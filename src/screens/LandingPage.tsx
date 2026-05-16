@@ -85,8 +85,8 @@ export default function LandingPage() {
     },
     {
       icon: '🛡️',
-      title: 'Fraud Detection',
-      desc: 'Built-in shill bidding detection and pattern analysis keeps the platform safe and fair for all participants.',
+      title: 'Secure & Verified',
+      desc: 'Every seller goes through admin-approved identity verification before listing. Buyers bid with confidence.',
     },
   ];
 

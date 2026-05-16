@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import {
-  IconBidVaultLogo, IconDashboard, IconList, IconUsers, IconAlert,
+  IconBidVaultLogo, IconDashboard, IconList, IconUsers,
   IconAnalytics, IconSettings,
 } from '../../components/Icons';
 import type { Auction } from '../../types';
@@ -19,7 +19,6 @@ function AdminSidebar({ active }: { active: string }) {
     { label: 'Live Auctions', icon: <IconList />, badge: '6', path: '/admin/live-auctions' },
     { label: 'Listing Review', icon: <IconList />, badge: String(pendingCount), path: '' },
     { label: 'Seller Verification', icon: <IconUsers />, path: '/admin/seller-verification' },
-    { label: 'Fraud Alerts', icon: <IconAlert />, badge: '3', path: '' },
     { label: 'Analytics', icon: <IconAnalytics />, path: '' },
     { label: 'Settings', icon: <IconSettings />, path: '' },
   ];

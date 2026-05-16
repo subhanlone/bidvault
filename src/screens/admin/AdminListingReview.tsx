@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
 import {
-  IconBidVaultLogo, IconDashboard, IconList, IconUsers, IconAlert,
+  IconBidVaultLogo, IconDashboard, IconList, IconUsers,
   IconAnalytics, IconSettings, IconChevronLeft, IconChevronRight,
   IconExport, IconStar,
 } from '../../components/Icons';
@@ -14,7 +14,6 @@ const sidebarItems = [
   { icon: <IconList />, label: 'Live Auctions', badge: '3' },
   { icon: <IconList />, label: 'Listing Review', badge: '', active: true },
   { icon: <IconUsers />, label: 'Seller Verification', badge: '' },
-  { icon: <IconAlert />, label: 'Fraud Alerts', badge: '3' },
   { icon: <IconUsers />, label: 'Users', badge: '' },
   { icon: <IconAnalytics />, label: 'Analytics', badge: '' },
   { icon: <IconList />, label: 'Reports', badge: '' },

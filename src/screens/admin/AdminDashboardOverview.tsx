@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import {
-  IconBidVaultLogo, IconDashboard, IconList, IconUsers, IconAlert,
+  IconBidVaultLogo, IconDashboard, IconList, IconUsers,
   IconAnalytics, IconSettings, IconBell, IconExport, IconPlus,
   IconChevronRight,
 } from '../../components/Icons';
@@ -15,19 +15,8 @@ const recentBids = [
   { img: '🎮', title: 'Xbox Series X', amount: 'PKR 85,000', tag: '' },
 ];
 
-const fraudAlerts = [
-  { type: 'Suspicious Bidding Pattern', detail: 'Auction #BV-2041: User 47 placed 12 bids in 47 seconds on iPhone 15 Pro Max. Pattern matches shill bidding.', color: 'red', action: 'Suspend User' },
-  { type: 'Abnormal Registration', detail: 'Auction #A-3178: Bidder registered 5 mins before bid. IP 192.168.1.247 placed 7 bids. Similar to flagged pattern.', color: 'orange', action: 'Cancel Bid' },
-  { type: 'Seller Verification Pending', detail: '12 sellers submitted identity docs over 48 hrs ago. SLA breach risk — review required.', color: 'yellow', action: 'Review Details' },
-];
-
 const barData = [22, 35, 18, 42, 38, 55, 30, 48, 22, 60, 45, 38, 52, 40, 25, 65, 42, 58, 35, 70, 48, 55, 38, 42, 60, 52, 45, 38];
 
-const alertColors: Record<string, { bg: string; border: string; title: string; btn: string }> = {
-  red: { bg: 'bg-[#fff5f5]', border: 'border-[#fecaca]', title: 'text-[#ef4444]', btn: 'bg-[#ef4444] hover:bg-[#dc2626]' },
-  orange: { bg: 'bg-[#fffbeb]', border: 'border-[#fde68a]', title: 'text-[#f59e0b]', btn: 'bg-[#f59e0b] hover:bg-[#d97706]' },
-  yellow: { bg: 'bg-[#fffbeb]', border: 'border-[#fde68a]', title: 'text-[#d97706]', btn: 'bg-[#d97706] hover:bg-[#b45309]' },
-};
 
 export default function AdminDashboardOverview() {
   const navigate = useNavigate();
@@ -41,7 +30,6 @@ export default function AdminDashboardOverview() {
     { icon: <IconList />, label: 'Live Auctions', badge: '6', path: '/admin/live-auctions' },
     { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: pendingListings[0] ? `/admin/listing-review/${pendingListings[0].listingId}` : '' },
     { icon: <IconUsers />, label: 'Seller Verification', badge: '', path: '/admin/seller-verification' },
-    { icon: <IconAlert />, label: 'Fraud Alerts', badge: '3', path: '' },
     { icon: <IconUsers />, label: 'Users', badge: '', path: '' },
     { icon: <IconAnalytics />, label: 'Analytics', badge: '', path: '' },
     { icon: <IconList />, label: 'Reports', badge: '', path: '' },
@@ -124,7 +112,7 @@ export default function AdminDashboardOverview() {
             {[
               { label: 'Active Auctions', value: '24', sub: '+3 Today', color: 'text-[#0b1f3a]' },
               { label: 'Total Bids Today', value: '1,847', sub: '+10% vs last week', color: 'text-[#1a7a4a]' },
-              { label: 'Critical Pending', value: '3', sub: 'Fraud alerts', color: 'text-[#ef4444]' },
+              { label: 'Pending Verifications', value: '5', sub: 'Sellers awaiting review', color: 'text-[#ef4444]' },
               { label: 'Pending Listings', value: String(pendingCount), sub: 'Awaiting review', color: 'text-[#f59e0b]' },
             ].map(s => (
               <div key={s.label} className="bg-white border border-[#e9ecef] rounded-[12px] p-5">
@@ -205,9 +193,8 @@ export default function AdminDashboardOverview() {
             </div>
           </div>
 
-          {/* Pending listings + Fraud alerts */}
-          <div className="grid grid-cols-[1fr_340px] gap-4">
-            {/* Pending listings */}
+          {/* Pending listings */}
+          <div className="grid grid-cols-1 gap-4">
             <div className="bg-white border border-[#e9ecef] rounded-[12px] p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -254,25 +241,6 @@ export default function AdminDashboardOverview() {
               )}
             </div>
 
-            {/* Fraud alerts */}
-            <div className="bg-white border border-[#e9ecef] rounded-[12px] p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[14px] text-[#0b1f3a]">Fraud Alerts</h3>
-                <span className="bg-[#ef4444] font-bold text-[10px] text-white px-2 py-[2px] rounded-[99px]">3 Active</span>
-              </div>
-              <div className="flex flex-col gap-3">
-                {fraudAlerts.map((a, i) => {
-                  const c = alertColors[a.color];
-                  return (
-                    <div key={i} className={`${c.bg} border ${c.border} rounded-[8px] p-3`}>
-                      <p className={`font-bold text-[12px] ${c.title} mb-1`}>{a.type}</p>
-                      <p className="text-[11px] text-[#6c757d] leading-[16px] mb-2">{a.detail}</p>
-                      <button className={`${c.btn} font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px]`}>{a.action}</button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           {/* Reports quick access */}
@@ -282,7 +250,7 @@ export default function AdminDashboardOverview() {
               <button className="text-[12px] text-[#d0021b] font-bold flex items-center gap-1">View All <IconChevronRight /></button>
             </div>
             <div className="grid grid-cols-4 gap-3">
-              {['Revenue Report', 'Bid Analytics', 'User Activity', 'Fraud Summary'].map(r => (
+              {['Revenue Report', 'Bid Analytics', 'User Activity', 'Seller Reports'].map(r => (
                 <div key={r} className="bg-[#f8f9fa] border border-[#e9ecef] rounded-[8px] px-4 py-3 flex items-center justify-between hover:border-[#d0021b] cursor-pointer group">
                   <span className="font-semibold text-[12px] text-[#495057] group-hover:text-[#d0021b]">{r}</span>
                   <IconChevronRight color="#d0021b" />

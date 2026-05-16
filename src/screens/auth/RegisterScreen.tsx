@@ -95,7 +95,7 @@ export default function RegisterScreen() {
           </div>
 
           <div className="flex flex-col gap-[10px] z-10">
-            {['256-bit SSL encryption on all transactions', 'AI-powered fraud detection on every bid', 'Verified sellers only — admin approved'].map(t => (
+            {['256-bit SSL encryption on all transactions', 'Admin-reviewed listings before going live', 'Verified sellers only — admin approved'].map(t => (
               <div key={t} className="flex gap-[10px] items-center">
                 <div className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] flex items-center justify-center p-px rounded-[11px] size-[22px]">
                   <IconCheck />
