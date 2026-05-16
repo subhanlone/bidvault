@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Clock, Gavel, Users, Banknote, Star, MapPin } from 'lucide-react';
 import { SEED_AUCTIONS } from '../services/mockData';
 import { useTimer } from '../hooks/useTimer';
 import { IconBidVaultLogo } from '../components/Icons';
@@ -24,8 +25,8 @@ function FeaturedCard({ auction }: { auction: Auction }) {
             {auction.badge}
           </span>
         )}
-        <span className={`absolute top-3 right-3 font-bold text-[11px] px-2 py-1 rounded-[6px] ${timer.totalSeconds < 3600 ? 'bg-[#d0021b] text-white' : 'bg-[rgba(11,31,58,0.7)] text-white'}`}>
-          ⏱ {timer.display}
+        <span className={`absolute top-3 right-3 font-bold text-[11px] px-2 py-1 rounded-[6px] flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-[#d0021b] text-white' : 'bg-[rgba(11,31,58,0.7)] text-white'}`}>
+          <Clock size={10} strokeWidth={2.5} /> {timer.display}
         </span>
       </div>
       <div className="p-4 flex flex-col flex-1">
@@ -61,10 +62,10 @@ export default function LandingPage() {
   const featured = SEED_AUCTIONS.slice(0, 3);
 
   const stats = [
-    { value: '2,400+', label: 'Active Auctions', icon: '🔨' },
-    { value: '18,000+', label: 'Registered Users', icon: '👥' },
-    { value: 'PKR 850M+', label: 'in Transactions', icon: '💰' },
-    { value: '4.9★', label: 'Buyer Satisfaction', icon: '🏆' },
+    { value: '2,400+', label: 'Active Auctions', icon: <Gavel size={28} strokeWidth={1.6} className="text-[#d0021b]" /> },
+    { value: '18,000+', label: 'Registered Users', icon: <Users size={28} strokeWidth={1.6} className="text-[#0b1f3a]" /> },
+    { value: 'PKR 850M+', label: 'in Transactions', icon: <Banknote size={28} strokeWidth={1.6} className="text-[#1a7a4a]" /> },
+    { value: '4.9 / 5', label: 'Buyer Satisfaction', icon: <Star size={28} strokeWidth={1.6} className="text-[#f59e0b]" fill="#f59e0b" /> },
   ];
 
   const features = [
@@ -84,9 +85,9 @@ export default function LandingPage() {
       desc: 'Experience live auction thrills with instant bid updates, countdown timers, and competing bid notifications.',
     },
     {
-      icon: '🛡️',
-      title: 'Secure & Verified',
-      desc: 'Every seller goes through admin-approved identity verification before listing. Buyers bid with confidence.',
+      icon: '📊',
+      title: 'Transparent Bidding',
+      desc: 'Full bid history visible to all participants — see every bid, every amount, and every timestamp in real time.',
     },
   ];
 
@@ -229,7 +230,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {stats.map(s => (
               <div key={s.label} className="text-center">
-                <div className="text-[28px] sm:text-[32px] mb-1">{s.icon}</div>
+                <div className="flex justify-center mb-2">{s.icon}</div>
                 <p className="font-extrabold text-[22px] sm:text-[28px] text-[#0b1f3a] leading-none">{s.value}</p>
                 <p className="text-[12px] sm:text-[13px] text-[#6c757d] mt-1">{s.label}</p>
               </div>
@@ -277,7 +278,7 @@ export default function LandingPage() {
                   onClick={() => setActiveTab(tab)}
                   className={`font-bold text-[13px] px-5 py-2 rounded-[8px] transition-all ${activeTab === tab ? 'bg-[#0b1f3a] text-white shadow-sm' : 'text-[#6c757d] hover:text-[#343a40]'}`}
                 >
-                  {tab === 'buyers' ? '🛒 For Buyers' : '🏷️ For Sellers'}
+                  {tab === 'buyers' ? 'For Buyers' : 'For Sellers'}
                 </button>
               ))}
             </div>
@@ -333,7 +334,9 @@ export default function LandingPage() {
             <p className="font-bold text-[13px] text-[#6c757d] uppercase tracking-[1px]">Trusted by buyers and sellers across Pakistan</p>
             <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 sm:gap-6">
               {['Karachi', 'Lahore', 'Islamabad', 'Peshawar', 'Quetta', 'Faisalabad'].map(city => (
-                <span key={city} className="font-semibold text-[13px] text-[#adb5bd]">📍 {city}</span>
+                <span key={city} className="font-semibold text-[13px] text-[#adb5bd] flex items-center gap-1">
+                  <MapPin size={12} strokeWidth={2} /> {city}
+                </span>
               ))}
             </div>
           </div>
