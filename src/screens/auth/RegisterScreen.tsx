@@ -53,12 +53,12 @@ export default function RegisterScreen() {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden">
-      <div className="grid grid-cols-2 w-full h-full">
+    <div className="min-h-screen md:h-screen flex overflow-hidden bg-white">
+      <div className="grid md:grid-cols-2 w-full md:h-full">
 
-        {/* LEFT PANEL */}
+        {/* LEFT PANEL — hidden on mobile */}
         <div
-          className="flex flex-col items-start overflow-hidden p-[52px] relative h-full"
+          className="hidden md:flex flex-col items-start overflow-hidden p-[52px] relative h-full"
           style={{ backgroundImage: 'linear-gradient(155deg,rgb(11,31,58) 0%,rgb(26,51,86) 50%,rgb(31,78,140) 100%)' }}
         >
           <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
@@ -109,16 +109,28 @@ export default function RegisterScreen() {
         </div>
 
         {/* RIGHT PANEL */}
-        <form onSubmit={handleSubmit} className="bg-white flex flex-col items-start justify-center p-[52px] overflow-y-auto h-full">
-          <div className="flex flex-col gap-[5px] pb-8 w-full">
-            <h2 className="font-extrabold text-[26px] text-[#0b1f3a]">Create your account</h2>
-            <p className="text-[14px] text-[#6c757d] leading-[21.7px]">
+        <form onSubmit={handleSubmit} className="bg-white flex flex-col items-start justify-center px-5 py-8 sm:px-8 md:px-[52px] md:py-[52px] overflow-y-auto md:h-full">
+          <div className="w-full max-w-[440px] mx-auto md:max-w-none md:mx-0">
+
+          {/* Mobile brand header */}
+          <div className="md:hidden flex items-center gap-3 mb-6">
+            <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[40px]">
+              <IconBidVaultLogo />
+            </div>
+            <span className="font-extrabold text-[24px] text-[#0b1f3a] tracking-[-0.5px]">
+              Bid<span className="text-[#d0021b]">Vault</span>
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-[5px] pb-6 md:pb-8 w-full">
+            <h2 className="font-extrabold text-[22px] md:text-[26px] text-[#0b1f3a]">Create your account</h2>
+            <p className="text-[13px] md:text-[14px] text-[#6c757d] leading-[21.7px]">
               Already have an account?{' '}
               <Link to="/login" className="font-bold text-[#d0021b]">Sign in here</Link>
             </p>
           </div>
 
-          <div className="flex flex-col gap-[18px] w-full">
+          <div className="flex flex-col gap-[16px] md:gap-[18px] w-full">
             {/* Role selector */}
             <div className="flex flex-col gap-[6px]">
               <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">
@@ -155,7 +167,7 @@ export default function RegisterScreen() {
             </div>
 
             {/* Name + Email */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-[6px]">
                 <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Full name <span className="text-[#d0021b]">*</span></label>
                 <div className="relative">
@@ -258,6 +270,7 @@ export default function RegisterScreen() {
               Already have an account?{' '}
               <Link to="/login" className="font-bold text-[#d0021b]">Sign in to BidVault</Link>
             </p>
+          </div>
           </div>
         </form>
       </div>

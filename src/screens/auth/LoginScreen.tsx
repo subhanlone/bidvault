@@ -42,12 +42,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden">
-      <div className="grid grid-cols-2 w-full h-full">
+    <div className="min-h-screen md:h-screen flex overflow-hidden bg-white">
+      <div className="grid md:grid-cols-2 w-full md:h-full">
 
-        {/* LEFT PANEL */}
+        {/* LEFT PANEL — hidden on mobile */}
         <div
-          className="flex flex-col items-start overflow-hidden p-[52px] relative h-full"
+          className="hidden md:flex flex-col items-start overflow-hidden p-[52px] relative h-full"
           style={{ backgroundImage: 'linear-gradient(150deg,rgb(11,31,58) 0%,rgb(26,51,86) 50%,rgb(31,78,140) 100%)' }}
         >
           <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
@@ -100,111 +100,124 @@ export default function LoginScreen() {
         </div>
 
         {/* RIGHT PANEL */}
-        <form onSubmit={handleSubmit} className="bg-white flex flex-col items-start justify-center px-[52px] py-[66px] overflow-y-auto h-full">
-          <div className="flex flex-col gap-[5px] pb-8 w-full">
-            <h2 className="font-extrabold text-[26px] text-[#0b1f3a]">Sign in to BidVault</h2>
-            <p className="text-[14px] text-[#6c757d] leading-[21.7px]">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-bold text-[#d0021b]">Create one free</Link>
-            </p>
-          </div>
+        <form onSubmit={handleSubmit} className="bg-white flex flex-col items-start justify-center px-5 py-8 sm:px-8 md:px-[52px] md:py-[66px] overflow-y-auto md:h-full">
+          <div className="w-full max-w-[440px] mx-auto md:max-w-none md:mx-0">
 
-          <div className="flex flex-col gap-[18px] w-full">
-            <button type="button" className="bg-white border border-[#e9ecef] flex gap-[10px] h-[48px] items-center justify-center rounded-[8px] w-full hover:bg-[#f8f9fa] transition-colors">
-              <IconGoogle />
-              <span className="font-semibold text-[14px] text-[#343a40]">Continue with Google</span>
-            </button>
-
-            <div className="flex gap-3 items-center py-1">
-              <div className="bg-[#e9ecef] flex-1 h-px" />
-              <span className="font-semibold text-[12px] text-[#adb5bd]">or sign in with email</span>
-              <div className="bg-[#e9ecef] flex-1 h-px" />
-            </div>
-
-            {/* Demo accounts hint */}
-            <div className="bg-[#f8f9fa] border border-[#e9ecef] rounded-[8px] px-4 py-3">
-              <p className="font-bold text-[11px] text-[#6c757d] mb-1 uppercase tracking-[0.5px]">Demo Accounts</p>
-              {[
-                ['BUYER', 'sawera@gmail.com', 'password123'],
-                ['SELLER', 'ahmed@gmail.com', 'password123'],
-                ['ADMIN', 'admin@bidvault.com', 'admin123'],
-              ].map(([role, em, pw]) => (
-                <button
-                  type="button"
-                  key={role}
-                  onClick={() => { setEmail(em); setPassword(pw); }}
-                  className="text-left w-full text-[11.5px] text-[#0b1f3a] hover:text-[#d0021b] font-medium py-[2px]"
-                >
-                  <span className="font-bold">{role}:</span> {em}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-[6px]">
-              <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Email address <span className="text-[#d0021b]">*</span></label>
-              <div className="relative">
-                <input
-                  className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-[15px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]"
-                  placeholder="you@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                />
-                <span className="absolute left-[14px] top-[17.5px]"><IconEmail /></span>
+            {/* Mobile brand header */}
+            <div className="md:hidden flex items-center gap-3 mb-8">
+              <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[40px]">
+                <IconBidVaultLogo />
               </div>
+              <span className="font-extrabold text-[24px] text-[#0b1f3a] tracking-[-0.5px]">
+                Bid<span className="text-[#d0021b]">Vault</span>
+              </span>
             </div>
 
-            <div className="flex flex-col gap-[6px]">
-              <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Password <span className="text-[#d0021b]">*</span></label>
-              <div className="relative">
-                <input
-                  type={showPw ? 'text' : 'password'}
-                  className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-[45px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]"
-                  placeholder="Your password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                />
-                <span className="absolute left-[14px] top-[16px]"><IconLock /></span>
-                <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex gap-[10px] items-center">
-                <button
-                  type="button"
-                  onClick={() => setRemember(p => !p)}
-                  className={`border-2 flex items-center justify-center p-[2px] rounded-[4px] size-[18px] transition-colors ${remember ? 'bg-[#d0021b] border-[#d0021b]' : 'bg-white border-[#dee2e6]'}`}
-                >
-                  {remember && <IconCheckbox />}
-                </button>
-                <span className="text-[#495057] text-[12.5px]">Keep me signed in</span>
-              </div>
-              <Link to="/forgot-password" className="font-bold text-[12.5px] text-[#d0021b]">Forgot password?</Link>
-            </div>
-
-            <div className="bg-[#f0f4ff] border border-[#c7d7fe] flex gap-[10px] items-center px-[15px] py-3 rounded-[8px]">
-              <IconInfo color="#3451b2" />
-              <p className="text-[12px] text-[#3451b2] leading-[18.6px]">
-                <span className="font-bold">Role-based access:</span>
-                <span className="font-medium"> After sign in, you'll be directed to your Buyer, Seller, or Admin dashboard automatically.</span>
+            <div className="flex flex-col gap-[5px] pb-6 md:pb-8 w-full">
+              <h2 className="font-extrabold text-[22px] md:text-[26px] text-[#0b1f3a]">Sign in to BidVault</h2>
+              <p className="text-[13px] md:text-[14px] text-[#6c757d] leading-[21.7px]">
+                Don't have an account?{' '}
+                <Link to="/register" className="font-bold text-[#d0021b]">Create one free</Link>
               </p>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-[#d0021b] drop-shadow-[0px_4px_8px_rgba(208,2,27,0.28)] flex gap-[9px] h-[50px] items-center justify-center rounded-[8px] w-full hover:bg-[#a80016] transition-colors disabled:opacity-60"
-            >
-              {loading
-                ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                : <><IconKey /><span className="font-bold text-[15px] text-white tracking-[0.2px]">Sign In to BidVault</span></>
-              }
-            </button>
+            <div className="flex flex-col gap-[16px] md:gap-[18px] w-full">
+              <button type="button" className="bg-white border border-[#e9ecef] flex gap-[10px] h-[48px] items-center justify-center rounded-[8px] w-full hover:bg-[#f8f9fa] transition-colors">
+                <IconGoogle />
+                <span className="font-semibold text-[14px] text-[#343a40]">Continue with Google</span>
+              </button>
 
-            <p className="text-[13px] text-[#6c757d] text-center">
-              New to BidVault?{' '}
-              <Link to="/register" className="font-bold text-[#d0021b]">Create a free account</Link>
-            </p>
+              <div className="flex gap-3 items-center py-1">
+                <div className="bg-[#e9ecef] flex-1 h-px" />
+                <span className="font-semibold text-[12px] text-[#adb5bd]">or sign in with email</span>
+                <div className="bg-[#e9ecef] flex-1 h-px" />
+              </div>
+
+              {/* Demo accounts hint */}
+              <div className="bg-[#f8f9fa] border border-[#e9ecef] rounded-[8px] px-4 py-3">
+                <p className="font-bold text-[11px] text-[#6c757d] mb-1 uppercase tracking-[0.5px]">Demo Accounts</p>
+                {[
+                  ['BUYER', 'sawera@gmail.com', 'password123'],
+                  ['SELLER', 'ahmed@gmail.com', 'password123'],
+                  ['ADMIN', 'admin@bidvault.com', 'admin123'],
+                ].map(([role, em, pw]) => (
+                  <button
+                    type="button"
+                    key={role}
+                    onClick={() => { setEmail(em); setPassword(pw); }}
+                    className="text-left w-full text-[11.5px] text-[#0b1f3a] hover:text-[#d0021b] font-medium py-[2px]"
+                  >
+                    <span className="font-bold">{role}:</span> {em}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-[6px]">
+                <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Email address <span className="text-[#d0021b]">*</span></label>
+                <div className="relative">
+                  <input
+                    className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-[15px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
+                    placeholder="you@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                  />
+                  <span className="absolute left-[14px] top-[17.5px]"><IconEmail /></span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-[6px]">
+                <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Password <span className="text-[#d0021b]">*</span></label>
+                <div className="relative">
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-[45px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
+                    placeholder="Your password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                  />
+                  <span className="absolute left-[14px] top-[16px]"><IconLock /></span>
+                  <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex gap-[10px] items-center">
+                  <button
+                    type="button"
+                    onClick={() => setRemember(p => !p)}
+                    className={`border-2 flex items-center justify-center p-[2px] rounded-[4px] size-[18px] transition-colors ${remember ? 'bg-[#d0021b] border-[#d0021b]' : 'bg-white border-[#dee2e6]'}`}
+                  >
+                    {remember && <IconCheckbox />}
+                  </button>
+                  <span className="text-[#495057] text-[12.5px]">Keep me signed in</span>
+                </div>
+                <Link to="/forgot-password" className="font-bold text-[12.5px] text-[#d0021b]">Forgot password?</Link>
+              </div>
+
+              <div className="bg-[#f0f4ff] border border-[#c7d7fe] flex gap-[10px] items-center px-[15px] py-3 rounded-[8px]">
+                <IconInfo color="#3451b2" />
+                <p className="text-[12px] text-[#3451b2] leading-[18.6px]">
+                  <span className="font-bold">Role-based access:</span>
+                  <span className="font-medium"> After sign in, you'll be directed to your Buyer, Seller, or Admin dashboard automatically.</span>
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-[#d0021b] drop-shadow-[0px_4px_8px_rgba(208,2,27,0.28)] flex gap-[9px] h-[50px] items-center justify-center rounded-[8px] w-full hover:bg-[#a80016] transition-colors disabled:opacity-60"
+              >
+                {loading
+                  ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <><IconKey /><span className="font-bold text-[15px] text-white tracking-[0.2px]">Sign In to BidVault</span></>
+                }
+              </button>
+
+              <p className="text-[13px] text-[#6c757d] text-center">
+                New to BidVault?{' '}
+                <Link to="/register" className="font-bold text-[#d0021b]">Create a free account</Link>
+              </p>
+            </div>
           </div>
         </form>
       </div>

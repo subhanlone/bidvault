@@ -127,7 +127,7 @@ export default function ForgotPasswordScreen() {
 
   const leftPanel = (
     <div
-      className="flex flex-col items-start overflow-hidden p-[52px] relative h-full"
+      className="hidden md:flex flex-col items-start overflow-hidden p-[52px] relative h-full"
       style={{ backgroundImage: 'linear-gradient(156deg,rgb(11,31,58) 0%,rgb(26,51,86) 50%,rgb(31,78,140) 100%)' }}
     >
       <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
@@ -168,11 +168,22 @@ export default function ForgotPasswordScreen() {
   );
 
   return (
-    <div className="h-screen flex overflow-hidden">
-      <div className="grid grid-cols-2 w-full h-full">
+    <div className="min-h-screen md:h-screen flex overflow-hidden bg-white">
+      <div className="grid md:grid-cols-2 w-full md:h-full">
         {leftPanel}
 
-        <div className="bg-white flex flex-col items-start justify-center p-[52px] overflow-y-auto h-full">
+        <div className="bg-white flex flex-col items-start justify-center px-5 py-8 sm:px-8 md:px-[52px] md:py-[52px] overflow-y-auto md:h-full">
+          <div className="w-full max-w-[440px] mx-auto md:max-w-none md:mx-0">
+
+          {/* Mobile brand header */}
+          <div className="md:hidden flex items-center gap-3 mb-6">
+            <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[40px]">
+              <IconBidVaultLogo />
+            </div>
+            <span className="font-extrabold text-[24px] text-[#0b1f3a] tracking-[-0.5px]">
+              Bid<span className="text-[#d0021b]">Vault</span>
+            </span>
+          </div>
           <div className="flex gap-2 items-center pb-6">
             <IconArrowLeft />
             <Link to="/login" className="font-semibold text-[13px] text-[#6c757d]">Back to Sign In</Link>
@@ -294,6 +305,7 @@ export default function ForgotPasswordScreen() {
               Remembered your password?{' '}
               <Link to="/login" className="font-bold text-[#d0021b]">Back to sign in</Link>
             </p>
+          </div>
           </div>
         </div>
       </div>
