@@ -226,6 +226,11 @@ export default function BuyerLiveBidding() {
         {/* RIGHT — Bidding panel */}
         <div className="flex flex-col gap-4 order-2 md:order-2">
 
+          {/* Back link — top on both mobile and desktop */}
+          <Link to="/buyer/browse" className="font-semibold text-[13px] text-[#6c757d] hover:text-[#d0021b] transition-colors flex items-center gap-1">
+            ← Back to Auctions
+          </Link>
+
           {/* Timer */}
           <div className={`rounded-[14px] p-5 text-center ${timer.totalSeconds < 3600 ? 'bg-[#d0021b]' : 'bg-[#0b1f3a]'}`}>
             <p className="font-bold text-[11px] text-[rgba(255,255,255,0.6)] uppercase tracking-[1px] mb-1">Time Remaining</p>
@@ -286,9 +291,6 @@ export default function BuyerLiveBidding() {
             </div>
           </div>
 
-          <Link to="/buyer/browse" className="text-center font-semibold text-[13px] text-[#6c757d] hover:text-[#d0021b] transition-colors">
-            ← Back to Auctions
-          </Link>
         </div>
       </div>
     </div>
