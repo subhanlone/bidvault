@@ -127,7 +127,7 @@ export default function ForgotPasswordScreen() {
 
   const leftPanel = (
     <div
-      className="flex flex-col items-start justify-between overflow-hidden p-[52px] relative h-full"
+      className="flex flex-col items-start overflow-hidden p-[52px] relative h-full"
       style={{ backgroundImage: 'linear-gradient(156deg,rgb(11,31,58) 0%,rgb(26,51,86) 50%,rgb(31,78,140) 100%)' }}
     >
       <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
@@ -140,27 +140,29 @@ export default function ForgotPasswordScreen() {
           Bid<span className="text-[#d0021b]">Vault</span>
         </span>
       </div>
-      <div className="flex flex-col gap-[13px] z-10">
-        <div className="bg-[rgba(208,2,27,0.18)] border border-[rgba(208,2,27,0.32)] flex gap-[7px] items-center pl-[10px] pr-[13px] py-[6px] rounded-[20px] w-fit">
-          <div className="bg-[#d0021b] rounded-[3.5px] size-[7px]" />
-          <span className="font-bold text-[#ff8a96] text-[10px] tracking-[1.2px] uppercase">Account Recovery</span>
-        </div>
-        <h1 className="font-extrabold text-[36px] text-white leading-[42px]">
-          Don't worry —<br />we've got you<br />covered
-        </h1>
-        <p className="max-w-[340px] text-[14px] text-[rgba(255,255,255,0.58)] leading-[23px]">
-          Reset your password in 3 simple steps. Enter your email, verify the code, and set a new secure password.
-        </p>
-      </div>
-      <div className="flex flex-col gap-[10px] z-10">
-        {['Reset code valid for 10 minutes', 'Sent to your registered email only', 'New password encrypted with bcrypt'].map(t => (
-          <div key={t} className="flex gap-[10px] items-center">
-            <div className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] flex items-center justify-center p-px rounded-[11px] size-[22px]">
-              <IconCheck />
-            </div>
-            <span className="font-medium text-[12.5px] text-[rgba(255,255,255,0.65)]">{t}</span>
+      <div className="flex flex-col flex-1 justify-center gap-10 z-10">
+        <div className="flex flex-col gap-[13px]">
+          <div className="bg-[rgba(208,2,27,0.18)] border border-[rgba(208,2,27,0.32)] flex gap-[7px] items-center pl-[10px] pr-[13px] py-[6px] rounded-[20px] w-fit">
+            <div className="bg-[#d0021b] rounded-[3.5px] size-[7px]" />
+            <span className="font-bold text-[#ff8a96] text-[10px] tracking-[1.2px] uppercase">Account Recovery</span>
           </div>
-        ))}
+          <h1 className="font-extrabold text-[36px] text-white leading-[42px]">
+            Don't worry —<br />we've got you<br />covered
+          </h1>
+          <p className="max-w-[340px] text-[14px] text-[rgba(255,255,255,0.58)] leading-[23px]">
+            Reset your password in 3 simple steps. Enter your email, verify the code, and set a new secure password.
+          </p>
+        </div>
+        <div className="flex flex-col gap-[10px]">
+          {['Reset code valid for 10 minutes', 'Sent to your registered email only', 'New password encrypted with bcrypt'].map(t => (
+            <div key={t} className="flex gap-[10px] items-center">
+              <div className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] flex items-center justify-center p-px rounded-[11px] size-[22px]">
+                <IconCheck />
+              </div>
+              <span className="font-medium text-[12.5px] text-[rgba(255,255,255,0.65)]">{t}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

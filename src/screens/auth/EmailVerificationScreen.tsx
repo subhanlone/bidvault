@@ -93,7 +93,7 @@ export default function EmailVerificationScreen() {
 
         {/* LEFT PANEL */}
         <div
-          className="flex flex-col items-start justify-between overflow-hidden p-[52px] relative h-full"
+          className="flex flex-col items-start overflow-hidden p-[52px] relative h-full"
           style={{ backgroundImage: 'linear-gradient(145deg,rgb(11,31,58) 0%,rgb(26,51,86) 50%,rgb(31,78,140) 100%)' }}
         >
           <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
@@ -108,36 +108,38 @@ export default function EmailVerificationScreen() {
             </span>
           </div>
 
-          <div className="flex flex-col gap-[13px] z-10">
-            <div className="bg-[rgba(208,2,27,0.18)] border border-[rgba(208,2,27,0.32)] flex gap-[7px] items-center pl-[10px] pr-[13px] py-[6px] rounded-[20px] w-fit">
-              <div className="bg-[#d0021b] rounded-[3.5px] size-[7px]" />
-              <span className="font-bold text-[#ff8a96] text-[10px] tracking-[1.2px] uppercase">Almost There</span>
+          <div className="flex flex-col flex-1 justify-center gap-10 z-10">
+            <div className="flex flex-col gap-[13px]">
+              <div className="bg-[rgba(208,2,27,0.18)] border border-[rgba(208,2,27,0.32)] flex gap-[7px] items-center pl-[10px] pr-[13px] py-[6px] rounded-[20px] w-fit">
+                <div className="bg-[#d0021b] rounded-[3.5px] size-[7px]" />
+                <span className="font-bold text-[#ff8a96] text-[10px] tracking-[1.2px] uppercase">Almost There</span>
+              </div>
+              <h1 className="font-extrabold text-[36px] text-white leading-[42px]">
+                One last step<br />to activate your<br />account
+              </h1>
+              <p className="max-w-[340px] text-[14px] text-[rgba(255,255,255,0.58)] leading-[23px]">
+                We sent a 6-digit verification code to your email address. Enter it to confirm your identity and start using BidVault.
+              </p>
+              <div className="flex gap-4 items-start pt-4">
+                {[{ value: fmtTime(codeExpiry), label: 'Code Expires' }, { value: '6', label: 'Digit Code' }].map(s => (
+                  <div key={s.label} className="bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.14)] flex flex-col gap-[3px] items-start px-[17px] py-[13px] rounded-[10px]">
+                    <span className="font-extrabold text-[22px] text-white leading-[22px]">{s.value}</span>
+                    <span className="font-medium text-[11px] text-[rgba(255,255,255,0.55)]">{s.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <h1 className="font-extrabold text-[36px] text-white leading-[42px]">
-              One last step<br />to activate your<br />account
-            </h1>
-            <p className="max-w-[340px] text-[14px] text-[rgba(255,255,255,0.58)] leading-[23px]">
-              We sent a 6-digit verification code to your email address. Enter it to confirm your identity and start using BidVault.
-            </p>
-            <div className="flex gap-4 items-start pt-4">
-              {[{ value: fmtTime(codeExpiry), label: 'Code Expires' }, { value: '6', label: 'Digit Code' }].map(s => (
-                <div key={s.label} className="bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.14)] flex flex-col gap-[3px] items-start px-[17px] py-[13px] rounded-[10px]">
-                  <span className="font-extrabold text-[22px] text-white leading-[22px]">{s.value}</span>
-                  <span className="font-medium text-[11px] text-[rgba(255,255,255,0.55)]">{s.label}</span>
+
+            <div className="flex flex-col gap-[10px]">
+              {['Code valid for 10 minutes only', 'Check spam folder if not found', 'Your account is 100% secure'].map(t => (
+                <div key={t} className="flex gap-[10px] items-center">
+                  <div className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] flex items-center justify-center p-px rounded-[11px] size-[22px]">
+                    <IconCheck />
+                  </div>
+                  <span className="font-medium text-[12.5px] text-[rgba(255,255,255,0.65)]">{t}</span>
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="flex flex-col gap-[10px] z-10">
-            {['Code valid for 10 minutes only', 'Check spam folder if not found', 'Your account is 100% secure'].map(t => (
-              <div key={t} className="flex gap-[10px] items-center">
-                <div className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] flex items-center justify-center p-px rounded-[11px] size-[22px]">
-                  <IconCheck />
-                </div>
-                <span className="font-medium text-[12.5px] text-[rgba(255,255,255,0.65)]">{t}</span>
-              </div>
-            ))}
           </div>
         </div>
 

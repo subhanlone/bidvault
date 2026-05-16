@@ -47,7 +47,7 @@ export default function LoginScreen() {
 
         {/* LEFT PANEL */}
         <div
-          className="flex flex-col items-start justify-between overflow-hidden p-[52px] relative h-full"
+          className="flex flex-col items-start overflow-hidden p-[52px] relative h-full"
           style={{ backgroundImage: 'linear-gradient(150deg,rgb(11,31,58) 0%,rgb(26,51,86) 50%,rgb(31,78,140) 100%)' }}
         >
           <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
@@ -62,38 +62,40 @@ export default function LoginScreen() {
             </span>
           </div>
 
-          <div className="flex flex-col gap-[13px] z-10">
-            <div className="bg-[rgba(208,2,27,0.18)] border border-[rgba(208,2,27,0.32)] flex gap-[7px] items-center pl-[10px] pr-[13px] py-[6px] rounded-[20px] w-fit">
-              <div className="bg-[#d0021b] rounded-[3.5px] size-[7px]" />
-              <span className="font-bold text-[#ff8a96] text-[10px] tracking-[1.2px] uppercase">Welcome Back</span>
-            </div>
-            <h1 className="font-extrabold text-[36px] text-white leading-[42px]">
-              Your auctions<br />are waiting<br />for you
-            </h1>
-            <p className="max-w-[340px] text-[14px] text-[rgba(255,255,255,0.58)] leading-[23px]">
-              Sign in to continue bidding, manage your listings, or access your admin controls — all in one place.
-            </p>
-            <div className="flex gap-4 items-start pt-4">
-              <div className="bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.14)] flex flex-col gap-[3px] items-start px-[17px] py-[13px] rounded-[10px]">
-                <span className="font-bold text-[22px] text-[#ef4444] leading-[22px]">●</span>
-                <span className="font-medium text-[11px] text-[rgba(255,255,255,0.55)]">3 Live Now</span>
+          <div className="flex flex-col flex-1 justify-center gap-10 z-10">
+            <div className="flex flex-col gap-[13px]">
+              <div className="bg-[rgba(208,2,27,0.18)] border border-[rgba(208,2,27,0.32)] flex gap-[7px] items-center pl-[10px] pr-[13px] py-[6px] rounded-[20px] w-fit">
+                <div className="bg-[#d0021b] rounded-[3.5px] size-[7px]" />
+                <span className="font-bold text-[#ff8a96] text-[10px] tracking-[1.2px] uppercase">Welcome Back</span>
               </div>
-              <div className="bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.14)] flex flex-col gap-[3px] items-start px-[17px] py-[13px] rounded-[10px]">
-                <span className="font-extrabold text-[22px] text-white leading-[22px]">PKR 2.4M</span>
-                <span className="font-medium text-[11px] text-[rgba(255,255,255,0.55)]">Bid Volume</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-[10px] z-10">
-            {['Role-based dashboard — Buyer / Seller / Admin', 'JWT secured session with auto-refresh', 'Real-time bid updates via Socket.io'].map(t => (
-              <div key={t} className="flex gap-[10px] items-center">
-                <div className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] flex items-center justify-center p-px rounded-[11px] size-[22px]">
-                  <IconCheck />
+              <h1 className="font-extrabold text-[36px] text-white leading-[42px]">
+                Your auctions<br />are waiting<br />for you
+              </h1>
+              <p className="max-w-[340px] text-[14px] text-[rgba(255,255,255,0.58)] leading-[23px]">
+                Sign in to continue bidding, manage your listings, or access your admin controls — all in one place.
+              </p>
+              <div className="flex gap-4 items-start pt-4">
+                <div className="bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.14)] flex flex-col gap-[3px] items-start px-[17px] py-[13px] rounded-[10px]">
+                  <span className="font-bold text-[22px] text-[#ef4444] leading-[22px]">●</span>
+                  <span className="font-medium text-[11px] text-[rgba(255,255,255,0.55)]">3 Live Now</span>
                 </div>
-                <span className="font-medium text-[12.5px] text-[rgba(255,255,255,0.65)]">{t}</span>
+                <div className="bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.14)] flex flex-col gap-[3px] items-start px-[17px] py-[13px] rounded-[10px]">
+                  <span className="font-extrabold text-[22px] text-white leading-[22px]">PKR 2.4M</span>
+                  <span className="font-medium text-[11px] text-[rgba(255,255,255,0.55)]">Bid Volume</span>
+                </div>
               </div>
-            ))}
+            </div>
+
+            <div className="flex flex-col gap-[10px]">
+              {['Role-based dashboard — Buyer / Seller / Admin', 'JWT secured session with auto-refresh', 'Real-time bid updates via Socket.io'].map(t => (
+                <div key={t} className="flex gap-[10px] items-center">
+                  <div className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] flex items-center justify-center p-px rounded-[11px] size-[22px]">
+                    <IconCheck />
+                  </div>
+                  <span className="font-medium text-[12.5px] text-[rgba(255,255,255,0.65)]">{t}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
