@@ -19,10 +19,10 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
   const items = [
     { label: 'Dashboard', icon: <IconDashboard />, path: '/admin/dashboard' },
     { label: 'Live Auctions', icon: <IconList />, badge: '6', path: '/admin/live-auctions' },
-    { label: 'Listing Review', icon: <IconList />, badge: String(pendingCount), path: '' },
+    { label: 'Listing Review', icon: <IconList />, badge: String(pendingCount), path: '/admin/dashboard' },
     { label: 'Seller Verification', icon: <IconUsers />, path: '/admin/seller-verification' },
-    { label: 'Analytics', icon: <IconAnalytics />, path: '' },
-    { label: 'Settings', icon: <IconSettings />, path: '' },
+    { label: 'Analytics', icon: <IconAnalytics />, path: '/admin/analytics' },
+    { label: 'Settings', icon: <IconSettings />, path: '/admin/settings' },
   ];
 
   return (

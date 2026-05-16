@@ -422,9 +422,10 @@ export default function LandingPage() {
             <div>
               <p className="font-bold text-[12px] text-[rgba(255,255,255,0.5)] uppercase tracking-[1px] mb-4">Account</p>
               <div className="flex flex-col gap-2.5">
-                {['Log In', 'Register', 'Forgot Password', 'Seller Dashboard'].map(l => (
-                  <button key={l} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">{l}</button>
-                ))}
+                <Link to="/login" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Log In</Link>
+                <Link to="/register" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Register</Link>
+                <Link to="/forgot-password" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Forgot Password</Link>
+                <button className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Seller Dashboard</button>
               </div>
             </div>
 
@@ -432,9 +433,10 @@ export default function LandingPage() {
             <div>
               <p className="font-bold text-[12px] text-[rgba(255,255,255,0.5)] uppercase tracking-[1px] mb-4">Legal</p>
               <div className="flex flex-col gap-2.5">
-                {['Privacy Policy', 'Terms of Service', 'Refund Policy', 'Contact Us'].map(l => (
-                  <button key={l} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">{l}</button>
-                ))}
+                <Link to="/privacy" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Privacy Policy</Link>
+                <Link to="/terms" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Terms of Service</Link>
+                <button className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Refund Policy</button>
+                <button className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Contact Us</button>
               </div>
             </div>
           </div>

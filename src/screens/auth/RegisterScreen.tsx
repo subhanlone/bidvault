@@ -236,8 +236,8 @@ export default function RegisterScreen() {
                 </button>
                 <p className="text-[#495057] text-[12.5px] leading-[19.38px]">
                   I agree to BidVault's{' '}
-                  <a href="#" className="font-bold text-[#d0021b]">Terms of Service</a>{' '}and{' '}
-                  <a href="#" className="font-bold text-[#d0021b]">Privacy Policy</a>
+                  <Link to="/terms" className="font-bold text-[#d0021b]">Terms of Service</Link>{' '}and{' '}
+                  <Link to="/privacy" className="font-bold text-[#d0021b]">Privacy Policy</Link>
                 </p>
               </div>
               {errors.agree && <p className="text-[11px] text-[#d0021b]">{errors.agree}</p>}

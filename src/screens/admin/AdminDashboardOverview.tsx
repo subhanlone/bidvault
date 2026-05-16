@@ -28,12 +28,10 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
   const sidebarItems = [
     { icon: <IconDashboard />, label: 'Dashboard', active: active === 'Dashboard', badge: '', path: '/admin/dashboard' },
     { icon: <IconList />, label: 'Live Auctions', badge: '6', path: '/admin/live-auctions' },
-    { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: pendingListings[0] ? `/admin/listing-review/${pendingListings[0].listingId}` : '' },
+    { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: '/admin/dashboard' },
     { icon: <IconUsers />, label: 'Seller Verification', badge: '', path: '/admin/seller-verification' },
-    { icon: <IconUsers />, label: 'Users', badge: '', path: '' },
-    { icon: <IconAnalytics />, label: 'Analytics', badge: '', path: '' },
-    { icon: <IconList />, label: 'Reports', badge: '', path: '' },
-    { icon: <IconSettings />, label: 'Settings', badge: '', path: '' },
+    { icon: <IconAnalytics />, label: 'Analytics', badge: '', path: '/admin/analytics' },
+    { icon: <IconSettings />, label: 'Settings', badge: '', path: '/admin/settings' },
   ];
 
   return (

@@ -10,20 +10,18 @@ import {
   IconExport, IconStar,
 } from '../../components/Icons';
 
-const sidebarItems = [
-  { icon: <IconDashboard />, label: 'Dashboard', active: false, badge: '' },
-  { icon: <IconList />, label: 'Live Auctions', badge: '3' },
-  { icon: <IconList />, label: 'Listing Review', badge: '', active: true },
-  { icon: <IconUsers />, label: 'Seller Verification', badge: '' },
-  { icon: <IconUsers />, label: 'Users', badge: '' },
-  { icon: <IconAnalytics />, label: 'Analytics', badge: '' },
-  { icon: <IconList />, label: 'Reports', badge: '' },
-  { icon: <IconSettings />, label: 'Settings', badge: '' },
-];
-
 function AdminSidebarContent({ onClose }: { onClose?: () => void }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  const items = [
+    { label: 'Dashboard', icon: <IconDashboard />, path: '/admin/dashboard' },
+    { label: 'Live Auctions', icon: <IconList />, badge: '3', path: '/admin/live-auctions' },
+    { label: 'Listing Review', icon: <IconList />, badge: '', active: true, path: '/admin/dashboard' },
+    { label: 'Seller Verification', icon: <IconUsers />, path: '/admin/seller-verification' },
+    { label: 'Analytics', icon: <IconAnalytics />, path: '/admin/analytics' },
+    { label: 'Settings', icon: <IconSettings />, path: '/admin/settings' },
+  ];
 
   return (
     <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 min-h-screen">
@@ -41,15 +39,15 @@ function AdminSidebarContent({ onClose }: { onClose?: () => void }) {
         )}
       </div>
       <nav className="flex flex-col gap-[2px] p-3 flex-1">
-        {sidebarItems.map(item => (
+        {items.map(item => (
           <div
             key={item.label}
-            onClick={() => { if (item.label === 'Dashboard') { navigate('/admin/dashboard'); onClose?.(); } }}
-            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${item.active ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]' : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'}`}
+            onClick={() => { navigate(item.path); onClose?.(); }}
+            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${'active' in item && item.active ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]' : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'}`}
           >
-            <span className={item.active ? 'text-[#ff6b7a]' : ''}>{item.icon}</span>
+            <span>{'active' in item && item.active ? <span className="text-[#ff6b7a]">{item.icon}</span> : item.icon}</span>
             <span className="font-semibold text-[12.5px] flex-1">{item.label}</span>
-            {item.badge && <span className={`font-bold text-[10px] px-[6px] py-[2px] rounded-[99px] ${item.active ? 'bg-[#d0021b] text-white' : 'bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.7)]'}`}>{item.badge}</span>}
+            {item.badge && <span className={`font-bold text-[10px] px-[6px] py-[2px] rounded-[99px] ${'active' in item && item.active ? 'bg-[#d0021b] text-white' : 'bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.7)]'}`}>{item.badge}</span>}
           </div>
         ))}
       </nav>

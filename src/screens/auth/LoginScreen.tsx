@@ -53,14 +53,14 @@ export default function LoginScreen() {
           <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
           <div className="absolute bg-[rgba(255,255,255,0.04)] bottom-[-40px] left-[-40px] rounded-[100px] size-[200px]" />
 
-          <div className="flex gap-3 items-center z-10">
+          <Link to="/" className="flex gap-3 items-center z-10">
             <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[42px]">
               <IconBidVaultLogo />
             </div>
             <span className="font-extrabold text-[26px] text-white tracking-[-0.5px]">
               Bid<span className="text-[#d0021b]">Vault</span>
             </span>
-          </div>
+          </Link>
 
           <div className="flex flex-col flex-1 justify-center gap-10 z-10">
             <div className="flex flex-col gap-[13px]">
@@ -105,12 +105,14 @@ export default function LoginScreen() {
 
             {/* Mobile brand header */}
             <div className="md:hidden flex items-center gap-3 mb-8">
-              <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[40px]">
-                <IconBidVaultLogo />
-              </div>
-              <span className="font-extrabold text-[24px] text-[#0b1f3a] tracking-[-0.5px]">
-                Bid<span className="text-[#d0021b]">Vault</span>
-              </span>
+              <Link to="/" className="flex items-center gap-3">
+                <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[40px]">
+                  <IconBidVaultLogo />
+                </div>
+                <span className="font-extrabold text-[24px] text-[#0b1f3a] tracking-[-0.5px]">
+                  Bid<span className="text-[#d0021b]">Vault</span>
+                </span>
+              </Link>
             </div>
 
             <div className="flex flex-col gap-[5px] pb-6 md:pb-8 w-full">

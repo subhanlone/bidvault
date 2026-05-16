@@ -30,9 +30,9 @@ function BuyerNav() {
           </nav>
         </div>
         <div className="hidden md:flex items-center gap-3">
-          <div className="bg-[rgba(255,255,255,0.1)] rounded-full size-[34px] flex items-center justify-center">
-            <span className="font-bold text-[13px] text-white">{user?.name[0] ?? 'B'}</span>
-          </div>
+          <Link to="/buyer/profile" className="bg-[#d0021b] rounded-full size-[34px] flex items-center justify-center hover:bg-[#a80016] transition-colors">
+            <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'B'}</span>
+          </Link>
           <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
           <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white ml-1 transition-colors">Logout</button>
         </div>
@@ -47,6 +47,7 @@ function BuyerNav() {
           <Link to="/buyer/browse" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.7)] py-2 hover:text-white">Browse Auctions</Link>
           <Link to="/buyer/my-bids" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.7)] py-2 hover:text-white">My Bids</Link>
           <Link to="/buyer/watchlist" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.7)] py-2 hover:text-white">Watchlist</Link>
+          <Link to="/buyer/profile" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[#d0021b] py-2">My Profile</Link>
           <div className="flex items-center justify-between pt-3 mt-1 border-t border-[rgba(255,255,255,0.08)]">
             <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
             <button onClick={logout} className="font-semibold text-[12px] text-[#d0021b]">Logout</button>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AuctionProvider } from './context/AuctionContext';
 import { ListingProvider } from './context/ListingContext';
@@ -7,6 +7,9 @@ import ToastContainer from './components/ToastContainer';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import LandingPage from './screens/LandingPage';
+import NotFound from './screens/NotFound';
+import PrivacyPolicy from './screens/PrivacyPolicy';
+import TermsOfService from './screens/TermsOfService';
 import RegisterScreen from './screens/auth/RegisterScreen';
 import EmailVerificationScreen from './screens/auth/EmailVerificationScreen';
 import LoginScreen from './screens/auth/LoginScreen';
@@ -16,6 +19,8 @@ import AdminDashboardOverview from './screens/admin/AdminDashboardOverview';
 import AdminListingReview from './screens/admin/AdminListingReview';
 import AdminLiveAuctions from './screens/admin/AdminLiveAuctions';
 import AdminSellerVerification from './screens/admin/AdminSellerVerification';
+import AdminAnalytics from './screens/admin/AdminAnalytics';
+import AdminSettings from './screens/admin/AdminSettings';
 
 import SellerDashboard from './screens/seller/SellerDashboard';
 import SellerIdentityVerification from './screens/seller/SellerIdentityVerification';
@@ -33,6 +38,7 @@ import BuyerLiveBidding from './screens/buyer/BuyerLiveBidding';
 import BuyerLiveBiddingFinalCountdown from './screens/buyer/BuyerLiveBiddingFinalCountdown';
 import BuyerConfirmBid from './screens/buyer/BuyerConfirmBid';
 import BuyerAuctionWon from './screens/buyer/BuyerAuctionWon';
+import BuyerProfile from './screens/buyer/BuyerProfile';
 import BuyerToastNotifications from './screens/buyer/BuyerToastNotifications';
 
 export default function App() {
@@ -45,6 +51,8 @@ export default function App() {
               <ToastContainer />
               <Routes>
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
 
                 {/* Public auth routes */}
                 <Route path="/register" element={<RegisterScreen />} />
@@ -71,6 +79,16 @@ export default function App() {
                 <Route path="/admin/seller-verification" element={
                   <ProtectedRoute allowedRoles={['ADMIN']}>
                     <AdminSellerVerification />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/analytics" element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminAnalytics />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/settings" element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminSettings />
                   </ProtectedRoute>
                 } />
 
@@ -152,13 +170,18 @@ export default function App() {
                     <BuyerAuctionWon />
                   </ProtectedRoute>
                 } />
+                <Route path="/buyer/profile" element={
+                  <ProtectedRoute allowedRoles={['BUYER']}>
+                    <BuyerProfile />
+                  </ProtectedRoute>
+                } />
                 <Route path="/buyer/toast-notifications" element={
                   <ProtectedRoute allowedRoles={['BUYER']}>
                     <BuyerToastNotifications />
                   </ProtectedRoute>
                 } />
 
-                <Route path="*" element={<Navigate to="/login" replace />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </ToastProvider>
           </ListingProvider>

@@ -70,14 +70,14 @@ export default function BuyerLiveBiddingFinalCountdown() {
       <header className="bg-[#0b1f3a] sticky top-0 z-30 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
         <div className="flex items-center justify-between px-4 sm:px-8">
           <div className="flex items-center gap-4 md:gap-8">
-            <div className="flex gap-[10px] items-center py-4">
+            <Link to="/buyer/browse" className="flex gap-[10px] items-center py-4">
               <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[34px]">
                 <IconBidVaultLogo className="size-[18px]" />
               </div>
               <span className="font-extrabold text-[20px] text-white tracking-[-0.3px]">
                 Bid<span className="text-[#d0021b]">Vault</span>
               </span>
-            </div>
+            </Link>
             <nav className="hidden md:flex">
               <Link to="/buyer/browse" className="font-semibold text-[13px] px-4 py-5 border-b-2 text-[rgba(255,255,255,0.55)] border-transparent hover:text-white">Browse Auctions</Link>
               <span className="font-semibold text-[13px] px-4 py-5 border-b-2 text-white border-[#d0021b]">Live Bidding</span>
@@ -87,9 +87,9 @@ export default function BuyerLiveBiddingFinalCountdown() {
             <button className="hidden md:flex bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.14)] rounded-[8px] p-2 transition-colors">
               <Search size={16} color="rgba(255,255,255,0.7)" />
             </button>
-            <div className="bg-[rgba(255,255,255,0.1)] rounded-full size-[34px] flex items-center justify-center">
+            <Link to="/buyer/profile" className="bg-[#d0021b] rounded-full size-[34px] flex items-center justify-center hover:bg-[#a80016] transition-colors">
               <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'B'}</span>
-            </div>
+            </Link>
             <span className="hidden md:block font-semibold text-[13px] text-white">{user?.name?.split(' ')[0]}</span>
             <button
               className="md:hidden p-2 text-white"
