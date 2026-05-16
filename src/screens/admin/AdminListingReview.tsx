@@ -16,7 +16,7 @@ function AdminSidebarContent({ onClose }: { onClose?: () => void }) {
 
   const items = [
     { label: 'Dashboard', icon: <IconDashboard />, path: '/admin/dashboard' },
-    { label: 'Live Auctions', icon: <IconList />, badge: '3', path: '/admin/live-auctions' },
+    { label: 'Live Auctions', icon: <IconList />, badge: '6', path: '/admin/live-auctions' },
     { label: 'Listing Review', icon: <IconList />, badge: '', active: true, path: '/admin/dashboard' },
     { label: 'Seller Verification', icon: <IconUsers />, path: '/admin/seller-verification' },
     { label: 'Analytics', icon: <IconAnalytics />, path: '/admin/analytics' },

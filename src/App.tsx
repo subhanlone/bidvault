@@ -151,12 +151,12 @@ export default function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/buyer/live-bidding/:auctionId" element={
-                  <ProtectedRoute allowedRoles={['BUYER']}>
+                  <ProtectedRoute allowedRoles={['BUYER', 'ADMIN']}>
                     <BuyerLiveBidding />
                   </ProtectedRoute>
                 } />
                 <Route path="/buyer/live-bidding/:auctionId/final-countdown" element={
-                  <ProtectedRoute allowedRoles={['BUYER']}>
+                  <ProtectedRoute allowedRoles={['BUYER', 'ADMIN']}>
                     <BuyerLiveBiddingFinalCountdown />
                   </ProtectedRoute>
                 } />

@@ -10,7 +10,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
   const { auctionId } = useParams<{ auctionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { getAuction, bids, addCompetingBid } = useAuction();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -103,6 +103,11 @@ export default function BuyerLiveBiddingFinalCountdown() {
           <div className="md:hidden bg-[#0d2444] border-t border-[rgba(255,255,255,0.08)] px-4 py-3 flex flex-col gap-1">
             <Link to="/buyer/browse" className="font-semibold text-[13px] text-[rgba(255,255,255,0.7)] py-2 px-3 rounded-[6px] hover:bg-[rgba(255,255,255,0.07)]" onClick={() => setMobileMenuOpen(false)}>Browse Auctions</Link>
             <span className="font-semibold text-[13px] text-white py-2 px-3 rounded-[6px] bg-[rgba(208,2,27,0.18)]">Live Bidding</span>
+            <Link to="/buyer/profile" className="font-semibold text-[13px] text-[#d0021b] py-2 px-3 rounded-[6px]" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
+            <div className="flex items-center justify-between pt-3 mt-1 border-t border-[rgba(255,255,255,0.08)]">
+              <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
+              <button onClick={logout} className="font-semibold text-[12px] text-[#d0021b]">Logout</button>
+            </div>
           </div>
         )}
       </header>

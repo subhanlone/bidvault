@@ -34,7 +34,7 @@ function BuyerNav() {
 
         <div className="hidden md:flex items-center gap-3">
           <Link to="/buyer/profile" className="bg-[#d0021b] rounded-full size-[34px] flex items-center justify-center hover:bg-[#a80016] transition-colors">
-            <span className="font-bold text-[13px] text-white">{user?.name[0] ?? 'B'}</span>
+            <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'B'}</span>
           </Link>
           <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
           <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white ml-1 transition-colors">Logout</button>
@@ -62,7 +62,7 @@ function BuyerNav() {
           <div className="flex items-center justify-between pt-3 mt-1 border-t border-[rgba(255,255,255,0.08)]">
             <div className="flex items-center gap-2">
               <div className="bg-[rgba(255,255,255,0.1)] rounded-full size-[30px] flex items-center justify-center">
-                <span className="font-bold text-[12px] text-white">{user?.name[0] ?? 'B'}</span>
+                <span className="font-bold text-[12px] text-white">{user?.name?.[0] ?? 'B'}</span>
               </div>
               <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
             </div>

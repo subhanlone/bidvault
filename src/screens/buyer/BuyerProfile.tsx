@@ -30,7 +30,7 @@ function BuyerNav() {
         </div>
         <div className="hidden md:flex items-center gap-3">
           <Link to="/buyer/profile" className="bg-[#d0021b] rounded-full size-[34px] flex items-center justify-center hover:bg-[#a80016] transition-colors">
-            <span className="font-bold text-[13px] text-white">{user?.name[0] ?? 'B'}</span>
+            <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'B'}</span>
           </Link>
           <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
           <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white ml-1 transition-colors">Logout</button>
@@ -54,7 +54,7 @@ function BuyerNav() {
           <div className="flex items-center justify-between pt-3 mt-1 border-t border-[rgba(255,255,255,0.08)]">
             <div className="flex items-center gap-2">
               <div className="bg-[rgba(255,255,255,0.1)] rounded-full size-[30px] flex items-center justify-center">
-                <span className="font-bold text-[12px] text-white">{user?.name[0] ?? 'B'}</span>
+                <span className="font-bold text-[12px] text-white">{user?.name?.[0] ?? 'B'}</span>
               </div>
               <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
             </div>
@@ -112,7 +112,7 @@ export default function BuyerProfile() {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h1 className="font-extrabold text-[22px] sm:text-[26px] text-white tracking-[-0.3px]">{user?.name ?? 'Buyer'}</h1>
-                <span className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] font-bold text-[10px] text-[#4ade80] px-2 py-[3px] rounded-[99px] flex items-center gap-1">
+                <span className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] font-bold text-[10px] text-[#1a7a4a] px-2 py-[3px] rounded-[99px] flex items-center gap-1">
                   <Shield size={9} strokeWidth={2.5} /> Verified Buyer
                 </span>
               </div>
