@@ -12,7 +12,7 @@ function FeaturedCard({ auction }: { auction: Auction }) {
   const timer = useTimer(auction.endTime);
 
   return (
-    <div className="bg-white border border-[#e9ecef] rounded-[16px] overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col">
+    <div className="bg-white border border-[#e9ecef] rounded-[16px] overflow-hidden hover:shadow-[0_8px_32px_rgba(11,31,58,0.12)] hover:-translate-y-1 transition-all duration-200 flex flex-col">
       <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-[#0b1f3a]">
         <img
           src={auction.imageUrl}
@@ -70,22 +70,30 @@ export default function LandingPage() {
 
   const features = [
     {
-      icon: <Bot size={32} strokeWidth={1.5} className="text-[#d0021b]" />,
+      icon: <Bot size={28} strokeWidth={1.5} className="text-[#d0021b]" />,
+      accent: '#d0021b',
+      iconBg: 'rgba(208,2,27,0.08)',
       title: 'AI Price Prediction',
       desc: 'Our AI analyzes thousands of market comparables to suggest the perfect starting price for your listing — no guesswork.',
     },
     {
-      icon: <Lock size={32} strokeWidth={1.5} className="text-[#0b1f3a]" />,
+      icon: <Lock size={28} strokeWidth={1.5} className="text-[#0b1f3a]" />,
+      accent: '#0b1f3a',
+      iconBg: 'rgba(11,31,58,0.07)',
       title: 'Verified Sellers Only',
       desc: 'Every seller completes CNIC-based identity verification before listing. Buy with confidence, every time.',
     },
     {
-      icon: <Zap size={32} strokeWidth={1.5} className="text-[#f59e0b]" />,
+      icon: <Zap size={28} strokeWidth={1.5} className="text-[#f59e0b]" />,
+      accent: '#f59e0b',
+      iconBg: 'rgba(245,158,11,0.09)',
       title: 'Real-Time Bidding',
       desc: 'Experience live auction thrills with instant bid updates, countdown timers, and competing bid notifications.',
     },
     {
-      icon: <BarChart2 size={32} strokeWidth={1.5} className="text-[#1a7a4a]" />,
+      icon: <BarChart2 size={28} strokeWidth={1.5} className="text-[#1a7a4a]" />,
+      accent: '#1a7a4a',
+      iconBg: 'rgba(26,122,74,0.08)',
       title: 'Transparent Bidding',
       desc: 'Full bid history visible to all participants — see every bid, every amount, and every timestamp in real time.',
     },
@@ -180,8 +188,8 @@ export default function LandingPage() {
         }} />
 
         {/* Decorative glow */}
-        <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-[#d0021b] opacity-[0.06] rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] bg-[#1a7a4a] opacity-[0.05] rounded-full blur-[100px]" />
+        <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-[#d0021b] opacity-[0.07] rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] bg-[#1a7a4a] opacity-[0.06] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
 
         <div className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28">
           <div className="max-w-[720px] mx-auto text-center lg:text-left lg:mx-0">
@@ -227,12 +235,12 @@ export default function LandingPage() {
       {/* ── STATS BAR ───────────────────────────────────────────────────────── */}
       <section className="bg-white border-b border-[#e9ecef]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {stats.map(s => (
-              <div key={s.label} className="text-center">
-                <div className="flex justify-center mb-2">{s.icon}</div>
-                <p className="font-extrabold text-[22px] sm:text-[28px] text-[#0b1f3a] leading-none">{s.value}</p>
-                <p className="text-[12px] sm:text-[13px] text-[#6c757d] mt-1">{s.label}</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4">
+            {stats.map((s, i) => (
+              <div key={s.label} className={`text-center py-4 px-4 sm:px-6 ${i < stats.length - 1 ? 'border-r border-[#e9ecef]' : ''}`}>
+                <div className="flex justify-center mb-3">{s.icon}</div>
+                <p className="font-extrabold text-[22px] sm:text-[28px] text-[#0b1f3a] leading-none tracking-[-0.5px]">{s.value}</p>
+                <p className="text-[12px] sm:text-[13px] text-[#6c757d] mt-1.5 font-medium">{s.label}</p>
               </div>
             ))}
           </div>
@@ -287,12 +295,11 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {(activeTab === 'buyers' ? buyerSteps : sellerSteps).map((step, i) => (
               <div key={step.step} className="relative">
-                {/* connector line */}
                 {i < 2 && (
-                  <div className="hidden md:block absolute top-[22px] left-[calc(50%+32px)] right-[-50%] h-[2px] bg-[#e9ecef] z-0" />
+                  <div className="hidden md:block absolute top-[22px] left-[calc(50%+32px)] right-[-50%] h-[2px] z-0" style={{ background: 'linear-gradient(90deg, #0b1f3a 0%, #e9ecef 100%)' }} />
                 )}
                 <div className="relative z-10 text-center flex flex-col items-center">
-                  <div className="bg-[#0b1f3a] text-white font-extrabold text-[14px] size-[44px] rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-[0_0_0_2px_#e9ecef]">
+                  <div className="bg-[#0b1f3a] text-white font-extrabold text-[14px] size-[46px] rounded-full flex items-center justify-center mb-4 shadow-[0_0_0_4px_rgba(11,31,58,0.1),0_4px_16px_rgba(11,31,58,0.2)]">
                     {step.step}
                   </div>
                   <h3 className="font-bold text-[16px] text-[#0b1f3a] mb-2">{step.title}</h3>
@@ -317,8 +324,14 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {features.map(f => (
-              <div key={f.title} className="bg-white border border-[#e9ecef] rounded-[16px] p-5 sm:p-6 hover:border-[#d0021b] hover:shadow-md transition-all group">
-                <div className="mb-4">{f.icon}</div>
+              <div
+                key={f.title}
+                className="bg-white border border-[#e9ecef] border-t-[3px] rounded-[16px] p-5 sm:p-6 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group"
+                style={{ borderTopColor: f.accent }}
+              >
+                <div className="mb-4 size-[48px] rounded-[12px] flex items-center justify-center" style={{ backgroundColor: f.iconBg }}>
+                  {f.icon}
+                </div>
                 <h3 className="font-bold text-[15px] text-[#0b1f3a] mb-2 group-hover:text-[#d0021b] transition-colors">{f.title}</h3>
                 <p className="text-[13px] text-[#6c757d] leading-[1.6]">{f.desc}</p>
               </div>
@@ -349,7 +362,7 @@ export default function LandingPage() {
           backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
           backgroundSize: '28px 28px',
         }} />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#d0021b] opacity-[0.08] rounded-full blur-[100px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#d0021b] opacity-[0.1] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s' }} />
 
         <div className="relative max-w-[800px] mx-auto px-4 sm:px-6 text-center">
           <div className="flex justify-center mb-4"><Hammer size={56} strokeWidth={1.3} className="text-[#d0021b]" /></div>
