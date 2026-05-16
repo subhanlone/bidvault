@@ -125,7 +125,7 @@ export default function BuyerLiveBidding() {
       <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col md:grid md:grid-cols-[1fr_320px] gap-5">
 
         {/* LEFT */}
-        <div className="flex flex-col gap-4 order-2 md:order-1">
+        <div className="flex flex-col gap-4 order-1 md:order-1">
 
           {/* Item image */}
           <div className="bg-white border border-[#e9ecef] rounded-[14px] overflow-hidden">
@@ -224,7 +224,7 @@ export default function BuyerLiveBidding() {
         </div>
 
         {/* RIGHT — Bidding panel */}
-        <div className="flex flex-col gap-4 order-1 md:order-2">
+        <div className="flex flex-col gap-4 order-2 md:order-2">
 
           {/* Timer */}
           <div className={`rounded-[14px] p-5 text-center ${timer.totalSeconds < 3600 ? 'bg-[#d0021b]' : 'bg-[#0b1f3a]'}`}>
