@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Clock, Gavel, Users, Banknote, Star, MapPin } from 'lucide-react';
+import { Clock, Gavel, Users, Banknote, Star, MapPin, Bot, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
 import { SEED_AUCTIONS } from '../services/mockData';
 import { useTimer } from '../hooks/useTimer';
 import { IconBidVaultLogo } from '../components/Icons';
@@ -70,22 +70,22 @@ export default function LandingPage() {
 
   const features = [
     {
-      icon: '🤖',
+      icon: <Bot size={32} strokeWidth={1.5} className="text-[#d0021b]" />,
       title: 'AI Price Prediction',
       desc: 'Our AI analyzes thousands of market comparables to suggest the perfect starting price for your listing — no guesswork.',
     },
     {
-      icon: '🔒',
+      icon: <Lock size={32} strokeWidth={1.5} className="text-[#0b1f3a]" />,
       title: 'Verified Sellers Only',
       desc: 'Every seller completes CNIC-based identity verification before listing. Buy with confidence, every time.',
     },
     {
-      icon: '⚡',
+      icon: <Zap size={32} strokeWidth={1.5} className="text-[#f59e0b]" />,
       title: 'Real-Time Bidding',
       desc: 'Experience live auction thrills with instant bid updates, countdown timers, and competing bid notifications.',
     },
     {
-      icon: '📊',
+      icon: <BarChart2 size={32} strokeWidth={1.5} className="text-[#1a7a4a]" />,
       title: 'Transparent Bidding',
       desc: 'Full bid history visible to all participants — see every bid, every amount, and every timestamp in real time.',
     },
@@ -318,7 +318,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {features.map(f => (
               <div key={f.title} className="bg-white border border-[#e9ecef] rounded-[16px] p-5 sm:p-6 hover:border-[#d0021b] hover:shadow-md transition-all group">
-                <div className="text-[36px] mb-4">{f.icon}</div>
+                <div className="mb-4">{f.icon}</div>
                 <h3 className="font-bold text-[15px] text-[#0b1f3a] mb-2 group-hover:text-[#d0021b] transition-colors">{f.title}</h3>
                 <p className="text-[13px] text-[#6c757d] leading-[1.6]">{f.desc}</p>
               </div>
@@ -352,7 +352,7 @@ export default function LandingPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#d0021b] opacity-[0.08] rounded-full blur-[100px]" />
 
         <div className="relative max-w-[800px] mx-auto px-4 sm:px-6 text-center">
-          <div className="text-[48px] sm:text-[56px] mb-4">🔨</div>
+          <div className="flex justify-center mb-4"><Hammer size={56} strokeWidth={1.3} className="text-[#d0021b]" /></div>
           <h2 className="font-extrabold text-[28px] sm:text-[38px] lg:text-[44px] text-white leading-[1.15] tracking-[-1px] mb-4">
             Ready to Start Bidding?
           </h2>

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
@@ -24,9 +25,7 @@ export default function SellerListingSubmitted() {
         {/* Success icon */}
         <div className="bg-[#f0faf4] border border-[rgba(26,122,74,0.2)] flex items-center justify-center rounded-[20px] size-[80px] mb-6">
           <div className="bg-[#1a7a4a] flex items-center justify-center rounded-full size-[48px]">
-            <svg className="h-[22px] w-[26px]" viewBox="0 0 26 22" fill="none">
-              <path d="M2 11L9 18L24 2" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <Check size={24} strokeWidth={3} className="text-white" />
           </div>
         </div>
 
@@ -48,9 +47,7 @@ export default function SellerListingSubmitted() {
           <div className="flex items-start gap-5">
             <div className="flex flex-col items-center">
               <div className="bg-[#1a7a4a] flex items-center justify-center rounded-full size-[28px] shrink-0">
-                <svg className="h-[8px] w-[10px]" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Check size={12} strokeWidth={2.5} className="text-white" />
               </div>
               <div className="bg-[#e9ecef] w-[2px] h-[40px]" />
             </div>

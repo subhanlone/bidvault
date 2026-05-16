@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
+import { AlertTriangle } from 'lucide-react';
 import { IconBidVaultLogo, IconX } from '../../components/Icons';
 
 export default function BuyerConfirmBid() {
@@ -56,7 +57,7 @@ export default function BuyerConfirmBid() {
         <div className="bg-white rounded-[16px] shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-[380px] overflow-hidden">
           <div className="flex items-center justify-between px-6 pt-6 pb-0">
             <div className="bg-[#fff0f2] flex items-center justify-center rounded-full size-[44px]">
-              <span className="text-[20px]">⚠️</span>
+              <AlertTriangle size={20} strokeWidth={2} className="text-[#d0021b]" />
             </div>
             <button onClick={() => navigate(-1)} className="bg-[#f8f9fa] flex items-center justify-center rounded-full size-[28px] hover:bg-[#e9ecef]">
               <IconX />
@@ -100,7 +101,7 @@ export default function BuyerConfirmBid() {
                 {/* Warning */}
                 <div className="bg-[#fffbeb] border border-[#fde68a] rounded-[8px] px-3 py-2 mb-5">
                   <p className="text-[11.5px] text-[#d97706] font-medium leading-[18px]">
-                    ⚠️ By confirming, you agree to purchase this item at this price if you win the auction.
+                    By confirming, you agree to purchase this item at this price if you win the auction.
                   </p>
                 </div>
 

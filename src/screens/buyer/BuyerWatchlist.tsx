@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
+import { Clock, Heart } from 'lucide-react';
 import { IconBidVaultLogo, IconHeart } from '../../components/Icons';
 import type { Auction } from '../../types';
 
@@ -40,7 +41,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="bg-[#f1f3f5] font-medium text-[11px] text-[#6c757d] px-2 py-[3px] rounded-[99px]">{auction.category}</span>
           <span className={`font-bold text-[11px] px-2 py-[3px] rounded-[99px] ${isEnded ? 'bg-[#f8f9fa] text-[#6c757d]' : timer.totalSeconds < 3600 ? 'bg-[#fff5f5] text-[#d0021b]' : 'bg-[#f0faf4] text-[#1a7a4a]'}`}>
-            {isEnded ? 'Ended' : `⏱ ${timer.display}`}
+            {isEnded ? 'Ended' : <span className="flex items-center gap-1"><Clock size={10} strokeWidth={2.5} />{timer.display}</span>}
           </span>
         </div>
         <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-3 line-clamp-2 leading-tight">{auction.title}</h3>
@@ -120,10 +121,10 @@ export default function BuyerWatchlist() {
 
         {watched.length === 0 ? (
           <div className="bg-white border border-[#e9ecef] rounded-[16px] flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div className="text-[56px] mb-4">❤️</div>
+            <div className="flex justify-center mb-4"><Heart size={56} strokeWidth={1.3} className="text-[#d0021b]" fill="rgba(208,2,27,0.15)" /></div>
             <h2 className="font-bold text-[18px] text-[#0b1f3a] mb-2">Your watchlist is empty</h2>
             <p className="text-[14px] text-[#6c757d] mb-6 max-w-[320px]">
-              Tap the ❤️ heart on any live auction to save it here and track it easily.
+              Tap the heart icon on any live auction to save it here and track it easily.
             </p>
             <Link to="/buyer/browse" className="bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors">
               Browse Auctions →

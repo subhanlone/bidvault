@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { mockApi } from '../../services/mockApi';
+import { Plus, Package } from 'lucide-react';
 import { IconBidVaultLogo, IconDashboard, IconList, IconUsers } from '../../components/Icons';
 import type { Listing } from '../../types';
 
@@ -99,7 +100,7 @@ export default function SellerDashboard() {
             onClick={() => navigate('/seller/create-listing/step-1')}
             className="bg-[#d0021b] font-bold text-[13px] text-white px-5 py-[10px] rounded-[8px] hover:bg-[#a80016] transition-colors flex items-center gap-2"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            <Plus size={14} strokeWidth={2.5} />
             Create New Listing
           </button>
         </header>
@@ -135,7 +136,7 @@ export default function SellerDashboard() {
               </div>
             ) : listings.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <div className="text-[48px] mb-4">📦</div>
+                <div className="flex justify-center mb-4"><Package size={48} strokeWidth={1.3} className="text-[#adb5bd]" /></div>
                 <h3 className="font-bold text-[16px] text-[#0b1f3a] mb-2">No listings yet</h3>
                 <p className="text-[13px] text-[#6c757d] mb-5 max-w-[300px]">
                   Create your first auction listing to start selling on BidVault.

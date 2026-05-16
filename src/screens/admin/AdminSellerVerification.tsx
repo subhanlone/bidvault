@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
 import { mockApi } from '../../services/mockApi';
+import { CheckCircle2, Check } from 'lucide-react';
 import {
   IconBidVaultLogo, IconDashboard, IconList, IconUsers,
   IconAnalytics, IconSettings,
@@ -155,7 +156,7 @@ export default function AdminSellerVerification() {
               </div>
             ) : sellers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="text-[48px] mb-4">✅</div>
+                <div className="flex justify-center mb-4"><CheckCircle2 size={48} strokeWidth={1.3} className="text-[#1a7a4a]" /></div>
                 <h3 className="font-bold text-[16px] text-[#0b1f3a] mb-1">All caught up!</h3>
                 <p className="text-[13px] text-[#6c757d]">No pending seller verifications.</p>
               </div>
@@ -248,7 +249,7 @@ export default function AdminSellerVerification() {
             <div className="grid grid-cols-3 gap-3 mt-2">
               {['Full Legal Name matches CNIC', 'CNIC front & back photos clear', 'CNIC number valid format (XXXXX-XXXXXXX-X)', 'Address is complete', 'Contact number verified', 'No duplicate accounts'].map(item => (
                 <div key={item} className="flex items-center gap-2">
-                  <svg className="size-[14px] text-[#1e40af] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <Check size={14} strokeWidth={2.5} className="text-[#1e40af] shrink-0" />
                   <span className="text-[11px] text-[#1e40af]">{item}</span>
                 </div>
               ))}

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
 import { useTimer } from '../../hooks/useTimer';
+import { Search, Check } from 'lucide-react';
 import { IconBidVaultLogo, IconStar, IconHeart } from '../../components/Icons';
 
 function BuyerNav() {
@@ -73,7 +74,7 @@ export default function BuyerLiveBidding() {
     return (
       <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[40px] mb-4">🔍</p>
+          <div className="flex justify-center mb-4"><Search size={40} strokeWidth={1.3} className="text-[#adb5bd]" /></div>
           <p className="font-bold text-[18px] text-[#343a40]">Auction not found</p>
           <Link to="/buyer/browse" className="mt-4 inline-block font-bold text-[#d0021b]">← Back to Browse</Link>
         </div>
@@ -160,7 +161,7 @@ export default function BuyerLiveBidding() {
                 <div className="flex items-center gap-1">
                   <IconStar className="size-[12px]" />
                   <span className="text-[11px] text-[#6c757d]">{auction.sellerRating} · {auction.sellerSales} sales</span>
-                  {auction.sellerVerified && <span className="bg-[#f0faf4] text-[#1a7a4a] text-[10px] font-bold px-2 py-[1px] rounded-[99px] ml-1">✓ Verified</span>}
+                  {auction.sellerVerified && <span className="bg-[#f0faf4] text-[#1a7a4a] text-[10px] font-bold px-2 py-[1px] rounded-[99px] ml-1 flex items-center gap-[2px]"><Check size={9} strokeWidth={3} />Verified</span>}
                 </div>
               </div>
             </div>

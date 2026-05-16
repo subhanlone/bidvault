@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
+import { Check, ClipboardList } from 'lucide-react';
 import { IconBidVaultLogo, IconUpload } from '../../components/Icons';
 import type { ItemCondition } from '../../types';
 
@@ -57,7 +58,7 @@ function Stepper({ current }: { current: number }) {
             <div className="flex flex-col items-center">
               <div className={`flex items-center justify-center rounded-full size-[32px] border-2 font-bold text-[13px] ${done ? 'bg-[#fff0f2] border-[#d0021b]' : active ? 'bg-[#d0021b] border-[#d0021b] text-white' : 'bg-white border-[#e9ecef] text-[#adb5bd]'}`}>
                 {done
-                  ? <svg className="h-[8px] w-[10px]" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#d0021b" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  ? <Check size={14} strokeWidth={2.5} className="text-[#d0021b]" />
                   : <span className={active ? 'text-white' : 'text-[#adb5bd]'}>{i + 1}</span>
                 }
               </div>
@@ -105,7 +106,7 @@ export default function SellerCreateListingStep1() {
           <div className="bg-white border border-[#e9ecef] rounded-[12px] p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="bg-[#fff0f2] flex items-center justify-center rounded-[10px] size-[36px]">
-                <span className="text-[#d0021b] text-[16px]">📋</span>
+                <ClipboardList size={18} strokeWidth={1.8} className="text-[#d0021b]" />
               </div>
               <div>
                 <h2 className="font-bold text-[14px] text-[#0b1f3a]">Item Information</h2>

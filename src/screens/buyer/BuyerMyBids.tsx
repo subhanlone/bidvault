@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
+import { Check, Zap, Trophy, X, Hammer } from 'lucide-react';
 import { IconBidVaultLogo } from '../../components/Icons';
 import type { Auction } from '../../types';
 
@@ -23,10 +24,10 @@ function BidCard({ entry }: { entry: BidEntry }) {
     : isWinning ? 'winning' : 'outbid';
 
   const statusConfig = {
-    winning: { label: '✓ Winning', bg: 'bg-[#f0faf4]', border: 'border-[rgba(26,122,74,0.3)]', text: 'text-[#1a7a4a]' },
-    outbid:  { label: '⚡ Outbid', bg: 'bg-[#fff5f5]', border: 'border-[rgba(208,2,27,0.2)]', text: 'text-[#d0021b]' },
-    won:     { label: '🏆 Won', bg: 'bg-[#f0faf4]', border: 'border-[rgba(26,122,74,0.3)]', text: 'text-[#1a7a4a]' },
-    lost:    { label: '😞 Ended', bg: 'bg-[#f8f9fa]', border: 'border-[#e9ecef]', text: 'text-[#6c757d]' },
+    winning: { icon: <Check size={10} strokeWidth={3} />, label: 'Winning', bg: 'bg-[#f0faf4]', border: 'border-[rgba(26,122,74,0.3)]', text: 'text-[#1a7a4a]' },
+    outbid:  { icon: <Zap size={10} strokeWidth={2.5} />, label: 'Outbid', bg: 'bg-[#fff5f5]', border: 'border-[rgba(208,2,27,0.2)]', text: 'text-[#d0021b]' },
+    won:     { icon: <Trophy size={10} strokeWidth={2.5} />, label: 'Won', bg: 'bg-[#f0faf4]', border: 'border-[rgba(26,122,74,0.3)]', text: 'text-[#1a7a4a]' },
+    lost:    { icon: <X size={10} strokeWidth={2.5} />, label: 'Ended', bg: 'bg-[#f8f9fa]', border: 'border-[#e9ecef]', text: 'text-[#6c757d]' },
   }[status];
 
   return (
@@ -41,8 +42,8 @@ function BidCard({ entry }: { entry: BidEntry }) {
         <div className="flex-1 p-4 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
             <h3 className="font-bold text-[14px] text-[#0b1f3a] leading-tight line-clamp-1">{auction.title}</h3>
-            <span className={`font-bold text-[11px] px-2 py-[3px] rounded-[99px] border ${statusConfig.bg} ${statusConfig.border} ${statusConfig.text} shrink-0`}>
-              {statusConfig.label}
+            <span className={`font-bold text-[11px] px-2 py-[3px] rounded-[99px] border flex items-center gap-1 ${statusConfig.bg} ${statusConfig.border} ${statusConfig.text} shrink-0`}>
+              {statusConfig.icon}{statusConfig.label}
             </span>
           </div>
 
@@ -165,7 +166,7 @@ export default function BuyerMyBids() {
         {/* Bid list */}
         {myBidEntries.length === 0 ? (
           <div className="bg-white border border-[#e9ecef] rounded-[16px] flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div className="text-[56px] mb-4">🔨</div>
+            <div className="flex justify-center mb-4"><Hammer size={56} strokeWidth={1.3} className="text-[#adb5bd]" /></div>
             <h2 className="font-bold text-[18px] text-[#0b1f3a] mb-2">No bids yet</h2>
             <p className="text-[14px] text-[#6c757d] mb-6 max-w-[300px]">
               You haven't placed any bids yet. Browse live auctions and start bidding!

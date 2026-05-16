@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
+import { Timer } from 'lucide-react';
 import { IconBidVaultLogo, IconFire } from '../../components/Icons';
 
 export default function BuyerLiveBiddingFinalCountdown() {
@@ -150,7 +151,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
         {/* Bid panel */}
         <div className="flex flex-col gap-4">
           <div className="bg-[#d0021b] rounded-[12px] p-5 text-center">
-            <p className="font-bold text-[11px] text-[rgba(255,255,255,0.7)] uppercase tracking-[1px] mb-1">⏱ Final Countdown</p>
+            <p className="font-bold text-[11px] text-[rgba(255,255,255,0.7)] uppercase tracking-[1px] mb-1 flex items-center justify-center gap-1"><Timer size={11} strokeWidth={2} /> Final Countdown</p>
             <p className="font-extrabold text-[52px] text-white leading-none">{timer.display}</p>
           </div>
 

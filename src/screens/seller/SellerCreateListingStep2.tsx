@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
+import { Clock } from 'lucide-react';
 import { IconCalendar, IconClock, IconToggle } from '../../components/Icons';
 import { ListingStepperHeader, Stepper } from './SellerCreateListingStep1';
 
@@ -49,7 +50,7 @@ export default function SellerCreateListingStep2() {
           <div className="bg-white border border-[#e9ecef] rounded-[12px] p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="bg-[#fff0f2] flex items-center justify-center rounded-[10px] size-[36px]">
-                <span className="text-[#d0021b] text-[16px]">⏰</span>
+                <Clock size={18} strokeWidth={1.8} className="text-[#d0021b]" />
               </div>
               <div>
                 <h2 className="font-bold text-[14px] text-[#0b1f3a]">Auction Parameters</h2>

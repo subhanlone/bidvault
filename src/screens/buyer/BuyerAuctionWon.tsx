@@ -1,4 +1,5 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { Sparkles, Trophy, Frown } from 'lucide-react';
 import { IconBidVaultLogo, IconTrophy } from '../../components/Icons';
 
 interface WonState {
@@ -36,13 +37,13 @@ export default function BuyerAuctionWon() {
       <div className="flex flex-col items-center justify-center py-16 px-4">
         {won ? (
           <>
-            <div className="text-[80px] mb-4">🎉</div>
+            <div className="flex justify-center mb-4"><Sparkles size={72} strokeWidth={1.2} className="text-[#f59e0b]" /></div>
             <div className="bg-[#f0faf4] border border-[rgba(26,122,74,0.2)] flex items-center justify-center rounded-[20px] size-[80px] mb-5">
               <div className="bg-[#1a7a4a] flex items-center justify-center rounded-full size-[52px]">
                 <IconTrophy className="size-[26px]" />
               </div>
             </div>
-            <h1 className="font-extrabold text-[32px] text-[#0b1f3a] mb-2">You Won! 🏆</h1>
+            <h1 className="font-extrabold text-[32px] text-[#0b1f3a] mb-2 flex items-center gap-2">You Won! <Trophy size={28} strokeWidth={1.8} className="text-[#f59e0b]" /></h1>
             <p className="text-[15px] text-[#6c757d] text-center max-w-[400px] mb-8">
               Congratulations! You've won the auction for <span className="font-bold text-[#343a40]">{title}</span>
             </p>
@@ -53,7 +54,7 @@ export default function BuyerAuctionWon() {
               <div className="flex flex-col gap-3">
                 {[
                   { label: 'Winning bid', value: `PKR ${finalBid.toLocaleString()}`, highlight: true },
-                  { label: 'Status', value: '✓ Auction Closed' },
+                  { label: 'Status', value: 'Auction Closed' },
                   { label: 'Next step', value: 'Seller will contact you within 24h' },
                 ].map(d => (
                   <div key={d.label} className="flex justify-between">
@@ -75,7 +76,7 @@ export default function BuyerAuctionWon() {
           </>
         ) : (
           <>
-            <div className="text-[80px] mb-6">😞</div>
+            <div className="flex justify-center mb-6"><Frown size={72} strokeWidth={1.2} className="text-[#adb5bd]" /></div>
             <h1 className="font-extrabold text-[28px] text-[#0b1f3a] mb-2">Auction Ended</h1>
             <p className="text-[14px] text-[#6c757d] text-center max-w-[380px] mb-4">
               The auction for <span className="font-bold text-[#343a40]">{title}</span> has ended. You didn't win this time.

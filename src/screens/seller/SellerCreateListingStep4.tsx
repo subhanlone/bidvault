@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
 import { mockApi } from '../../services/mockApi';
+import { Smartphone, Car, Package } from 'lucide-react';
 import { IconInfo } from '../../components/Icons';
 import { ListingStepperHeader, Stepper } from './SellerCreateListingStep1';
 
@@ -51,7 +52,7 @@ export default function SellerCreateListingStep4() {
             </div>
             <div className="p-5">
               <div className="bg-[#0b1f3a] rounded-[10px] h-[160px] flex items-center justify-center text-[60px] mb-4">
-                {draft.category?.includes('Electronics') ? '📱' : draft.category?.includes('Vehicles') ? '🚗' : '📦'}
+                {draft.category?.includes('Electronics') ? <Smartphone size={52} strokeWidth={1.2} className="text-white opacity-40" /> : draft.category?.includes('Vehicles') ? <Car size={52} strokeWidth={1.2} className="text-white opacity-40" /> : <Package size={52} strokeWidth={1.2} className="text-white opacity-40" />}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[

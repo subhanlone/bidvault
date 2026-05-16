@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
+import { Smartphone, Car, Laptop, Gamepad2 } from 'lucide-react';
 import {
   IconBidVaultLogo, IconDashboard, IconList, IconUsers,
   IconAnalytics, IconSettings, IconBell, IconExport, IconPlus,
@@ -8,11 +9,11 @@ import {
 } from '../../components/Icons';
 
 const recentBids = [
-  { img: '📱', title: 'iPhone 15 Pro Max', amount: 'PKR 312,000', tag: 'Highest' },
-  { img: '🚗', title: 'Toyota Corolla 2023', amount: 'PKR 185,000', tag: '' },
-  { img: '💻', title: 'MacBook Pro M2', amount: 'PKR 422,000', tag: '' },
-  { img: '📱', title: 'Samsung Galaxy S24 Ultra', amount: 'PKR 195,000', tag: '' },
-  { img: '🎮', title: 'Xbox Series X', amount: 'PKR 85,000', tag: '' },
+  { icon: <Smartphone size={16} strokeWidth={1.5} className="text-[#6c757d]" />, title: 'iPhone 15 Pro Max', amount: 'PKR 312,000', tag: 'Highest' },
+  { icon: <Car size={16} strokeWidth={1.5} className="text-[#6c757d]" />, title: 'Toyota Corolla 2023', amount: 'PKR 185,000', tag: '' },
+  { icon: <Laptop size={16} strokeWidth={1.5} className="text-[#6c757d]" />, title: 'MacBook Pro M2', amount: 'PKR 422,000', tag: '' },
+  { icon: <Smartphone size={16} strokeWidth={1.5} className="text-[#6c757d]" />, title: 'Samsung Galaxy S24 Ultra', amount: 'PKR 195,000', tag: '' },
+  { icon: <Gamepad2 size={16} strokeWidth={1.5} className="text-[#6c757d]" />, title: 'Xbox Series X', amount: 'PKR 85,000', tag: '' },
 ];
 
 const barData = [22, 35, 18, 42, 38, 55, 30, 48, 22, 60, 45, 38, 52, 40, 25, 65, 42, 58, 35, 70, 48, 55, 38, 42, 60, 52, 45, 38];
@@ -181,7 +182,7 @@ export default function AdminDashboardOverview() {
               <div className="flex flex-col gap-3">
                 {recentBids.map((b, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="bg-[#f8f9fa] rounded-[8px] size-[32px] flex items-center justify-center text-[16px] shrink-0">{b.img}</div>
+                    <div className="bg-[#f8f9fa] rounded-[8px] size-[32px] flex items-center justify-center shrink-0">{b.icon}</div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-[11px] text-[#343a40] truncate">{b.title}</p>
                       <p className="font-bold text-[12px] text-[#0b1f3a]">{b.amount}</p>
