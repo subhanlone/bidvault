@@ -127,7 +127,7 @@ export default function ForgotPasswordScreen() {
 
   const leftPanel = (
     <div
-      className="flex flex-col items-start justify-between overflow-hidden p-[52px] relative"
+      className="flex flex-col items-start justify-between overflow-hidden p-[52px] relative h-full"
       style={{ backgroundImage: 'linear-gradient(156deg,rgb(11,31,58) 0%,rgb(26,51,86) 50%,rgb(31,78,140) 100%)' }}
     >
       <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
@@ -166,11 +166,11 @@ export default function ForgotPasswordScreen() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-6">
-      <div className="bg-transparent grid grid-cols-2 w-full max-w-[1000px] min-h-[680px] overflow-hidden rounded-[16px] shadow-[0px_2px_8px_0px_rgba(11,31,58,0.06),0px_16px_48px_0px_rgba(11,31,58,0.08)]">
+    <div className="h-screen flex overflow-hidden">
+      <div className="grid grid-cols-2 w-full h-full">
         {leftPanel}
 
-        <div className="bg-white flex flex-col items-start justify-center p-[52px]">
+        <div className="bg-white flex flex-col items-start justify-center p-[52px] overflow-y-auto h-full">
           <div className="flex gap-2 items-center pb-6">
             <IconArrowLeft />
             <Link to="/login" className="font-semibold text-[13px] text-[#6c757d]">Back to Sign In</Link>

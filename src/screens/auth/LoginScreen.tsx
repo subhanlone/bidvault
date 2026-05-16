@@ -42,12 +42,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center p-6">
-      <div className="bg-transparent grid grid-cols-2 w-full max-w-[1000px] min-h-[680px] overflow-hidden rounded-[16px] shadow-[0px_2px_8px_0px_rgba(11,31,58,0.06),0px_16px_48px_0px_rgba(11,31,58,0.08)]">
+    <div className="h-screen flex overflow-hidden">
+      <div className="grid grid-cols-2 w-full h-full">
 
         {/* LEFT PANEL */}
         <div
-          className="flex flex-col items-start justify-between overflow-hidden p-[52px] relative"
+          className="flex flex-col items-start justify-between overflow-hidden p-[52px] relative h-full"
           style={{ backgroundImage: 'linear-gradient(150deg,rgb(11,31,58) 0%,rgb(26,51,86) 50%,rgb(31,78,140) 100%)' }}
         >
           <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
@@ -98,7 +98,7 @@ export default function LoginScreen() {
         </div>
 
         {/* RIGHT PANEL */}
-        <form onSubmit={handleSubmit} className="bg-white flex flex-col items-start justify-center px-[52px] py-[66px]">
+        <form onSubmit={handleSubmit} className="bg-white flex flex-col items-start justify-center px-[52px] py-[66px] overflow-y-auto h-full">
           <div className="flex flex-col gap-[5px] pb-8 w-full">
             <h2 className="font-extrabold text-[26px] text-[#0b1f3a]">Sign in to BidVault</h2>
             <p className="text-[14px] text-[#6c757d] leading-[21.7px]">
