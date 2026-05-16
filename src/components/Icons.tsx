@@ -4,7 +4,7 @@ import {
   Shield, LayoutDashboard, List, Users, AlertTriangle, TrendingUp, Settings,
   Search, Bell, Upload, Plus, ChevronRight, ChevronLeft, Calendar, Clock,
   FileText, Phone, CreditCard, Star, Flame, Heart, SlidersHorizontal, X,
-  Trophy, Store, User, Filter, ToggleRight,
+  Store, User, ToggleRight,
 } from 'lucide-react';
 
 // ─── Brand logos (custom SVG, not Lucide) ────────────────────────────────────
