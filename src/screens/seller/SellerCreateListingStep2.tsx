@@ -35,19 +35,17 @@ export default function SellerCreateListingStep2() {
     <div className="min-h-screen bg-white">
       <ListingStepperHeader currentStep={1} />
 
-      <div className="max-w-[1200px] mx-auto px-8 py-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="font-extrabold text-[22px] text-[#0b1f3a]">Create New Auction Listing</h1>
-            <p className="text-[13px] text-[#6c757d]">Set your auction parameters</p>
-          </div>
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
+        <div className="mb-5 sm:mb-6">
+          <h1 className="font-extrabold text-[19px] sm:text-[22px] text-[#0b1f3a]">Create New Auction Listing</h1>
+          <p className="text-[13px] text-[#6c757d]">Set your auction parameters</p>
         </div>
 
         <Stepper current={1} />
 
-        <div className="grid grid-cols-[1fr_280px] gap-6">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_280px] gap-5 sm:gap-6">
           {/* Parameters form */}
-          <div className="bg-white border border-[#e9ecef] rounded-[12px] p-6">
+          <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="bg-[#fff0f2] flex items-center justify-center rounded-[10px] size-[36px]">
                 <Clock size={18} strokeWidth={1.8} className="text-[#d0021b]" />
@@ -174,9 +172,9 @@ export default function SellerCreateListingStep2() {
           </div>
         </div>
 
-        <div className="flex justify-between mt-6">
-          <button onClick={() => navigate('/seller/create-listing/step-1')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
-          <button onClick={handleNext} className="bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors">
+        <div className="flex justify-between mt-5 sm:mt-6">
+          <button onClick={() => navigate('/seller/create-listing/step-1')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
+          <button onClick={handleNext} className="bg-[#d0021b] font-bold text-[14px] text-white px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors">
             Next: AI Pricing →
           </button>
         </div>

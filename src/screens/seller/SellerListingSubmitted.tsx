@@ -86,11 +86,11 @@ export default function SellerListingSubmitted() {
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-4 mt-10">
-          <button onClick={() => navigate('/seller/dashboard')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">
+        <div className="flex flex-col sm:flex-row gap-3 mt-10 w-full max-w-[380px]">
+          <button onClick={() => navigate('/seller/dashboard')} className="flex-1 border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa] transition-colors">
             View Dashboard
           </button>
-          <button onClick={handleCreateAnother} className="bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors">
+          <button onClick={handleCreateAnother} className="flex-1 bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors">
             Create Another Listing
           </button>
         </div>

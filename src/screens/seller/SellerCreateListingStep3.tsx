@@ -45,9 +45,9 @@ export default function SellerCreateListingStep3() {
     <div className="min-h-screen bg-white">
       <ListingStepperHeader currentStep={2} />
 
-      <div className="max-w-[1200px] mx-auto px-8 py-8">
-        <h1 className="font-extrabold text-[22px] text-[#0b1f3a] mb-1">AI Price Suggestion</h1>
-        <p className="text-[13px] text-[#6c757d] mb-6">Our AI analyzed similar items to suggest the best starting price</p>
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
+        <h1 className="font-extrabold text-[19px] sm:text-[22px] text-[#0b1f3a] mb-1">AI Price Suggestion</h1>
+        <p className="text-[13px] text-[#6c757d] mb-5 sm:mb-6">Our AI analyzed similar items to suggest the best starting price</p>
 
         <Stepper current={2} />
 
@@ -57,7 +57,7 @@ export default function SellerCreateListingStep3() {
             <p className="font-semibold text-[14px] text-[#6c757d]">Running XGBoost model on 47 comparable auctions…</p>
           </div>
         ) : prediction ? (
-          <div className="grid grid-cols-[1fr_260px] gap-6">
+          <div className="flex flex-col md:grid md:grid-cols-[1fr_260px] gap-5 sm:gap-6">
             <div>
               {/* AI result card */}
               <div className="bg-[#0b1f3a] rounded-[16px] p-6 mb-4">
@@ -98,11 +98,11 @@ export default function SellerCreateListingStep3() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={keepMyPrice} className="border-2 border-[#d0021b] font-bold text-[14px] text-[#d0021b] py-3 rounded-[10px] hover:bg-[#fff0f2] transition-colors">
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-3">
+                <button onClick={keepMyPrice} className="border-2 border-[#d0021b] font-bold text-[13px] sm:text-[14px] text-[#d0021b] py-3 rounded-[10px] hover:bg-[#fff0f2] transition-colors">
                   Keep My Price ({fmtPKR(draft.startingPrice)})
                 </button>
-                <button onClick={useAiPrice} className="bg-[#d0021b] font-bold text-[14px] text-white py-3 rounded-[10px] hover:bg-[#a80016] transition-colors">
+                <button onClick={useAiPrice} className="bg-[#d0021b] font-bold text-[13px] sm:text-[14px] text-white py-3 rounded-[10px] hover:bg-[#a80016] transition-colors">
                   Apply AI Price ({fmtPKR(prediction.predictedPrice)})
                 </button>
               </div>
@@ -136,8 +136,8 @@ export default function SellerCreateListingStep3() {
           </div>
         )}
 
-        <div className="flex justify-between mt-6">
-          <button onClick={() => navigate('/seller/create-listing/step-2')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
+        <div className="flex justify-between mt-5 sm:mt-6">
+          <button onClick={() => navigate('/seller/create-listing/step-2')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
         </div>
       </div>
     </div>
