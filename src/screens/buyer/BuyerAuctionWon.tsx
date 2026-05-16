@@ -22,7 +22,7 @@ export default function BuyerAuctionWon() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <header className="bg-[#0b1f3a] sticky top-0 z-20 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
+      <header className="bg-[#0b1f3a] sticky top-0 z-30 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
         <div className="flex items-center justify-between px-4 sm:px-8 h-[60px]">
           <div className="flex gap-[10px] items-center">
             <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[34px]">
