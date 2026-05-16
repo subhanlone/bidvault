@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
+import { Menu, X } from 'lucide-react';
 import {
   IconBidVaultLogo, IconDashboard, IconList, IconUsers,
   IconAnalytics, IconSettings, IconChevronLeft, IconChevronRight,
@@ -20,10 +21,55 @@ const sidebarItems = [
   { icon: <IconSettings />, label: 'Settings', badge: '' },
 ];
 
+function AdminSidebarContent({ onClose }: { onClose?: () => void }) {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  return (
+    <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 min-h-screen">
+      <div className="flex gap-[10px] items-center px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
+        <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
+          <IconBidVaultLogo className="size-[16px]" />
+        </div>
+        <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
+          Bid<span className="text-[#d0021b]">Vault</span>
+        </span>
+        {onClose && (
+          <button onClick={onClose} className="ml-auto text-[rgba(255,255,255,0.5)] hover:text-white">
+            <X size={18} />
+          </button>
+        )}
+      </div>
+      <nav className="flex flex-col gap-[2px] p-3 flex-1">
+        {sidebarItems.map(item => (
+          <div
+            key={item.label}
+            onClick={() => { if (item.label === 'Dashboard') { navigate('/admin/dashboard'); onClose?.(); } }}
+            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${item.active ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]' : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'}`}
+          >
+            <span className={item.active ? 'text-[#ff6b7a]' : ''}>{item.icon}</span>
+            <span className="font-semibold text-[12.5px] flex-1">{item.label}</span>
+            {item.badge && <span className={`font-bold text-[10px] px-[6px] py-[2px] rounded-[99px] ${item.active ? 'bg-[#d0021b] text-white' : 'bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.7)]'}`}>{item.badge}</span>}
+          </div>
+        ))}
+      </nav>
+      <div className="flex items-center gap-[10px] px-4 py-4 border-t border-[rgba(255,255,255,0.08)]">
+        <div className="bg-[#d0021b] flex items-center justify-center rounded-full size-[32px] shrink-0">
+          <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'A'}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
+          <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
+        </div>
+        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Out</button>
+      </div>
+    </aside>
+  );
+}
+
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const { pendingListings, approveListing, rejectListing } = useAuction();
   const { showToast } = useToast();
 
@@ -32,6 +78,7 @@ export default function AdminListingReview() {
   const [rejectReason, setRejectReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [rating, setRating] = useState(4);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const listing = pendingListings.find(l => l.listingId === listingId);
   const currentIndex = pendingListings.findIndex(l => l.listingId === listingId);
@@ -78,97 +125,83 @@ export default function AdminListingReview() {
   return (
     <div className="flex min-h-screen bg-[#f8f9fa] font-[Plus_Jakarta_Sans,sans-serif]">
 
-      {/* SIDEBAR */}
-      <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 min-h-screen">
-        <div className="flex gap-[10px] items-center px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
-          <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
-            <IconBidVaultLogo className="size-[16px]" />
-          </div>
-          <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
-            Bid<span className="text-[#d0021b]">Vault</span>
-          </span>
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex md:flex-col md:w-[200px] md:shrink-0 md:min-h-screen">
+        <AdminSidebarContent />
+      </div>
+
+      {/* Mobile sidebar drawer */}
+      {sidebarOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <AdminSidebarContent onClose={() => setSidebarOpen(false)} />
+          <div className="flex-1 bg-[rgba(0,0,0,0.4)]" onClick={() => setSidebarOpen(false)} />
         </div>
-        <nav className="flex flex-col gap-[2px] p-3 flex-1">
-          {sidebarItems.map(item => (
-            <div
-              key={item.label}
-              onClick={() => item.label === 'Dashboard' && navigate('/admin/dashboard')}
-              className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${item.active ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]' : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'}`}
-            >
-              <span className={item.active ? 'text-[#ff6b7a]' : ''}>{item.icon}</span>
-              <span className="font-semibold text-[12.5px] flex-1">{item.label}</span>
-              {item.badge && <span className={`font-bold text-[10px] px-[6px] py-[2px] rounded-[99px] ${item.active ? 'bg-[#d0021b] text-white' : 'bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.7)]'}`}>{item.badge}</span>}
-            </div>
-          ))}
-        </nav>
-        <div className="flex items-center gap-[10px] px-4 py-4 border-t border-[rgba(255,255,255,0.08)]">
-          <div className="bg-[#d0021b] flex items-center justify-center rounded-full size-[32px] shrink-0">
-            <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'A'}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
-            <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
-          </div>
-          <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Out</button>
-        </div>
-      </aside>
+      )}
 
       {/* MAIN */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Top bar */}
-        <header className="bg-white border-b border-[#e9ecef] flex items-center justify-between px-6 py-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => navigate('/admin/dashboard')} className="text-[12px] text-[#6c757d] hover:text-[#d0021b]">Listing Review</button>
-              <IconChevronRight className="size-[10px]" />
-              <span className="font-semibold text-[12px] text-[#343a40] max-w-[280px] truncate">{listing.title}</span>
-            </div>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="bg-[#fff3cd] border border-[#fde68a] font-bold text-[11px] text-[#d97706] px-2 py-[2px] rounded-[99px]">Pending Review</span>
-              <span className="text-[11px] text-[#6c757d]">#{listing.listingId} · Submitted {new Date(listing.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-              <span className="text-[11px] text-[#adb5bd]">{currentIndex + 1} of {pendingListings.length}</span>
+        <header className="bg-white border-b border-[#e9ecef] flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              className="md:hidden p-2 rounded-[6px] border border-[#e9ecef] hover:bg-[#f8f9fa] shrink-0"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu size={18} className="text-[#495057]" />
+            </button>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <button onClick={() => navigate('/admin/dashboard')} className="text-[12px] text-[#6c757d] hover:text-[#d0021b] whitespace-nowrap">Listing Review</button>
+                <IconChevronRight className="size-[10px] shrink-0" />
+                <span className="font-semibold text-[12px] text-[#343a40] truncate">{listing.title}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                <span className="bg-[#fff3cd] border border-[#fde68a] font-bold text-[11px] text-[#d97706] px-2 py-[2px] rounded-[99px]">Pending Review</span>
+                <span className="hidden sm:inline text-[11px] text-[#6c757d]">#{listing.listingId} · Submitted {new Date(listing.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}</span>
+                <span className="text-[11px] text-[#adb5bd]">{currentIndex + 1} of {pendingListings.length}</span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="border border-[#dee2e6] flex gap-2 items-center px-4 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa]">
+          <div className="flex items-center gap-2 shrink-0">
+            <button className="hidden sm:flex border border-[#dee2e6] gap-2 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa]">
               <IconExport /> Export
             </button>
             <button
               onClick={() => prevListing && navigate(`/admin/listing-review/${prevListing.listingId}`)}
               disabled={!prevListing}
-              className="border border-[#dee2e6] flex gap-2 items-center px-4 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] disabled:opacity-40"
+              className="border border-[#dee2e6] flex gap-1 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] disabled:opacity-40"
             >
-              <IconChevronLeft /> Previous
+              <IconChevronLeft /><span className="hidden sm:inline">Previous</span>
             </button>
             <button
               onClick={() => nextListing && navigate(`/admin/listing-review/${nextListing.listingId}`)}
               disabled={!nextListing}
-              className="border border-[#dee2e6] flex gap-2 items-center px-4 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] disabled:opacity-40"
+              className="border border-[#dee2e6] flex gap-1 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] disabled:opacity-40"
             >
-              Next <IconChevronRight />
+              <span className="hidden sm:inline">Next</span><IconChevronRight />
             </button>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6 grid grid-cols-[1fr_380px] gap-5">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col md:grid md:grid-cols-[1fr_360px] gap-4 sm:gap-5">
 
           {/* LEFT */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 sm:gap-5">
             {/* Listing Details */}
             <div className="bg-white border border-[#e9ecef] rounded-[12px] overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[#e9ecef]">
+              <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-[#e9ecef]">
                 <h3 className="font-bold text-[14px] text-[#0b1f3a]">Listing Details</h3>
                 <span className="bg-[#fff3cd] border border-[#fde68a] font-bold text-[11px] text-[#d97706] px-2 py-[2px] rounded-[99px]">Pending Review</span>
               </div>
-              <div className="p-5 flex gap-5">
-                <div className="bg-[#0b1f3a] rounded-[10px] w-[180px] h-[160px] shrink-0 overflow-hidden">
+              <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-5">
+                <div className="bg-[#0b1f3a] rounded-[10px] w-full sm:w-[160px] h-[160px] shrink-0 overflow-hidden">
                   {listing.imageUrl
                     ? <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     : <span className="flex items-center justify-center w-full h-full text-[60px]">{listing.emoji}</span>
                   }
                 </div>
-                <div className="flex-1 grid grid-cols-2 gap-4">
+                <div className="flex-1 grid grid-cols-2 gap-3 sm:gap-4">
                   {[
                     { label: 'TITLE', value: listing.title },
                     { label: 'CATEGORY', value: listing.category },
@@ -195,8 +228,8 @@ export default function AdminListingReview() {
             </div>
 
             {/* Seller info + Price Analysis */}
-            <div className="grid grid-cols-2 gap-5">
-              <div className="bg-white border border-[#e9ecef] rounded-[12px] p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
                 <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-3">Seller Information</h3>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="bg-[#d0021b] flex items-center justify-center rounded-full size-[40px] shrink-0">
@@ -221,10 +254,10 @@ export default function AdminListingReview() {
                 </div>
               </div>
 
-              <div className="bg-white border border-[#e9ecef] rounded-[12px] p-5">
+              <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
                 <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-3">AI Price Analysis</h3>
                 <div className="flex items-end gap-2 mb-3">
-                  <span className="font-extrabold text-[28px] text-[#1a7a4a]">PKR {(listing.startPrice * 0.9).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  <span className="font-extrabold text-[24px] sm:text-[28px] text-[#1a7a4a]">PKR {(listing.startPrice * 0.9).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                   <span className="text-[12px] text-[#adb5bd] mb-1">— PKR {(listing.startPrice * 1.25).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="flex items-center gap-2 mb-3">
@@ -239,8 +272,8 @@ export default function AdminListingReview() {
           </div>
 
           {/* RIGHT — Admin Decision */}
-          <div className="flex flex-col gap-5">
-            <div className="bg-white border border-[#e9ecef] rounded-[12px] p-5">
+          <div className="flex flex-col gap-4 sm:gap-5">
+            <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
               <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-4">Admin Decision</h3>
 
               {!rejecting ? (
@@ -302,8 +335,8 @@ export default function AdminListingReview() {
               </div>
             </div>
 
-            {/* Similar Listings (static comparable context) */}
-            <div className="bg-white border border-[#e9ecef] rounded-[12px] p-5 flex-1">
+            {/* Other Pending Listings */}
+            <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5 flex-1">
               <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-4">Other Pending Listings</h3>
               {pendingListings.filter(l => l.listingId !== listingId).length === 0 ? (
                 <p className="text-[12px] text-[#6c757d] text-center py-4">No other pending listings.</p>
