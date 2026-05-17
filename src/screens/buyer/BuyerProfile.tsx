@@ -112,7 +112,7 @@ export default function BuyerProfile() {
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h1 className="font-extrabold text-[22px] sm:text-[26px] text-white tracking-[-0.3px]">{user?.name ?? 'Buyer'}</h1>
-                <span className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] font-bold text-[10px] text-[#1a7a4a] px-2 py-[3px] rounded-[99px] flex items-center gap-1">
+                <span className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] font-bold text-[10px] text-[#4ade80] px-2 py-[3px] rounded-[99px] flex items-center gap-1">
                   <Shield size={9} strokeWidth={2.5} /> Verified Buyer
                 </span>
               </div>

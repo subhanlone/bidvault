@@ -87,7 +87,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
             <button className="hidden md:flex bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.14)] rounded-[8px] p-2 transition-colors">
               <Search size={16} color="rgba(255,255,255,0.7)" />
             </button>
-            <Link to="/buyer/profile" className="bg-[#d0021b] rounded-full size-[34px] flex items-center justify-center hover:bg-[#a80016] transition-colors">
+            <Link to="/buyer/profile" className="bg-[rgba(255,255,255,0.1)] rounded-full size-[34px] flex items-center justify-center hover:bg-[rgba(255,255,255,0.15)] transition-colors">
               <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'B'}</span>
             </Link>
             <span className="hidden md:block font-semibold text-[13px] text-white">{user?.name?.split(' ')[0]}</span>
