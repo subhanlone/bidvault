@@ -26,49 +26,49 @@ function SellerSidebar({ active, onClose }: { active: string; onClose?: () => vo
   ];
 
   return (
-    <aside className="bg-white border-r border-[#e9ecef] w-full md:w-[200px] shrink-0 flex flex-col h-full">
-      <div className="flex items-center justify-between gap-[10px] px-5 py-5 border-b border-[#e9ecef]">
+    <aside className="bg-[#0b1f3a] w-full md:w-[200px] shrink-0 flex flex-col h-full">
+      <div className="flex items-center justify-between gap-[10px] px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
         <div className="flex gap-[10px] items-center">
           <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
             <IconBidVaultLogo className="size-[16px]" />
           </div>
-          <span className="font-extrabold text-[18px] text-[#0b1f3a] tracking-[-0.3px]">
+          <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
             Bid<span className="text-[#d0021b]">Vault</span>
           </span>
         </div>
         {onClose && (
-          <button onClick={onClose} className="md:hidden p-1 hover:bg-[#f8f9fa] rounded">
-            <X size={18} className="text-[#6c757d]" />
+          <button onClick={onClose} className="md:hidden p-1 hover:bg-[rgba(255,255,255,0.08)] rounded">
+            <X size={18} className="text-[rgba(255,255,255,0.6)]" />
           </button>
         )}
       </div>
 
-      <p className="font-bold text-[10px] text-[#adb5bd] tracking-[0.8px] uppercase px-5 pt-5 pb-2">Seller Account</p>
+      <p className="font-bold text-[10px] text-[rgba(255,255,255,0.35)] tracking-[0.8px] uppercase px-5 pt-5 pb-2">Seller Account</p>
       <nav className="flex flex-col gap-1 px-3">
         {items.map(item => (
           <Link
             key={item.label}
             to={item.path}
             onClick={onClose}
-            className={`flex items-center gap-3 px-3 py-[9px] rounded-[8px] ${item.label === active ? 'bg-[#fff0f2] text-[#d0021b]' : 'text-[#6c757d] hover:bg-[#f8f9fa]'}`}
+            className={`flex items-center gap-3 px-3 py-[9px] rounded-[8px] transition-colors ${item.label === active ? 'bg-[#d0021b] text-white' : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.08)] hover:text-white'}`}
           >
-            <span className={item.label === active ? 'text-[#d0021b]' : ''}>{item.icon}</span>
-            <span className={`font-semibold text-[13px] ${item.label === active ? 'text-[#d0021b]' : ''}`}>{item.label}</span>
+            <span>{item.icon}</span>
+            <span className="font-semibold text-[13px]">{item.label}</span>
           </Link>
         ))}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-2 px-5 py-5 border-t border-[#e9ecef]">
+      <div className="mt-auto flex flex-col gap-2 px-5 py-5 border-t border-[rgba(255,255,255,0.08)]">
         <div className="flex items-center gap-2">
-          <div className="bg-[#0b1f3a] size-[32px] rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0">
+          <div className="bg-[#d0021b] size-[32px] rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0">
             {user?.name?.[0] ?? 'S'}
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-[12px] text-[#0b1f3a] truncate">{user?.name}</p>
+            <p className="font-bold text-[12px] text-white truncate">{user?.name}</p>
             <span className={`border font-bold text-[10px] px-2 py-[1px] rounded-[99px] ${badgeClass}`}>{badgeText}</span>
           </div>
         </div>
-        <button onClick={logout} className="text-[12px] text-[#6c757d] hover:text-[#d0021b] font-semibold text-left">Logout</button>
+        <button onClick={logout} className="text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white font-semibold text-left transition-colors">Logout</button>
       </div>
     </aside>
   );
