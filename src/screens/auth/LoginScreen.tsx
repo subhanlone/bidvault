@@ -178,7 +178,7 @@ export default function LoginScreen() {
                     onChange={e => setPassword(e.target.value)}
                   />
                   <span className="absolute left-[14px] top-[16px]"><IconLock /></span>
-                  <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
+                  <button type="button" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
                 </div>
               </div>
 

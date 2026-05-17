@@ -1,70 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingUp, Eye, EyeOff, Bell, BellOff } from 'lucide-react';
+import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingUp, Eye, EyeOff, Bell, BellOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
-import { IconBidVaultLogo } from '../../components/Icons';
+import { BuyerNav } from '../../components/BuyerNav';
 import { SEED_BIDS } from '../../services/mockData';
-
-function BuyerNav() {
-  const { user, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <header className="bg-[#0b1f3a] sticky top-0 z-40 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
-      <div className="flex items-center justify-between px-4 sm:px-8 h-[60px]">
-        <div className="flex items-center gap-6">
-          <Link to="/buyer/browse" className="flex gap-[10px] items-center shrink-0">
-            <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[34px]">
-              <IconBidVaultLogo className="size-[18px]" />
-            </div>
-            <span className="font-extrabold text-[20px] text-white tracking-[-0.3px]">
-              Bid<span className="text-[#d0021b]">Vault</span>
-            </span>
-          </Link>
-          <nav className="hidden md:flex">
-            <Link to="/buyer/browse" className="font-semibold text-[13px] px-4 py-[18px] border-b-2 text-[rgba(255,255,255,0.55)] border-transparent hover:text-white transition-colors">Browse</Link>
-            <Link to="/buyer/my-bids" className="font-semibold text-[13px] px-4 py-[18px] border-b-2 text-[rgba(255,255,255,0.55)] border-transparent hover:text-white transition-colors">My Bids</Link>
-            <Link to="/buyer/watchlist" className="font-semibold text-[13px] px-4 py-[18px] border-b-2 text-[rgba(255,255,255,0.55)] border-transparent hover:text-white transition-colors">Watchlist</Link>
-          </nav>
-        </div>
-        <div className="hidden md:flex items-center gap-3">
-          <Link to="/buyer/profile" className="bg-[#d0021b] rounded-full size-[34px] flex items-center justify-center hover:bg-[#a80016] transition-colors">
-            <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'B'}</span>
-          </Link>
-          <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
-          <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white ml-1 transition-colors">Logout</button>
-        </div>
-        <button className="md:hidden p-2 rounded-[6px] hover:bg-[rgba(255,255,255,0.08)]" onClick={() => setMenuOpen(o => !o)}>
-          {menuOpen ? <X size={20} className="text-white" /> : (
-            <div className="flex flex-col gap-[5px]">
-              <span className="block w-5 h-[2px] bg-white" />
-              <span className="block w-5 h-[2px] bg-white" />
-              <span className="block w-5 h-[2px] bg-white" />
-            </div>
-          )}
-        </button>
-      </div>
-      {menuOpen && (
-        <div className="md:hidden bg-[#0d2545] border-t border-[rgba(255,255,255,0.08)] px-4 py-4 flex flex-col gap-1">
-          <Link to="/buyer/browse" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.7)] py-2 hover:text-white">Browse Auctions</Link>
-          <Link to="/buyer/my-bids" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.7)] py-2 hover:text-white">My Bids</Link>
-          <Link to="/buyer/watchlist" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.7)] py-2 hover:text-white">Watchlist</Link>
-          <Link to="/buyer/profile" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[#d0021b] py-2">My Profile</Link>
-          <div className="flex items-center justify-between pt-3 mt-1 border-t border-[rgba(255,255,255,0.08)]">
-            <div className="flex items-center gap-2">
-              <div className="bg-[rgba(255,255,255,0.1)] rounded-full size-[30px] flex items-center justify-center">
-                <span className="font-bold text-[12px] text-white">{user?.name?.[0] ?? 'B'}</span>
-              </div>
-              <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
-            </div>
-            <button onClick={logout} className="font-semibold text-[12px] text-[#d0021b]">Logout</button>
-          </div>
-        </div>
-      )}
-    </header>
-  );
-}
 
 export default function BuyerProfile() {
   const { user, logout } = useAuth();
@@ -167,13 +107,18 @@ export default function BuyerProfile() {
                   { label: 'Email Address', value: user?.email ?? '—' },
                   { label: 'Account Type', value: 'Buyer' },
                   { label: 'User ID', value: user?.userId ?? '—' },
-                  { label: 'Email Verified', value: user?.isEmailVerified ? 'Yes ✓' : 'No' },
                 ].map(row => (
                   <div key={row.label} className="flex items-start justify-between gap-4">
                     <span className="text-[12px] text-[#6c757d] font-medium shrink-0 w-[130px]">{row.label}</span>
                     <span className="font-semibold text-[13px] text-[#343a40] text-right break-all">{row.value}</span>
                   </div>
                 ))}
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-[12px] text-[#6c757d] font-medium shrink-0 w-[130px]">Email Verified</span>
+                  {user?.isEmailVerified
+                    ? <span className="flex items-center gap-1 font-semibold text-[13px] text-[#1a7a4a]"><Check size={13} strokeWidth={2.5} />Yes</span>
+                    : <span className="font-semibold text-[13px] text-[#343a40]">No</span>}
+                </div>
               </div>
             </div>
 
@@ -194,15 +139,16 @@ export default function BuyerProfile() {
                   {myBids.slice(0, 5).map(bid => {
                     const auction = auctions.find(a => a.auctionId === bid.auctionId);
                     return (
-                      <div
+                      <button
                         key={bid.bidId}
-                        className="flex items-center gap-3 px-5 py-3 hover:bg-[#f8f9fa] transition-colors cursor-pointer"
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-[#f8f9fa] transition-colors text-left w-full"
                         onClick={() => auction && navigate(`/buyer/live-bidding/${auction.auctionId}`)}
+                        disabled={!auction}
                       >
                         <div className="bg-[#f8f9fa] rounded-[8px] size-[38px] overflow-hidden shrink-0">
                           {auction?.imageUrl
                             ? <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
-                            : <span className="flex items-center justify-center w-full h-full text-[16px]">{auction?.emoji ?? '📦'}</span>
+                            : <Package size={18} strokeWidth={1.5} className="text-[#adb5bd] m-auto mt-[9px]" />
                           }
                         </div>
                         <div className="flex-1 min-w-0">
@@ -211,9 +157,9 @@ export default function BuyerProfile() {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="font-bold text-[13px] text-[#d0021b]">PKR {bid.amount.toLocaleString()}</p>
-                          <p className="text-[10px] text-[#adb5bd]">{bid.isWin ? '🏆 Won' : 'Bid placed'}</p>
+                          <p className="text-[10px] text-[#adb5bd]">{bid.isWin ? 'Won' : 'Bid placed'}</p>
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -298,10 +244,10 @@ export default function BuyerProfile() {
                         type={showPw ? 'text' : 'password'}
                         value={newPw}
                         onChange={e => setNewPw(e.target.value)}
-                        className="w-full border border-[#dee2e6] rounded-[8px] px-3 py-2.5 text-[13px] text-[#343a40] outline-none focus:border-[#d0021b] pr-10"
+                        className="w-full border border-[#dee2e6] rounded-[8px] px-3 py-2.5 text-[13px] text-[#343a40] outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow pr-10"
                         placeholder="Min. 8 characters"
                       />
-                      <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-[10px] text-[#adb5bd]">
+                      <button type="button" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(v => !v)} className="absolute right-3 top-[10px] text-[#adb5bd]">
                         {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
                     </div>

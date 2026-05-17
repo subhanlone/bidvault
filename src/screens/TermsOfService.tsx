@@ -82,22 +82,32 @@ export default function TermsOfService() {
         <div className="mb-8 bg-[#f8f9fa] border border-[#e9ecef] rounded-[10px] p-4">
           <p className="font-bold text-[12px] text-[#6c757d] uppercase tracking-[0.5px] mb-3">Jump to Section</p>
           <div className="flex flex-wrap gap-2">
-            {SECTIONS.map(s => (
-              <button key={s.title} className="font-medium text-[11px] text-[#495057] bg-white border border-[#e9ecef] px-2.5 py-1 rounded-[6px] hover:border-[#d0021b] hover:text-[#d0021b] transition-colors">
-                {s.title.split('. ')[1]}
-              </button>
-            ))}
+            {SECTIONS.map(s => {
+              const anchor = s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+              return (
+                <button
+                  key={s.title}
+                  onClick={() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="font-medium text-[11px] text-[#495057] bg-white border border-[#e9ecef] px-2.5 py-1 rounded-[6px] hover:border-[#d0021b] hover:text-[#d0021b] transition-colors"
+                >
+                  {s.title.split('. ')[1]}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Sections */}
         <div className="flex flex-col gap-8">
-          {SECTIONS.map(s => (
-            <div key={s.title}>
-              <h2 className="font-bold text-[16px] text-[#0b1f3a] mb-3">{s.title}</h2>
-              <p className="text-[14px] text-[#495057] leading-[1.75]">{s.body}</p>
-            </div>
-          ))}
+          {SECTIONS.map(s => {
+            const anchor = s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            return (
+              <div key={s.title} id={anchor}>
+                <h2 className="font-bold text-[16px] text-[#0b1f3a] mb-3">{s.title}</h2>
+                <p className="text-[14px] text-[#495057] leading-[1.75]">{s.body}</p>
+              </div>
+            );
+          })}
         </div>
 
         {/* Contact */}

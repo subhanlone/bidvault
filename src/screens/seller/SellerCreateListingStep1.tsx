@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
-import { Check, ClipboardList, Menu, X } from 'lucide-react';
+import { Camera, Car, Check, ClipboardList, Menu, Package, Smartphone, X } from 'lucide-react';
 import { IconBidVaultLogo, IconUpload } from '../../components/Icons';
 import type { ItemCondition } from '../../types';
 
@@ -143,7 +143,7 @@ export default function SellerCreateListingStep1() {
                 <div className="flex flex-col gap-[6px]">
                   <label className="font-bold text-[12px] text-[#343a40]">Category <span className="text-[#d0021b]">*</span></label>
                   <select
-                    className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] appearance-none"
+                    className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow appearance-none"
                     value={draft.category}
                     onChange={e => updateDraft({ category: e.target.value })}
                   >
@@ -171,7 +171,7 @@ export default function SellerCreateListingStep1() {
               <div className="flex flex-col gap-[6px]">
                 <label className="font-bold text-[12px] text-[#343a40]">Item description <span className="text-[#d0021b]">*</span></label>
                 <textarea
-                  className="bg-white border border-[#dee2e6] px-4 py-3 rounded-[8px] text-[13px] text-[#495057] w-full h-[120px] resize-none outline-none focus:border-[#d0021b] leading-[20px]"
+                  className="bg-white border border-[#dee2e6] px-4 py-3 rounded-[8px] text-[13px] text-[#495057] w-full h-[120px] resize-none outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow leading-[20px]"
                   placeholder="Describe your item in detail — condition, specs, accessories included, etc."
                   value={draft.description}
                   onChange={e => updateDraft({ description: e.target.value })}
@@ -184,7 +184,7 @@ export default function SellerCreateListingStep1() {
           <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-[#fff0f2] flex items-center justify-center rounded-[10px] size-[36px]">
-                <span className="text-[#d0021b] text-[16px]">📷</span>
+                <Camera size={18} strokeWidth={1.8} className="text-[#d0021b]" />
               </div>
               <div>
                 <h2 className="font-bold text-[14px] text-[#0b1f3a]">Photos</h2>
@@ -194,12 +194,16 @@ export default function SellerCreateListingStep1() {
 
             {draft.hasPhoto ? (
               <>
-                <div className="bg-[#0b1f3a] rounded-[10px] w-full h-[160px] flex items-center justify-center text-[60px] mb-3">
-                  {draft.category?.includes('Electronics') ? '📱' : draft.category?.includes('Vehicles') ? '🚗' : '📦'}
+                <div className="bg-[#0b1f3a] rounded-[10px] w-full h-[160px] flex items-center justify-center mb-3">
+                  {draft.category?.includes('Electronics')
+                    ? <Smartphone size={56} strokeWidth={1.2} className="text-[rgba(255,255,255,0.35)]" />
+                    : draft.category?.includes('Vehicles')
+                    ? <Car size={56} strokeWidth={1.2} className="text-[rgba(255,255,255,0.35)]" />
+                    : <Package size={56} strokeWidth={1.2} className="text-[rgba(255,255,255,0.35)]" />}
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-[#1a3356] rounded-[8px] h-[64px] flex items-center justify-center text-[24px]">📦</div>
-                  <div className="bg-[#1a3356] rounded-[8px] h-[64px] flex items-center justify-center text-[24px]">📦</div>
+                  <div className="bg-[#1a3356] rounded-[8px] h-[64px] flex items-center justify-center"><Package size={24} strokeWidth={1.3} className="text-[rgba(255,255,255,0.3)]" /></div>
+                  <div className="bg-[#1a3356] rounded-[8px] h-[64px] flex items-center justify-center"><Package size={24} strokeWidth={1.3} className="text-[rgba(255,255,255,0.3)]" /></div>
                   <label className="border-2 border-dashed border-[#dee2e6] rounded-[8px] h-[64px] flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-[#d0021b]">
                     <IconUpload className="size-[16px]" color="#adb5bd" />
                     <span className="text-[10px] text-[#adb5bd]">Add photo</span>

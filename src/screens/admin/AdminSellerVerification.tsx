@@ -1,82 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
 import { mockApi } from '../../services/mockApi';
-import { CheckCircle2, Check, Menu, X } from 'lucide-react';
-import {
-  IconBidVaultLogo, IconDashboard, IconList, IconUsers,
-  IconAnalytics, IconSettings,
-} from '../../components/Icons';
+import { CheckCircle2, Check, Menu } from 'lucide-react';
+import { AdminSidebarContent } from '../../components/AdminSidebar';
 import type { User } from '../../types';
-
-function AdminSidebarContent({ active, onClose }: { active: string; onClose?: () => void }) {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { pendingListings } = useAuction();
-  const pendingCount = pendingListings.length;
-
-  const items = [
-    { label: 'Dashboard', icon: <IconDashboard />, path: '/admin/dashboard' },
-    { label: 'Live Auctions', icon: <IconList />, badge: '6', path: '/admin/live-auctions' },
-    { label: 'Listing Review', icon: <IconList />, badge: String(pendingCount), path: '/admin/dashboard' },
-    { label: 'Seller Verification', icon: <IconUsers />, path: '/admin/seller-verification' },
-    { label: 'Analytics', icon: <IconAnalytics />, path: '/admin/analytics' },
-    { label: 'Settings', icon: <IconSettings />, path: '/admin/settings' },
-  ];
-
-  return (
-    <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 min-h-screen">
-      <div className="flex gap-[10px] items-center px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
-        <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
-          <IconBidVaultLogo className="size-[16px]" />
-        </div>
-        <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
-          Bid<span className="text-[#d0021b]">Vault</span>
-        </span>
-        {onClose && (
-          <button onClick={onClose} className="ml-auto text-[rgba(255,255,255,0.5)] hover:text-white">
-            <X size={18} />
-          </button>
-        )}
-      </div>
-
-      <nav className="flex flex-col gap-[2px] p-3 flex-1">
-        {items.map(item => (
-          <div
-            key={item.label}
-            onClick={() => { navigate(item.path); onClose?.(); }}
-            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${
-              item.label === active
-                ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]'
-                : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'
-            }`}
-          >
-            <span>{item.icon}</span>
-            <span className="font-semibold text-[12.5px] flex-1">{item.label}</span>
-            {item.badge && (
-              <span className={`font-bold text-[10px] px-[6px] py-[2px] rounded-[99px] ${item.label === active ? 'bg-[#d0021b] text-white' : 'bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.7)]'}`}>
-                {item.badge}
-              </span>
-            )}
-          </div>
-        ))}
-      </nav>
-
-      <div className="flex items-center gap-[10px] px-4 py-4 border-t border-[rgba(255,255,255,0.08)]">
-        <div className="bg-[#d0021b] flex items-center justify-center rounded-full size-[32px] shrink-0">
-          <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'A'}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
-          <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
-        </div>
-        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Logout</button>
-      </div>
-    </aside>
-  );
-}
 
 export default function AdminSellerVerification() {
   const { showToast } = useToast();
@@ -274,7 +201,7 @@ export default function AdminSellerVerification() {
                         <div className="mx-4 sm:mx-5 mb-4 p-4 bg-[#fff5f5] border border-[#fecaca] rounded-[8px]">
                           <p className="font-bold text-[12px] text-[#ef4444] mb-2">Rejection Reason</p>
                           <textarea
-                            className="w-full border border-[#fecaca] rounded-[6px] p-3 text-[13px] text-[#343a40] outline-none focus:border-[#ef4444] resize-none"
+                            className="w-full border border-[#fecaca] rounded-[6px] p-3 text-[13px] text-[#343a40] outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] resize-none"
                             rows={3}
                             placeholder="e.g. Documents are unclear or incomplete..."
                             value={rejectReason}

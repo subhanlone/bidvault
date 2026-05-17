@@ -213,32 +213,32 @@ export default function SellerIdentityVerification() {
                 <div className="flex flex-col gap-[6px]">
                   <label className="font-bold text-[12px] text-[#343a40]">Full legal name <span className="text-[#d0021b]">*</span></label>
                   <div className="relative">
-                    <input className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]" value={fullName} onChange={e => setFullName(e.target.value)} />
+                    <input className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow" value={fullName} onChange={e => setFullName(e.target.value)} />
                     <span className="absolute left-[14px] top-[15px]"><IconUser className="size-[16px]" /></span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-[6px]">
                   <label className="font-bold text-[12px] text-[#343a40]">CNIC number <span className="text-[#d0021b]">*</span></label>
                   <div className="relative">
-                    <input className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]" placeholder="35201-1234567-8" value={cnic} onChange={e => setCnic(e.target.value)} />
+                    <input className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow" placeholder="35201-1234567-8" value={cnic} onChange={e => setCnic(e.target.value)} />
                     <span className="absolute left-[14px] top-[15px]"><IconIdCard /></span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-[6px]">
                   <label className="font-bold text-[12px] text-[#343a40]">Phone number <span className="text-[#d0021b]">*</span></label>
                   <div className="relative">
-                    <input className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]" placeholder="+92 300 0000000" value={phone} onChange={e => setPhone(e.target.value)} />
+                    <input className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow" placeholder="+92 300 0000000" value={phone} onChange={e => setPhone(e.target.value)} />
                     <span className="absolute left-[14px] top-[15px]"><IconPhone /></span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-[6px]">
                   <label className="font-bold text-[12px] text-[#343a40]">City / District <span className="text-[#d0021b]">*</span></label>
-                  <input className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]" placeholder="Islamabad" value={city} onChange={e => setCity(e.target.value)} />
+                  <input className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow" placeholder="Islamabad" value={city} onChange={e => setCity(e.target.value)} />
                 </div>
               </div>
               <div className="flex flex-col gap-[6px]">
                 <label className="font-bold text-[12px] text-[#343a40]">Full address <span className="text-[#d0021b]">*</span></label>
-                <textarea className="bg-white border border-[#dee2e6] px-4 py-3 rounded-[8px] text-[14px] text-[#343a40] w-full h-[80px] resize-none outline-none focus:border-[#d0021b]" placeholder="House #, Street, Area, City" value={address} onChange={e => setAddress(e.target.value)} />
+                <textarea className="bg-white border border-[#dee2e6] px-4 py-3 rounded-[8px] text-[14px] text-[#343a40] w-full h-[80px] resize-none outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow" placeholder="House #, Street, Area, City" value={address} onChange={e => setAddress(e.target.value)} />
               </div>
             </div>
 

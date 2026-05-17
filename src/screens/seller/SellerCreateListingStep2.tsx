@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
-import { Clock } from 'lucide-react';
+import { Car, Clock, Package, Smartphone } from 'lucide-react';
 import { IconCalendar, IconClock, IconToggle } from '../../components/Icons';
 import { ListingStepperHeader, Stepper } from './SellerCreateListingStep1';
 
@@ -63,7 +63,7 @@ export default function SellerCreateListingStep2() {
                   <div className="relative">
                     <input
                       type="date"
-                      className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]"
+                      className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
                       min={new Date().toISOString().split('T')[0]}
                       value={draft.startDate}
                       onChange={e => updateDraft({ startDate: e.target.value })}
@@ -105,7 +105,7 @@ export default function SellerCreateListingStep2() {
                   <label className="font-bold text-[12px] text-[#343a40]">Starting price (PKR) <span className="text-[#d0021b]">*</span></label>
                   <input
                     type="number"
-                    className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]"
+                    className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
                     placeholder="e.g. 85000"
                     value={draft.startingPrice || ''}
                     onChange={e => updateDraft({ startingPrice: Number(e.target.value), finalStartingPrice: Number(e.target.value) })}
@@ -117,7 +117,7 @@ export default function SellerCreateListingStep2() {
                 <label className="font-bold text-[12px] text-[#343a40]">Minimum bid increment (PKR) <span className="text-[#d0021b]">*</span></label>
                 <input
                   type="number"
-                  className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]"
+                  className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
                   placeholder="e.g. 1000"
                   value={draft.minIncrement || ''}
                   onChange={e => updateDraft({ minIncrement: Number(e.target.value) })}
@@ -151,8 +151,12 @@ export default function SellerCreateListingStep2() {
           {/* Preview */}
           <div className="bg-white border border-[#e9ecef] rounded-[12px] p-5 h-fit">
             <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-4">Auction Preview</h3>
-            <div className="bg-[#0b1f3a] rounded-[10px] h-[160px] flex items-center justify-center text-[60px] mb-4">
-              {draft.category?.includes('Electronics') ? '📱' : draft.category?.includes('Vehicles') ? '🚗' : '📦'}
+            <div className="bg-[#0b1f3a] rounded-[10px] h-[160px] flex items-center justify-center mb-4">
+              {draft.category?.includes('Electronics')
+                ? <Smartphone size={52} strokeWidth={1.2} className="text-[rgba(255,255,255,0.35)]" />
+                : draft.category?.includes('Vehicles')
+                ? <Car size={52} strokeWidth={1.2} className="text-[rgba(255,255,255,0.35)]" />
+                : <Package size={52} strokeWidth={1.2} className="text-[rgba(255,255,255,0.35)]" />}
             </div>
             <h4 className="font-bold text-[13px] text-[#343a40] mb-3 truncate">{draft.title || 'Your Item Title'}</h4>
             <div className="flex flex-col gap-2">

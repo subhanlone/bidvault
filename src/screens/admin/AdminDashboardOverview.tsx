@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
-import { Smartphone, Car, Laptop, Gamepad2, Menu, X } from 'lucide-react';
+import { CheckCircle2, Smartphone, Car, Laptop, Gamepad2, Menu } from 'lucide-react';
 import {
-  IconBidVaultLogo, IconDashboard, IconList, IconUsers,
-  IconAnalytics, IconSettings, IconBell, IconExport, IconPlus,
+  IconBell, IconExport, IconPlus,
   IconChevronRight,
 } from '../../components/Icons';
+import { AdminSidebarContent } from '../../components/AdminSidebar';
 
 const recentBids = [
   { icon: <Smartphone size={16} strokeWidth={1.5} className="text-[#6c757d]" />, title: 'iPhone 15 Pro Max', amount: 'PKR 312,000', tag: 'Highest' },
@@ -18,73 +17,6 @@ const recentBids = [
 ];
 
 const barData = [22, 35, 18, 42, 38, 55, 30, 48, 22, 60, 45, 38, 52, 40, 25, 65, 42, 58, 35, 70, 48, 55, 38, 42, 60, 52, 45, 38];
-
-function AdminSidebarContent({ active, onClose }: { active: string; onClose?: () => void }) {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { pendingListings } = useAuction();
-  const pendingCount = pendingListings.length;
-
-  const items = [
-    { icon: <IconDashboard />, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: <IconList />, label: 'Live Auctions', badge: '6', path: '/admin/live-auctions' },
-    { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: '/admin/dashboard' },
-    { icon: <IconUsers />, label: 'Seller Verification', path: '/admin/seller-verification' },
-    { icon: <IconAnalytics />, label: 'Analytics', path: '/admin/analytics' },
-    { icon: <IconSettings />, label: 'Settings', path: '/admin/settings' },
-  ];
-
-  return (
-    <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 min-h-screen">
-      <div className="flex gap-[10px] items-center px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
-        <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
-          <IconBidVaultLogo className="size-[16px]" />
-        </div>
-        <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
-          Bid<span className="text-[#d0021b]">Vault</span>
-        </span>
-        {onClose && (
-          <button onClick={onClose} className="ml-auto text-[rgba(255,255,255,0.5)] hover:text-white">
-            <X size={18} />
-          </button>
-        )}
-      </div>
-
-      <nav className="flex flex-col gap-[2px] p-3 flex-1">
-        {items.map(item => (
-          <div
-            key={item.label}
-            onClick={() => { navigate(item.path); onClose?.(); }}
-            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${
-              item.label === active
-                ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]'
-                : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'
-            }`}
-          >
-            <span>{item.icon}</span>
-            <span className="font-semibold text-[12.5px] flex-1">{item.label}</span>
-            {item.badge && (
-              <span className={`font-bold text-[10px] px-[6px] py-[2px] rounded-[99px] ${item.label === active ? 'bg-[#d0021b] text-white' : 'bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.7)]'}`}>
-                {item.badge}
-              </span>
-            )}
-          </div>
-        ))}
-      </nav>
-
-      <div className="flex items-center gap-[10px] px-4 py-4 border-t border-[rgba(255,255,255,0.08)]">
-        <div className="bg-[#d0021b] flex items-center justify-center rounded-full size-[32px] shrink-0">
-          <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'A'}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
-          <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
-        </div>
-        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Logout</button>
-      </div>
-    </aside>
-  );
-}
 
 export default function AdminDashboardOverview() {
   const navigate = useNavigate();
@@ -238,7 +170,10 @@ export default function AdminDashboardOverview() {
             </div>
 
             {pendingCount === 0 ? (
-              <p className="text-[13px] text-[#6c757d] text-center py-8">No pending listings. All caught up! ✓</p>
+              <div className="flex items-center justify-center gap-2 py-8">
+                <CheckCircle2 size={16} strokeWidth={2} className="text-[#1a7a4a]" />
+                <p className="text-[13px] text-[#6c757d]">No pending listings. All caught up!</p>
+              </div>
             ) : (
               <>
                 {/* Desktop table */}

@@ -56,7 +56,7 @@ export default function BuyerToastNotifications() {
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-[rgba(255,255,255,0.1)] rounded-full size-[34px] flex items-center justify-center">
-            <span className="font-bold text-[13px] text-white">{user?.name[0] ?? 'B'}</span>
+            <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'B'}</span>
           </div>
           <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0]}</span>
           <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.55)] hover:text-white ml-2">Logout</button>

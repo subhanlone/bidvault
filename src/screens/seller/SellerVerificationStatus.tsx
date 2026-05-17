@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { Menu, X } from 'lucide-react';
+import { Camera, Clock, CreditCard, Menu, User, X } from 'lucide-react';
 import {
   IconBidVaultLogo, IconDashboard, IconList, IconUsers,
   IconCheckGreen, IconInfo,
@@ -134,7 +134,7 @@ export default function SellerVerificationStatus() {
           </div>
         )}
 
-        <main className="flex-1 p-4 sm:p-6 md:p-8 md:p-10">
+        <main className="flex-1 p-4 sm:p-6 md:p-10">
           {/* Mobile sidebar toggle */}
           <button
             className="md:hidden mb-4 flex items-center gap-2 text-[13px] font-semibold text-[#6c757d] border border-[#e9ecef] px-3 py-2 rounded-[8px] hover:bg-white"
@@ -188,7 +188,7 @@ export default function SellerVerificationStatus() {
             <div className="bg-[#fffbeb] border border-[#fde68a] rounded-[12px] p-4 sm:p-5 mb-5 max-w-[700px]">
               <div className="flex items-center gap-3 mb-2">
                 <div className="bg-[#fde68a] flex items-center justify-center rounded-full size-[32px] shrink-0">
-                  <span className="text-[16px]">⏳</span>
+                  <Clock size={16} strokeWidth={2} className="text-[#92400e]" />
                 </div>
                 <h3 className="font-bold text-[14px] sm:text-[15px] text-[#d97706]">Under Admin Review</h3>
               </div>
@@ -203,13 +203,13 @@ export default function SellerVerificationStatus() {
             <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-5">Submitted Documents</h3>
             <div className="flex flex-col gap-1">
               {[
-                { icon: '👤', label: 'Full Legal Name', value: user?.name ?? '—' },
-                { icon: '💳', label: 'CNIC Number', value: '35201-1234567-8' },
-                { icon: '📷', label: 'CNIC Front Photo', value: 'cnic_front.jpg · Uploaded' },
+                { icon: <User size={16} strokeWidth={1.8} className="text-[#495057]" />, label: 'Full Legal Name', value: user?.name ?? '—' },
+                { icon: <CreditCard size={16} strokeWidth={1.8} className="text-[#495057]" />, label: 'CNIC Number', value: '35201-1234567-8' },
+                { icon: <Camera size={16} strokeWidth={1.8} className="text-[#495057]" />, label: 'CNIC Front Photo', value: 'cnic_front.jpg · Uploaded' },
               ].map((d, i, arr) => (
                 <div key={i}>
                   <div className="flex items-center gap-3 sm:gap-4 py-3 sm:py-4">
-                    <div className="bg-[#f8f9fa] flex items-center justify-center rounded-[8px] size-[36px] sm:size-[40px] text-[16px] sm:text-[18px] shrink-0">{d.icon}</div>
+                    <div className="bg-[#f8f9fa] flex items-center justify-center rounded-[8px] size-[36px] sm:size-[40px] shrink-0">{d.icon}</div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-[11px] text-[#6c757d]">{d.label}</p>
                       <p className="font-bold text-[12px] sm:text-[13px] text-[#343a40] truncate">{d.value}</p>

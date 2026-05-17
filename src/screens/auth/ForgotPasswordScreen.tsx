@@ -207,7 +207,7 @@ export default function ForgotPasswordScreen() {
                 <div className="flex flex-col gap-[6px]">
                   <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Email address <span className="text-[#d0021b]">*</span></label>
                   <input
-                    className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]"
+                    className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
                     placeholder="you@email.com"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
@@ -277,17 +277,17 @@ export default function ForgotPasswordScreen() {
                   <div className="flex flex-col gap-[6px]">
                     <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">New password <span className="text-[#d0021b]">*</span></label>
                     <div className="relative">
-                      <input type={showPw ? 'text' : 'password'} placeholder="Min. 6 characters" className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-[45px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]" value={newPw} onChange={e => setNewPw(e.target.value)} />
+                      <input type={showPw ? 'text' : 'password'} placeholder="Min. 6 characters" className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-[45px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow" value={newPw} onChange={e => setNewPw(e.target.value)} />
                       <span className="absolute left-[14px] top-[16px]"><IconLock /></span>
-                      <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
+                      <button type="button" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
                     </div>
                   </div>
                   <div className="flex flex-col gap-[6px]">
                     <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Confirm password <span className="text-[#d0021b]">*</span></label>
                     <div className="relative">
-                      <input type={showConfirm ? 'text' : 'password'} placeholder="Repeat password" className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-[45px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b]" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} />
+                      <input type={showConfirm ? 'text' : 'password'} placeholder="Repeat password" className="bg-white border border-[#dee2e6] h-[48px] pl-[43px] pr-[45px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} />
                       <span className="absolute left-[14px] top-[16px]"><IconLock /></span>
-                      <button type="button" onClick={() => setShowConfirm(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
+                      <button type="button" aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'} onClick={() => setShowConfirm(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
                     </div>
                   </div>
                 </div>
@@ -295,7 +295,7 @@ export default function ForgotPasswordScreen() {
                   <IconInfo className="size-[17px] shrink-0" color="#1e40af" />
                   <p className="font-medium text-[12.5px] text-[#1e40af] leading-[19px]">Must be <span className="font-bold">6+ characters</span> long and match the confirm field.</p>
                 </div>
-                <button type="submit" disabled={loading} className="bg-[#0b1f3a] drop-shadow-[0px_4px_8px_rgba(11,31,58,0.22)] flex gap-[9px] h-[50px] items-center justify-center rounded-[8px] w-full hover:bg-[#1a3356] transition-colors disabled:opacity-60">
+                <button type="submit" disabled={loading} className="bg-[#d0021b] drop-shadow-[0px_4px_8px_rgba(208,2,27,0.22)] flex gap-[9px] h-[50px] items-center justify-center rounded-[8px] w-full hover:bg-[#a80016] transition-colors disabled:opacity-60">
                   {loading ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><IconShield /><span className="font-bold text-[15px] text-white">Reset My Password</span></>}
                 </button>
               </form>

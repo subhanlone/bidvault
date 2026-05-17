@@ -172,7 +172,7 @@ export default function RegisterScreen() {
                 <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Full name <span className="text-[#d0021b]">*</span></label>
                 <div className="relative">
                   <input
-                    className={`bg-white border h-[48px] pl-[43px] pr-[15px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] ${errors.name ? 'border-[#d0021b]' : 'border-[#dee2e6]'}`}
+                    className={`bg-white border h-[48px] pl-[43px] pr-[15px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow ${errors.name ? 'border-[#d0021b]' : 'border-[#dee2e6]'}`}
                     placeholder="Your full name"
                     value={name}
                     onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: '' })); }}
@@ -185,7 +185,7 @@ export default function RegisterScreen() {
                 <label className="font-bold text-[12px] text-[#343a40] tracking-[0.15px]">Email address <span className="text-[#d0021b]">*</span></label>
                 <div className="relative">
                   <input
-                    className={`bg-white border h-[48px] pl-[43px] pr-[15px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] ${errors.email ? 'border-[#d0021b]' : 'border-[#dee2e6]'}`}
+                    className={`bg-white border h-[48px] pl-[43px] pr-[15px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow ${errors.email ? 'border-[#d0021b]' : 'border-[#dee2e6]'}`}
                     placeholder="you@email.com"
                     value={email}
                     onChange={e => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }}
@@ -202,13 +202,13 @@ export default function RegisterScreen() {
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'}
-                  className={`bg-white border h-[48px] pl-[43px] pr-[45px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] ${errors.password ? 'border-[#d0021b]' : 'border-[#dee2e6]'}`}
+                  className={`bg-white border h-[48px] pl-[43px] pr-[45px] rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow ${errors.password ? 'border-[#d0021b]' : 'border-[#dee2e6]'}`}
                   placeholder="Min. 6 characters"
                   value={password}
                   onChange={e => { setPassword(e.target.value); setErrors(p => ({ ...p, password: '' })); }}
                 />
                 <span className="absolute left-[14px] top-[16px]"><IconLock /></span>
-                <button type="button" onClick={() => setShowPw(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
+                <button type="button" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(p => !p)} className="absolute right-[14px] top-[17.5px]"><IconEye /></button>
               </div>
               {password.length > 0 && (
                 <div className="flex flex-col gap-1">
