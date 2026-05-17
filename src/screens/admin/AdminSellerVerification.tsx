@@ -305,13 +305,13 @@ export default function AdminSellerVerification() {
           </div>
 
           {/* Document checklist */}
-          <div className="bg-[#f0faf4] border border-[rgba(26,122,74,0.2)] rounded-[12px] p-4">
-            <p className="font-bold text-[13px] text-[#1a7a4a] mb-2">Verification Checklist</p>
+          <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-[12px] p-4">
+            <p className="font-bold text-[13px] text-[#1e40af] mb-2">Verification Checklist</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 mt-1">
               {['Full Legal Name matches CNIC', 'CNIC front & back photos clear', 'CNIC number valid format (XXXXX-XXXXXXX-X)', 'Address is complete', 'Contact number verified', 'No duplicate accounts'].map(item => (
                 <div key={item} className="flex items-center gap-2">
-                  <Check size={14} strokeWidth={2.5} className="text-[#1a7a4a] shrink-0" />
-                  <span className="text-[11px] text-[#1a7a4a]">{item}</span>
+                  <Check size={14} strokeWidth={2.5} className="text-[#1e40af] shrink-0" />
+                  <span className="text-[11px] text-[#1e40af]">{item}</span>
                 </div>
               ))}
             </div>
