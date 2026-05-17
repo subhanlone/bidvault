@@ -41,7 +41,7 @@ function ListingStepperHeader({ currentStep }: { currentStep: number }) {
             <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'S'}</span>
           </div>
           <span className="font-semibold text-[13px] text-white">{user?.name ?? 'Seller'}</span>
-          <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white ml-2 transition-colors">Logout</button>
+          <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.55)] hover:text-white ml-2 transition-colors">Logout</button>
         </div>
         <button className="md:hidden p-2 rounded-[6px] hover:bg-[rgba(255,255,255,0.08)]" onClick={() => setMobileMenuOpen(o => !o)}>
           {mobileMenuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}

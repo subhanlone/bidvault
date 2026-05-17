@@ -16,7 +16,7 @@ const STATUS_CONFIG = {
 function SellerSidebar({ active, onClose }: { active: string; onClose?: () => void }) {
   const { user, logout } = useAuth();
   const status = user?.verificationStatus ?? 'UNVERIFIED';
-  const badgeText = status === 'VERIFIED' ? 'Verified Seller' : status === 'PENDING' ? 'Under Review' : 'Unverified';
+  const badgeText = status === 'VERIFIED' ? 'Verified Seller' : status === 'PENDING' ? 'Under Review' : 'Unverified Seller';
   const badgeClass = status === 'VERIFIED' ? 'border-[#1a7a4a] text-[#1a7a4a]' : status === 'PENDING' ? 'border-[#f59e0b] text-[#f59e0b]' : 'border-[#d0021b] text-[#d0021b]';
 
   const items = [

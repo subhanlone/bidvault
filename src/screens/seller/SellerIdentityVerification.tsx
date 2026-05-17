@@ -12,7 +12,7 @@ import {
 function SellerNav({ active }: { active: string }) {
   const { user, logout } = useAuth();
   const status = user?.verificationStatus ?? 'UNVERIFIED';
-  const badgeText = status === 'VERIFIED' ? 'Verified Seller' : status === 'PENDING' ? 'Under Review' : 'Unverified';
+  const badgeText = status === 'VERIFIED' ? 'Verified Seller' : status === 'PENDING' ? 'Under Review' : 'Unverified Seller';
   const badgeClass = status === 'VERIFIED' ? 'border-[#1a7a4a] text-[#1a7a4a]' : status === 'PENDING' ? 'border-[#f59e0b] text-[#f59e0b] bg-[rgba(245,158,11,0.1)]' : 'border-[#d0021b] text-[#d0021b]';
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -43,7 +43,7 @@ function SellerNav({ active }: { active: string }) {
             <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'S'}</span>
           </div>
           <span className="font-semibold text-[13px] text-white">{user?.name ?? 'Seller'}</span>
-          <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white ml-2 transition-colors">Logout</button>
+          <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.55)] hover:text-white ml-2 transition-colors">Logout</button>
         </div>
         <button className="md:hidden p-2 rounded-[6px] hover:bg-[rgba(255,255,255,0.08)]" onClick={() => setMenuOpen(o => !o)}>
           {menuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
