@@ -25,38 +25,36 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
   const { pendingListings } = useAuction();
   const pendingCount = pendingListings.length;
 
-  const sidebarItems = [
-    { icon: <IconDashboard />, label: 'Dashboard', active: active === 'Dashboard', badge: '', path: '/admin/dashboard' },
+  const items = [
+    { icon: <IconDashboard />, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: <IconList />, label: 'Live Auctions', badge: '6', path: '/admin/live-auctions' },
     { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: '/admin/dashboard' },
-    { icon: <IconUsers />, label: 'Seller Verification', badge: '', path: '/admin/seller-verification' },
-    { icon: <IconAnalytics />, label: 'Analytics', badge: '', path: '/admin/analytics' },
-    { icon: <IconSettings />, label: 'Settings', badge: '', path: '/admin/settings' },
+    { icon: <IconUsers />, label: 'Seller Verification', path: '/admin/seller-verification' },
+    { icon: <IconAnalytics />, label: 'Analytics', path: '/admin/analytics' },
+    { icon: <IconSettings />, label: 'Settings', path: '/admin/settings' },
   ];
 
   return (
-    <aside className="bg-[#0b1f3a] flex flex-col w-full h-full">
-      <div className="flex items-center justify-between gap-[10px] px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
-        <div className="flex gap-[10px] items-center">
-          <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
-            <IconBidVaultLogo className="size-[16px]" />
-          </div>
-          <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
-            Bid<span className="text-[#d0021b]">Vault</span>
-          </span>
+    <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 min-h-screen">
+      <div className="flex gap-[10px] items-center px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
+        <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
+          <IconBidVaultLogo className="size-[16px]" />
         </div>
+        <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
+          Bid<span className="text-[#d0021b]">Vault</span>
+        </span>
         {onClose && (
-          <button onClick={onClose} className="md:hidden p-1 text-[rgba(255,255,255,0.5)] hover:text-white">
+          <button onClick={onClose} className="ml-auto text-[rgba(255,255,255,0.5)] hover:text-white">
             <X size={18} />
           </button>
         )}
       </div>
 
       <nav className="flex flex-col gap-[2px] p-3 flex-1">
-        {sidebarItems.map(item => (
+        {items.map(item => (
           <div
             key={item.label}
-            onClick={() => { if (item.path) navigate(item.path); onClose?.(); }}
+            onClick={() => { navigate(item.path); onClose?.(); }}
             className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${
               item.label === active
                 ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]'
@@ -82,7 +80,7 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
           <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
           <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
         </div>
-        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Out</button>
+        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Logout</button>
       </div>
     </aside>
   );
@@ -106,10 +104,8 @@ export default function AdminDashboardOverview() {
       {/* Mobile sidebar drawer */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="w-[220px] h-full shadow-xl">
-            <AdminSidebarContent active="Dashboard" onClose={() => setSidebarOpen(false)} />
-          </div>
-          <div className="flex-1 bg-[rgba(11,31,58,0.5)]" onClick={() => setSidebarOpen(false)} />
+          <AdminSidebarContent active="Dashboard" onClose={() => setSidebarOpen(false)} />
+          <div className="flex-1 bg-[rgba(0,0,0,0.4)]" onClick={() => setSidebarOpen(false)} />
         </div>
       )}
 
@@ -126,8 +122,8 @@ export default function AdminDashboardOverview() {
               <Menu size={18} className="text-[#6c757d]" />
             </button>
             <div>
-              <h1 className="font-extrabold text-[17px] sm:text-[20px] text-[#0b1f3a]">Dashboard Overview</h1>
-              <p className="hidden sm:block text-[12px] text-[#6c757d]">Friday, 16 May 2026 · BidVault Admin</p>
+              <h1 className="font-extrabold text-[18px] sm:text-[20px] text-[#0b1f3a]">Dashboard Overview</h1>
+              <p className="text-[12px] text-[#6c757d]">Friday, 16 May 2026 · BidVault Admin</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">

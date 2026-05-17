@@ -46,7 +46,7 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
         {items.map(item => (
           <div
             key={item.label}
-            onClick={() => { if (item.path) { navigate(item.path); onClose?.(); } }}
+            onClick={() => { navigate(item.path); onClose?.(); }}
             className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${
               item.label === active
                 ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]'
@@ -72,7 +72,7 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
           <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
           <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
         </div>
-        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Out</button>
+        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Logout</button>
       </div>
     </aside>
   );
@@ -305,13 +305,13 @@ export default function AdminSellerVerification() {
           </div>
 
           {/* Document checklist */}
-          <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-[12px] p-4">
-            <p className="font-bold text-[13px] text-[#1e40af] mb-2">Verification Checklist</p>
+          <div className="bg-[#f0faf4] border border-[rgba(26,122,74,0.2)] rounded-[12px] p-4">
+            <p className="font-bold text-[13px] text-[#1a7a4a] mb-2">Verification Checklist</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 mt-1">
               {['Full Legal Name matches CNIC', 'CNIC front & back photos clear', 'CNIC number valid format (XXXXX-XXXXXXX-X)', 'Address is complete', 'Contact number verified', 'No duplicate accounts'].map(item => (
                 <div key={item} className="flex items-center gap-2">
-                  <Check size={14} strokeWidth={2.5} className="text-[#1e40af] shrink-0" />
-                  <span className="text-[11px] text-[#1e40af]">{item}</span>
+                  <Check size={14} strokeWidth={2.5} className="text-[#1a7a4a] shrink-0" />
+                  <span className="text-[11px] text-[#1a7a4a]">{item}</span>
                 </div>
               ))}
             </div>

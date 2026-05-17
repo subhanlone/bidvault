@@ -45,7 +45,7 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
         {items.map(item => (
           <div
             key={item.label}
-            onClick={() => { if (item.path) { navigate(item.path); onClose?.(); } }}
+            onClick={() => { navigate(item.path); onClose?.(); }}
             className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${
               item.label === active
                 ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]'
@@ -71,7 +71,7 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
           <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
           <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
         </div>
-        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Out</button>
+        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Logout</button>
       </div>
     </aside>
   );
@@ -185,14 +185,15 @@ export default function AdminLiveAuctions() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { label: 'Total Active', value: String(active.length), color: 'text-[#0b1f3a]' },
-              { label: 'Ending in <1hr', value: String(endingSoon.length), color: 'text-[#ef4444]' },
-              { label: 'Total Bids', value: totalBids.toLocaleString(), color: 'text-[#1a7a4a]' },
-              { label: 'Highest Bid', value: `PKR ${(highestBid / 1000).toFixed(0)}K`, color: 'text-[#d0021b]' },
+              { label: 'Total Active', value: String(active.length), color: 'text-[#0b1f3a]', sub: 'Across all categories' },
+              { label: 'Ending in <1hr', value: String(endingSoon.length), color: 'text-[#ef4444]', sub: 'Needs attention' },
+              { label: 'Total Bids', value: totalBids.toLocaleString(), color: 'text-[#1a7a4a]', sub: 'Across all auctions' },
+              { label: 'Highest Bid', value: `PKR ${(highestBid / 1000).toFixed(0)}K`, color: 'text-[#d0021b]', sub: 'Single item' },
             ].map(s => (
               <div key={s.label} className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
                 <p className="font-medium text-[11px] sm:text-[12px] text-[#6c757d] mb-1 sm:mb-2">{s.label}</p>
                 <p className={`font-extrabold text-[24px] sm:text-[28px] ${s.color} leading-none`}>{s.value}</p>
+                <p className="text-[10px] text-[#adb5bd] mt-1">{s.sub}</p>
               </div>
             ))}
           </div>

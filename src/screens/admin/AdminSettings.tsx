@@ -64,7 +64,7 @@ function AdminSidebarContent({ active, onClose }: { active: string; onClose?: ()
           <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
           <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
         </div>
-        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Out</button>
+        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Logout</button>
       </div>
     </aside>
   );

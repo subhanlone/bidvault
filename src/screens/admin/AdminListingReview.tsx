@@ -10,14 +10,16 @@ import {
   IconExport, IconStar,
 } from '../../components/Icons';
 
-function AdminSidebarContent({ onClose }: { onClose?: () => void }) {
+function AdminSidebarContent({ active, onClose }: { active: string; onClose?: () => void }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { pendingListings } = useAuction();
+  const pendingCount = pendingListings.length;
 
   const items = [
     { label: 'Dashboard', icon: <IconDashboard />, path: '/admin/dashboard' },
     { label: 'Live Auctions', icon: <IconList />, badge: '6', path: '/admin/live-auctions' },
-    { label: 'Listing Review', icon: <IconList />, badge: '', active: true, path: '/admin/dashboard' },
+    { label: 'Listing Review', icon: <IconList />, badge: String(pendingCount), path: '/admin/dashboard' },
     { label: 'Seller Verification', icon: <IconUsers />, path: '/admin/seller-verification' },
     { label: 'Analytics', icon: <IconAnalytics />, path: '/admin/analytics' },
     { label: 'Settings', icon: <IconSettings />, path: '/admin/settings' },
@@ -43,11 +45,11 @@ function AdminSidebarContent({ onClose }: { onClose?: () => void }) {
           <div
             key={item.label}
             onClick={() => { navigate(item.path); onClose?.(); }}
-            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${'active' in item && item.active ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]' : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'}`}
+            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${item.label === active ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]' : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'}`}
           >
-            <span>{'active' in item && item.active ? <span className="text-[#ff6b7a]">{item.icon}</span> : item.icon}</span>
+            <span>{item.icon}</span>
             <span className="font-semibold text-[12.5px] flex-1">{item.label}</span>
-            {item.badge && <span className={`font-bold text-[10px] px-[6px] py-[2px] rounded-[99px] ${'active' in item && item.active ? 'bg-[#d0021b] text-white' : 'bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.7)]'}`}>{item.badge}</span>}
+            {item.badge && <span className={`font-bold text-[10px] px-[6px] py-[2px] rounded-[99px] ${item.label === active ? 'bg-[#d0021b] text-white' : 'bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.7)]'}`}>{item.badge}</span>}
           </div>
         ))}
       </nav>
@@ -59,7 +61,7 @@ function AdminSidebarContent({ onClose }: { onClose?: () => void }) {
           <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
           <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
         </div>
-        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Out</button>
+        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Logout</button>
       </div>
     </aside>
   );
@@ -121,17 +123,17 @@ export default function AdminListingReview() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8f9fa] font-[Plus_Jakarta_Sans,sans-serif]">
+    <div className="flex min-h-screen bg-[#f8f9fa]">
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex md:flex-col md:w-[200px] md:shrink-0 md:min-h-screen">
-        <AdminSidebarContent />
+        <AdminSidebarContent active="Listing Review" />
       </div>
 
       {/* Mobile sidebar drawer */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <AdminSidebarContent onClose={() => setSidebarOpen(false)} />
+          <AdminSidebarContent active="Listing Review" onClose={() => setSidebarOpen(false)} />
           <div className="flex-1 bg-[rgba(0,0,0,0.4)]" onClick={() => setSidebarOpen(false)} />
         </div>
       )}
