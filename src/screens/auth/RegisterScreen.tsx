@@ -64,14 +64,14 @@ export default function RegisterScreen() {
           <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
           <div className="absolute bg-[rgba(255,255,255,0.04)] bottom-[-40px] left-[-40px] rounded-[100px] size-[200px]" />
 
-          <div className="flex gap-3 items-center z-10">
+          <Link to="/" className="flex gap-3 items-center z-10">
             <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[42px]">
               <IconBidVaultLogo />
             </div>
             <span className="font-extrabold text-[26px] text-white tracking-[-0.5px]">
               Bid<span className="text-[#d0021b]">Vault</span>
             </span>
-          </div>
+          </Link>
 
           <div className="flex flex-col flex-1 justify-center gap-10 z-10">
             <div className="flex flex-col gap-[13px]">
@@ -123,7 +123,7 @@ export default function RegisterScreen() {
           </div>
 
           <div className="flex flex-col gap-[5px] pb-6 md:pb-8 w-full">
-            <h2 className="font-extrabold text-[22px] md:text-[26px] text-[#0b1f3a]">Create your account</h2>
+            <h1 className="font-extrabold text-[22px] md:text-[26px] text-[#0b1f3a]">Create your account</h1>
             <p className="text-[13px] md:text-[14px] text-[#6c757d] leading-[21.7px]">
               Already have an account?{' '}
               <Link to="/login" className="font-bold text-[#d0021b]">Sign in here</Link>

@@ -76,7 +76,7 @@ export default function BuyerWatchlist() {
     <div className="min-h-screen bg-[#f8f9fa]">
       <BuyerNav active="Watchlist" />
 
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
             <h1 className="font-extrabold text-[20px] sm:text-[22px] text-[#0b1f3a]">Watchlist</h1>
@@ -121,7 +121,7 @@ export default function BuyerWatchlist() {
             ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

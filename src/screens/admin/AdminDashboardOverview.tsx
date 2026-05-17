@@ -35,9 +35,9 @@ export default function AdminDashboardOverview() {
 
       {/* Mobile sidebar drawer */}
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-40 flex">
           <AdminSidebarContent active="Dashboard" onClose={() => setSidebarOpen(false)} />
-          <div className="flex-1 bg-[rgba(0,0,0,0.4)]" onClick={() => setSidebarOpen(false)} />
+          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
         </div>
       )}
 

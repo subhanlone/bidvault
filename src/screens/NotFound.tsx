@@ -15,7 +15,7 @@ export default function NotFound() {
     : '/';
 
   return (
-    <div className="min-h-screen bg-[#0b1f3a] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <main className="min-h-screen bg-[#0b1f3a] flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Background grid */}
       <div className="absolute inset-0 opacity-[0.035]" style={{
         backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
@@ -84,6 +84,6 @@ export default function NotFound() {
           BidVault · Pakistan's AI-Powered Auction Platform
         </p>
       </div>
-    </div>
+    </main>
   );
 }

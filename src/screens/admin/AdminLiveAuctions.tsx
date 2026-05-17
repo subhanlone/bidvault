@@ -84,9 +84,9 @@ export default function AdminLiveAuctions() {
 
       {/* Mobile sidebar drawer */}
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-40 flex">
           <AdminSidebarContent active="Live Auctions" onClose={() => setSidebarOpen(false)} />
-          <div className="flex-1 bg-[rgba(0,0,0,0.4)]" onClick={() => setSidebarOpen(false)} />
+          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
         </div>
       )}
 
@@ -146,7 +146,12 @@ export default function AdminLiveAuctions() {
             </div>
 
             <div className="flex flex-col">
-              {auctions.map(auction => (
+              {auctions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <p className="font-bold text-[15px] text-[#343a40] mb-1">No active auctions</p>
+                  <p className="text-[13px] text-[#6c757d]">There are no live auctions at the moment.</p>
+                </div>
+              ) : auctions.map(auction => (
                 <AuctionRow key={auction.auctionId} auction={auction} />
               ))}
             </div>

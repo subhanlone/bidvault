@@ -132,14 +132,14 @@ export default function ForgotPasswordScreen() {
     >
       <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
       <div className="absolute bg-[rgba(255,255,255,0.04)] bottom-[-40px] left-[-40px] rounded-[100px] size-[200px]" />
-      <div className="flex gap-3 items-center z-10">
+      <Link to="/" className="flex gap-3 items-center z-10">
         <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[42px]">
           <IconBidVaultLogo />
         </div>
         <span className="font-extrabold text-[26px] text-white tracking-[-0.5px]">
           Bid<span className="text-[#d0021b]">Vault</span>
         </span>
-      </div>
+      </Link>
       <div className="flex flex-col flex-1 justify-center gap-10 z-10">
         <div className="flex flex-col gap-[13px]">
           <div className="bg-[rgba(208,2,27,0.18)] border border-[rgba(208,2,27,0.32)] flex gap-[7px] items-center pl-[10px] pr-[13px] py-[6px] rounded-[20px] w-fit">
@@ -201,7 +201,7 @@ export default function ForgotPasswordScreen() {
                   </div>
                 </div>
                 <div className="text-center">
-                  <h3 className="font-extrabold text-[18px] text-[#0b1f3a]">Forgot your password?</h3>
+                  <h1 className="font-extrabold text-[18px] text-[#0b1f3a]">Forgot your password?</h1>
                   <p className="text-[13px] text-[#6c757d] leading-[20px] mt-1">Enter your account email to receive a reset code.</p>
                 </div>
                 <div className="flex flex-col gap-[6px]">
@@ -229,7 +229,7 @@ export default function ForgotPasswordScreen() {
                   </div>
                 </div>
                 <div className="text-center">
-                  <h3 className="font-extrabold text-[18px] text-[#0b1f3a]">Reset code sent!</h3>
+                  <h1 className="font-extrabold text-[18px] text-[#0b1f3a]">Reset code sent!</h1>
                   <p className="text-[13px] text-[#6c757d] leading-[20px] mt-1">We sent a 6-digit code to<br /><span className="font-bold text-[#343a40]">{email}</span></p>
                 </div>
                 <div className="flex flex-col gap-[10px]">
@@ -270,7 +270,7 @@ export default function ForgotPasswordScreen() {
             {step === 3 && (
               <form onSubmit={handleStep3} className="flex flex-col gap-[18px]">
                 <div className="text-center">
-                  <h3 className="font-extrabold text-[18px] text-[#0b1f3a]">Set a new password</h3>
+                  <h1 className="font-extrabold text-[18px] text-[#0b1f3a]">Set a new password</h1>
                   <p className="text-[13px] text-[#6c757d] leading-[20px] mt-1">Choose a strong password for your account.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

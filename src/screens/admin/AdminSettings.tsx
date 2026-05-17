@@ -37,9 +37,9 @@ export default function AdminSettings() {
         <AdminSidebarContent active="Settings" />
       </div>
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-40 flex">
           <AdminSidebarContent active="Settings" onClose={() => setSidebarOpen(false)} />
-          <div className="flex-1 bg-[rgba(0,0,0,0.4)]" onClick={() => setSidebarOpen(false)} />
+          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
         </div>
       )}
 
@@ -110,6 +110,7 @@ export default function AdminSettings() {
             </div>
           </div>
 
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="contents">
           {/* Auction Rules */}
           <div className="bg-white border border-[#e9ecef] rounded-[12px] overflow-hidden">
             <div className="px-5 py-4 border-b border-[#e9ecef]">
@@ -162,6 +163,7 @@ export default function AdminSettings() {
               </div>
             </div>
           </div>
+          </form>
 
           {/* Danger zone */}
           <div className="bg-white border border-[#fecaca] rounded-[12px] overflow-hidden">

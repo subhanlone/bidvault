@@ -38,6 +38,7 @@ export default function BuyerProfile() {
     <div className="min-h-screen bg-[#f8f9fa]">
       <BuyerNav />
 
+      <main>
       {/* Profile hero */}
       <div className="bg-[#0b1f3a] relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]" style={{
@@ -281,6 +282,7 @@ export default function BuyerProfile() {
           </div>
         </div>
       </div>
+      </main>
     </div>
   );
 }

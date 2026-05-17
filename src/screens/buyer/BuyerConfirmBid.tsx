@@ -35,7 +35,7 @@ export default function BuyerConfirmBid() {
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
       {/* Nav */}
-      <header className="bg-[#0b1f3a] sticky top-0 z-30 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
+      <header className="bg-[#0b1f3a] sticky top-0 z-20 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
         <div className="flex items-center justify-between px-4 sm:px-8 h-[60px]">
           <div className="flex gap-[10px] items-center">
             <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[34px]">
@@ -55,8 +55,8 @@ export default function BuyerConfirmBid() {
       </header>
 
       {/* Modal overlay */}
-      <div className="min-h-[calc(100vh-60px)] bg-[rgba(11,31,58,0.45)] flex items-center justify-center p-4 sm:p-6">
-        <div className="bg-white rounded-[16px] shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[400px] overflow-hidden">
+      <main className="min-h-[calc(100vh-60px)] bg-[rgba(11,31,58,0.45)] flex items-center justify-center p-4 sm:p-6">
+        <div role="dialog" aria-modal="true" className="bg-white rounded-[16px] shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[400px] overflow-hidden">
           <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-0">
             <div className="bg-[#fff0f2] flex items-center justify-center rounded-full size-[44px]">
               <AlertTriangle size={20} strokeWidth={2} className="text-[#d0021b]" />
@@ -139,7 +139,7 @@ export default function BuyerConfirmBid() {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

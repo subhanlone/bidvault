@@ -5,13 +5,14 @@ export default function ToastContainer() {
   const { toasts, removeToast } = useToast();
 
   return (
-    <div
+    <ul
+      role="list"
       aria-live="assertive"
       aria-atomic="false"
-      className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"
+      className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none list-none m-0 p-0"
     >
       {toasts.map(t => (
-        <div
+        <li
           key={t.id}
           className={`
             pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-[10px]
@@ -29,12 +30,13 @@ export default function ToastContainer() {
           </div>
           <button
             onClick={() => removeToast(t.id)}
+            aria-label="Dismiss notification"
             className="shrink-0 text-white opacity-60 hover:opacity-100 transition-opacity mt-0.5"
           >
             <IconX className="size-[14px]" />
           </button>
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

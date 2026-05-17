@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAuction } from '../context/AuctionContext';
@@ -8,7 +8,6 @@ import {
 } from './Icons';
 
 export function AdminSidebarContent({ active, onClose }: { active: string; onClose?: () => void }) {
-  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { pendingListings } = useAuction();
   const pendingCount = pendingListings.length;
@@ -40,10 +39,11 @@ export function AdminSidebarContent({ active, onClose }: { active: string; onClo
 
       <nav className="flex flex-col gap-[2px] p-3 flex-1">
         {items.map(item => (
-          <div
+          <Link
             key={item.label}
-            onClick={() => { navigate(item.path); onClose?.(); }}
-            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] cursor-pointer ${
+            to={item.path}
+            onClick={() => onClose?.()}
+            className={`flex items-center gap-[10px] px-3 py-[9px] rounded-[8px] ${
               item.label === active
                 ? 'bg-[rgba(208,2,27,0.15)] text-[#ff6b7a]'
                 : 'text-[rgba(255,255,255,0.55)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white'
@@ -56,7 +56,7 @@ export function AdminSidebarContent({ active, onClose }: { active: string; onClo
                 {item.badge}
               </span>
             )}
-          </div>
+          </Link>
         ))}
       </nav>
 

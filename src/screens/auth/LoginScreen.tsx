@@ -116,7 +116,7 @@ export default function LoginScreen() {
             </div>
 
             <div className="flex flex-col gap-[5px] pb-6 md:pb-8 w-full">
-              <h2 className="font-extrabold text-[22px] md:text-[26px] text-[#0b1f3a]">Sign in to BidVault</h2>
+              <h1 className="font-extrabold text-[22px] md:text-[26px] text-[#0b1f3a]">Sign in to BidVault</h1>
               <p className="text-[13px] md:text-[14px] text-[#6c757d] leading-[21.7px]">
                 Don't have an account?{' '}
                 <Link to="/register" className="font-bold text-[#d0021b]">Create one free</Link>

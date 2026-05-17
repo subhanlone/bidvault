@@ -45,7 +45,7 @@ export default function SellerCreateListingStep3() {
     <div className="min-h-screen bg-white">
       <ListingStepperHeader currentStep={2} />
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
         <h1 className="font-extrabold text-[19px] sm:text-[22px] text-[#0b1f3a] mb-1">AI Price Suggestion</h1>
         <p className="text-[13px] text-[#6c757d] mb-5 sm:mb-6">Our AI analyzed similar items to suggest the best starting price</p>
 
@@ -139,7 +139,7 @@ export default function SellerCreateListingStep3() {
         <div className="flex justify-between mt-5 sm:mt-6">
           <button onClick={() => navigate('/seller/create-listing/step-2')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

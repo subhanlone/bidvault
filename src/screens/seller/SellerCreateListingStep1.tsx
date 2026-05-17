@@ -19,7 +19,7 @@ function ListingStepperHeader({ currentStep }: { currentStep: number }) {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <header className="bg-[#0b1f3a] sticky top-0 z-30 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
+    <header className="bg-[#0b1f3a] sticky top-0 z-20 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
       <div className="flex items-center justify-between px-4 sm:px-8 h-[60px]">
         <div className="flex items-center gap-4 md:gap-8">
           <div className="flex gap-[10px] items-center">
@@ -107,7 +107,7 @@ export default function SellerCreateListingStep1() {
     <div className="min-h-screen bg-white">
       <ListingStepperHeader currentStep={0} />
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
         <div className="mb-5 sm:mb-6">
           <h1 className="font-extrabold text-[19px] sm:text-[22px] text-[#0b1f3a]">Create New Auction Listing</h1>
           <p className="text-[13px] text-[#6c757d]">Fill in the details to list your item for auction</p>
@@ -227,7 +227,7 @@ export default function SellerCreateListingStep1() {
             Next: Auction Setup →
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

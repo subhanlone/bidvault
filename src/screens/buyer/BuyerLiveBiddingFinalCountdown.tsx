@@ -1,18 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
-import { Timer, Check, Menu, X, Search } from 'lucide-react';
-import { IconBidVaultLogo, IconFire } from '../../components/Icons';
+import { Timer, Check } from 'lucide-react';
+import { IconFire } from '../../components/Icons';
+import { BuyerNav } from '../../components/BuyerNav';
 
 export default function BuyerLiveBiddingFinalCountdown() {
   const { auctionId } = useParams<{ auctionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { getAuction, bids, addCompetingBid } = useAuction();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const id = auctionId ?? (location.state as { auctionId?: string })?.auctionId ?? '';
   const auction = getAuction(id);
@@ -66,51 +66,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
 
-      {/* Nav */}
-      <header className="bg-[#0b1f3a] sticky top-0 z-30 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
-        <div className="flex items-center justify-between px-4 sm:px-8">
-          <div className="flex items-center gap-4 md:gap-8">
-            <Link to="/buyer/browse" className="flex gap-[10px] items-center py-4">
-              <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[34px]">
-                <IconBidVaultLogo className="size-[18px]" />
-              </div>
-              <span className="font-extrabold text-[20px] text-white tracking-[-0.3px]">
-                Bid<span className="text-[#d0021b]">Vault</span>
-              </span>
-            </Link>
-            <nav className="hidden md:flex">
-              <Link to="/buyer/browse" className="font-semibold text-[13px] px-4 py-5 border-b-2 text-[rgba(255,255,255,0.55)] border-transparent hover:text-white">Browse Auctions</Link>
-              <span className="font-semibold text-[13px] px-4 py-5 border-b-2 text-white border-[#d0021b]">Live Bidding</span>
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="hidden md:flex bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.14)] rounded-[8px] p-2 transition-colors">
-              <Search size={16} color="rgba(255,255,255,0.7)" />
-            </button>
-            <Link to="/buyer/profile" className="bg-[rgba(255,255,255,0.1)] rounded-full size-[34px] flex items-center justify-center hover:bg-[rgba(255,255,255,0.15)] transition-colors">
-              <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'B'}</span>
-            </Link>
-            <span className="hidden md:block font-semibold text-[13px] text-white">{user?.name?.split(' ')[0]}</span>
-            <button
-              className="md:hidden p-2 text-white"
-              onClick={() => setMobileMenuOpen(o => !o)}
-            >
-              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </div>
-        </div>
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-[#0d2444] border-t border-[rgba(255,255,255,0.08)] px-4 py-3 flex flex-col gap-1">
-            <Link to="/buyer/browse" className="font-semibold text-[13px] text-[rgba(255,255,255,0.7)] py-2 px-3 rounded-[6px] hover:bg-[rgba(255,255,255,0.07)]" onClick={() => setMobileMenuOpen(false)}>Browse Auctions</Link>
-            <span className="font-semibold text-[13px] text-white py-2 px-3 rounded-[6px] bg-[rgba(208,2,27,0.18)]">Live Bidding</span>
-            <Link to="/buyer/profile" className="font-semibold text-[13px] text-[#d0021b] py-2 px-3 rounded-[6px]" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
-            <div className="flex items-center justify-between pt-3 mt-1 border-t border-[rgba(255,255,255,0.08)]">
-              <span className="font-semibold text-[13px] text-white">{user?.name?.split(' ')[0] ?? 'Buyer'}</span>
-              <button onClick={logout} className="font-semibold text-[12px] text-[#d0021b]">Logout</button>
-            </div>
-          </div>
-        )}
-      </header>
+      <BuyerNav active="Live Bidding" />
 
       {/* Urgent banner */}
       <div className="bg-[#d0021b] px-4 sm:px-8 py-3">
@@ -147,7 +103,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
       </div>
 
       {/* Main content */}
-      <div className="max-w-[940px] mx-auto px-4 sm:px-6 py-5 sm:py-8 flex flex-col md:grid md:grid-cols-[1fr_300px] gap-5 sm:gap-6">
+      <main className="max-w-[940px] mx-auto px-4 sm:px-6 py-5 sm:py-8 flex flex-col md:grid md:grid-cols-[1fr_300px] gap-5 sm:gap-6">
 
         {/* Bid panel — first on mobile */}
         <div className="flex flex-col gap-4 order-1 md:order-2">
@@ -206,7 +162,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

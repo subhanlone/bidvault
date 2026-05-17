@@ -99,14 +99,14 @@ export default function EmailVerificationScreen() {
           <div className="absolute bg-[rgba(208,2,27,0.1)] right-[-60px] rounded-[160px] size-[320px] top-[-60px]" />
           <div className="absolute bg-[rgba(255,255,255,0.04)] bottom-[-40px] left-[-40px] rounded-[100px] size-[200px]" />
 
-          <div className="flex gap-3 items-center z-10">
+          <Link to="/" className="flex gap-3 items-center z-10">
             <div className="bg-[#d0021b] flex items-center justify-center rounded-[10px] size-[42px]">
               <IconBidVaultLogo />
             </div>
             <span className="font-extrabold text-[26px] text-white tracking-[-0.5px]">
               Bid<span className="text-[#d0021b]">Vault</span>
             </span>
-          </div>
+          </Link>
 
           <div className="flex flex-col flex-1 justify-center gap-10 z-10">
             <div className="flex flex-col gap-[13px]">
@@ -164,7 +164,7 @@ export default function EmailVerificationScreen() {
             </div>
 
             <div className="flex flex-col gap-[5px] text-center">
-              <h3 className="font-extrabold text-[18px] text-[#0b1f3a]">Check your inbox</h3>
+              <h1 className="font-extrabold text-[18px] text-[#0b1f3a]">Check your inbox</h1>
               <p className="text-[13px] text-[#6c757d] leading-[20px]">
                 We sent a 6-digit code to<br />
                 <span className="font-bold text-[#343a40]">{email || 'your email'}</span>
@@ -180,6 +180,7 @@ export default function EmailVerificationScreen() {
               <Link to="/register" className="font-bold text-[12px] text-[#d0021b]">Change</Link>
             </div>
 
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
             {/* OTP */}
             <div className="flex flex-col gap-[10px]">
               <label className="font-bold text-[12px] text-[#343a40] text-center tracking-[0.15px]">
@@ -215,7 +216,7 @@ export default function EmailVerificationScreen() {
             </div>
 
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading || otp.join('').length < 6}
               className="bg-[#d0021b] drop-shadow-[0px_4px_8px_rgba(208,2,27,0.28)] flex gap-[9px] h-[50px] items-center justify-center rounded-[8px] w-full hover:bg-[#a80016] transition-colors disabled:opacity-60"
             >
@@ -224,6 +225,7 @@ export default function EmailVerificationScreen() {
                 : <><span className="font-bold text-[15px] text-white tracking-[0.2px]">Verify & Activate Account</span><IconArrow /></>
               }
             </button>
+            </form>
 
             <div className="flex gap-[7px] items-center justify-center">
               <IconResend />

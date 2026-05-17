@@ -63,7 +63,7 @@ export default function BuyerToastNotifications() {
         </div>
       </header>
 
-      <div className="max-w-[700px] mx-auto px-6 py-10">
+      <main className="max-w-[700px] mx-auto px-6 py-10">
         <h1 className="font-extrabold text-[24px] text-[#0b1f3a] mb-1">Toast Notification Demo</h1>
         <p className="text-[13px] text-[#6c757d] mb-8">Click each button to trigger a notification. These appear in the top-right corner.</p>
 
@@ -90,7 +90,7 @@ export default function BuyerToastNotifications() {
             Fire All 4 Notifications
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

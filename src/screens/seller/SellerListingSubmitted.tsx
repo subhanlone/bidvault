@@ -21,7 +21,7 @@ export default function SellerListingSubmitted() {
     <div className="min-h-screen bg-white">
       <ListingStepperHeader currentStep={3} />
 
-      <div className="flex flex-col items-center justify-center py-20 px-4">
+      <main className="flex flex-col items-center justify-center py-20 px-4">
         {/* Success icon */}
         <div className="bg-[#f0faf4] border border-[rgba(26,122,74,0.2)] flex items-center justify-center rounded-[20px] size-[80px] mb-6">
           <div className="bg-[#1a7a4a] flex items-center justify-center rounded-full size-[48px]">
@@ -94,7 +94,7 @@ export default function SellerListingSubmitted() {
             Create Another Listing
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

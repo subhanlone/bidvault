@@ -48,7 +48,7 @@ export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-white">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-[#0b1f3a] border-b border-[rgba(255,255,255,0.08)]">
+      <nav className="sticky top-0 z-20 bg-[#0b1f3a] border-b border-[rgba(255,255,255,0.08)]">
         <div className="max-w-[900px] mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between">
           <Link to="/" className="flex gap-[10px] items-center">
             <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
@@ -65,7 +65,7 @@ export default function TermsOfService() {
         </div>
       </nav>
 
-      <div className="max-w-[760px] mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <main className="max-w-[760px] mx-auto px-4 sm:px-6 py-10 sm:py-14">
         {/* Header */}
         <div className="mb-10">
           <p className="font-bold text-[12px] text-[#d0021b] uppercase tracking-[1.5px] mb-2">Legal</p>
@@ -127,7 +127,7 @@ export default function TermsOfService() {
             <Link to="/" className="hover:text-[#d0021b]">Home</Link>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

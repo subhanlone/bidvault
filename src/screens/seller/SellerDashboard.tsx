@@ -103,11 +103,11 @@ export default function SellerDashboard() {
 
       {/* Mobile sidebar drawer */}
       {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
+        <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="w-[220px] h-full shadow-xl">
             <SellerSidebar active="Dashboard" onClose={() => setSidebarOpen(false)} />
           </div>
-          <div className="flex-1 bg-[rgba(11,31,58,0.4)]" onClick={() => setSidebarOpen(false)} />
+          <button className="flex-1 bg-[rgba(11,31,58,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
         </div>
       )}
 

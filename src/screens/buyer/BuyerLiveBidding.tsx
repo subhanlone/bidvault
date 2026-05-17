@@ -73,7 +73,7 @@ export default function BuyerLiveBidding() {
     <div className="min-h-screen bg-[#f8f9fa]">
       <BuyerNav active="Live Bidding" />
 
-      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col md:grid md:grid-cols-[1fr_320px] gap-5">
+      <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col md:grid md:grid-cols-[1fr_320px] gap-5">
 
         {/* LEFT */}
         <div className="flex flex-col gap-4 order-1 md:order-1">
@@ -222,7 +222,7 @@ export default function BuyerLiveBidding() {
               ))}
             </div>
 
-            <div className="flex flex-col gap-2">
+            <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); handleBid(Number(customBid)); }}>
               <label className="font-bold text-[11px] text-[#6c757d] uppercase tracking-[0.3px]">Custom amount (PKR)</label>
               <div className="flex gap-2">
                 <input
@@ -233,17 +233,17 @@ export default function BuyerLiveBidding() {
                   onChange={e => setCustomBid(e.target.value)}
                 />
                 <button
-                  onClick={() => handleBid(Number(customBid))}
+                  type="submit"
                   className="bg-[#0b1f3a] font-bold text-[13px] text-white px-4 rounded-[8px] hover:bg-[#1a3356] transition-colors"
                 >
                   Bid
                 </button>
               </div>
-            </div>
+            </form>
           </div>
 
         </div>
-      </div>
+      </main>
     </div>
   );
 }

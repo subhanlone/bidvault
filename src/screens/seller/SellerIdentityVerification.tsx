@@ -17,7 +17,7 @@ function SellerNav({ active }: { active: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="bg-[#0b1f3a] sticky top-0 z-30 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
+    <header className="bg-[#0b1f3a] sticky top-0 z-20 shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
       <div className="flex items-center justify-between px-4 sm:px-8 h-[60px]">
         <div className="flex items-center gap-4 md:gap-8">
           <div className="flex gap-[10px] items-center">
@@ -176,7 +176,7 @@ export default function SellerIdentityVerification() {
                 ))}
               </nav>
             </div>
-            <div className="flex-1 bg-[rgba(11,31,58,0.4)]" onClick={() => setSidebarOpen(false)} />
+            <button className="flex-1 bg-[rgba(11,31,58,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
           </div>
         )}
 

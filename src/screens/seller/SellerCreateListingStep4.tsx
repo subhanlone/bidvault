@@ -37,7 +37,7 @@ export default function SellerCreateListingStep4() {
     <div className="min-h-screen bg-[#f8f9fa]">
       <ListingStepperHeader currentStep={3} />
 
-      <div className="max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
+      <main className="max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
         <h1 className="font-extrabold text-[19px] sm:text-[22px] text-[#0b1f3a] mb-1">Review Your Listing</h1>
         <p className="text-[13px] text-[#6c757d] mb-5 sm:mb-6">Check all details before submitting to admin for review.</p>
 
@@ -107,7 +107,7 @@ export default function SellerCreateListingStep4() {
             {loading ? <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Submit Listing for Review →'}
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
