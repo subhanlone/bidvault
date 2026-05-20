@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { mockApi } from '../../services/mockApi';
 import { Plus, Package, Menu, X } from 'lucide-react';
-import { IconBidVaultLogo, IconDashboard, IconList, IconUsers } from '../../components/Icons';
+import { IconBidVaultLogo, IconDashboard, IconList } from '../../components/Icons';
 import type { Listing } from '../../types';
 
 const STATUS_CONFIG = {
@@ -15,13 +15,9 @@ const STATUS_CONFIG = {
 
 function SellerSidebar({ active, onClose }: { active: string; onClose?: () => void }) {
   const { user, logout } = useAuth();
-  const status = user?.verificationStatus ?? 'UNVERIFIED';
-  const badgeText = status === 'VERIFIED' ? 'Verified Seller' : status === 'PENDING' ? 'Under Review' : 'Unverified Seller';
-  const badgeClass = status === 'VERIFIED' ? 'border-[#1a7a4a] text-[#1a7a4a]' : status === 'PENDING' ? 'border-[#f59e0b] text-[#f59e0b]' : 'border-[#d0021b] text-[#d0021b]';
 
   const items = [
     { label: 'Dashboard', icon: <IconDashboard />, path: '/seller/dashboard' },
-    { label: 'Identity Verification', icon: <IconUsers />, path: '/seller/verification-status' },
     { label: 'My Listings', icon: <IconList />, path: '/seller/dashboard' },
   ];
 
@@ -65,7 +61,6 @@ function SellerSidebar({ active, onClose }: { active: string; onClose?: () => vo
           </div>
           <div className="min-w-0">
             <p className="font-bold text-[12px] text-white truncate">{user?.name}</p>
-            <span className={`border font-bold text-[10px] px-2 py-[1px] rounded-[99px] ${badgeClass}`}>{badgeText}</span>
           </div>
         </div>
         <button onClick={logout} className="text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white font-semibold text-left transition-colors">Logout</button>
@@ -253,12 +248,6 @@ export default function SellerDashboard() {
                 >
                   + Create New Listing
                 </button>
-                <Link
-                  to="/seller/verification-status"
-                  className="border border-[#dee2e6] font-semibold text-[12px] sm:text-[13px] text-[#495057] px-4 py-2 rounded-[8px] hover:bg-[#f8f9fa] transition-colors"
-                >
-                  View Verification Status
-                </Link>
               </div>
             </div>
           )}

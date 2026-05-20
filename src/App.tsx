@@ -18,13 +18,10 @@ import ForgotPasswordScreen from './screens/auth/ForgotPasswordScreen';
 import AdminDashboardOverview from './screens/admin/AdminDashboardOverview';
 import AdminListingReview from './screens/admin/AdminListingReview';
 import AdminLiveAuctions from './screens/admin/AdminLiveAuctions';
-import AdminSellerVerification from './screens/admin/AdminSellerVerification';
 import AdminAnalytics from './screens/admin/AdminAnalytics';
 import AdminSettings from './screens/admin/AdminSettings';
 
 import SellerDashboard from './screens/seller/SellerDashboard';
-import SellerIdentityVerification from './screens/seller/SellerIdentityVerification';
-import SellerVerificationStatus from './screens/seller/SellerVerificationStatus';
 import SellerCreateListingStep1 from './screens/seller/SellerCreateListingStep1';
 import SellerCreateListingStep2 from './screens/seller/SellerCreateListingStep2';
 import SellerCreateListingStep4 from './screens/seller/SellerCreateListingStep4';
@@ -75,11 +72,6 @@ export default function App() {
                     <AdminLiveAuctions />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/seller-verification" element={
-                  <ProtectedRoute allowedRoles={['ADMIN']}>
-                    <AdminSellerVerification />
-                  </ProtectedRoute>
-                } />
                 <Route path="/admin/analytics" element={
                   <ProtectedRoute allowedRoles={['ADMIN']}>
                     <AdminAnalytics />
@@ -95,16 +87,6 @@ export default function App() {
                 <Route path="/seller/dashboard" element={
                   <ProtectedRoute allowedRoles={['SELLER']}>
                     <SellerDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/seller/identity-verification" element={
-                  <ProtectedRoute allowedRoles={['SELLER']}>
-                    <SellerIdentityVerification />
-                  </ProtectedRoute>
-                } />
-                <Route path="/seller/verification-status" element={
-                  <ProtectedRoute allowedRoles={['SELLER']}>
-                    <SellerVerificationStatus />
                   </ProtectedRoute>
                 } />
                 <Route path="/seller/create-listing/step-1" element={

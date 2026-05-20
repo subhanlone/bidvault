@@ -25,12 +25,7 @@ export default function ProtectedRoute({ children, allowedRoles }: Props) {
 
   if (!allowedRoles.includes(user.role)) {
     if (user.role === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
-    if (user.role === 'SELLER') {
-      const dest = user.verificationStatus === 'VERIFIED'
-        ? '/seller/dashboard'
-        : '/seller/identity-verification';
-      return <Navigate to={dest} replace />;
-    }
+    if (user.role === 'SELLER') return <Navigate to="/seller/dashboard" replace />;
     return <Navigate to="/buyer/browse" replace />;
   }
 

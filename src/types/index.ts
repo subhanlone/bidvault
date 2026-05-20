@@ -1,5 +1,4 @@
 export type UserRole = 'BUYER' | 'SELLER' | 'ADMIN';
-export type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 export type AuctionStatus = 'SCHEDULED' | 'ACTIVE' | 'CLOSED';
 export type ListingStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
 export type NotificationType = 'BID' | 'WIN' | 'LISTING' | 'SYSTEM';
@@ -12,7 +11,6 @@ export interface User {
   email: string;
   role: UserRole;
   isEmailVerified: boolean;
-  verificationStatus?: VerificationStatus;
   createdAt: string;
 }
 

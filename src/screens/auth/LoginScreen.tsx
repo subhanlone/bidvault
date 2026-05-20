@@ -30,12 +30,8 @@ export default function LoginScreen() {
     if (result.success && result.user) {
       showToast({ type: 'success', title: `Welcome back, ${result.user.name.split(' ')[0]}!`, message: 'You are now signed in.' });
       if (result.user.role === 'ADMIN') navigate('/admin/dashboard');
-      else if (result.user.role === 'SELLER') {
-        const dest = result.user.verificationStatus === 'VERIFIED'
-          ? '/seller/dashboard'
-          : '/seller/identity-verification';
-        navigate(dest);
-      } else navigate('/buyer/browse');
+      else if (result.user.role === 'SELLER') navigate('/seller/dashboard');
+      else navigate('/buyer/browse');
     } else {
       showToast({ type: 'error', title: 'Sign In Failed', message: result.error || 'Invalid credentials.' });
     }

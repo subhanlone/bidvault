@@ -30,7 +30,6 @@ export const mockApi = {
       email: data.email.toLowerCase(),
       role: data.role,
       isEmailVerified: false,
-      verificationStatus: data.role === 'SELLER' ? 'UNVERIFIED' : undefined,
       createdAt: new Date().toISOString(),
     };
     users.push(newUser);
@@ -87,21 +86,6 @@ export const mockApi = {
     return { success: true };
   },
 
-  // ── Seller Verification ───────────────────────────────────────────────────
-
-  async submitVerification(sellerId: string): Promise<ApiResponse> {
-    await delay(800);
-    const user = users.find(u => u.userId === sellerId);
-    if (user) user.verificationStatus = 'PENDING';
-    return { success: true };
-  },
-
-  async approveSellerVerification(sellerId: string): Promise<ApiResponse> {
-    await delay(500);
-    const user = users.find(u => u.userId === sellerId);
-    if (user) user.verificationStatus = 'VERIFIED';
-    return { success: true };
-  },
 
   // ── Auctions ──────────────────────────────────────────────────────────────
 
@@ -227,17 +211,6 @@ export const mockApi = {
     return { success: true };
   },
 
-  async getPendingSellerVerifications(): Promise<ApiResponse<User[]>> {
-    await delay(300);
-    return { success: true, data: users.filter(u => u.role === 'SELLER' && u.verificationStatus === 'PENDING') };
-  },
-
-  async rejectSellerVerification(sellerId: string): Promise<ApiResponse> {
-    await delay(500);
-    const u = users.find(u => u.userId === sellerId);
-    if (u) u.verificationStatus = 'REJECTED';
-    return { success: true };
-  },
 
   // Helper: get user by email (for internal use)
   getUserByEmail(email: string): User | undefined {

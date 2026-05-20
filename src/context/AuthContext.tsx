@@ -13,8 +13,6 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyResetOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  submitVerification: () => Promise<{ success: boolean; error?: string }>;
-  simulateAdminApproval: () => void;
   updateUser: (u: User) => void;
 }
 
@@ -87,31 +85,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return res.success ? { success: true } : { success: false, error: res.error };
   };
 
-  const submitVerification = async () => {
-    if (!user) return { success: false, error: 'Not logged in.' };
-    const res = await mockApi.submitVerification(user.userId);
-    if (res.success) {
-      const updated = { ...user, verificationStatus: 'PENDING' as const };
-      persist(updated, token);
-      return { success: true };
-    }
-    return { success: false, error: res.error };
-  };
-
-  const simulateAdminApproval = () => {
-    if (!user) return;
-    const updated = { ...user, verificationStatus: 'VERIFIED' as const };
-    persist(updated, token);
-  };
-
   const updateUser = (u: User) => persist(u, token);
 
   return (
     <AuthContext.Provider value={{
       user, token, isLoading,
       register, verifyEmail, login, logout,
-      forgotPassword, verifyResetOtp, resetPassword,
-      submitVerification, simulateAdminApproval, updateUser,
+      forgotPassword, verifyResetOtp, resetPassword, updateUser,
     }}>
       {children}
     </AuthContext.Provider>

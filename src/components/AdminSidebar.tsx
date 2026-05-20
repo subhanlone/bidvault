@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAuction } from '../context/AuctionContext';
 import {
-  IconBidVaultLogo, IconDashboard, IconList, IconUsers,
+  IconBidVaultLogo, IconDashboard, IconList,
   IconAnalytics, IconSettings,
 } from './Icons';
 
@@ -16,7 +16,6 @@ export function AdminSidebarContent({ active, onClose }: { active: string; onClo
     { icon: <IconDashboard />, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: <IconList />, label: 'Live Auctions', badge: '6', path: '/admin/live-auctions' },
     { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: '/admin/dashboard' },
-    { icon: <IconUsers />, label: 'Seller Verification', path: '/admin/seller-verification' },
     { icon: <IconAnalytics />, label: 'Analytics', path: '/admin/analytics' },
     { icon: <IconSettings />, label: 'Settings', path: '/admin/settings' },
   ];

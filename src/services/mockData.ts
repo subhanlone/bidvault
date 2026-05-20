@@ -21,7 +21,6 @@ export const SEED_USERS: User[] = [
     email: 'ahmed@gmail.com',
     role: 'SELLER',
     isEmailVerified: true,
-    verificationStatus: 'VERIFIED',
     createdAt: past(24 * 60),
   },
   {
@@ -39,7 +38,6 @@ export const SEED_USERS: User[] = [
     email: 'fatima@gmail.com',
     role: 'SELLER',
     isEmailVerified: true,
-    verificationStatus: 'PENDING',
     createdAt: past(24 * 2),
   },
   {
@@ -48,7 +46,6 @@ export const SEED_USERS: User[] = [
     email: 'kamran@gmail.com',
     role: 'SELLER',
     isEmailVerified: true,
-    verificationStatus: 'PENDING',
     createdAt: past(24 * 3),
   },
   {
@@ -57,7 +54,6 @@ export const SEED_USERS: User[] = [
     email: 'sara@gmail.com',
     role: 'SELLER',
     isEmailVerified: true,
-    verificationStatus: 'PENDING',
     createdAt: past(24 * 5),
   },
   {
@@ -66,7 +62,6 @@ export const SEED_USERS: User[] = [
     email: 'omar@gmail.com',
     role: 'SELLER',
     isEmailVerified: true,
-    verificationStatus: 'PENDING',
     createdAt: past(24 * 1),
   },
 ];
