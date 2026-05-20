@@ -21,7 +21,7 @@ export function AdminSidebarContent({ active, onClose }: { active: string; onClo
   ];
 
   return (
-    <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 min-h-screen">
+    <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 h-screen sticky top-0 overflow-y-auto">
       <div className="flex gap-[10px] items-center px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
         <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
           <IconBidVaultLogo className="size-[16px]" />

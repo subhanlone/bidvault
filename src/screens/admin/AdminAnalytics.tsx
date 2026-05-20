@@ -59,7 +59,7 @@ export default function AdminAnalytics() {
 
   return (
     <div className="flex min-h-screen bg-[#f8f9fa]">
-      <div className="hidden md:flex md:flex-col md:w-[200px] md:shrink-0 md:min-h-screen">
+      <div className="hidden md:block md:w-[200px] md:shrink-0">
         <AdminSidebarContent active="Analytics" />
       </div>
       {sidebarOpen && (
