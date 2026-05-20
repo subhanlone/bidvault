@@ -197,7 +197,7 @@ export default function AdminListingReview() {
               </div>
 
               <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
-                <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-3">AI Price Analysis</h3>
+                <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-3">Price Assessment</h3>
                 <div className="flex items-end gap-2 mb-3">
                   <span className="font-extrabold text-[24px] sm:text-[28px] text-[#1a7a4a]">PKR {(listing.startPrice * 0.9).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                   <span className="text-[12px] text-[#adb5bd] mb-1">— PKR {(listing.startPrice * 1.25).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>

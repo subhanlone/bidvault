@@ -79,7 +79,7 @@ export default function AdminDashboardOverview() {
             {[
               { label: 'Active Auctions', value: '24', sub: '+3 Today', color: 'text-[#0b1f3a]' },
               { label: 'Total Bids Today', value: '1,847', sub: '+10% vs last week', color: 'text-[#1a7a4a]' },
-              { label: 'Listing Reviews', value: String(pendingCount), sub: 'Pending approval', color: 'text-[#ef4444]' },
+              { label: 'Revenue Today', value: 'PKR 2.4M', sub: '+8% vs yesterday', color: 'text-[#3b82f6]' },
               { label: 'Pending Listings', value: String(pendingCount), sub: 'Awaiting review', color: 'text-[#f59e0b]' },
             ].map(s => (
               <div key={s.label} className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">

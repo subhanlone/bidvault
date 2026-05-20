@@ -19,7 +19,7 @@ export default function SellerListingSubmitted() {
 
   return (
     <div className="min-h-screen bg-white">
-      <ListingStepperHeader currentStep={3} />
+      <ListingStepperHeader currentStep={2} />
 
       <main className="flex flex-col items-center justify-center py-20 px-4">
         {/* Success icon */}

@@ -74,7 +74,7 @@ export default function LandingPage() {
       accent: '#0b1f3a',
       iconBg: 'rgba(11,31,58,0.07)',
       title: 'Verified Sellers Only',
-      desc: 'Every seller completes CNIC-based identity verification before listing. Buy with confidence, every time.',
+      desc: 'Every seller is reviewed and approved by our admin team before listing. Buy with confidence, every time.',
     },
     {
       icon: <Zap size={28} strokeWidth={1.5} className="text-[#f59e0b]" />,
@@ -99,8 +99,8 @@ export default function LandingPage() {
   ];
 
   const sellerSteps = [
-    { step: '01', title: 'Verify Your Identity', desc: 'Submit your CNIC and supporting documents. Our admin team reviews and approves your seller account.' },
-    { step: '02', title: 'Create a Listing', desc: 'Upload details and photos. Our AI analyzes the market and recommends the optimal starting price for your item.' },
+    { step: '01', title: 'Create Your Account', desc: 'Register as a seller and set up your profile. Our admin team reviews and activates your seller account.' },
+    { step: '02', title: 'Create a Listing', desc: 'Upload photos and describe your item in detail. Set your own starting price for the auction.' },
     { step: '03', title: 'Go Live & Earn', desc: 'After admin approval, your auction goes live to thousands of active buyers. Watch bids roll in.' },
   ];
 
@@ -195,12 +195,12 @@ export default function LandingPage() {
 
             <h1 className="font-extrabold text-[36px] sm:text-[48px] lg:text-[60px] text-white leading-[1.1] tracking-[-1.5px] mb-5">
               Pakistan's Smartest<br />
-              <span className="text-[#d0021b]">AI-Powered</span> Auction<br />
+              <span className="text-[#d0021b]">Real-Time</span> Auction<br />
               Platform
             </h1>
 
             <p className="text-[15px] sm:text-[17px] text-[rgba(255,255,255,0.65)] leading-[1.7] mb-8 max-w-[560px] mx-auto lg:mx-0">
-              Bid on verified items, sell with AI-optimized pricing, and experience real-time auctions — all in one secure platform built for Pakistan.
+              Bid on verified items, sell with transparent listings, and experience real-time auctions — all in one secure platform built for Pakistan.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
@@ -315,7 +315,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {features.map(f => (
               <div
                 key={f.title}
@@ -397,7 +397,7 @@ export default function LandingPage() {
                 </span>
               </Link>
               <p className="text-[13px] text-[rgba(255,255,255,0.4)] leading-[1.7]">
-                Pakistan's AI-powered auction platform. Buy and sell with confidence.
+                Pakistan's trusted auction platform. Buy and sell with confidence.
               </p>
             </div>
 

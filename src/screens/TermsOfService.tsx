@@ -16,7 +16,7 @@ const SECTIONS = [
   },
   {
     title: '4. Seller Responsibilities',
-    body: `Sellers must complete CNIC-based identity verification before creating listings. All listings must accurately describe the item, including its condition. Sellers may not list prohibited items (counterfeit goods, stolen property, weapons, restricted items). Sellers are responsible for honoring transactions when a listing receives winning bids. BidVault may remove listings and ban sellers who violate these rules.`,
+    body: `Sellers must maintain accurate account information and may be subject to admin review before listing privileges are granted. All listings must accurately describe the item, including its condition. Sellers may not list prohibited items (counterfeit goods, stolen property, weapons, restricted items). Sellers are responsible for honoring transactions when a listing receives winning bids. BidVault may remove listings and ban sellers who violate these rules.`,
   },
   {
     title: '5. Admin Review and Approval',

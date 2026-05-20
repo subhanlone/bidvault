@@ -4,15 +4,15 @@ import { IconBidVaultLogo } from '../components/Icons';
 const SECTIONS = [
   {
     title: '1. Information We Collect',
-    body: `When you create an account on BidVault, we collect personal information including your full name, email address, and selected account role (Buyer or Seller). Sellers additionally submit CNIC (National Identity Card) details and supporting documents for identity verification. We also collect usage data such as bids placed, listings created, auction participation history, and device/browser metadata for security and fraud prevention.`,
+    body: `When you create an account on BidVault, we collect personal information including your full name, email address, and selected account role (Buyer or Seller). We also collect usage data such as bids placed, listings created, auction participation history, and device/browser metadata for security and fraud prevention.`,
   },
   {
     title: '2. How We Use Your Information',
     body: `Your information is used solely to operate the BidVault platform: facilitating auctions, verifying seller identities, processing bids, sending transactional email notifications (bid confirmations, win alerts, listing approvals), and administering user accounts. We do not sell, rent, or share your personal data with third parties for marketing purposes.`,
   },
   {
-    title: '3. Seller Identity Verification',
-    body: `Sellers are required to complete CNIC-based verification before listing items. Submitted documents are reviewed exclusively by BidVault administrators and are stored securely. Verification data is used only to confirm seller identity and is not shared externally. Rejected verification submissions are deleted from our systems within 30 days.`,
+    title: '3. Seller Account Review',
+    body: `Seller accounts are subject to admin review before listing privileges are granted. BidVault administrators may request additional information to confirm account legitimacy. Account review data is used solely to maintain platform integrity and is not shared externally. Rejected applications may be resubmitted after addressing the stated concerns.`,
   },
   {
     title: '4. Data Security',

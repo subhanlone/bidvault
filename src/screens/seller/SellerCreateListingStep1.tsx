@@ -36,7 +36,6 @@ function ListingStepperHeader({ currentStep }: { currentStep: number }) {
           </nav>
         </div>
         <div className="hidden md:flex items-center gap-3">
-          <span className="bg-[#1a7a4a] border border-[#1a7a4a] font-bold text-[11px] text-white px-3 py-1 rounded-[99px]">Verified Seller</span>
           <div className="bg-[rgba(255,255,255,0.1)] rounded-full size-[34px] flex items-center justify-center">
             <span className="font-bold text-[13px] text-white">{user?.name?.[0] ?? 'S'}</span>
           </div>
