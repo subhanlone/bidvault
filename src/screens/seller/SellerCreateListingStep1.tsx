@@ -222,7 +222,7 @@ export default function SellerCreateListingStep1() {
         </div>
 
         <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-5 sm:mt-6">
-          <Link to="/seller/verification-status" className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa] text-center">Cancel</Link>
+          <Link to="/seller/dashboard" className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa] text-center">Cancel</Link>
           <button onClick={handleNext} className="bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors">
             Next: Auction Setup →
           </button>
