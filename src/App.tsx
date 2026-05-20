@@ -27,7 +27,6 @@ import SellerIdentityVerification from './screens/seller/SellerIdentityVerificat
 import SellerVerificationStatus from './screens/seller/SellerVerificationStatus';
 import SellerCreateListingStep1 from './screens/seller/SellerCreateListingStep1';
 import SellerCreateListingStep2 from './screens/seller/SellerCreateListingStep2';
-import SellerCreateListingStep3 from './screens/seller/SellerCreateListingStep3';
 import SellerCreateListingStep4 from './screens/seller/SellerCreateListingStep4';
 import SellerListingSubmitted from './screens/seller/SellerListingSubmitted';
 
@@ -116,11 +115,6 @@ export default function App() {
                 <Route path="/seller/create-listing/step-2" element={
                   <ProtectedRoute allowedRoles={['SELLER']}>
                     <SellerCreateListingStep2 />
-                  </ProtectedRoute>
-                } />
-                <Route path="/seller/create-listing/step-3" element={
-                  <ProtectedRoute allowedRoles={['SELLER']}>
-                    <SellerCreateListingStep3 />
                   </ProtectedRoute>
                 } />
                 <Route path="/seller/create-listing/step-4" element={

@@ -16,23 +16,6 @@ export interface User {
   createdAt: string;
 }
 
-export interface ComparableListing {
-  title: string;
-  soldPrice: number;
-}
-
-export interface PricePrediction {
-  predictionId: string;
-  listingId: string;
-  predictedPrice: number;
-  confidence: number;
-  modelName: string;
-  generatedAt: string;
-  comparables: ComparableListing[];
-  rangeLow: number;
-  rangeHigh: number;
-}
-
 export interface Listing {
   listingId: string;
   sellerId: string;
@@ -110,9 +93,6 @@ export interface ListingDraft {
   minIncrement: number;
   hasReserve: boolean;
   reservePrice: number;
-  aiPrediction?: PricePrediction;
-  useAiPrice: boolean;
-  finalStartingPrice: number;
 }
 
 export interface Toast {

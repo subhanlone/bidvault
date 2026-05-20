@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Clock, Gavel, Users, Banknote, Star, MapPin, Bot, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
+import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
 import { SEED_AUCTIONS } from '../services/mockData';
 import { useTimer } from '../hooks/useTimer';
 import { IconBidVaultLogo } from '../components/Icons';
@@ -69,13 +69,6 @@ export default function LandingPage() {
   ];
 
   const features = [
-    {
-      icon: <Bot size={28} strokeWidth={1.5} className="text-[#d0021b]" />,
-      accent: '#d0021b',
-      iconBg: 'rgba(208,2,27,0.08)',
-      title: 'AI Price Prediction',
-      desc: 'Our AI analyzes thousands of market comparables to suggest the perfect starting price for your listing — no guesswork.',
-    },
     {
       icon: <Lock size={28} strokeWidth={1.5} className="text-[#0b1f3a]" />,
       accent: '#0b1f3a',

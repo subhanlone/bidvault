@@ -28,7 +28,7 @@ export default function SellerCreateListingStep2() {
       showToast({ type: 'error', title: 'Invalid Reserve', message: 'Reserve price must be higher than starting price.' });
       return;
     }
-    navigate('/seller/create-listing/step-3');
+    navigate('/seller/create-listing/step-4');
   };
 
   return (
@@ -109,7 +109,7 @@ export default function SellerCreateListingStep2() {
                     className="bg-white border border-[#dee2e6] h-[48px] px-4 rounded-[8px] text-[14px] text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
                     placeholder="e.g. 85000"
                     value={draft.startingPrice || ''}
-                    onChange={e => updateDraft({ startingPrice: Number(e.target.value), finalStartingPrice: Number(e.target.value) })}
+                    onChange={e => updateDraft({ startingPrice: Number(e.target.value) })}
                   />
                 </div>
               </div>
@@ -180,7 +180,7 @@ export default function SellerCreateListingStep2() {
         <div className="flex justify-between mt-5 sm:mt-6">
           <button onClick={() => navigate('/seller/create-listing/step-1')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
           <button type="submit" className="bg-[#d0021b] font-bold text-[14px] text-white px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors">
-            Next: AI Pricing →
+            Next: Review →
           </button>
         </div>
         </form>

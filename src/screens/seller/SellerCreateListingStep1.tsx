@@ -7,7 +7,7 @@ import { Camera, Car, Check, ClipboardList, Menu, Package, Smartphone, X } from 
 import { IconBidVaultLogo, IconUpload } from '../../components/Icons';
 import type { ItemCondition } from '../../types';
 
-const STEP_LABELS = ['Item Details', 'Auction Setup', 'AI Pricing', 'Review & Submit'];
+const STEP_LABELS = ['Item Details', 'Auction Setup', 'Review & Submit'];
 const CATEGORIES = ['Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles'];
 const CONDITIONS: { value: ItemCondition; label: string }[] = [
   { value: 'NEW', label: 'New' },

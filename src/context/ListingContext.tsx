@@ -14,9 +14,6 @@ const DEFAULT_DRAFT: ListingDraft = {
   minIncrement: 1_000,
   hasReserve: false,
   reservePrice: 0,
-  aiPrediction: undefined,
-  useAiPrice: false,
-  finalStartingPrice: 0,
 };
 
 interface ListingContextType {

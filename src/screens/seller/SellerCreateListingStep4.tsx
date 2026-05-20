@@ -31,17 +31,15 @@ export default function SellerCreateListingStep4() {
     }
   };
 
-  const price = draft.useAiPrice ? draft.aiPrediction?.predictedPrice ?? draft.finalStartingPrice : draft.startingPrice;
-
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <ListingStepperHeader currentStep={3} />
+      <ListingStepperHeader currentStep={2} />
 
       <main className="max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
         <h1 className="font-extrabold text-[19px] sm:text-[22px] text-[#0b1f3a] mb-1">Review Your Listing</h1>
         <p className="text-[13px] text-[#6c757d] mb-5 sm:mb-6">Check all details before submitting to admin for review.</p>
 
-        <Stepper current={3} />
+        <Stepper current={2} />
 
         <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 sm:gap-5">
           {/* Item Details */}
@@ -78,12 +76,11 @@ export default function SellerCreateListingStep4() {
             </div>
             <div className="p-5 grid grid-cols-2 gap-3">
               {[
-                { label: 'STARTING PRICE', value: fmtPKR(price), red: true },
+                { label: 'STARTING PRICE', value: fmtPKR(draft.startingPrice), red: true },
                 { label: 'MIN INCREMENT', value: fmtPKR(draft.minIncrement) },
                 { label: 'START DATE', value: draft.startDate || '—' },
                 { label: 'DURATION', value: `${draft.duration} Days` },
                 ...(draft.hasReserve ? [{ label: 'RESERVE PRICE', value: fmtPKR(draft.reservePrice) }] : []),
-                { label: 'AI PRICE USED', value: draft.useAiPrice ? 'Yes' : 'No' },
               ].map(d => (
                 <div key={d.label} className="bg-[#f8f9fa] rounded-[8px] px-3 py-3">
                   <p className="text-[10px] text-[#adb5bd] font-bold tracking-[0.5px] uppercase">{d.label}</p>
@@ -102,7 +99,7 @@ export default function SellerCreateListingStep4() {
         </div>
 
         <div className="flex justify-between mt-5 sm:mt-6">
-          <button onClick={() => navigate('/seller/create-listing/step-3')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
+          <button onClick={() => navigate('/seller/create-listing/step-2')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
           <button onClick={handleSubmit} disabled={loading} className="bg-[#d0021b] flex gap-2 items-center font-bold text-[13px] sm:text-[14px] text-white px-4 sm:px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors disabled:opacity-60">
             {loading ? <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Submit Listing for Review →'}
           </button>

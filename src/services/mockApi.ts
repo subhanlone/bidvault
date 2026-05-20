@@ -1,4 +1,4 @@
-import type { User, Auction, Bid, Listing, PricePrediction, RegisterData, LoginData, ListingDraft, ApiResponse } from '../types';
+import type { User, Auction, Bid, Listing, RegisterData, LoginData, ListingDraft, ApiResponse } from '../types';
 import { SEED_USERS, SEED_PASSWORDS, SEED_AUCTIONS, SEED_BIDS, SEED_PENDING_LISTINGS } from './mockData';
 
 const delay = (ms = 650) => new Promise<void>(r => setTimeout(r, ms));
@@ -147,45 +147,6 @@ export const mockApi = {
     return { success: true, data: newBid };
   },
 
-  // ── AI Price Prediction ───────────────────────────────────────────────────
-
-  async getPricePrediction(
-    category: string,
-    condition: string,
-    startingPrice: number,
-  ): Promise<ApiResponse<PricePrediction>> {
-    await delay(1200);
-    const base = startingPrice > 0 ? startingPrice : 50_000;
-    const multiplier = condition === 'NEW' ? 1.15 : condition === 'LIKE_NEW' ? 1.0 : 0.82;
-    const predicted = Math.round((base * multiplier * (0.95 + Math.random() * 0.2)) / 1000) * 1000;
-    const rangeLow = Math.round(predicted * 0.8 / 1000) * 1000;
-    const rangeHigh = Math.round(predicted * 1.25 / 1000) * 1000;
-    const confidence = 0.78 + Math.random() * 0.15;
-
-    const comparablePrices = [
-      Math.round(predicted * (0.9 + Math.random() * 0.15) / 1000) * 1000,
-      Math.round(predicted * (1.0 + Math.random() * 0.15) / 1000) * 1000,
-      Math.round(predicted * (0.75 + Math.random() * 0.15) / 1000) * 1000,
-    ];
-
-    const prediction: PricePrediction = {
-      predictionId: `pp-${Date.now()}`,
-      listingId: 'draft',
-      predictedPrice: predicted,
-      confidence: parseFloat(confidence.toFixed(2)),
-      modelName: 'XGBoost v2.1',
-      generatedAt: new Date().toISOString(),
-      comparables: [
-        { title: `${category} Item — 256GB`, soldPrice: comparablePrices[0] },
-        { title: `${category} Item — 512GB`, soldPrice: comparablePrices[1] },
-        { title: `${category} Item — Basic`, soldPrice: comparablePrices[2] },
-      ],
-      rangeLow,
-      rangeHigh,
-    };
-    return { success: true, data: prediction };
-  },
-
   // ── Listings ──────────────────────────────────────────────────────────────
 
   async submitListing(
@@ -203,7 +164,7 @@ export const mockApi = {
       category: draft.category,
       condition: draft.condition as 'NEW' | 'LIKE_NEW' | 'USED',
       description: draft.description,
-      startPrice: draft.finalStartingPrice || draft.startingPrice,
+      startPrice: draft.startingPrice,
       reservePrice: draft.hasReserve ? draft.reservePrice : undefined,
       status: 'PENDING',
       submittedAt: new Date().toISOString(),
