@@ -15,7 +15,7 @@ export function AdminSidebarContent({ active, onClose }: { active: string; onClo
   const items = [
     { icon: <IconDashboard />, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: <IconList />, label: 'Live Auctions', badge: '6', path: '/admin/live-auctions' },
-    { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: '/admin/dashboard' },
+    { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: '/admin/listing-reviews' },
     { icon: <IconAnalytics />, label: 'Analytics', path: '/admin/analytics' },
     { icon: <IconSettings />, label: 'Settings', path: '/admin/settings' },
   ];

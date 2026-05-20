@@ -33,7 +33,7 @@ export default function AdminListingReview() {
     await approveListing(listing.listingId);
     setLoading(false);
     showToast({ type: 'success', title: 'Listing Approved', message: `"${listing.title}" is now published.` });
-    navigate('/admin/dashboard');
+    navigate('/admin/listing-reviews');
   };
 
   const handleReject = async () => {
@@ -46,7 +46,7 @@ export default function AdminListingReview() {
     await rejectListing(listing.listingId, rejectReason);
     setLoading(false);
     showToast({ type: 'info', title: 'Listing Rejected', message: `"${listing.title}" has been rejected.` });
-    navigate('/admin/dashboard');
+    navigate('/admin/listing-reviews');
   };
 
   const conditionLabel: Record<string, string> = { NEW: 'New', LIKE_NEW: 'Like New', USED: 'Used' };
@@ -56,8 +56,8 @@ export default function AdminListingReview() {
       <div className="flex min-h-screen bg-[#f8f9fa] items-center justify-center">
         <div className="text-center">
           <p className="font-bold text-[18px] text-[#343a40] mb-4">Listing not found or already reviewed.</p>
-          <button onClick={() => navigate('/admin/dashboard')} className="bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#a80016]">
-            Back to Dashboard
+          <button onClick={() => navigate('/admin/listing-reviews')} className="bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#a80016]">
+            Back to Review Queue
           </button>
         </div>
       </div>
@@ -94,7 +94,7 @@ export default function AdminListingReview() {
             </button>
             <div className="min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <button onClick={() => navigate('/admin/dashboard')} className="text-[12px] text-[#6c757d] hover:text-[#d0021b] whitespace-nowrap">Listing Review</button>
+                <button onClick={() => navigate('/admin/listing-reviews')} className="text-[12px] text-[#6c757d] hover:text-[#d0021b] whitespace-nowrap">Listing Review</button>
                 <IconChevronRight className="size-[10px] shrink-0" />
                 <span className="font-semibold text-[12px] text-[#343a40] truncate">{listing.title}</span>
               </div>

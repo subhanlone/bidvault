@@ -18,6 +18,7 @@ import ForgotPasswordScreen from './screens/auth/ForgotPasswordScreen';
 import AdminDashboardOverview from './screens/admin/AdminDashboardOverview';
 import AdminListingReview from './screens/admin/AdminListingReview';
 import AdminLiveAuctions from './screens/admin/AdminLiveAuctions';
+import AdminListingReviews from './screens/admin/AdminListingReviews';
 import AdminAnalytics from './screens/admin/AdminAnalytics';
 import AdminSettings from './screens/admin/AdminSettings';
 
@@ -70,6 +71,11 @@ export default function App() {
                 <Route path="/admin/live-auctions" element={
                   <ProtectedRoute allowedRoles={['ADMIN']}>
                     <AdminLiveAuctions />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/listing-reviews" element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <AdminListingReviews />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/analytics" element={
