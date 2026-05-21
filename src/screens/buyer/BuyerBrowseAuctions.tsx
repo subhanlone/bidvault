@@ -84,7 +84,7 @@ export default function BuyerBrowseAuctions() {
 
       <div className="flex">
         {/* Sidebar — desktop only */}
-        <aside className="hidden md:block bg-white border-r border-[#e9ecef] w-[220px] shrink-0 min-h-[calc(100vh-60px)] p-5">
+        <aside className="hidden md:block bg-white border-r border-[#e9ecef] w-[220px] shrink-0 sticky top-[60px] self-start max-h-[calc(100vh-60px)] overflow-y-auto p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-[13px] text-[#0b1f3a] flex items-center gap-1.5">
               <SlidersHorizontal size={13} strokeWidth={2.5} /> Filters

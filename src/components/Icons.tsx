@@ -1,7 +1,7 @@
 // BidVault icon library — Lucide React wrappers with same export names
 import {
   Check, Mail, Lock, Eye, ArrowRight, ArrowLeft, Info, Key, RotateCcw,
-  Shield, LayoutDashboard, List, Users, AlertTriangle, TrendingUp, Settings,
+  Shield, LayoutDashboard, List, AlertTriangle, TrendingUp, Settings,
   Search, Bell, Upload, Plus, ChevronRight, ChevronLeft, Calendar, Clock,
   FileText, Phone, CreditCard, Star, Flame, Heart, SlidersHorizontal, X,
   Store, User, ToggleRight,
@@ -122,10 +122,6 @@ export const IconDashboard = () => (
 
 export const IconList = () => (
   <List className="size-[16px]" strokeWidth={1.5} />
-);
-
-export const IconUsers = () => (
-  <Users className="size-[16px]" strokeWidth={1.5} />
 );
 
 export const IconAlert = () => (

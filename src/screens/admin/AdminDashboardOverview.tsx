@@ -55,7 +55,7 @@ export default function AdminDashboardOverview() {
             </button>
             <div>
               <h1 className="font-extrabold text-[18px] sm:text-[20px] text-[#0b1f3a]">Dashboard Overview</h1>
-              <p className="text-[12px] text-[#6c757d]">Friday, 16 May 2026 · BidVault Admin</p>
+              <p className="text-[12px] text-[#6c757d]">{new Date().toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · BidVault Admin</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">

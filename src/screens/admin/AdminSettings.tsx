@@ -92,7 +92,7 @@ export default function AdminSettings() {
             </div>
             <div className="divide-y divide-[#f8f9fa]">
               {[
-                { label: 'Auto-Approve Listings', sub: 'Skip manual review for verified sellers', value: autoApprove, set: setAutoApprove, danger: true },
+                { label: 'Auto-Approve Listings', sub: 'Skip manual review and publish listings immediately', value: autoApprove, set: setAutoApprove, danger: true },
                 { label: 'Email Notifications', sub: 'Send bid/win alerts to buyers and sellers', value: emailNotifs, set: setEmailNotifs },
                 { label: 'Maintenance Mode', sub: 'Show maintenance page to all users', value: maintenanceMode, set: setMaintenanceMode, danger: true },
               ].map(t => (

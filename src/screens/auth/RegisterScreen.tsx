@@ -83,7 +83,7 @@ export default function RegisterScreen() {
                 Pakistan's Smartest<br />Auction Platform
               </h1>
               <p className="text-[14px] text-[rgba(255,255,255,0.58)] leading-[23px] max-w-[340px]">
-                List items, bid in real-time, and discover fair market prices powered by AI — all in one secure platform.
+                List items, bid in real-time, and discover fair market prices — all in one secure platform built for Pakistan.
               </p>
               <div className="flex gap-4 items-start pt-5">
                 {[{ value: '50K+', label: 'Active Users' }, { value: '12K+', label: 'Auctions Done' }, { value: '99%', label: 'Satisfaction' }].map(s => (
@@ -96,7 +96,7 @@ export default function RegisterScreen() {
             </div>
 
             <div className="flex flex-col gap-[10px]">
-              {['256-bit SSL encryption on all transactions', 'Admin-reviewed listings before going live', 'Verified sellers only — admin approved'].map(t => (
+              {['256-bit SSL encryption on all transactions', 'Admin-reviewed listings before going live', 'Real-time bidding with live countdowns'].map(t => (
                 <div key={t} className="flex gap-[10px] items-center">
                   <div className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] flex items-center justify-center p-px rounded-[11px] size-[22px]">
                     <IconCheck />

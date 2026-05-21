@@ -22,7 +22,7 @@ function SellerSidebar({ active, onClose }: { active: string; onClose?: () => vo
   ];
 
   return (
-    <aside className="bg-[#0b1f3a] w-full md:w-[200px] shrink-0 flex flex-col h-full">
+    <aside className="bg-[#0b1f3a] w-full md:w-[200px] shrink-0 flex flex-col h-screen sticky top-0 overflow-y-auto">
       <div className="flex items-center justify-between gap-[10px] px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
         <div className="flex gap-[10px] items-center">
           <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
@@ -92,7 +92,7 @@ export default function SellerDashboard() {
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex">
       {/* Desktop sidebar */}
-      <div className="hidden md:flex md:flex-col md:w-[200px] md:shrink-0 md:min-h-screen">
+      <div className="hidden md:block md:w-[200px] md:shrink-0">
         <SellerSidebar active="Dashboard" />
       </div>
 
