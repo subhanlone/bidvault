@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { IconBidVaultLogo } from '../components/Icons';
+import { Gavel } from 'lucide-react';
 
 const SECTIONS = [
   {
@@ -52,7 +52,7 @@ export default function TermsOfService() {
         <div className="max-w-[900px] mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between">
           <Link to="/" className="flex gap-[10px] items-center">
             <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
-              <IconBidVaultLogo className="size-[16px]" />
+              <Gavel size={16} strokeWidth={2} className="text-white" />
             </div>
             <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
               Bid<span className="text-[#d0021b]">Vault</span>

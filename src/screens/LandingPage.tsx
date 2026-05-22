@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
 import { SEED_AUCTIONS } from '../services/mockData';
 import { useTimer } from '../hooks/useTimer';
-import { IconBidVaultLogo } from '../components/Icons';
 import type { Auction } from '../types';
 
 // ─── Auction card with live timer ─────────────────────────────────────────────
@@ -117,7 +116,7 @@ export default function LandingPage() {
             {/* Logo */}
             <Link to="/" className="flex gap-[10px] items-center shrink-0">
               <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[34px]">
-                <IconBidVaultLogo className="size-[18px]" />
+                <Gavel size={18} strokeWidth={2} className="text-white" />
               </div>
               <span className="font-extrabold text-[20px] text-white tracking-[-0.3px]">
                 Bid<span className="text-[#d0021b]">Vault</span>
@@ -390,7 +389,7 @@ export default function LandingPage() {
             <div className="sm:col-span-2 lg:col-span-1">
               <Link to="/" className="flex gap-[10px] items-center mb-4">
                 <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
-                  <IconBidVaultLogo className="size-[16px]" />
+                  <Gavel size={16} strokeWidth={2} className="text-white" />
                 </div>
                 <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
                   Bid<span className="text-[#d0021b]">Vault</span>

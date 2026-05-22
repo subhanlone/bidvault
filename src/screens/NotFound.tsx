@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { IconBidVaultLogo } from '../components/Icons';
+import { Gavel } from 'lucide-react';
 
 export default function NotFound() {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export default function NotFound() {
         {/* Brand */}
         <Link to="/" className="inline-flex items-center gap-2 mb-12 opacity-70 hover:opacity-100 transition-opacity">
           <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
-            <IconBidVaultLogo className="size-[16px]" />
+            <Gavel size={16} strokeWidth={2} className="text-white" />
           </div>
           <span className="font-extrabold text-[20px] text-white tracking-[-0.3px]">
             Bid<span className="text-[#d0021b]">Vault</span>
