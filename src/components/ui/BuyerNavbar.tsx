@@ -10,6 +10,7 @@ interface BuyerNavbarProps {
   links?: NavLink[];
   userName?: string;
   avatarUrl?: string;
+  onLogout?: () => void;
 }
 
 const defaultLinks: NavLink[] = [
@@ -19,7 +20,7 @@ const defaultLinks: NavLink[] = [
   { label: 'Watchlist', to: '/buyer/watchlist' },
 ];
 
-export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', avatarUrl }: BuyerNavbarProps) {
+export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', avatarUrl, onLogout }: BuyerNavbarProps) {
   const { pathname } = useLocation();
 
   return (
@@ -51,7 +52,10 @@ export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', 
             {userName.charAt(0).toUpperCase()}
           </div>
         )}
-        <span className="text-sm text-white/80 font-medium">{userName}</span>
+        <span className="text-sm text-white/80 font-medium hidden sm:block">{userName}</span>
+        {onLogout && (
+          <button onClick={onLogout} className="text-xs text-white/40 hover:text-white/80 transition-colors cursor-pointer ml-1">Logout</button>
+        )}
       </div>
     </nav>
   );

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
+import { Button } from '../../components/ui';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
 
 export default function SellerListingSubmitted() {
@@ -10,12 +11,21 @@ export default function SellerListingSubmitted() {
   const { submittedListingId, clearDraft } = useListing();
 
   const now = new Date();
-  const submittedAt = now.toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }) + ' · ' + now.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
+  const submittedAt =
+    now.toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }) +
+    ' · ' +
+    now.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
 
   const handleCreateAnother = () => {
     clearDraft();
     navigate('/seller/create-listing/step-1');
   };
+
+  const timeline = [
+    { label: 'Listing submitted', sub: submittedAt, done: true,  active: false },
+    { label: 'Admin review',      sub: 'Within 24–48 hours',     done: false, active: true  },
+    { label: 'Auction goes live', sub: 'After admin approval',   done: false, active: false },
+  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -23,76 +33,56 @@ export default function SellerListingSubmitted() {
 
       <main className="flex flex-col items-center justify-center py-20 px-4">
         {/* Success icon */}
-        <div className="bg-[#f0faf4] border border-[rgba(26,122,74,0.2)] flex items-center justify-center rounded-[20px] size-[80px] mb-6">
-          <div className="bg-[#1a7a4a] flex items-center justify-center rounded-full size-[48px]">
+        <div className="w-20 h-20 rounded-2xl bg-[#f0faf4] border border-[#16a34a]/20 flex items-center justify-center mb-6">
+          <div className="w-12 h-12 rounded-full bg-[#16a34a] flex items-center justify-center">
             <Check size={24} strokeWidth={3} className="text-white" />
           </div>
         </div>
 
-        <h1 className="font-extrabold text-[28px] text-[#0b1f3a] mb-3">Listing Submitted!</h1>
-        <p className="text-[14px] text-[#6c757d] text-center leading-[22px] max-w-[420px] mb-5">
+        <h1 className="text-3xl font-extrabold text-[#0b1f3a] mb-3">Listing Submitted!</h1>
+        <p className="text-sm text-[#6c757d] text-center leading-relaxed max-w-md mb-5">
           Your listing has been submitted for admin review. You'll receive an email at{' '}
           <span className="font-bold text-[#343a40]">{user?.email ?? 'your email'}</span> once it's approved.
         </p>
 
         {submittedListingId && (
-          <div className="border border-[#dee2e6] font-semibold text-[13px] text-[#343a40] px-5 py-2 rounded-[8px] mb-10">
+          <div className="border border-[#dee2e6] text-sm font-semibold text-[#343a40] px-5 py-2 rounded-lg mb-10">
             Listing ID: <span className="font-bold text-[#d0021b]">{submittedListingId}</span>
           </div>
         )}
 
-        {/* Progress timeline */}
-        <div className="flex flex-col gap-0 w-full max-w-[380px]">
-          {/* Step 1 — done */}
-          <div className="flex items-start gap-5">
-            <div className="flex flex-col items-center">
-              <div className="bg-[#1a7a4a] flex items-center justify-center rounded-full size-[28px] shrink-0">
-                <Check size={12} strokeWidth={2.5} className="text-white" />
+        {/* Timeline */}
+        <div className="flex flex-col w-full max-w-sm">
+          {timeline.map(({ label, sub, done, active }, i) => (
+            <div key={label} className="flex items-start gap-5">
+              <div className="flex flex-col items-center">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  done   ? 'bg-[#16a34a]' :
+                  active ? 'border-2 border-[#f59e0b] bg-white' :
+                           'border-2 border-[#e9ecef] bg-white'
+                }`}>
+                  {done
+                    ? <Check size={12} strokeWidth={2.5} className="text-white" />
+                    : <span className={`font-extrabold text-xs ${active ? 'text-[#f59e0b]' : 'text-[#adb5bd]'}`}>{i + 1}</span>
+                  }
+                </div>
+                {i < timeline.length - 1 && <div className="w-0.5 h-10 bg-[#e9ecef]" />}
               </div>
-              <div className="bg-[#e9ecef] w-[2px] h-[40px]" />
-            </div>
-            <div className="pt-1">
-              <p className="font-bold text-[14px] text-[#0b1f3a]">Listing submitted</p>
-              <p className="text-[12px] text-[#6c757d]">{submittedAt}</p>
-            </div>
-          </div>
-
-          {/* Step 2 — in progress */}
-          <div className="flex items-start gap-5">
-            <div className="flex flex-col items-center">
-              <div className="border-2 border-[#f59e0b] flex items-center justify-center rounded-full size-[28px] shrink-0 bg-white">
-                <span className="font-extrabold text-[13px] text-[#f59e0b]">2</span>
-              </div>
-              <div className="bg-[#e9ecef] w-[2px] h-[40px]" />
-            </div>
-            <div className="pt-1">
-              <p className="font-bold text-[14px] text-[#0b1f3a]">Admin review</p>
-              <p className="text-[12px] text-[#6c757d]">Within 24–48 hours</p>
-            </div>
-          </div>
-
-          {/* Step 3 — pending */}
-          <div className="flex items-start gap-5">
-            <div className="flex flex-col items-center">
-              <div className="border-2 border-[#e9ecef] flex items-center justify-center rounded-full size-[28px] shrink-0 bg-white">
-                <span className="font-extrabold text-[13px] text-[#adb5bd]">3</span>
+              <div className="pt-1 pb-2">
+                <p className="text-sm font-bold text-[#0b1f3a]">{label}</p>
+                <p className="text-xs text-[#6c757d]">{sub}</p>
               </div>
             </div>
-            <div className="pt-1">
-              <p className="font-bold text-[14px] text-[#0b1f3a]">Auction goes live</p>
-              <p className="text-[12px] text-[#6c757d]">After admin approval</p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 mt-10 w-full max-w-[380px]">
-          <button onClick={() => navigate('/seller/dashboard')} className="flex-1 border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa] transition-colors">
+        <div className="flex flex-col sm:flex-row gap-3 mt-10 w-full max-w-sm">
+          <Button variant="outline" fullWidth onClick={() => navigate('/seller/dashboard')}>
             View Dashboard
-          </button>
-          <button onClick={handleCreateAnother} className="flex-1 bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors">
+          </Button>
+          <Button variant="primary" fullWidth onClick={handleCreateAnother}>
             Create Another Listing
-          </button>
+          </Button>
         </div>
       </main>
     </div>

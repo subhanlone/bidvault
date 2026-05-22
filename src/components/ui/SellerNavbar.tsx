@@ -11,6 +11,7 @@ interface SellerNavbarProps {
   links?: NavLink[];
   userName?: string;
   verificationStatus?: 'verified' | 'review' | 'unverified';
+  onLogout?: () => void;
 }
 
 const defaultLinks: NavLink[] = [
@@ -25,7 +26,7 @@ const statusBadge = {
   unverified: <Badge variant="unverified">Unverified Seller</Badge>,
 };
 
-export default function SellerNavbar({ links = defaultLinks, userName = 'Seller', verificationStatus = 'verified' }: SellerNavbarProps) {
+export default function SellerNavbar({ links = defaultLinks, userName = 'Seller', verificationStatus = 'verified', onLogout }: SellerNavbarProps) {
   const { pathname } = useLocation();
 
   return (
@@ -54,7 +55,10 @@ export default function SellerNavbar({ links = defaultLinks, userName = 'Seller'
         <div className="w-8 h-8 rounded-full bg-[#1a3356] flex items-center justify-center text-white text-sm font-semibold">
           {userName.charAt(0).toUpperCase()}
         </div>
-        <span className="text-sm text-white/80 font-medium">{userName}</span>
+        <span className="text-sm text-white/80 font-medium hidden sm:block">{userName}</span>
+        {onLogout && (
+          <button onClick={onLogout} className="text-xs text-white/40 hover:text-white/80 transition-colors cursor-pointer ml-1">Logout</button>
+        )}
       </div>
     </nav>
   );

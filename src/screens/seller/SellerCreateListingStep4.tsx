@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Smartphone, Car, Package, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
 import { mockApi } from '../../services/mockApi';
-import { Smartphone, Car, Package } from 'lucide-react';
-import { IconInfo } from '../../components/Icons';
+import { Button } from '../../components/ui';
 import { ListingStepperHeader, Stepper } from './SellerCreateListingStep1';
 
 export default function SellerCreateListingStep4() {
@@ -31,78 +31,84 @@ export default function SellerCreateListingStep4() {
     }
   };
 
+  const conditionLabel = draft.condition === 'NEW' ? 'New' : draft.condition === 'LIKE_NEW' ? 'Like New' : draft.condition === 'USED' ? 'Used' : '—';
+
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
       <ListingStepperHeader currentStep={2} />
 
-      <main className="max-w-[900px] mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-8">
-        <h1 className="font-extrabold text-[19px] sm:text-[22px] text-[#0b1f3a] mb-1">Review Your Listing</h1>
-        <p className="text-[13px] text-[#6c757d] mb-5 sm:mb-6">Check all details before submitting to admin for review.</p>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+        <h1 className="text-xl font-extrabold text-[#0b1f3a] mb-1">Review Your Listing</h1>
+        <p className="text-sm text-[#6c757d] mb-5">Check all details before submitting to admin for review.</p>
 
         <Stepper current={2} />
 
-        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 sm:gap-5">
-          {/* Item Details */}
-          <div className="bg-white border border-[#e9ecef] rounded-[12px] overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+          {/* Item details */}
+          <div className="bg-white border border-[#e9ecef] rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#e9ecef]">
-              <h3 className="font-bold text-[14px] text-[#0b1f3a]">Item Details</h3>
-              <button onClick={() => navigate('/seller/create-listing/step-1')} className="font-bold text-[12px] text-[#d0021b]">Edit</button>
+              <h3 className="text-sm font-bold text-[#0b1f3a]">Item Details</h3>
+              <button onClick={() => navigate('/seller/create-listing/step-1')} className="text-xs font-bold text-[#d0021b] hover:underline cursor-pointer">Edit</button>
             </div>
             <div className="p-5">
-              <div className="bg-[#0b1f3a] rounded-[10px] h-[160px] flex items-center justify-center text-[60px] mb-4">
-                {draft.category?.includes('Electronics') ? <Smartphone size={52} strokeWidth={1.2} className="text-white opacity-40" /> : draft.category?.includes('Vehicles') ? <Car size={52} strokeWidth={1.2} className="text-white opacity-40" /> : <Package size={52} strokeWidth={1.2} className="text-white opacity-40" />}
+              <div className="bg-[#0b1f3a] rounded-xl h-40 flex items-center justify-center mb-4">
+                {draft.category?.includes('Electronics')
+                  ? <Smartphone size={52} strokeWidth={1.2} className="text-white/40" />
+                  : draft.category?.includes('Vehicles')
+                  ? <Car size={52} strokeWidth={1.2} className="text-white/40" />
+                  : <Package size={52} strokeWidth={1.2} className="text-white/40" />}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'TITLE', value: draft.title || '—' },
-                  { label: 'CATEGORY', value: draft.category?.split('&')[0].trim() || '—' },
-                  { label: 'CONDITION', value: draft.condition === 'NEW' ? 'New' : draft.condition === 'LIKE_NEW' ? 'Like New' : draft.condition === 'USED' ? 'Used' : '—' },
-                  { label: 'PHOTOS', value: draft.hasPhoto ? '3 uploaded' : 'None' },
+                  { label: 'TITLE',     value: draft.title || '—' },
+                  { label: 'CATEGORY',  value: draft.category?.split('&')[0].trim() || '—' },
+                  { label: 'CONDITION', value: conditionLabel },
+                  { label: 'PHOTOS',    value: draft.hasPhoto ? '3 uploaded' : 'None' },
                 ].map(d => (
-                  <div key={d.label} className="bg-[#f8f9fa] rounded-[8px] px-3 py-3">
-                    <p className="text-[10px] text-[#adb5bd] font-bold tracking-[0.5px] uppercase">{d.label}</p>
-                    <p className="font-semibold text-[13px] text-[#343a40] mt-[2px] truncate">{d.value}</p>
+                  <div key={d.label} className="bg-[#f8f9fa] rounded-lg px-3 py-3">
+                    <p className="text-[10px] text-[#adb5bd] font-bold tracking-wide uppercase">{d.label}</p>
+                    <p className="text-sm font-semibold text-[#343a40] mt-0.5 truncate">{d.value}</p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Auction Parameters */}
-          <div className="bg-white border border-[#e9ecef] rounded-[12px] overflow-hidden">
+          {/* Auction parameters */}
+          <div className="bg-white border border-[#e9ecef] rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#e9ecef]">
-              <h3 className="font-bold text-[14px] text-[#0b1f3a]">Auction Parameters</h3>
-              <button onClick={() => navigate('/seller/create-listing/step-2')} className="font-bold text-[12px] text-[#d0021b]">Edit</button>
+              <h3 className="text-sm font-bold text-[#0b1f3a]">Auction Parameters</h3>
+              <button onClick={() => navigate('/seller/create-listing/step-2')} className="text-xs font-bold text-[#d0021b] hover:underline cursor-pointer">Edit</button>
             </div>
             <div className="p-5 grid grid-cols-2 gap-3">
               {[
                 { label: 'STARTING PRICE', value: fmtPKR(draft.startingPrice), red: true },
-                { label: 'MIN INCREMENT', value: fmtPKR(draft.minIncrement) },
-                { label: 'START DATE', value: draft.startDate || '—' },
-                { label: 'DURATION', value: `${draft.duration} Days` },
-                ...(draft.hasReserve ? [{ label: 'RESERVE PRICE', value: fmtPKR(draft.reservePrice) }] : []),
+                { label: 'MIN INCREMENT',  value: fmtPKR(draft.minIncrement)  },
+                { label: 'START DATE',     value: draft.startDate || '—'      },
+                { label: 'DURATION',       value: `${draft.duration} Days`    },
+                ...(draft.hasReserve ? [{ label: 'RESERVE PRICE', value: fmtPKR(draft.reservePrice), red: false }] : []),
               ].map(d => (
-                <div key={d.label} className="bg-[#f8f9fa] rounded-[8px] px-3 py-3">
-                  <p className="text-[10px] text-[#adb5bd] font-bold tracking-[0.5px] uppercase">{d.label}</p>
-                  <p className={`font-bold text-[14px] mt-[2px] ${d.red ? 'text-[#d0021b]' : 'text-[#343a40]'}`}>{d.value}</p>
+                <div key={d.label} className="bg-[#f8f9fa] rounded-lg px-3 py-3">
+                  <p className="text-[10px] text-[#adb5bd] font-bold tracking-wide uppercase">{d.label}</p>
+                  <p className={`text-sm font-bold mt-0.5 ${d.red ? 'text-[#d0021b]' : 'text-[#343a40]'}`}>{d.value}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="bg-[#eff6ff] border border-[#bfdbfe] flex gap-3 items-center px-4 py-3 rounded-[8px] mt-5">
-          <IconInfo color="#1e40af" />
-          <p className="text-[12px] text-[#1e40af] font-medium">
+        <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-[#bfdbfe] rounded-lg px-4 py-3 mt-5">
+          <Info size={15} className="text-[#1e40af] flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-[#1e40af] leading-relaxed">
             After submission, admin will review your listing within <span className="font-bold">24–48 hours</span>. You'll be notified by email once it's approved.
           </p>
         </div>
 
-        <div className="flex justify-between mt-5 sm:mt-6">
-          <button onClick={() => navigate('/seller/create-listing/step-2')} className="border border-[#dee2e6] font-semibold text-[14px] text-[#495057] px-5 sm:px-6 py-3 rounded-[8px] hover:bg-[#f8f9fa]">← Back</button>
-          <button onClick={handleSubmit} disabled={loading} className="bg-[#d0021b] flex gap-2 items-center font-bold text-[13px] sm:text-[14px] text-white px-4 sm:px-6 py-3 rounded-[8px] hover:bg-[#a80016] transition-colors disabled:opacity-60">
-            {loading ? <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Submit Listing for Review →'}
-          </button>
+        <div className="flex justify-between mt-5">
+          <Button variant="outline" onClick={() => navigate('/seller/create-listing/step-2')}>← Back</Button>
+          <Button variant="primary" loading={loading} onClick={handleSubmit}>
+            Submit Listing for Review →
+          </Button>
         </div>
       </main>
     </div>
