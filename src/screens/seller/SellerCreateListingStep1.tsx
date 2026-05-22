@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Check, ClipboardList, Camera, Package, Smartphone, Car, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -51,7 +50,7 @@ export function Stepper({ current }: { current: number }) {
   );
 }
 
-export function ListingStepperHeader({ currentStep }: { currentStep: number }) {
+export function ListingStepperHeader(_: { currentStep: number }) {
   const { user, logout } = useAuth();
   return (
     <SellerNavbar

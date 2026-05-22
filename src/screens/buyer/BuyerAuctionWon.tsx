@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles, Trophy, Frown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BuyerNavbar } from '../../components/ui';
