@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
-import { Menu } from 'lucide-react';
-import {
-  IconChevronLeft, IconChevronRight,
-  IconExport, IconStar,
-} from '../../components/Icons';
+import { Menu, ChevronLeft, ChevronRight, Download, Star } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/AdminSidebar';
 
 export default function AdminListingReview() {
@@ -94,8 +90,8 @@ export default function AdminListingReview() {
             </button>
             <div className="min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <button onClick={() => navigate('/admin/listing-reviews')} className="text-[12px] text-[#6c757d] hover:text-[#d0021b] whitespace-nowrap">Listing Review</button>
-                <IconChevronRight className="size-[10px] shrink-0" />
+                <button onClick={() => navigate('/admin/listing-reviews')} className="text-[12px] text-[#6c757d] hover:text-[#d0021b] whitespace-nowrap cursor-pointer">Listing Review</button>
+                <ChevronRight size={10} className="shrink-0 text-[#adb5bd]" />
                 <span className="font-semibold text-[12px] text-[#343a40] truncate">{listing.title}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -106,22 +102,22 @@ export default function AdminListingReview() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button className="hidden sm:flex border border-[#dee2e6] gap-2 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa]">
-              <IconExport /> Export
+            <button className="hidden sm:flex border border-[#dee2e6] gap-2 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] cursor-pointer">
+              <Download size={14} strokeWidth={2} /> Export
             </button>
             <button
               onClick={() => prevListing && navigate(`/admin/listing-review/${prevListing.listingId}`)}
               disabled={!prevListing}
-              className="border border-[#dee2e6] flex gap-1 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] disabled:opacity-40"
+              className="border border-[#dee2e6] flex gap-1 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] disabled:opacity-40 cursor-pointer"
             >
-              <IconChevronLeft /><span className="hidden sm:inline">Previous</span>
+              <ChevronLeft size={14} /><span className="hidden sm:inline">Previous</span>
             </button>
             <button
               onClick={() => nextListing && navigate(`/admin/listing-review/${nextListing.listingId}`)}
               disabled={!nextListing}
-              className="border border-[#dee2e6] flex gap-1 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] disabled:opacity-40"
+              className="border border-[#dee2e6] flex gap-1 items-center px-3 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] disabled:opacity-40 cursor-pointer"
             >
-              <span className="hidden sm:inline">Next</span><IconChevronRight />
+              <span className="hidden sm:inline">Next</span><ChevronRight size={14} />
             </button>
           </div>
         </header>
@@ -310,8 +306,8 @@ export default function AdminListingReview() {
                 <p className="font-bold text-[12px] text-[#343a40] mb-1">Rate this listing quality</p>
                 <div className="flex gap-1">
                   {[1, 2, 3, 4, 5].map(n => (
-                    <button key={n} onClick={() => setRating(n)}>
-                      <IconStar filled={n <= rating} />
+                    <button key={n} onClick={() => setRating(n)} className="cursor-pointer">
+                      <Star size={18} className={n <= rating ? 'text-[#f59e0b]' : 'text-[#dee2e6]'} fill={n <= rating ? '#f59e0b' : 'none'} />
                     </button>
                   ))}
                 </div>

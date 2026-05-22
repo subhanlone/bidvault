@@ -1,11 +1,7 @@
 import { Link } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { X, Gavel, LayoutDashboard, List, BarChart2, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAuction } from '../context/AuctionContext';
-import {
-  IconBidVaultLogo, IconDashboard, IconList,
-  IconAnalytics, IconSettings,
-} from './Icons';
 
 export function AdminSidebarContent({ active, onClose }: { active: string; onClose?: () => void }) {
   const { user, logout } = useAuth();
@@ -13,24 +9,24 @@ export function AdminSidebarContent({ active, onClose }: { active: string; onClo
   const pendingCount = pendingListings.length;
 
   const items = [
-    { icon: <IconDashboard />, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: <IconList />, label: 'Live Auctions', badge: '6', path: '/admin/live-auctions' },
-    { icon: <IconList />, label: 'Listing Review', badge: String(pendingCount), path: '/admin/listing-reviews' },
-    { icon: <IconAnalytics />, label: 'Analytics', path: '/admin/analytics' },
-    { icon: <IconSettings />, label: 'Settings', path: '/admin/settings' },
+    { icon: <LayoutDashboard size={15} strokeWidth={2} />, label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: <List size={15} strokeWidth={2} />, label: 'Live Auctions', badge: '6', path: '/admin/live-auctions' },
+    { icon: <List size={15} strokeWidth={2} />, label: 'Listing Review', badge: String(pendingCount), path: '/admin/listing-reviews' },
+    { icon: <BarChart2 size={15} strokeWidth={2} />, label: 'Analytics', path: '/admin/analytics' },
+    { icon: <Settings size={15} strokeWidth={2} />, label: 'Settings', path: '/admin/settings' },
   ];
 
   return (
     <aside className="bg-[#0b1f3a] flex flex-col w-[200px] shrink-0 h-screen sticky top-0 overflow-y-auto">
       <div className="flex gap-[10px] items-center px-5 py-5 border-b border-[rgba(255,255,255,0.08)]">
         <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
-          <IconBidVaultLogo className="size-[16px]" />
+          <Gavel size={16} strokeWidth={2} className="text-white" />
         </div>
         <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
           Bid<span className="text-[#d0021b]">Vault</span>
         </span>
         {onClose && (
-          <button onClick={onClose} className="ml-auto text-[rgba(255,255,255,0.5)] hover:text-white">
+          <button onClick={onClose} className="ml-auto text-[rgba(255,255,255,0.5)] hover:text-white cursor-pointer">
             <X size={18} />
           </button>
         )}
@@ -67,7 +63,7 @@ export function AdminSidebarContent({ active, onClose }: { active: string; onClo
           <p className="font-bold text-[12px] text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
           <p className="text-[10px] text-[rgba(255,255,255,0.45)]">Admin</p>
         </div>
-        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0">Logout</button>
+        <button onClick={logout} className="text-[10px] text-[rgba(255,255,255,0.4)] hover:text-white shrink-0 cursor-pointer">Logout</button>
       </div>
     </aside>
   );

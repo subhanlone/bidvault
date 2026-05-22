@@ -1,11 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
-import { CheckCircle2, Smartphone, Car, Laptop, Gamepad2, Menu } from 'lucide-react';
-import {
-  IconBell, IconExport, IconPlus,
-  IconChevronRight,
-} from '../../components/Icons';
+import { CheckCircle2, Smartphone, Car, Laptop, Gamepad2, Menu, Bell, Download, Plus, ChevronRight } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/AdminSidebar';
 
 const recentBids = [
@@ -37,7 +33,7 @@ export default function AdminDashboardOverview() {
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <AdminSidebarContent active="Dashboard" onClose={() => setSidebarOpen(false)} />
-          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
+          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0 cursor-pointer" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
         </div>
       )}
 
@@ -48,7 +44,7 @@ export default function AdminDashboardOverview() {
         <header className="bg-white border-b border-[#e9ecef] flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
           <div className="flex items-center gap-3">
             <button
-              className="md:hidden p-2 rounded-[6px] border border-[#e9ecef] hover:bg-[#f8f9fa]"
+              className="md:hidden p-2 rounded-[6px] border border-[#e9ecef] hover:bg-[#f8f9fa] cursor-pointer"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={18} className="text-[#6c757d]" />
@@ -59,14 +55,14 @@ export default function AdminDashboardOverview() {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="hidden sm:flex border border-[#dee2e6] gap-2 items-center px-4 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa]">
-              <IconExport /> Export
+            <button className="hidden sm:flex border border-[#dee2e6] gap-2 items-center px-4 py-2 rounded-[8px] text-[13px] text-[#495057] hover:bg-[#f8f9fa] cursor-pointer">
+              <Download size={14} strokeWidth={2} /> Export
             </button>
-            <button className="bg-[#d0021b] flex gap-2 items-center px-3 sm:px-4 py-2 rounded-[8px] text-[12px] sm:text-[13px] text-white hover:bg-[#a80016]">
-              <IconPlus /> <span className="hidden sm:inline">New Auction</span><span className="sm:hidden">New</span>
+            <button className="bg-[#d0021b] flex gap-2 items-center px-3 sm:px-4 py-2 rounded-[8px] text-[12px] sm:text-[13px] text-white hover:bg-[#a80016] cursor-pointer">
+              <Plus size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">New Auction</span><span className="sm:hidden">New</span>
             </button>
             <div className="relative cursor-pointer">
-              <IconBell />
+              <Bell size={20} strokeWidth={1.8} className="text-[#6c757d]" />
               <span className="absolute -top-1 -right-1 bg-[#d0021b] rounded-full size-[8px]" />
             </div>
           </div>
@@ -176,14 +172,12 @@ export default function AdminDashboardOverview() {
               </div>
             ) : (
               <>
-                {/* Desktop table */}
                 <div className="hidden sm:grid sm:grid-cols-[1fr_120px_100px_80px_100px] gap-3 text-[11px] text-[#6c757d] font-bold uppercase tracking-[0.5px] mb-2 px-2">
                   <span>Item</span><span>Seller</span><span>Category</span><span>Price</span><span>Action</span>
                 </div>
                 <div className="flex flex-col gap-2">
                   {pendingListings.map(l => (
                     <div key={l.listingId}>
-                      {/* Desktop row */}
                       <div className="hidden sm:grid sm:grid-cols-[1fr_120px_100px_80px_100px] gap-3 items-center bg-[#f8f9fa] rounded-[8px] px-3 py-3">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="bg-[#e9ecef] rounded-[8px] size-[36px] overflow-hidden shrink-0">
@@ -202,12 +196,11 @@ export default function AdminDashboardOverview() {
                         <p className="font-bold text-[12px] text-[#0b1f3a]">{(l.startPrice / 1000).toFixed(0)}K</p>
                         <button
                           onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
-                          className="bg-[#d0021b] font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-[#a80016]"
+                          className="bg-[#d0021b] font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-[#a80016] cursor-pointer"
                         >
                           Review
                         </button>
                       </div>
-                      {/* Mobile card */}
                       <div className="sm:hidden bg-[#f8f9fa] rounded-[8px] px-3 py-3 flex items-center gap-3">
                         <div className="bg-[#e9ecef] rounded-[8px] size-[40px] overflow-hidden shrink-0">
                           {l.imageUrl
@@ -221,7 +214,7 @@ export default function AdminDashboardOverview() {
                         </div>
                         <button
                           onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
-                          className="bg-[#d0021b] font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-[#a80016] shrink-0"
+                          className="bg-[#d0021b] font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-[#a80016] shrink-0 cursor-pointer"
                         >
                           Review
                         </button>
@@ -237,13 +230,13 @@ export default function AdminDashboardOverview() {
           <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-[13px] sm:text-[14px] text-[#0b1f3a]">Reports — Quick Access</h3>
-              <button className="text-[12px] text-[#d0021b] font-bold flex items-center gap-1">View All <IconChevronRight /></button>
+              <button className="text-[12px] text-[#d0021b] font-bold flex items-center gap-1 cursor-pointer">View All <ChevronRight size={12} /></button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {['Revenue Report', 'Bid Analytics', 'User Activity', 'Seller Reports'].map(r => (
                 <div key={r} className="bg-[#f8f9fa] border border-[#e9ecef] rounded-[8px] px-3 sm:px-4 py-3 flex items-center justify-between hover:border-[#d0021b] cursor-pointer group">
                   <span className="font-semibold text-[12px] text-[#495057] group-hover:text-[#d0021b]">{r}</span>
-                  <IconChevronRight color="#d0021b" />
+                  <ChevronRight size={12} className="text-[#d0021b]" />
                 </div>
               ))}
             </div>
