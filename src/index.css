@@ -1,14 +1,60 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+@theme {
+  /* Brand colors */
+  --color-primary: #d0021b;
+  --color-primary-hover: #b8011a;
+  --color-primary-light: #fee2e2;
+  --color-primary-ring: rgba(208, 2, 27, 0.15);
+
+  --color-navy: #0b1f3a;
+  --color-navy-mid: #1a3356;
+  --color-navy-light: #1f4e8c;
+
+  /* Surfaces */
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+
+  /* Text */
+  --color-text: #0b1f3a;
+  --color-text-body: #374151;
+  --color-muted: #6c757d;
+
+  /* Semantic */
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-success-border: #bbf7d0;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-info-bg: #dbeafe;
+  --color-info-text: #1e40af;
+  --color-dark-bg: #111827;
+
+  /* Font */
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.10);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: #f8f9fa;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text-body);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
@@ -16,11 +62,40 @@ body {
   min-height: 100vh;
 }
 
+.auth-panel-gradient {
+  background: linear-gradient(155deg, #0b1f3a, #1a3356, #1f4e8c);
+}
+
 @keyframes toast-in {
   from { opacity: 0; transform: translateX(60px) scale(0.95); }
   to   { opacity: 1; transform: translateX(0)   scale(1);    }
 }
-
 .animate-toast-in {
   animation: toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes countdown-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.animate-countdown-pulse {
+  animation: countdown-pulse 1s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
 }
