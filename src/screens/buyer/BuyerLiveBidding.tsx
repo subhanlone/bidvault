@@ -4,14 +4,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
 import { useTimer } from '../../hooks/useTimer';
-import { Search, Check, Zap } from 'lucide-react';
-import { IconStar, IconHeart } from '../../components/Icons';
-import { BuyerNav } from '../../components/BuyerNav';
+import { Search, Check, Zap, Star, Heart } from 'lucide-react';
+import { BuyerNavbar } from '../../components/ui';
 
 export default function BuyerLiveBidding() {
   const { auctionId } = useParams<{ auctionId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { getAuction, bids, addCompetingBid } = useAuction();
   const { showToast } = useToast();
 
@@ -71,7 +70,7 @@ export default function BuyerLiveBidding() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <BuyerNav active="Live Bidding" />
+      <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col md:grid md:grid-cols-[1fr_320px] gap-5">
 
@@ -90,10 +89,10 @@ export default function BuyerLiveBidding() {
               <div className="absolute inset-0 bg-gradient-to-t from-[rgba(11,31,58,0.3)] to-transparent" />
               <button
                 onClick={() => auction && toggleWatchlist(auction.auctionId)}
-                className={`absolute top-4 right-4 rounded-full size-[36px] flex items-center justify-center transition-all shadow-md ${watched ? 'bg-[#d0021b]' : 'bg-white hover:bg-[#fff0f2]'}`}
+                className={`absolute top-4 right-4 rounded-full size-[36px] flex items-center justify-center transition-all shadow-md cursor-pointer ${watched ? 'bg-[#d0021b]' : 'bg-white hover:bg-[#fff0f2]'}`}
                 title={watched ? 'Remove from watchlist' : 'Add to watchlist'}
               >
-                <IconHeart className={`size-[18px] ${watched ? 'text-white' : 'text-[#d0021b]'}`} filled={watched} />
+                <Heart size={18} className={watched ? 'text-white' : 'text-[#d0021b]'} fill={watched ? 'white' : 'none'} />
               </button>
             </div>
             <div className="flex gap-3 p-4">
@@ -133,7 +132,7 @@ export default function BuyerLiveBidding() {
               <div>
                 <p className="font-bold text-[13px] text-[#343a40]">{auction.sellerName}</p>
                 <div className="flex items-center gap-1 flex-wrap">
-                  <IconStar className="size-[12px]" />
+                  <Star size={12} fill="#f59e0b" className="text-[#f59e0b]" />
                   <span className="text-[11px] text-[#6c757d]">{auction.sellerRating} · {auction.sellerSales} sales</span>
                   {auction.sellerVerified && (
                     <span className="bg-[#f0faf4] text-[#1a7a4a] text-[10px] font-bold px-2 py-[1px] rounded-[99px] flex items-center gap-[3px]">
@@ -177,7 +176,7 @@ export default function BuyerLiveBidding() {
         {/* RIGHT — Bidding panel */}
         <div className="flex flex-col gap-4 order-2 md:order-2">
 
-          {/* Back link — top on both mobile and desktop */}
+          {/* Back link */}
           <Link to="/buyer/browse" className="font-semibold text-[13px] text-[#6c757d] hover:text-[#d0021b] transition-colors flex items-center gap-1">
             ← Back to Auctions
           </Link>
@@ -214,7 +213,7 @@ export default function BuyerLiveBidding() {
                 <button
                   key={amt}
                   onClick={() => handleBid(amt)}
-                  className={`w-full py-3 rounded-[8px] font-bold text-[14px] border-2 transition-all ${i === 0 ? 'bg-[#d0021b] border-[#d0021b] text-white hover:bg-[#a80016] shadow-[0_4px_12px_rgba(208,2,27,0.25)]' : 'border-[#e9ecef] text-[#343a40] hover:border-[#d0021b] hover:text-[#d0021b] hover:bg-[#fff8f8]'}`}
+                  className={`w-full py-3 rounded-[8px] font-bold text-[14px] border-2 transition-all cursor-pointer ${i === 0 ? 'bg-[#d0021b] border-[#d0021b] text-white hover:bg-[#a80016] shadow-[0_4px_12px_rgba(208,2,27,0.25)]' : 'border-[#e9ecef] text-[#343a40] hover:border-[#d0021b] hover:text-[#d0021b] hover:bg-[#fff8f8]'}`}
                 >
                   PKR {amt.toLocaleString()}
                   {i === 0 && <span className="ml-2 text-[10px] opacity-75">Min bid</span>}
@@ -234,7 +233,7 @@ export default function BuyerLiveBidding() {
                 />
                 <button
                   type="submit"
-                  className="bg-[#0b1f3a] font-bold text-[13px] text-white px-4 rounded-[8px] hover:bg-[#1a3356] transition-colors"
+                  className="bg-[#0b1f3a] font-bold text-[13px] text-white px-4 rounded-[8px] hover:bg-[#1a3356] transition-colors cursor-pointer"
                 >
                   Bid
                 </button>

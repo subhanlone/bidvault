@@ -3,15 +3,14 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
-import { Timer, Check } from 'lucide-react';
-import { IconFire } from '../../components/Icons';
-import { BuyerNav } from '../../components/BuyerNav';
+import { Timer, Check, Flame } from 'lucide-react';
+import { BuyerNavbar } from '../../components/ui';
 
 export default function BuyerLiveBiddingFinalCountdown() {
   const { auctionId } = useParams<{ auctionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { getAuction, bids, addCompetingBid } = useAuction();
 
   const id = auctionId ?? (location.state as { auctionId?: string })?.auctionId ?? '';
@@ -65,15 +64,14 @@ export default function BuyerLiveBiddingFinalCountdown() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-
-      <BuyerNav active="Live Bidding" />
+      <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       {/* Urgent banner */}
       <div className="bg-[#d0021b] px-4 sm:px-8 py-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <IconFire className="size-[16px]" />
+              <Flame size={16} className="text-white" />
               <p className="font-bold text-[13px] text-white">ENDING VERY SOON</p>
             </div>
             <p className="text-[11px] text-[rgba(255,255,255,0.8)]">{auction.title}</p>
@@ -94,7 +92,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
             })}
             <button
               onClick={handleBid}
-              className="bg-white font-bold text-[12px] sm:text-[13px] text-[#d0021b] px-3 sm:px-5 py-2 rounded-[8px] hover:bg-[#f8f9fa] ml-2 whitespace-nowrap transition-colors"
+              className="bg-white font-bold text-[12px] sm:text-[13px] text-[#d0021b] px-3 sm:px-5 py-2 rounded-[8px] hover:bg-[#f8f9fa] ml-2 whitespace-nowrap transition-colors cursor-pointer"
             >
               Place Final Bid
             </button>
@@ -102,7 +100,6 @@ export default function BuyerLiveBiddingFinalCountdown() {
         </div>
       </div>
 
-      {/* Main content */}
       <main className="max-w-[940px] mx-auto px-4 sm:px-6 py-5 sm:py-8 flex flex-col md:grid md:grid-cols-[1fr_300px] gap-5 sm:gap-6">
 
         {/* Bid panel — first on mobile */}
@@ -127,14 +124,14 @@ export default function BuyerLiveBiddingFinalCountdown() {
             )}
             <button
               onClick={handleBid}
-              className="w-full bg-[#d0021b] font-bold text-[14px] text-white py-3 rounded-[8px] hover:bg-[#a80016] transition-colors shadow-[0_4px_12px_rgba(208,2,27,0.25)]"
+              className="w-full bg-[#d0021b] font-bold text-[14px] text-white py-3 rounded-[8px] hover:bg-[#a80016] transition-colors shadow-[0_4px_12px_rgba(208,2,27,0.25)] cursor-pointer"
             >
               Bid PKR {minNext.toLocaleString()} Now →
             </button>
           </div>
         </div>
 
-        {/* Item + bids — below bid panel on mobile */}
+        {/* Item + bids */}
         <div className="flex flex-col gap-5 order-2 md:order-1">
           <div className="bg-white border-2 border-[#d0021b] rounded-[12px] overflow-hidden">
             <div className="h-[200px] sm:h-[260px] overflow-hidden bg-[#0b1f3a] relative">

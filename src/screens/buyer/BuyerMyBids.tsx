@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Check, Zap, Trophy, X, Hammer } from 'lucide-react';
-import { BuyerNav } from '../../components/BuyerNav';
+import { BuyerNavbar } from '../../components/ui';
 import type { Auction } from '../../types';
 
 interface BidEntry {
@@ -65,7 +65,7 @@ function BidCard({ entry }: { entry: BidEntry }) {
           {!isEnded && (
             <button
               onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
-              className={`font-bold text-[12px] px-3 sm:px-4 py-[7px] sm:py-2 rounded-[7px] transition-colors ${
+              className={`font-bold text-[12px] px-3 sm:px-4 py-[7px] sm:py-2 rounded-[7px] transition-colors cursor-pointer ${
                 status === 'outbid'
                   ? 'bg-[#d0021b] text-white hover:bg-[#a80016]'
                   : 'border border-[#dee2e6] text-[#495057] hover:bg-[#f8f9fa]'
@@ -84,7 +84,7 @@ function BidCard({ entry }: { entry: BidEntry }) {
 }
 
 export default function BuyerMyBids() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { auctions, bids } = useAuction();
 
   const myBidEntries: BidEntry[] = Object.entries(bids)
@@ -110,7 +110,7 @@ export default function BuyerMyBids() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <BuyerNav active="My Bids" />
+      <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       <main className="max-w-[860px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">

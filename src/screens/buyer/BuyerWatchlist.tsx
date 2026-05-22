@@ -1,9 +1,9 @@
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Clock, Heart } from 'lucide-react';
-import { IconHeart } from '../../components/Icons';
-import { BuyerNav } from '../../components/BuyerNav';
+import { BuyerNavbar } from '../../components/ui';
 import type { Auction } from '../../types';
 
 function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => void }) {
@@ -26,10 +26,10 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.3)] to-transparent" />
         <button
           onClick={e => { e.stopPropagation(); onRemove(); }}
-          className="absolute top-3 right-3 bg-[#d0021b] rounded-full size-[32px] flex items-center justify-center hover:bg-[#a80016] transition-colors"
+          className="absolute top-3 right-3 bg-[#d0021b] rounded-full size-[32px] flex items-center justify-center hover:bg-[#a80016] transition-colors cursor-pointer"
           title="Remove from watchlist"
         >
-          <IconHeart className="size-[14px]" filled />
+          <Heart size={14} fill="white" className="text-white" />
         </button>
         {auction.badge && (
           <span className={`absolute top-3 left-3 ${auction.badgeColor} font-bold text-[10px] text-white px-2 py-1 rounded-[99px]`}>
@@ -55,7 +55,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
           {!isEnded && (
             <button
               onClick={e => { e.stopPropagation(); navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
-              className="bg-[#d0021b] font-bold text-[12px] text-white px-4 py-2 rounded-[7px] hover:bg-[#a80016] transition-colors"
+              className="bg-[#d0021b] font-bold text-[12px] text-white px-4 py-2 rounded-[7px] hover:bg-[#a80016] transition-colors cursor-pointer"
             >
               Bid Now →
             </button>
@@ -67,6 +67,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
 }
 
 export default function BuyerWatchlist() {
+  const { user, logout } = useAuth();
   const { auctions, watchlist, toggleWatchlist } = useAuction();
 
   const watched = auctions.filter(a => watchlist.includes(a.auctionId));
@@ -74,7 +75,7 @@ export default function BuyerWatchlist() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
-      <BuyerNav active="Watchlist" />
+      <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
