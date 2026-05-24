@@ -6,6 +6,10 @@ import { useToast } from '../../context/ToastContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Search, Check, Zap, Star, Heart } from 'lucide-react';
 import { BuyerNavbar } from '../../components/ui';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+
+const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
 export default function BuyerLiveBidding() {
   const { auctionId } = useParams<{ auctionId: string }>();
@@ -15,10 +19,11 @@ export default function BuyerLiveBidding() {
   const { showToast } = useToast();
 
   const auction = getAuction(auctionId ?? '');
-  const timer = useTimer(auction?.endTime ?? new Date(Date.now() + 3_600_000).toISOString());
+  const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
   const competingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const redirectedRef = useRef(false);
   const [customBid, setCustomBid] = useState('');
+  const [customBidTouched, setCustomBidTouched] = useState(false);
   const { toggleWatchlist, isWatched } = useAuction();
   const watched = auction ? isWatched(auction.auctionId) : false;
 
@@ -57,6 +62,9 @@ export default function BuyerLiveBidding() {
   const minNext = auction.currentBid + auction.minIncrement;
   const myBids = auctionBids.filter(b => b.buyerId === user?.userId);
   const isHighest = myBids.length > 0 && myBids[0].amount === auction.currentBid;
+  const isOutbid = myBids.length > 0 && !isHighest;
+  const showCustomBidError = customBidTouched && customBid.trim() !== '' && Number(customBid) < minNext;
+  const effectiveBidAmount = Number(customBid) > 0 ? Number(customBid) : minNext;
 
   const handleBid = (amount: number) => {
     if (amount < minNext) {
@@ -75,7 +83,7 @@ export default function BuyerLiveBidding() {
       <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col md:grid md:grid-cols-[1fr_320px] gap-5">
 
         {/* LEFT */}
-        <div className="flex flex-col gap-4 order-1 md:order-1">
+        <div className="flex flex-col gap-4 order-last md:order-first">
 
           {/* Item image */}
           <div className="bg-surface border border-border-light rounded-md overflow-hidden">
@@ -165,7 +173,11 @@ export default function BuyerLiveBidding() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-[13px] text-secondary">PKR {b.amount.toLocaleString()}</p>
-                      {i === 0 && <span className="bg-primary text-white text-[10px] font-bold px-2 py-[1px] rounded-[99px]">Highest</span>}
+                      {i === 0 && (
+                        <span className="bg-success-bg border border-success-border text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-[99px]">
+                          Highest
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -175,7 +187,7 @@ export default function BuyerLiveBidding() {
         </div>
 
         {/* RIGHT — Bidding panel */}
-        <div className="flex flex-col gap-4 order-2 md:order-2">
+        <div className="flex flex-col gap-4 order-first md:order-last">
 
           {/* Back link */}
           <Link to="/buyer/browse" className="font-semibold text-[13px] text-muted hover:text-primary transition-colors flex items-center gap-1">
@@ -196,12 +208,27 @@ export default function BuyerLiveBidding() {
           {/* Current bid */}
           <div className="bg-surface border border-border-light rounded-md p-5">
             <p className="text-[12px] text-muted mb-1">Current Bid</p>
-            <p className="font-extrabold text-[28px] text-primary leading-none mb-1">PKR {auction.currentBid.toLocaleString()}</p>
+            <p className="font-extrabold text-[28px] text-primary leading-none mb-1">
+              <span key={auction.currentBid} className="animate-price-bump inline-block">
+                PKR {auction.currentBid.toLocaleString()}
+              </span>
+            </p>
             <p className="text-[11px] text-muted">{auction.bidCount} bids · Min next: PKR {minNext.toLocaleString()}</p>
             {isHighest && (
-              <div className="mt-3 bg-success-bg border border-[rgba(26,122,74,0.25)] px-3 py-2 rounded-sm flex items-center gap-2">
+              <div className="mt-3 bg-success-bg border border-success-border px-3 py-2 rounded-sm flex items-center gap-2">
                 <Check size={13} strokeWidth={2.5} className="text-success-dark shrink-0" />
                 <p className="font-bold text-[12px] text-success-dark">You are the highest bidder</p>
+              </div>
+            )}
+            {isOutbid && (
+              <div className="mt-3 bg-warning-bg border border-warning-border px-3 py-2 rounded-sm flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Zap size={13} strokeWidth={2.5} className="text-warning shrink-0" />
+                  <p className="font-bold text-[12px] text-warning">You've been outbid</p>
+                </div>
+                <Button size="sm" variant="primary" onClick={() => handleBid(minNext)}>
+                  Bid Again
+                </Button>
               </div>
             )}
           </div>
@@ -214,7 +241,7 @@ export default function BuyerLiveBidding() {
                 <button
                   key={amt}
                   onClick={() => handleBid(amt)}
-                  className={`w-full py-3 rounded-sm font-bold text-[14px] border-2 transition-all cursor-pointer ${i === 0 ? 'bg-primary border-primary text-white hover:bg-primary-dark shadow-primary' : 'border-border-light text-secondary hover:border-primary hover:text-primary hover:bg-primary-surface'}`}
+                  className={`w-full py-3 rounded-sm font-bold text-[14px] border-2 transition-colors transition-transform active:scale-[0.97] cursor-pointer ${i === 0 ? 'bg-primary border-primary text-white hover:bg-primary-dark shadow-primary' : 'border-border-light text-secondary hover:border-primary hover:text-primary hover:bg-primary-surface'}`}
                 >
                   PKR {amt.toLocaleString()}
                   {i === 0 && <span className="ml-2 text-[10px] opacity-75">Min bid</span>}
@@ -222,21 +249,41 @@ export default function BuyerLiveBidding() {
               ))}
             </div>
 
-            <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); handleBid(Number(customBid)); }}>
+            <form
+              className="flex flex-col gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (Number(customBid) < minNext) {
+                  setCustomBidTouched(true);
+                  return;
+                }
+                handleBid(Number(customBid));
+              }}
+            >
               <label htmlFor="custom-bid-amount" className="font-bold text-[11px] text-muted uppercase tracking-[0.3px]">Custom amount (PKR)</label>
-              <div className="flex gap-2">
-                <input
-                  id="custom-bid-amount"
-                  type="number"
-                  inputMode="numeric"
-                  className="flex-1 border border-[#dee2e6] h-[44px] px-3 rounded-sm text-[14px] text-secondary outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] focus-visible:ring-2 focus-visible:ring-[rgba(208,2,27,0.2)] transition-shadow"
-                  placeholder={`Min ${minNext.toLocaleString()}`}
-                  value={customBid}
-                  onChange={e => setCustomBid(e.target.value)}
-                />
+              <div className="flex gap-2 items-start">
+                <div className="flex-1">
+                  <Input
+                    id="custom-bid-amount"
+                    type="number"
+                    inputMode="numeric"
+                    className="h-[44px]"
+                    placeholder={`Min ${minNext.toLocaleString()}`}
+                    value={customBid}
+                    onChange={e => {
+                      setCustomBid(e.target.value);
+                      if (!customBidTouched && e.target.value.trim() !== '') {
+                        setCustomBidTouched(true);
+                      }
+                    }}
+                    onBlur={() => setCustomBidTouched(true)}
+                    error={showCustomBidError ? `Minimum bid is PKR ${minNext.toLocaleString()}` : undefined}
+                  />
+                </div>
                 <button
                   type="submit"
-                  className="bg-navy font-bold text-[13px] text-white px-4 rounded-sm hover:bg-navy-mid active:scale-[0.97] transition-colors cursor-pointer"
+                  aria-label={`Place bid of PKR ${effectiveBidAmount.toLocaleString()}`}
+                  className="bg-navy font-bold text-[13px] text-white px-4 rounded-sm hover:bg-navy-mid active:scale-[0.97] transition-colors cursor-pointer h-[44px]"
                 >
                   Bid
                 </button>

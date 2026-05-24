@@ -32,7 +32,10 @@ export default function SellerNavbar({ links = defaultLinks, userName = 'Seller'
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => setMobileOpen(false), [pathname]);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setMobileOpen(false), 0);
+    return () => clearTimeout(timeoutId);
+  }, [pathname]);
 
   return (
     <nav aria-label="Seller navigation" className="sticky top-0 z-20 h-14 bg-navy flex items-center px-6 gap-8 relative">

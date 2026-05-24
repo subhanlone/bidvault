@@ -1,10 +1,11 @@
 ﻿import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
 import { AlertTriangle, X } from 'lucide-react';
 import { BuyerNavbar } from '../../components/ui';
+import Button from '../../components/ui/Button';
 
 export default function BuyerConfirmBid() {
   const navigate = useNavigate();
@@ -12,18 +13,21 @@ export default function BuyerConfirmBid() {
   const { user, logout } = useAuth();
   const { getAuction, placeBid } = useAuction();
   const { showToast } = useToast();
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const state = location.state as { auctionId: string; bidAmount: number } | null;
-  const auction = getAuction(state?.auctionId ?? '');
-  const bidAmount = state?.bidAmount ?? 0;
+  if (!state?.auctionId || !state?.bidAmount) {
+    return <Navigate to="/buyer/browse" replace />;
+  }
 
-  const [loading, setLoading] = useState(false);
+  const auction = getAuction(state.auctionId ?? '');
+  const bidAmount = state.bidAmount ?? 0;
 
   const handleConfirm = async () => {
     if (!auction || !user) return;
-    setLoading(true);
+    setIsConfirming(true);
     const res = await placeBid(auction.auctionId, bidAmount, user);
-    setLoading(false);
+    setIsConfirming(false);
     if (res.success) {
       showToast({ type: 'success', title: 'Bid Placed!', message: `Your bid of PKR ${bidAmount.toLocaleString()} is now the highest.` });
       navigate(`/buyer/live-bidding/${auction.auctionId}`);
@@ -37,6 +41,7 @@ export default function BuyerConfirmBid() {
       <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       <main className="min-h-[calc(100vh-56px)] bg-[rgba(11,31,58,0.45)] flex items-center justify-center p-4 sm:p-6">
+        {/* TODO: Migrate to Modal component from ui/ after Modal is stable */}
         <div role="dialog" aria-modal="true" aria-labelledby="confirm-bid-title" className="bg-surface rounded-lg shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[400px] overflow-hidden">
           <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-0">
             <div className="bg-primary-surface flex items-center justify-center rounded-full size-[44px]">
@@ -90,22 +95,22 @@ export default function BuyerConfirmBid() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="flex-1 rounded-sm"
                     onClick={() => navigate(-1)}
-                    className="flex-1 border border-[#dee2e6] font-semibold text-[14px] text-tertiary py-3 rounded-sm hover:bg-bg transition-colors cursor-pointer"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    size="lg"
+                    className="flex-1 rounded-sm shadow-primary"
+                    loading={isConfirming}
                     onClick={handleConfirm}
-                    disabled={loading}
-                    className="flex-1 bg-primary font-bold text-[14px] text-white py-3 rounded-sm hover:bg-primary-dark transition-colors disabled:opacity-60 shadow-primary cursor-pointer"
                   >
-                    {loading
-                      ? <span className="inline-block size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      : 'Confirm Bid →'
-                    }
-                  </button>
+                    Confirm Bid →
+                  </Button>
                 </div>
               </>
             )}

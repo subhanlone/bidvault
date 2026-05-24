@@ -1,10 +1,14 @@
-﻿import { useNavigate, Link } from 'react-router-dom';
+﻿import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Check, Zap, Trophy, X, Hammer } from 'lucide-react';
 import { BuyerNavbar } from '../../components/ui';
+import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
+
+const INITIAL_NOW = Date.now();
 
 interface BidEntry {
   auction: Auction;
@@ -24,8 +28,8 @@ function BidCard({ entry }: { entry: BidEntry }) {
     : isWinning ? 'winning' : 'outbid';
 
   const statusConfig = {
-    winning: { icon: <Check size={10} strokeWidth={3} />, label: 'Winning', bg: 'bg-success-bg', border: 'border-[rgba(26,122,74,0.3)]', text: 'text-success-dark' },
-    outbid:  { icon: <Zap size={10} strokeWidth={2.5} />, label: 'Outbid', bg: 'bg-[#fff5f5]', border: 'border-[rgba(208,2,27,0.2)]', text: 'text-primary' },
+    winning: { icon: <Check size={10} strokeWidth={3} />, label: 'Winning', bg: 'bg-primary-light', border: 'border-primary/30', text: 'text-primary' },
+    outbid:  { icon: <Zap size={10} strokeWidth={2.5} />, label: 'Outbid', bg: 'bg-warning-bg', border: 'border-warning-border', text: 'text-warning' },
     won:     { icon: <Trophy size={10} strokeWidth={2.5} />, label: 'Won', bg: 'bg-success-bg', border: 'border-[rgba(26,122,74,0.3)]', text: 'text-success-dark' },
     lost:    { icon: <X size={10} strokeWidth={2.5} />, label: 'Ended', bg: 'bg-bg', border: 'border-border-light', text: 'text-muted' },
   }[status];
@@ -34,7 +38,7 @@ function BidCard({ entry }: { entry: BidEntry }) {
     <div className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-md transition-shadow">
       <div className="flex items-stretch">
         <div className="bg-navy w-[80px] sm:w-[110px] shrink-0 overflow-hidden">
-          <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
+          <img src={auction.imageUrl} alt={auction.title} loading="lazy" className="w-full h-full object-cover" />
         </div>
 
         <div className="flex-1 p-3 sm:p-4 min-w-0">
@@ -47,15 +51,15 @@ function BidCard({ entry }: { entry: BidEntry }) {
 
           <div className="flex flex-wrap gap-x-4 sm:gap-x-5 gap-y-1 mb-3">
             <div>
-              <p className="text-[9px] sm:text-[10px] text-placeholder font-bold uppercase">My Highest Bid</p>
+              <p className="text-2xs sm:text-xs text-placeholder font-bold uppercase">My Highest Bid</p>
               <p className="font-extrabold text-[14px] sm:text-[16px] text-primary">PKR {myHighestBid.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-[9px] sm:text-[10px] text-placeholder font-bold uppercase">Current Bid</p>
+              <p className="text-2xs sm:text-xs text-placeholder font-bold uppercase">Current Bid</p>
               <p className="font-bold text-[14px] sm:text-[16px] text-secondary">PKR {auction.currentBid.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-[9px] sm:text-[10px] text-placeholder font-bold uppercase">Time Left</p>
+              <p className="text-2xs sm:text-xs text-placeholder font-bold uppercase">Time Left</p>
               <p className={`font-bold text-[13px] sm:text-[14px] ${isEnded ? 'text-muted' : timer.totalSeconds < 3600 ? 'text-primary' : 'text-secondary'}`}>
                 {isEnded ? 'Ended' : timer.display}
               </p>
@@ -86,6 +90,17 @@ function BidCard({ entry }: { entry: BidEntry }) {
 export default function BuyerMyBids() {
   const { user, logout } = useAuth();
   const { auctions, bids } = useAuction();
+  const navigate = useNavigate();
+  const [now, setNow] = useState(INITIAL_NOW);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setNow(Date.now()), 0);
+    const intervalId = setInterval(() => setNow(Date.now()), 30_000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const myBidEntries: BidEntry[] = Object.entries(bids)
     .map(([auctionId, bidList]) => {
@@ -99,14 +114,14 @@ export default function BuyerMyBids() {
     })
     .filter((e): e is BidEntry => e !== null)
     .sort((a, b) => {
-      const aEnded = new Date(a.auction.endTime).getTime() < Date.now();
-      const bEnded = new Date(b.auction.endTime).getTime() < Date.now();
+      const aEnded = new Date(a.auction.endTime).getTime() < now;
+      const bEnded = new Date(b.auction.endTime).getTime() < now;
       if (aEnded !== bEnded) return aEnded ? 1 : -1;
       return new Date(a.auction.endTime).getTime() - new Date(b.auction.endTime).getTime();
     });
 
-  const activeCount = myBidEntries.filter(e => new Date(e.auction.endTime).getTime() > Date.now()).length;
-  const winningCount = myBidEntries.filter(e => e.isWinning && new Date(e.auction.endTime).getTime() > Date.now()).length;
+  const activeCount = myBidEntries.filter(e => new Date(e.auction.endTime).getTime() > now).length;
+  const winningCount = myBidEntries.filter(e => e.isWinning && new Date(e.auction.endTime).getTime() > now).length;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -141,9 +156,9 @@ export default function BuyerMyBids() {
             <p className="text-[13px] sm:text-[14px] text-muted mb-6 max-w-[300px]">
               You haven't placed any bids yet. Browse live auctions and start bidding!
             </p>
-            <Link to="/buyer/browse" className="bg-primary font-bold text-[14px] text-white px-6 py-3 rounded-sm hover:bg-primary-dark transition-colors">
+            <Button variant="ghost" onClick={() => navigate('/buyer/browse')}>
               Browse Auctions →
-            </Link>
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-3">

@@ -45,6 +45,7 @@ export function ListingProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useListing() {
   const ctx = useContext(ListingContext);
   if (!ctx) throw new Error('useListing must be used within ListingProvider');

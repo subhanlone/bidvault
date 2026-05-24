@@ -1,7 +1,8 @@
-﻿import { useLocation, useNavigate } from 'react-router-dom';
+﻿import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Sparkles, Trophy, Frown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BuyerNavbar } from '../../components/ui';
+import Button from '../../components/ui/Button';
 
 interface WonState {
   auctionId: string;
@@ -17,10 +18,14 @@ export default function BuyerAuctionWon() {
   const { user, logout } = useAuth();
   const state = location.state as WonState | null;
 
-  const won = state?.won ?? true;
-  const title = state?.title ?? 'Auction Item';
-  const emoji = state?.emoji ?? '🏆';
-  const finalBid = state?.finalBid ?? 0;
+  if (!state) {
+    return <Navigate to="/buyer/browse" replace />;
+  }
+
+  const won = state.won ?? true;
+  const title = state.title ?? 'Auction Item';
+  const emoji = state.emoji ?? '🏆';
+  const finalBid = state.finalBid ?? 0;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -32,9 +37,9 @@ export default function BuyerAuctionWon() {
             <div className="flex justify-center mb-4">
               <Sparkles size={60} strokeWidth={1.2} className="text-gold" />
             </div>
-            <div className="bg-success-bg border border-[rgba(26,122,74,0.2)] flex items-center justify-center rounded-md size-[72px] sm:size-[80px] mb-5">
-              <div className="bg-[#1a7a4a] flex items-center justify-center rounded-full size-[48px] sm:size-[52px]">
-                <Trophy size={24} strokeWidth={2} className="text-white" />
+            <div className="bg-success-bg border border-success-border flex items-center justify-center rounded-md size-[72px] sm:size-[80px] mb-5">
+              <div className="bg-success-bg border border-success-border flex items-center justify-center rounded-full size-[48px] sm:size-[52px]">
+                <Trophy size={24} strokeWidth={2} className="text-success" />
               </div>
             </div>
             <h1 className="font-extrabold text-[26px] sm:text-[32px] text-navy mb-2 flex items-center gap-2">
@@ -55,25 +60,27 @@ export default function BuyerAuctionWon() {
                 ].map(d => (
                   <div key={d.label} className="flex justify-between gap-4">
                     <span className="text-[13px] text-muted">{d.label}</span>
-                    <span className={`font-bold text-[12px] sm:text-[13px] text-right ${d.highlight ? 'text-primary' : 'text-success-dark'}`}>{d.value}</span>
+                    <span className={`font-bold text-[12px] sm:text-[13px] text-right ${d.highlight ? 'text-success' : 'text-success-dark'}`}>{d.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full max-w-[440px]">
-              <button
+              <Button
+                variant="outline"
+                className="flex-1 rounded-sm border-success-border text-success-dark hover:bg-success-bg"
                 onClick={() => navigate('/buyer/my-bids')}
-                className="flex-1 border border-[#dee2e6] font-semibold text-[14px] text-tertiary px-5 py-3 rounded-sm hover:bg-bg transition-colors cursor-pointer"
               >
                 View My Bids
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 rounded-sm bg-success-bg border-success-border text-success hover:bg-success-bg/80"
                 onClick={() => navigate('/buyer/browse')}
-                className="flex-1 bg-[#1a7a4a] font-bold text-[14px] text-white px-5 py-3 rounded-sm hover:bg-[#135c38] transition-colors cursor-pointer"
               >
                 Browse More Auctions
-              </button>
+              </Button>
             </div>
           </>
         ) : (
@@ -85,22 +92,24 @@ export default function BuyerAuctionWon() {
             <p className="text-[13px] sm:text-[14px] text-muted text-center max-w-[380px] mb-4">
               The auction for <span className="font-bold text-secondary">{title}</span> has ended. You didn't win this time.
             </p>
-            <p className="font-bold text-[16px] sm:text-[18px] text-primary mb-8">
+            <p className="font-bold text-[16px] sm:text-[18px] text-warning mb-8">
               Final price: PKR {finalBid.toLocaleString()}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
+              <Button
+                variant="outline"
+                className="rounded-sm"
                 onClick={() => navigate('/buyer/my-bids')}
-                className="border border-[#dee2e6] font-semibold text-[14px] text-tertiary px-6 py-3 rounded-sm hover:bg-bg transition-colors cursor-pointer"
               >
                 View My Bids
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-sm border-warning-border text-warning hover:bg-warning-bg"
                 onClick={() => navigate('/buyer/browse')}
-                className="bg-primary font-bold text-[14px] text-white px-8 py-3 rounded-sm hover:bg-primary-dark transition-colors cursor-pointer"
               >
                 Find Another Auction
-              </button>
+              </Button>
             </div>
           </>
         )}

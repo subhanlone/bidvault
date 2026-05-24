@@ -61,7 +61,12 @@ export default function ForgotPasswordScreen() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    if (step === 2) { setResendSecs(60); inputRefs.current[0]?.focus(); }
+    if (step !== 2) return;
+    const timeoutId = setTimeout(() => {
+      setResendSecs(60);
+      inputRefs.current[0]?.focus();
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, [step]);
 
   useEffect(() => {

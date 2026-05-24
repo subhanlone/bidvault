@@ -1,10 +1,12 @@
-﻿import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Timer, Check, Flame } from 'lucide-react';
 import { BuyerNavbar } from '../../components/ui';
+
+const FINAL_COUNTDOWN_FALLBACK_END_TIME = new Date(Date.now() + 55_000).toISOString();
 
 export default function BuyerLiveBiddingFinalCountdown() {
   const { auctionId } = useParams<{ auctionId: string }>();
@@ -15,9 +17,12 @@ export default function BuyerLiveBiddingFinalCountdown() {
 
   const id = auctionId ?? (location.state as { auctionId?: string })?.auctionId ?? '';
   const auction = getAuction(id);
-  const timer = useTimer(auction?.endTime ?? new Date(Date.now() + 55_000).toISOString());
+  const timer = useTimer(auction?.endTime ?? FINAL_COUNTDOWN_FALLBACK_END_TIME);
   const wonRef = useRef(false);
   const competingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [flashTimer, setFlashTimer] = useState(false);
+  const lastBidIdRef = useRef<string | null>(null);
+  const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!auction) return;
@@ -46,6 +51,33 @@ export default function BuyerLiveBiddingFinalCountdown() {
     });
   }, [timer.isExpired, auction, bids, user, navigate]);
 
+  const auctionBids = auction ? bids[auction.auctionId] ?? [] : [];
+  const minNext = auction ? auction.currentBid + auction.minIncrement : 0;
+  const isHighest = auction ? auctionBids[0]?.buyerId === user?.userId : false;
+  const latestBidId = auctionBids[0]?.bidId;
+  const isFinalMinute = timer.totalSeconds > 0 && timer.totalSeconds <= 60;
+
+  useEffect(() => {
+    if (!latestBidId) return;
+    if (lastBidIdRef.current && latestBidId !== lastBidIdRef.current) {
+      setFlashTimer(true);
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+      flashTimeoutRef.current = setTimeout(() => setFlashTimer(false), 700);
+    }
+    lastBidIdRef.current = latestBidId;
+    return () => {
+      if (flashTimeoutRef.current) {
+        clearTimeout(flashTimeoutRef.current);
+        flashTimeoutRef.current = null;
+      }
+    };
+  }, [latestBidId]);
+
+  const handleBid = () => {
+    if (!auction) return;
+    navigate('/buyer/confirm-bid', { state: { auctionId: auction.auctionId, bidAmount: minNext } });
+  };
+
   if (!auction) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -53,14 +85,6 @@ export default function BuyerLiveBiddingFinalCountdown() {
       </div>
     );
   }
-
-  const auctionBids = bids[auction.auctionId] ?? [];
-  const minNext = auction.currentBid + auction.minIncrement;
-  const isHighest = auctionBids[0]?.buyerId === user?.userId;
-
-  const handleBid = () => {
-    navigate('/buyer/confirm-bid', { state: { auctionId: auction.auctionId, bidAmount: minNext } });
-  };
 
   return (
     <div className="min-h-screen bg-bg">
@@ -103,8 +127,8 @@ export default function BuyerLiveBiddingFinalCountdown() {
       <main className="max-w-[940px] mx-auto px-4 sm:px-6 py-5 sm:py-8 flex flex-col md:grid md:grid-cols-[1fr_300px] gap-5 sm:gap-6">
 
         {/* Bid panel — first on mobile */}
-        <div className="flex flex-col gap-4 order-1 md:order-2">
-          <div className="bg-primary rounded-md p-5 text-center">
+        <div className="flex flex-col gap-4 order-first md:order-last">
+          <div className={`bg-primary rounded-md p-5 text-center transition-shadow ${isFinalMinute ? 'animate-countdown-pulse' : ''} ${flashTimer ? 'bg-primary-dark shadow-[0_0_0_12px_rgba(208,2,27,0.35)]' : ''}`}>
             <p className="font-bold text-[11px] text-[rgba(255,255,255,0.7)] uppercase tracking-[1px] mb-1 flex items-center justify-center gap-1">
               <Timer size={11} strokeWidth={2} /> Final Countdown
             </p>
@@ -113,7 +137,11 @@ export default function BuyerLiveBiddingFinalCountdown() {
 
           <div className="bg-surface border border-border-light rounded-md p-5">
             <p className="text-[12px] text-muted mb-1">Current Bid</p>
-            <p className="font-extrabold text-[26px] sm:text-[28px] text-primary leading-none mb-3">PKR {auction.currentBid.toLocaleString()}</p>
+            <p className="font-extrabold text-[26px] sm:text-[28px] text-primary leading-none mb-3">
+              <span key={auction.currentBid} className="animate-price-bump inline-block">
+                PKR {auction.currentBid.toLocaleString()}
+              </span>
+            </p>
             {isHighest && (
               <div className="mb-3 bg-success-bg border border-[rgba(26,122,74,0.3)] px-3 py-2 rounded-sm flex items-center gap-2">
                 <div className="bg-[rgba(26,122,74,0.15)] border border-[rgba(26,122,74,0.3)] rounded-full p-[2px] shrink-0">
@@ -132,7 +160,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
         </div>
 
         {/* Item + bids */}
-        <div className="flex flex-col gap-5 order-2 md:order-1">
+        <div className="flex flex-col gap-5 order-last md:order-first">
           <div className="bg-surface border-2 border-primary rounded-md overflow-hidden">
             <div className="h-[200px] sm:h-[260px] overflow-hidden bg-navy relative">
               <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />

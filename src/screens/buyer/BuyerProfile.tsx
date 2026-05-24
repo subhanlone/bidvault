@@ -4,6 +4,8 @@ import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingU
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { BuyerNavbar } from '../../components/ui';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 import { SEED_BIDS } from '../../services/mockData';
 
 export default function BuyerProfile() {
@@ -241,32 +243,41 @@ export default function BuyerProfile() {
                     </button>
                   ) : (
                     <div className="flex flex-col gap-3">
-                      <label className="font-bold text-[12px] text-secondary">New Password</label>
-                      <div className="relative">
-                        <input
-                          type={showPw ? 'text' : 'password'}
-                          value={newPw}
-                          onChange={e => setNewPw(e.target.value)}
-                          className="w-full border border-[#dee2e6] rounded-sm px-3 py-2.5 text-[13px] text-secondary outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow pr-10"
-                          placeholder="Min. 8 characters"
-                        />
-                        <button type="button" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(v => !v)} className="absolute right-3 top-[10px] text-placeholder cursor-pointer">
-                          {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                        </button>
-                      </div>
+                      <Input
+                        id="buyer-new-password"
+                        label="New Password"
+                        type={showPw ? 'text' : 'password'}
+                        value={newPw}
+                        onChange={e => setNewPw(e.target.value)}
+                        placeholder="Min. 8 characters"
+                        rightIcon={
+                          <button
+                            type="button"
+                            aria-label={showPw ? 'Hide password' : 'Show password'}
+                            onClick={() => setShowPw(v => !v)}
+                            className="text-muted hover:text-body transition-colors"
+                          >
+                            {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                        }
+                      />
                       <div className="flex gap-2">
-                        <button
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 rounded-sm"
                           onClick={() => { setShowPwForm(false); setNewPw(''); }}
-                          className="flex-1 border border-[#dee2e6] font-semibold text-[12px] text-muted py-2 rounded-sm hover:bg-bg cursor-pointer"
                         >
                           Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1 rounded-sm"
+                          loading={false}
                           onClick={() => { setShowPwForm(false); setNewPw(''); }}
-                          className="flex-1 bg-primary font-bold text-[12px] text-white py-2 rounded-sm hover:bg-primary-dark cursor-pointer"
                         >
                           Save
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}

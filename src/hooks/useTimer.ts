@@ -15,9 +15,12 @@ export function useTimer(endTime: string): TimerState {
   const ref = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    setTotalSeconds(calc());
+    const timeoutId = setTimeout(() => setTotalSeconds(calc()), 0);
     ref.current = setInterval(() => setTotalSeconds(calc()), 1000);
-    return () => { if (ref.current) clearInterval(ref.current); };
+    return () => {
+      clearTimeout(timeoutId);
+      if (ref.current) clearInterval(ref.current);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endTime]);
 

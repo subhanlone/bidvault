@@ -204,7 +204,8 @@ export const mockApi = {
     return { success: true };
   },
 
-  async rejectListing(listingId: string, _reason: string): Promise<ApiResponse> {
+  async rejectListing(listingId: string, reason: string): Promise<ApiResponse> {
+    void reason;
     await delay(600);
     const idx = pendingListings.findIndex(l => l.listingId === listingId);
     if (idx !== -1) pendingListings[idx].status = 'REJECTED';

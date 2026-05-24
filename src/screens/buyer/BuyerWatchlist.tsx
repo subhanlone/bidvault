@@ -1,4 +1,5 @@
-﻿import { useNavigate, Link } from 'react-router-dom';
+﻿import { useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
@@ -6,13 +7,15 @@ import { Clock, Heart } from 'lucide-react';
 import { BuyerNavbar } from '../../components/ui';
 import type { Auction } from '../../types';
 
+const INITIAL_NOW = Date.now();
+
 function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => void }) {
   const navigate = useNavigate();
   const timer = useTimer(auction.endTime);
   const isEnded = timer.isExpired;
 
   return (
-    <div className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-md transition-all group flex flex-col">
+    <div className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-md transition-all duration-200 group flex flex-col">
       <div
         className="h-[160px] relative overflow-hidden bg-navy cursor-pointer"
         onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
@@ -20,12 +23,14 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
         <img
           src={auction.imageUrl}
           alt={auction.title}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.3)] to-transparent" />
         <button
           onClick={e => { e.stopPropagation(); onRemove(); }}
+          aria-label="Remove from watchlist"
           className="absolute top-3 right-3 bg-primary rounded-full size-[32px] flex items-center justify-center hover:bg-primary-dark transition-colors cursor-pointer"
           title="Remove from watchlist"
         >
@@ -69,9 +74,19 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
 export default function BuyerWatchlist() {
   const { user, logout } = useAuth();
   const { auctions, watchlist, toggleWatchlist } = useAuction();
+  const [now, setNow] = useState(INITIAL_NOW);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setNow(Date.now()), 0);
+    const intervalId = setInterval(() => setNow(Date.now()), 30_000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const watched = auctions.filter(a => watchlist.includes(a.auctionId));
-  const activeCount = watched.filter(a => new Date(a.endTime).getTime() > Date.now()).length;
+  const activeCount = watched.filter(a => new Date(a.endTime).getTime() > now).length;
 
   return (
     <div className="min-h-screen bg-bg">

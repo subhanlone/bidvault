@@ -25,17 +25,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const { user: u, token: t } = JSON.parse(raw);
-        // Re-sync with mutable store (in case in-memory state changed)
-        const fresh = mockApi.getUser(u.userId);
-        setUser(fresh ?? u);
-        setToken(t);
-      }
-    } catch { /* ignore */ }
-    setIsLoading(false);
+    const timeoutId = setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const { user: u, token: t } = JSON.parse(raw);
+          // Re-sync with mutable store (in case in-memory state changed)
+          const fresh = mockApi.getUser(u.userId);
+          setUser(fresh ?? u);
+          setToken(t);
+        }
+      } catch { /* ignore */ }
+      setIsLoading(false);
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const persist = (u: User | null, t: string | null) => {
@@ -98,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

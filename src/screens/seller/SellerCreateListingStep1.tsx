@@ -50,8 +50,9 @@ export function Stepper({ current }: { current: number }) {
   );
 }
 
-export function ListingStepperHeader(_: { currentStep: number }) {
+export function ListingStepperHeader({ currentStep }: { currentStep: number }) {
   const { user, logout } = useAuth();
+  void currentStep;
   return (
     <SellerNavbar
       userName={user?.name}

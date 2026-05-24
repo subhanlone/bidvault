@@ -1,13 +1,33 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, SlidersHorizontal, Heart, ChevronRight } from 'lucide-react';
+import { Search, SlidersHorizontal, Heart, ChevronRight, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { BuyerNavbar } from '../../components/ui';
+import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
 
 const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Sports & Fitness'];
+
+const FilterCheckbox = ({ checked, onClick, label }: { checked: boolean; onClick: () => void; label: string }) => (
+  <label className="flex items-center gap-2.5 cursor-pointer group">
+    <span className="relative flex">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onClick}
+        className="sr-only peer"
+      />
+      <span
+        className={`w-[14px] h-[14px] rounded-xs border-2 flex items-center justify-center transition-colors ${checked ? 'bg-primary border-primary' : 'border-border-strong group-hover:border-primary/50'}`}
+      >
+        {checked && <Check size={9} strokeWidth={3} className="text-white" />}
+      </span>
+    </span>
+    <span className="text-sm text-body">{label}</span>
+  </label>
+);
 
 function AuctionCardSkeleton() {
   return (
@@ -36,6 +56,10 @@ function AuctionCardSkeleton() {
 function AuctionCard({ auction }: { auction: Auction }) {
   const navigate = useNavigate();
   const timer = useTimer(auction.endTime);
+  const { toggleWatchlist, isWatched } = useAuction();
+  const watched = isWatched(auction.auctionId);
+  const isEndingSoon = timer.hours === 0 && timer.minutes < 60 && !timer.isExpired;
+  const isFinalMinutes = timer.hours === 0 && timer.minutes < 5 && !timer.isExpired;
 
   return (
     <div
@@ -46,6 +70,7 @@ function AuctionCard({ auction }: { auction: Auction }) {
         <img
           src={auction.imageUrl}
           alt={auction.title}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
@@ -55,14 +80,26 @@ function AuctionCard({ auction }: { auction: Auction }) {
             {auction.badge}
           </span>
         )}
-        <span className={`absolute bottom-3 left-3 font-bold text-[11px] px-2 py-1 rounded-md flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-surface/15 backdrop-blur-sm text-white'}`}>
-          {timer.isExpired ? 'Closed' : timer.display}
+        <span className={`absolute bottom-3 left-3 font-bold text-[11px] px-2 py-1 rounded-md flex items-center gap-2 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-surface/15 backdrop-blur-sm text-white'}`}>
+          <span>{timer.isExpired ? 'Closed' : timer.display}</span>
+          {isFinalMinutes ? (
+            <span className="inline-flex items-center gap-1 text-primary text-[9px] font-bold uppercase tracking-[0.3px]">
+              <span className="size-2 rounded-full bg-primary animate-countdown-pulse" />
+              Ending
+            </span>
+          ) : isEndingSoon ? (
+            <span className="inline-flex items-center rounded-full bg-warning-bg text-warning px-2 py-[2px] text-[9px] font-bold">
+              Ending Soon
+            </span>
+          ) : null}
         </span>
         <button
-          onClick={e => e.stopPropagation()}
-          className="absolute top-3 right-3 bg-surface rounded-full w-[30px] h-[30px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:scale-110 cursor-pointer"
+          onClick={e => { e.stopPropagation(); toggleWatchlist(auction.auctionId); }}
+          aria-label={watched ? 'Remove from watchlist' : 'Add to watchlist'}
+          aria-pressed={watched}
+          className={`absolute top-3 right-3 rounded-full w-[30px] h-[30px] flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer ${watched ? 'bg-primary text-white' : 'bg-surface/80 text-muted hover:text-primary'}`}
         >
-          <Heart size={14} className="text-primary" />
+          <Heart size={14} className={watched ? 'text-white' : 'text-muted'} fill={watched ? 'currentColor' : 'none'} />
         </button>
       </div>
       <div className="p-4">
@@ -96,25 +133,18 @@ export default function BuyerBrowseAuctions() {
   const [loading, setLoading]           = useState(true);
 
   useEffect(() => {
+    // TODO: Replace with real API loading state when backend is connected
     const t = setTimeout(() => setLoading(false), 900);
     return () => clearTimeout(t);
   }, []);
 
   const filtered = auctions.filter(a => {
     if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false;
+    // TODO: Replace with exact enum matching when real API is connected
     if (category !== 'All' && !a.category.includes(category.split('&')[0].trim())) return false;
     if (showEndingSoon && !a.badge?.includes('Ending')) return false;
     return true;
   });
-
-  const FilterCheckbox = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
-    <div
-      onClick={onClick}
-      className={`w-[14px] h-[14px] rounded-[3px] border-2 flex items-center justify-center shrink-0 transition-colors cursor-pointer ${checked ? 'bg-primary border-primary' : 'border-[#dee2e6]'}`}
-    >
-      {checked && <svg className="h-[5px] w-[7px]" viewBox="0 0 7 5" fill="none"><path d="M0.5 2.5L2.5 4.5L6.5 0.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" /></svg>}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-bg">
@@ -135,19 +165,22 @@ export default function BuyerBrowseAuctions() {
             <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Category</p>
             <div className="flex flex-col gap-2">
               {CATEGORIES.map(c => (
-                <label key={c} className="flex items-center gap-2 cursor-pointer">
-                  <FilterCheckbox checked={category === c} onClick={() => setCategory(c)} />
-                  <span className={`text-[12.5px] ${category === c ? 'font-bold text-secondary' : 'text-muted'}`}>{c}</span>
-                </label>
+                <FilterCheckbox
+                  key={c}
+                  checked={category === c}
+                  onClick={() => setCategory(c)}
+                  label={c}
+                />
               ))}
             </div>
           </div>
           <div>
             <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Status</p>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <FilterCheckbox checked={showEndingSoon} onClick={() => setShowEndingSoon(p => !p)} />
-              <span className="text-[12.5px] text-muted">Ending Soon</span>
-            </label>
+            <FilterCheckbox
+              checked={showEndingSoon}
+              onClick={() => setShowEndingSoon(p => !p)}
+              label="Ending Soon"
+            />
           </div>
         </aside>
 
@@ -190,10 +223,11 @@ export default function BuyerBrowseAuctions() {
                   </button>
                 ))}
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <FilterCheckbox checked={showEndingSoon} onClick={() => setShowEndingSoon(p => !p)} />
-                <span className="text-[12.5px] text-muted">Ending Soon</span>
-              </label>
+              <FilterCheckbox
+                checked={showEndingSoon}
+                onClick={() => setShowEndingSoon(p => !p)}
+                label="Ending Soon"
+              />
             </div>
           )}
 
@@ -225,9 +259,13 @@ export default function BuyerBrowseAuctions() {
               </div>
               <p className="font-bold text-[16px] text-secondary">No auctions found</p>
               <p className="text-[13px] text-muted">Try adjusting your search or filters</p>
-              <button onClick={() => { setSearch(''); setCategory('All'); setShowEndingSoon(false); }} className="mt-1 font-bold text-[13px] text-primary hover:underline cursor-pointer">
+              <Button
+                variant="ghost"
+                onClick={() => { setSearch(''); setCategory('All'); setShowEndingSoon(false); }}
+                className="mt-1"
+              >
                 Clear filters
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

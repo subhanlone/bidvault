@@ -44,7 +44,10 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
     if (res.success && res.data) setPendingListings(res.data);
   }, []);
 
-  useEffect(() => { refreshListings(); }, [refreshListings]);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => { void refreshListings(); }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [refreshListings]);
 
   const getAuction = useCallback(
     (id: string) => auctions.find(a => a.auctionId === id),
@@ -138,6 +141,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuction() {
   const ctx = useContext(AuctionContext);
   if (!ctx) throw new Error('useAuction must be used within AuctionProvider');

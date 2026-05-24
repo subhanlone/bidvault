@@ -1,10 +1,12 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Menu } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import type { Auction } from '../../types';
+
+const INITIAL_NOW = Date.now();
 
 function AuctionRow({ auction }: { auction: Auction }) {
   const timer = useTimer(auction.endTime);
@@ -66,10 +68,20 @@ function AuctionRow({ auction }: { auction: Auction }) {
 export default function AdminLiveAuctions() {
   const { auctions } = useAuction();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [now, setNow] = useState(INITIAL_NOW);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setNow(Date.now()), 0);
+    const intervalId = setInterval(() => setNow(Date.now()), 30_000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const active = auctions.filter(a => a.status === 'ACTIVE');
   const endingSoon = active.filter(a => {
-    const secs = Math.max(0, (new Date(a.endTime).getTime() - Date.now()) / 1000);
+    const secs = Math.max(0, (new Date(a.endTime).getTime() - now) / 1000);
     return secs < 3600;
   });
   const totalBids = auctions.reduce((s, a) => s + a.bidCount, 0);
