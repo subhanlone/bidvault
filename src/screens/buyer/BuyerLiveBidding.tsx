@@ -8,6 +8,7 @@ import { Search, Check, Zap, Star, Heart } from 'lucide-react';
 import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { getSocket } from '../../services/socket';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
@@ -15,26 +16,24 @@ export default function BuyerLiveBidding() {
   const { auctionId } = useParams<{ auctionId: string }>();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { getAuction, bids, addCompetingBid } = useAuction();
+  const { getAuction, bids, fetchBids, toggleWatchlist, isWatched } = useAuction();
   const { showToast } = useToast();
 
   const auction = getAuction(auctionId ?? '');
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
-  const competingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const redirectedRef = useRef(false);
   const [customBid, setCustomBid] = useState('');
   const [customBidTouched, setCustomBidTouched] = useState(false);
-  const { toggleWatchlist, isWatched } = useAuction();
   const watched = auction ? isWatched(auction.auctionId) : false;
 
+  // Load initial bids and subscribe to socket room
   useEffect(() => {
-    if (!auction) return;
-    competingRef.current = setInterval(() => {
-      addCompetingBid(auction.auctionId);
-    }, 8000 + Math.random() * 7000);
-    return () => { if (competingRef.current) clearInterval(competingRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auction?.auctionId]);
+    if (!auctionId) return;
+    void fetchBids(auctionId);
+    const socket = getSocket();
+    socket.emit('auction:subscribe', auctionId);
+    return () => { socket.emit('auction:unsubscribe', auctionId); };
+  }, [auctionId, fetchBids]);
 
   useEffect(() => {
     if (redirectedRef.current || !auction) return;
@@ -121,18 +120,8 @@ export default function BuyerLiveBidding() {
             </div>
             <h2 className="font-extrabold text-[18px] sm:text-[20px] text-navy mb-3">{auction.title}</h2>
 
-            {auction.specs && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                {Object.entries(auction.specs).map(([k, v]) => (
-                  <div key={k} className="bg-bg rounded-sm px-3 py-2">
-                    <p className="text-[10px] text-placeholder font-bold uppercase tracking-[0.4px]">{k}</p>
-                    <p className="font-semibold text-[13px] text-secondary mt-[2px]">{v}</p>
-                  </div>
-                ))}
-              </div>
-            )}
 
-            <p className="text-[13px] text-muted leading-[20px]">{auction.description}</p>
+<p className="text-[13px] text-muted leading-[20px]">{auction.description}</p>
 
             <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border-light">
               <div className="bg-navy size-[36px] rounded-full flex items-center justify-center text-white font-bold text-[14px] shrink-0">
@@ -142,7 +131,9 @@ export default function BuyerLiveBidding() {
                 <p className="font-bold text-[13px] text-secondary">{auction.sellerName}</p>
                 <div className="flex items-center gap-1 flex-wrap">
                   <Star size={12} fill="#f59e0b" className="text-gold" />
-                  <span className="text-[11px] text-muted">{auction.sellerRating} · {auction.sellerSales} sales</span>
+                  <span className="text-[11px] text-muted">
+                    {auction.sellerRating !== null ? auction.sellerRating : 'N/A'} · {auction.sellerSales !== null ? `${auction.sellerSales} sales` : 'No sales yet'}
+                  </span>
                   {auction.sellerVerified && (
                     <span className="bg-success-bg text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-[99px] flex items-center gap-[3px]">
                       <Check size={9} strokeWidth={3} />Verified

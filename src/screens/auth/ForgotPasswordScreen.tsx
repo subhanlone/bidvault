@@ -65,6 +65,7 @@ export default function ForgotPasswordScreen() {
   const [showConfirm,setShowConfirm]= useState(false);
   const [loading,    setLoading]    = useState(false);
   const [resendSecs, setResendSecs] = useState(0);
+  const [resetCode,  setResetCode]  = useState<string | undefined>();
   const [emailError, setEmailError] = useState('');
   const [otpError, setOtpError] = useState('');
   const [newPwError, setNewPwError] = useState('');
@@ -116,6 +117,7 @@ export default function ForgotPasswordScreen() {
     const res = await forgotPassword(email);
     setLoading(false);
     if (res.success) {
+      setResetCode(res.resetCode);
       showToast({ type: 'success', title: 'Code Sent!', message: `Check ${email} for your reset code.` });
       setStep(2);
     } else {
@@ -149,8 +151,8 @@ export default function ForgotPasswordScreen() {
     setNewPwError('');
     setConfirmPwError('');
     let invalidCount = 0;
-    if (newPw.length < 6) {
-      setNewPwError('Password must be at least 6 characters');
+    if (newPw.length < 8) {
+      setNewPwError('Password must be at least 8 characters');
       invalidCount += 1;
     }
     if (newPw !== confirmPw) {
@@ -162,7 +164,7 @@ export default function ForgotPasswordScreen() {
       return;
     }
     setLoading(true);
-    const res = await resetPassword(email, newPw);
+    const res = await resetPassword(email, otp.join(''), newPw);
     setLoading(false);
     if (res.success) {
       showToast({ type: 'success', title: 'Password Reset!', message: 'You can now sign in with your new password.' });
@@ -222,7 +224,6 @@ export default function ForgotPasswordScreen() {
                 autoComplete="email"
                 error={emailError}
               />
-              <p className="text-[11px] text-placeholder mt-1">Hint: try <strong>sawera@gmail.com</strong></p>
             </div>
 
             <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>
@@ -265,7 +266,9 @@ export default function ForgotPasswordScreen() {
                 ))}
               </div>
               {otpError && <p className="text-[11px] text-error text-center" role="alert">{otpError}</p>}
-              <p className="text-[11px] text-placeholder text-center">Hint: use code <strong>654321</strong> for demo</p>
+              {import.meta.env.DEV && resetCode && (
+                <p className="text-[11px] text-placeholder text-center">Dev hint: your code is <strong>{resetCode}</strong></p>
+              )}
             </div>
 
             <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3">
@@ -283,7 +286,16 @@ export default function ForgotPasswordScreen() {
               <button
                 type="button"
                 disabled={resendSecs > 0}
-                onClick={() => { setResendSecs(60); showToast({ type: 'info', title: 'Code Resent', message: `New code sent to ${email}` }); }}
+                onClick={async () => {
+                  setResendSecs(60);
+                  const res = await forgotPassword(email);
+                  if (res.success) {
+                    setResetCode(res.resetCode);
+                    showToast({ type: 'info', title: 'Code Resent', message: `New code sent to ${email}` });
+                  } else {
+                    showToast({ type: 'error', title: 'Failed', message: res.error || 'Could not resend code.' });
+                  }
+                }}
                 className={`text-sm font-bold cursor-pointer ${resendSecs > 0 ? 'text-placeholder cursor-not-allowed' : 'text-primary hover:underline'}`}
               >
                 {resendSecs > 0 ? `Resend (${fmtTime(resendSecs)})` : 'Resend email'}
@@ -303,7 +315,7 @@ export default function ForgotPasswordScreen() {
             <Input
               label="New password"
               type={showPw ? 'text' : 'password'}
-              placeholder="Min. 6 characters"
+              placeholder="Min. 8 characters"
               value={newPw}
               onChange={e => { setNewPw(e.target.value); setNewPwError(''); }}
               leftIcon={<Lock size={16} />}
@@ -346,7 +358,7 @@ export default function ForgotPasswordScreen() {
 
             <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3">
               <Info size={15} className="text-info flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-info leading-relaxed">Must be <span className="font-bold">6+ characters</span> long and match the confirm field.</p>
+              <p className="text-[12px] text-info leading-relaxed">Must be <span className="font-bold">8+ characters</span> long and match the confirm field.</p>
             </div>
 
             <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>

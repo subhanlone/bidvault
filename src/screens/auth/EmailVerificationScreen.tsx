@@ -12,10 +12,12 @@ function fmtTime(s: number) {
 export default function EmailVerificationScreen() {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const { verifyEmail } = useAuth();
+  const { verifyEmail, resendVerification } = useAuth();
   const { showToast }   = useToast();
 
-  const email: string = (location.state as { email?: string })?.email ?? '';
+  const state = location.state as { email?: string; verificationCode?: string } | null;
+  const email: string = state?.email ?? '';
+  const verificationCode: string | undefined = state?.verificationCode;
   const [otp, setOtp]             = useState(['', '', '', '', '', '']);
   const [loading, setLoading]     = useState(false);
   const [resendSecs, setResendSecs] = useState(60);
@@ -78,11 +80,16 @@ export default function EmailVerificationScreen() {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (resendSecs > 0) return;
     setResendSecs(60);
     setCodeExpiry(600);
-    showToast({ type: 'info', title: 'Code Resent', message: `A new code was sent to ${email}` });
+    const result = await resendVerification(email);
+    if (result.success) {
+      showToast({ type: 'info', title: 'Code Resent', message: `A new code was sent to ${email}` });
+    } else {
+      showToast({ type: 'error', title: 'Failed', message: result.error || 'Could not resend code.' });
+    }
   };
 
   return (
@@ -157,7 +164,9 @@ export default function EmailVerificationScreen() {
               />
             ))}
           </div>
-          <p className="text-[11px] text-placeholder text-center">Hint: use code <strong>123456</strong> for demo</p>
+          {import.meta.env.DEV && verificationCode && (
+            <p className="text-[11px] text-placeholder text-center">Dev hint: your code is <strong>{verificationCode}</strong></p>
+          )}
         </div>
 
         {/* Info banner */}

@@ -1,29 +1,35 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingUp, Eye, EyeOff, Bell, BellOff, Search, Hammer } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
+import { useToast } from '../../context/ToastContext';
 import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { SEED_BIDS } from '../../services/mockData';
 
 export default function BuyerProfile() {
-  const { user, logout } = useAuth();
-  const { auctions } = useAuction();
+  const { user, logout, changePassword } = useAuth();
+  const { auctions, bids, watchlist, fetchMyBids } = useAuction();
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const [notifBids, setNotifBids] = useState(true);
   const [notifWins, setNotifWins] = useState(true);
   const [notifNews, setNotifNews] = useState(false);
   const [showPwForm, setShowPwForm] = useState(false);
+  const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState('');
 
-  const myBids = SEED_BIDS.filter(b => b.buyerId === user?.userId);
+  useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
+
+  const myBids = Object.values(bids).flat().filter(b => b.buyerId === user?.userId);
   const totalBidAmount = myBids.reduce((s, b) => s + b.amount, 0);
-  const auctionsWon = myBids.filter(b => b.isWin).length;
-  const watchlistCount = auctions.length;
+  const auctionsWon = myBids.filter(b => b.isWin === true).length;
+  const watchlistCount = watchlist.length;
 
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-PK', { year: 'numeric', month: 'long' })
@@ -244,11 +250,19 @@ export default function BuyerProfile() {
                   ) : (
                     <div className="flex flex-col gap-3">
                       <Input
+                        id="buyer-current-password"
+                        label="Current Password"
+                        type="password"
+                        value={currentPw}
+                        onChange={e => { setCurrentPw(e.target.value); setPwError(''); }}
+                        placeholder="Your current password"
+                      />
+                      <Input
                         id="buyer-new-password"
                         label="New Password"
                         type={showPw ? 'text' : 'password'}
                         value={newPw}
-                        onChange={e => setNewPw(e.target.value)}
+                        onChange={e => { setNewPw(e.target.value); setPwError(''); }}
                         placeholder="Min. 8 characters"
                         rightIcon={
                           <button
@@ -260,21 +274,33 @@ export default function BuyerProfile() {
                             {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                           </button>
                         }
+                        error={pwError}
                       />
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           className="flex-1 rounded-sm"
-                          onClick={() => { setShowPwForm(false); setNewPw(''); }}
+                          onClick={() => { setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError(''); }}
                         >
                           Cancel
                         </Button>
                         <Button
                           size="sm"
                           className="flex-1 rounded-sm"
-                          loading={false}
-                          onClick={() => { setShowPwForm(false); setNewPw(''); }}
+                          loading={pwLoading}
+                          onClick={async () => {
+                            if (newPw.length < 8) { setPwError('Min. 8 characters'); return; }
+                            setPwLoading(true);
+                            const result = await changePassword(currentPw, newPw);
+                            setPwLoading(false);
+                            if (result.success) {
+                              setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError('');
+                              showToast({ type: 'success', title: 'Password Changed', message: 'Your password has been updated.' });
+                            } else {
+                              setPwError(result.error || 'Failed to change password.');
+                            }
+                          }}
                         >
                           Save
                         </Button>

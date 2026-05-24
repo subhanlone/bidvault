@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Plus, Package, Banknote, Gavel, PackageCheck, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { mockApi } from '../../services/mockApi';
+import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
 import type { Listing } from '../../types';
 
@@ -56,11 +56,10 @@ export default function SellerDashboard() {
 
   useEffect(() => {
     if (!user) return;
-    mockApi.getSellerListings(user.userId).then(res => {
-      if (res.success && res.data) setListings(res.data);
-      setLoading(false);
-    });
-  }, [user]);
+    api.get<Listing[]>('/listings/mine').then(data => {
+      setListings(data);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [user?.userId]);
 
   const total    = listings.length;
   const pending  = listings.filter(l => l.status === 'PENDING').length;

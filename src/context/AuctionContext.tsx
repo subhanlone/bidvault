@@ -1,62 +1,138 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Auction, Bid, Listing, User } from '../types';
-import { mockApi, auctions as seedAuctions, bids as seedBids } from '../services/mockApi';
-import { SEED_PENDING_LISTINGS } from '../services/mockData';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import type { Auction, Bid, Listing } from '../types';
+import { api, ApiError } from '../services/api';
+import { getSocket } from '../services/socket';
+import { useAuth } from './AuthContext';
 
 interface AuctionContextType {
   auctions: Auction[];
+  auctionsLoaded: boolean;
   bids: Record<string, Bid[]>;
   pendingListings: Listing[];
   watchlist: string[];
   getAuction: (id: string) => Auction | undefined;
-  placeBid: (auctionId: string, amount: number, buyer: User) => Promise<{ success: boolean; error?: string }>;
-  addCompetingBid: (auctionId: string) => Bid | null;
+  placeBid: (auctionId: string, amount: number) => Promise<{ success: boolean; error?: string }>;
+  fetchBids: (auctionId: string) => Promise<void>;
+  fetchMyBids: () => Promise<void>;
   approveListing: (listingId: string) => Promise<void>;
   rejectListing: (listingId: string, reason: string) => Promise<void>;
   refreshListings: () => Promise<void>;
-  toggleWatchlist: (auctionId: string) => void;
+  toggleWatchlist: (auctionId: string) => Promise<void>;
   isWatched: (auctionId: string) => boolean;
 }
 
 const AuctionContext = createContext<AuctionContextType | null>(null);
 
-const COMPETITOR_NAMES = ['Usman', 'Ali', 'Zainab', 'Hassan', 'Bilal', 'Amina', 'Omar', 'Fatima', 'Kamran', 'Sara'];
-
-function buildBidMap(bidList: Bid[]): Record<string, Bid[]> {
-  const map: Record<string, Bid[]> = {};
-  for (const b of bidList) {
-    if (!map[b.auctionId]) map[b.auctionId] = [];
-    map[b.auctionId].push(b);
-  }
-  return map;
-}
-
 export function AuctionProvider({ children }: { children: React.ReactNode }) {
-  const [auctions, setAuctions] = useState<Auction[]>([...seedAuctions]);
-  const [bids, setBids] = useState<Record<string, Bid[]>>(buildBidMap([...seedBids]));
-  const [pendingListings, setPendingListings] = useState<Listing[]>([...SEED_PENDING_LISTINGS]);
-  const [watchlist, setWatchlist] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('bidvault_watchlist') ?? '[]'); } catch { return []; }
-  });
+  const { user } = useAuth();
+  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [auctionsLoaded, setAuctionsLoaded] = useState(false);
+  const [bids, setBids] = useState<Record<string, Bid[]>>({});
+  const [pendingListings, setPendingListings] = useState<Listing[]>([]);
+  const [watchlist, setWatchlist] = useState<string[]>([]);
+  const socketSetupRef = useRef(false);
 
-  const refreshListings = useCallback(async () => {
-    const res = await mockApi.getPendingListings();
-    if (res.success && res.data) setPendingListings(res.data);
+  // Fetch all auctions on mount
+  useEffect(() => {
+    api.get<Auction[]>('/auctions').then(data => {
+      setAuctions(data);
+      setAuctionsLoaded(true);
+    }).catch(() => { setAuctionsLoaded(true); });
   }, []);
 
+  // Sync watchlist from backend when user logs in
   useEffect(() => {
-    const timeoutId = setTimeout(() => { void refreshListings(); }, 0);
-    return () => clearTimeout(timeoutId);
-  }, [refreshListings]);
+    if (!user || (user.role !== 'BUYER' && user.role !== 'ADMIN')) {
+      Promise.resolve().then(() => setWatchlist([]));
+      return;
+    }
+    api.get<Array<{ auctionId: string }>>('/watchlist').then(data => {
+      setWatchlist(data.map(item => item.auctionId));
+    }).catch(() => {});
+  }, [user?.userId]);
+
+  // Global Socket.IO bid:placed listener
+  useEffect(() => {
+    if (socketSetupRef.current) return;
+    socketSetupRef.current = true;
+
+    const socket = getSocket();
+
+    function onBidPlaced(payload: {
+      auctionId: string;
+      bid: { bidId: string; amount: number; buyerId: string; buyerName: string; timestamp: string };
+    }) {
+      const { auctionId, bid } = payload;
+      const newBid: Bid = {
+        bidId: bid.bidId,
+        auctionId,
+        buyerId: bid.buyerId,
+        buyerName: bid.buyerName,
+        amount: bid.amount,
+        timestamp: bid.timestamp,
+      };
+      setBids(prev => {
+        const existing = prev[auctionId] ?? [];
+        if (existing.some(b => b.bidId === newBid.bidId)) return prev;
+        return { ...prev, [auctionId]: [newBid, ...existing] };
+      });
+      setAuctions(prev =>
+        prev.map(a =>
+          a.auctionId === auctionId ? { ...a, currentBid: bid.amount, bidCount: a.bidCount + 1 } : a,
+        ),
+      );
+    }
+
+    socket.on('bid:placed', onBidPlaced);
+
+    return () => {
+      socket.off('bid:placed', onBidPlaced);
+      socketSetupRef.current = false;
+    };
+  }, []);
 
   const getAuction = useCallback(
     (id: string) => auctions.find(a => a.auctionId === id),
     [auctions],
   );
 
-  const placeBid = async (auctionId: string, amount: number, buyer: User) => {
-    const res = await mockApi.placeBid(auctionId, amount, buyer);
-    if (res.success && res.data) {
+  const fetchBids = useCallback(async (auctionId: string) => {
+    try {
+      const data = await api.get<Bid[]>(`/auctions/${auctionId}/bids`);
+      setBids(prev => ({ ...prev, [auctionId]: data }));
+    } catch {
+      // Non-critical — bids can load empty
+    }
+  }, []);
+
+  const fetchMyBids = useCallback(async () => {
+    if (!user || user.role !== 'BUYER') return;
+    try {
+      const data = await api.get<Array<Bid & { auction: Auction }>>('/auctions/mine/bids');
+      const bidsByAuction: Record<string, Bid[]> = {};
+      const newAuctions: Auction[] = [];
+      for (const { auction, ...bid } of data) {
+        if (!bidsByAuction[bid.auctionId]) bidsByAuction[bid.auctionId] = [];
+        bidsByAuction[bid.auctionId].push(bid as Bid);
+        if (!newAuctions.some(a => a.auctionId === auction.auctionId)) {
+          newAuctions.push(auction);
+        }
+      }
+      setBids(prev => ({ ...prev, ...bidsByAuction }));
+      setAuctions(prev => {
+        const merged = [...prev];
+        for (const a of newAuctions) {
+          if (!merged.some(x => x.auctionId === a.auctionId)) merged.push(a);
+        }
+        return merged;
+      });
+    } catch { /* non-critical */ }
+  }, [user]);
+
+  const placeBid = async (auctionId: string, amount: number) => {
+    try {
+      const bid = await api.post<Bid>(`/auctions/${auctionId}/bids`, { amount });
+      setBids(prev => ({ ...prev, [auctionId]: [bid, ...(prev[auctionId] ?? [])] }));
       setAuctions(prev =>
         prev.map(a =>
           a.auctionId === auctionId
@@ -64,75 +140,62 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
             : a,
         ),
       );
-      setBids(prev => ({
-        ...prev,
-        [auctionId]: [res.data!, ...(prev[auctionId] ?? [])],
-      }));
       return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Could not place bid' };
     }
-    return { success: false, error: res.error };
   };
 
-  const addCompetingBid = useCallback(
-    (auctionId: string): Bid | null => {
-      const auction = seedAuctions.find(a => a.auctionId === auctionId);
-      if (!auction) return null;
-      const increments = [1, 2, 3];
-      const inc = increments[Math.floor(Math.random() * increments.length)] * auction.minIncrement;
-      const amount = auction.currentBid + inc;
-      const name = COMPETITOR_NAMES[Math.floor(Math.random() * COMPETITOR_NAMES.length)];
-      const newBid: Bid = {
-        bidId: `bc-${Date.now()}`,
-        auctionId,
-        buyerId: `u-comp-${Date.now()}`,
-        buyerName: name,
-        amount,
-        timestamp: new Date().toISOString(),
-        isWin: false,
-      };
-      auction.currentBid = amount;
-      auction.bidCount += 1;
-      seedBids.unshift(newBid);
-      setAuctions(prev =>
-        prev.map(a =>
-          a.auctionId === auctionId
-            ? { ...a, currentBid: amount, bidCount: a.bidCount + 1 }
-            : a,
-        ),
-      );
-      setBids(prev => ({
-        ...prev,
-        [auctionId]: [newBid, ...(prev[auctionId] ?? [])],
-      }));
-      return newBid;
-    },
-    [],
-  );
+  const refreshListings = useCallback(async () => {
+    if (user?.role !== 'ADMIN') return;
+    try {
+      const data = await api.get<Listing[]>('/listings/pending');
+      setPendingListings(data);
+    } catch {
+      setPendingListings([]);
+    }
+  }, [user?.role]);
 
   const approveListing = async (listingId: string) => {
-    await mockApi.approveListing(listingId);
+    await api.post(`/listings/${listingId}/approve`);
     setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
   };
 
   const rejectListing = async (listingId: string, reason: string) => {
-    await mockApi.rejectListing(listingId, reason);
+    await api.post(`/listings/${listingId}/reject`, { reason });
     setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
   };
 
-  const toggleWatchlist = useCallback((auctionId: string) => {
-    setWatchlist(prev => {
-      const next = prev.includes(auctionId) ? prev.filter(id => id !== auctionId) : [...prev, auctionId];
-      localStorage.setItem('bidvault_watchlist', JSON.stringify(next));
-      return next;
-    });
-  }, []);
+  const toggleWatchlist = useCallback(async (auctionId: string) => {
+    if (!user) return;
+
+    const isCurrentlyWatched = watchlist.includes(auctionId);
+
+    // Optimistic update
+    setWatchlist(prev =>
+      isCurrentlyWatched ? prev.filter(id => id !== auctionId) : [...prev, auctionId],
+    );
+
+    try {
+      if (isCurrentlyWatched) {
+        await api.del(`/watchlist/${auctionId}`);
+      } else {
+        await api.post(`/watchlist/${auctionId}`);
+      }
+    } catch {
+      // Revert on failure
+      setWatchlist(prev =>
+        isCurrentlyWatched ? [...prev, auctionId] : prev.filter(id => id !== auctionId),
+      );
+    }
+  }, [user, watchlist]);
 
   const isWatched = useCallback((auctionId: string) => watchlist.includes(auctionId), [watchlist]);
 
   return (
     <AuctionContext.Provider value={{
-      auctions, bids, pendingListings, watchlist,
-      getAuction, placeBid, addCompetingBid,
+      auctions, auctionsLoaded, bids, pendingListings, watchlist,
+      getAuction, placeBid, fetchBids, fetchMyBids,
       approveListing, rejectListing, refreshListings,
       toggleWatchlist, isWatched,
     }}>
@@ -147,3 +210,5 @@ export function useAuction() {
   if (!ctx) throw new Error('useAuction must be used within AuctionProvider');
   return ctx;
 }
+
+export { ApiError };

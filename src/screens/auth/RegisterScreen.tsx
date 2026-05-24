@@ -37,7 +37,7 @@ export default function RegisterScreen() {
     if (!name.trim()) e.name = 'Full name is required';
     if (!email.trim()) e.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Enter a valid email';
-    if (password.length < 6) e.password = 'Password must be at least 6 characters';
+    if (password.length < 8) e.password = 'Password must be at least 8 characters';
     if (!agree) e.agree = 'You must agree to the terms';
     return e;
   };
@@ -51,7 +51,7 @@ export default function RegisterScreen() {
     setLoading(false);
     if (result.success) {
       showToast({ type: 'success', title: 'Account Created!', message: 'Check your email for a verification code.' });
-      navigate('/email-verification', { state: { email } });
+      navigate('/email-verification', { state: { email, verificationCode: result.verificationCode } });
     } else {
       showToast({ type: 'error', title: 'Registration Failed', message: result.error || 'Something went wrong.' });
     }
@@ -151,7 +151,7 @@ export default function RegisterScreen() {
           <Input
             label="Password"
             type={showPw ? 'text' : 'password'}
-            placeholder="Min. 6 characters"
+            placeholder="Min. 8 characters"
             value={password}
             onChange={e => { setPassword(e.target.value); clearError('password'); }}
             leftIcon={<Lock size={16} />}

@@ -13,30 +13,19 @@ export default function BuyerLiveBiddingFinalCountdown() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { getAuction, bids, addCompetingBid } = useAuction();
+  const { getAuction, bids } = useAuction();
 
   const id = auctionId ?? (location.state as { auctionId?: string })?.auctionId ?? '';
   const auction = getAuction(id);
   const timer = useTimer(auction?.endTime ?? FINAL_COUNTDOWN_FALLBACK_END_TIME);
   const wonRef = useRef(false);
-  const competingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [flashTimer, setFlashTimer] = useState(false);
   const lastBidIdRef = useRef<string | null>(null);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!auction) return;
-    competingRef.current = setInterval(() => {
-      addCompetingBid(auction.auctionId);
-    }, 15000);
-    return () => { if (competingRef.current) clearInterval(competingRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auction?.auctionId]);
-
-  useEffect(() => {
     if (!timer.isExpired || wonRef.current || !auction) return;
     wonRef.current = true;
-    if (competingRef.current) clearInterval(competingRef.current);
     const auctionBids = bids[auction.auctionId] ?? [];
     const highestBid = auctionBids[0];
     const userWon = highestBid?.buyerId === user?.userId;

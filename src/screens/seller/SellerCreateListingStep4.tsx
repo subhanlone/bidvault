@@ -4,7 +4,7 @@ import { Smartphone, Car, Package, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
-import { mockApi } from '../../services/mockApi';
+import { api, ApiError } from '../../services/api';
 import { Button } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
@@ -20,15 +20,34 @@ export default function SellerCreateListingStep4() {
 
   const handleSubmit = async () => {
     if (!user) return;
+    if (!draft.startDate || !draft.startTime) {
+      showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and set a start date and time.' });
+      return;
+    }
+    if (draft.startingPrice <= 0) {
+      showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and set a valid starting price.' });
+      return;
+    }
     setIsSubmitting(true);
-    const res = await mockApi.submitListing(draft, user.userId, user.name);
-    setIsSubmitting(false);
-    if (res.success && res.data) {
-      setSubmittedListingId(res.data.listingId);
+    try {
+      const data = await api.post<{ listingId: string }>('/listings', {
+        title: draft.title,
+        category: draft.category,
+        condition: draft.condition,
+        description: draft.description,
+        startAt: `${draft.startDate}T${draft.startTime}:00`,
+        durationDays: draft.duration,
+        startPrice: draft.startingPrice,
+        minIncrement: draft.minIncrement,
+        reservePrice: draft.hasReserve ? draft.reservePrice : undefined,
+      });
+      setSubmittedListingId(data.listingId);
       showToast({ type: 'success', title: 'Listing Submitted!', message: 'Your listing is under admin review.' });
       navigate('/seller/listing-submitted');
-    } else {
-      showToast({ type: 'error', title: 'Submission Failed', message: res.error || 'Please try again.' });
+    } catch (err) {
+      showToast({ type: 'error', title: 'Submission Failed', message: err instanceof ApiError ? err.message : 'Please try again.' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

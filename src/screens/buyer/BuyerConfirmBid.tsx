@@ -26,7 +26,7 @@ export default function BuyerConfirmBid() {
   const handleConfirm = async () => {
     if (!auction || !user) return;
     setIsConfirming(true);
-    const res = await placeBid(auction.auctionId, bidAmount, user);
+    const res = await placeBid(auction.auctionId, bidAmount);
     setIsConfirming(false);
     if (res.success) {
       showToast({ type: 'success', title: 'Bid Placed!', message: `Your bid of PKR ${bidAmount.toLocaleString()} is now the highest.` });

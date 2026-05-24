@@ -89,9 +89,11 @@ function BidCard({ entry }: { entry: BidEntry }) {
 
 export default function BuyerMyBids() {
   const { user, logout } = useAuth();
-  const { auctions, bids } = useAuction();
+  const { auctions, bids, fetchMyBids } = useAuction();
   const navigate = useNavigate();
   const [now, setNow] = useState(INITIAL_NOW);
+
+  useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => setNow(Date.now()), 0);

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
@@ -9,7 +9,9 @@ import { Button } from '../../components/ui';
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
-  const { pendingListings, approveListing, rejectListing } = useAuction();
+  const { pendingListings, refreshListings, approveListing, rejectListing } = useAuction();
+
+  useEffect(() => { refreshListings(); }, [refreshListings]);
   const { showToast } = useToast();
 
   const [notes, setNotes] = useState('');

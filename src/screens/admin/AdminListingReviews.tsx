@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { CheckCircle2, ClipboardList, Menu } from 'lucide-react';
@@ -6,8 +6,10 @@ import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
-  const { pendingListings } = useAuction();
+  const { pendingListings, refreshListings } = useAuction();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => { refreshListings(); }, [refreshListings]);
 
   const pendingCount = pendingListings.length;
 

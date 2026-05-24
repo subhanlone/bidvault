@@ -1,10 +1,10 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
-import { SEED_AUCTIONS } from '../services/mockData';
 import { useTimer } from '../hooks/useTimer';
 import type { Auction } from '../types';
 import { Button } from '../components/ui';
+import { api } from '../services/api';
 
 // ─── Auction card with live timer ─────────────────────────────────────────────
 function FeaturedCard({ auction }: { auction: Auction }) {
@@ -20,11 +20,6 @@ function FeaturedCard({ auction }: { auction: Auction }) {
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
-        {auction.badge && (
-          <span className={`absolute top-3 left-3 ${auction.badgeColor} font-bold text-[10px] text-white px-2 py-1 rounded-[99px]`}>
-            {auction.badge}
-          </span>
-        )}
         <span className={`absolute top-3 right-3 font-bold text-[11px] px-2 py-1 rounded-[6px] flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-[rgba(11,31,58,0.7)] text-white'}`}>
           <Clock size={10} strokeWidth={2.5} /> {timer.display}
         </span>
@@ -60,8 +55,13 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'buyers' | 'sellers'>('buyers');
+  const [featured, setFeatured] = useState<Auction[]>([]);
 
-  const featured = SEED_AUCTIONS.slice(0, 3);
+  useEffect(() => {
+    api.get<Auction[]>('/auctions?status=ACTIVE').then(data => {
+      setFeatured(data.slice(0, 3));
+    }).catch(() => {});
+  }, []);
 
   const stats = [
     { value: '2,400+', label: 'Active Auctions', icon: <Gavel size={28} strokeWidth={1.6} className="text-primary" /> },

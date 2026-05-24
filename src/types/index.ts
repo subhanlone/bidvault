@@ -16,6 +16,7 @@ export interface User {
 
 export interface Listing {
   listingId: string;
+  listingCode: string;
   sellerId: string;
   sellerName: string;
   title: string;
@@ -24,7 +25,11 @@ export interface Listing {
   description: string;
   startPrice: number;
   reservePrice?: number;
+  minIncrement: number;
+  startAt: string;
+  durationDays: number;
   status: ListingStatus;
+  rejectionReason?: string;
   submittedAt: string;
   emoji: string;
   imageUrl?: string;
@@ -41,8 +46,8 @@ export interface Auction {
   sellerId: string;
   sellerName: string;
   sellerVerified: boolean;
-  sellerRating: number;
-  sellerSales: number;
+  sellerRating: number | null;
+  sellerSales: number | null;
   startPrice: number;
   currentBid: number;
   minIncrement: number;
@@ -51,9 +56,6 @@ export interface Auction {
   startTime: string;
   endTime: string;
   status: AuctionStatus;
-  badge?: string;
-  badgeColor?: string;
-  specs?: Record<string, string>;
   imageUrl: string;
   images?: string[];
 }
@@ -65,7 +67,7 @@ export interface Bid {
   buyerName: string;
   amount: number;
   timestamp: string;
-  isWin: boolean;
+  isWin?: boolean;
 }
 
 export interface Transaction {

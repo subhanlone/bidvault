@@ -36,11 +36,6 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
         >
           <Heart size={14} fill="white" className="text-white" />
         </button>
-        {auction.badge && (
-          <span className={`absolute top-3 left-3 ${auction.badgeColor} font-bold text-[10px] text-white px-2 py-1 rounded-[99px]`}>
-            {auction.badge}
-          </span>
-        )}
       </div>
 
       <div className="p-4 flex flex-col flex-1 cursor-pointer" onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}>

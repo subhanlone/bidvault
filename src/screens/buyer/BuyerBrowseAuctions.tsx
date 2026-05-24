@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Heart, ChevronRight, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
 
 const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Sports & Fitness'];
+const INITIAL_NOW = Date.now();
 
 const FilterCheckbox = ({ checked, onClick, label }: { checked: boolean; onClick: () => void; label: string }) => (
   <label className="flex items-center gap-2.5 cursor-pointer group">
@@ -75,11 +76,6 @@ function AuctionCard({ auction }: { auction: Auction }) {
           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(11,31,58,0.35)] to-transparent" />
-        {auction.badge && (
-          <span className={`absolute top-3 left-3 font-bold text-[10px] text-white px-2 py-1 rounded-full ${auction.badgeColor}`}>
-            {auction.badge}
-          </span>
-        )}
         <span className={`absolute bottom-3 left-3 font-bold text-[11px] px-2 py-1 rounded-md flex items-center gap-2 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-surface/15 backdrop-blur-sm text-white'}`}>
           <span>{timer.isExpired ? 'Closed' : timer.display}</span>
           {isFinalMinutes ? (
@@ -125,24 +121,20 @@ function AuctionCard({ auction }: { auction: Auction }) {
 
 export default function BuyerBrowseAuctions() {
   const { user, logout } = useAuth();
-  const { auctions } = useAuction();
+  const { auctions, auctionsLoaded } = useAuction();
   const [search, setSearch]             = useState('');
   const [category, setCategory]         = useState('All');
   const [showEndingSoon, setShowEndingSoon] = useState(false);
   const [sidebarOpen, setSidebarOpen]   = useState(false);
-  const [loading, setLoading]           = useState(true);
-
-  useEffect(() => {
-    // TODO: Replace with real API loading state when backend is connected
-    const t = setTimeout(() => setLoading(false), 900);
-    return () => clearTimeout(t);
-  }, []);
+  const [now] = useState(INITIAL_NOW);
 
   const filtered = auctions.filter(a => {
     if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false;
-    // TODO: Replace with exact enum matching when real API is connected
-    if (category !== 'All' && !a.category.includes(category.split('&')[0].trim())) return false;
-    if (showEndingSoon && !a.badge?.includes('Ending')) return false;
+    if (category !== 'All' && !a.category.toLowerCase().includes(category.split('&')[0].trim().toLowerCase())) return false;
+    if (showEndingSoon) {
+      const msLeft = new Date(a.endTime).getTime() - now;
+      if (msLeft <= 0 || msLeft > 3_600_000) return false;
+    }
     return true;
   });
 
@@ -248,7 +240,7 @@ export default function BuyerBrowseAuctions() {
             </div>
           </div>
 
-          {loading ? (
+          {!auctionsLoaded ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
             </div>

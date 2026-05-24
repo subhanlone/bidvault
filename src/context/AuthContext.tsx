@@ -1,100 +1,138 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { User, RegisterData, LoginData } from '../types';
-import { mockApi } from '../services/mockApi';
+import { api, getStoredAuth, setStoredAuth, clearStoredAuth } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
   verifyEmail: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
+  resendVerification: (email: string) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
   login: (data: LoginData) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => void;
-  forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; resetCode?: string; error?: string }>;
   verifyResetOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
-  resetPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string, otp: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   updateUser: (u: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-const STORAGE_KEY = 'bidvault_auth_v1';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => {
+    const stored = getStoredAuth();
+    return (stored?.accessToken && stored.user) ? stored.user as User : null;
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    const stored = getStoredAuth();
+    return stored?.accessToken ?? null;
+  });
+  const [isLoading] = useState(false);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const { user: u, token: t } = JSON.parse(raw);
-          // Re-sync with mutable store (in case in-memory state changed)
-          const fresh = mockApi.getUser(u.userId);
-          setUser(fresh ?? u);
-          setToken(t);
-        }
-      } catch { /* ignore */ }
-      setIsLoading(false);
-    }, 0);
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  const persist = (u: User | null, t: string | null) => {
-    if (u && t) localStorage.setItem(STORAGE_KEY, JSON.stringify({ user: u, token: t }));
-    else localStorage.removeItem(STORAGE_KEY);
+  const persist = (u: User | null, accessToken: string | null, refreshToken?: string) => {
+    if (u && accessToken) {
+      const stored = getStoredAuth();
+      setStoredAuth({ user: u, accessToken, refreshToken: refreshToken ?? stored?.refreshToken ?? '' });
+    } else {
+      clearStoredAuth();
+    }
     setUser(u);
-    setToken(t);
+    setToken(accessToken);
   };
 
   const register = async (data: RegisterData) => {
-    const res = await mockApi.register(data);
-    if (res.success) return { success: true };
-    return { success: false, error: res.error };
+    try {
+      const result = await api.post<{ user: User; verificationCode?: string }>('/auth/register', data);
+      return { success: true, verificationCode: result.verificationCode };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Registration failed' };
+    }
   };
 
   const verifyEmail = async (email: string, otp: string) => {
-    const res = await mockApi.verifyEmail(email, otp);
-    if (res.success) return { success: true };
-    return { success: false, error: res.error };
+    try {
+      await api.post('/auth/verify-email', { email, otp });
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Verification failed' };
+    }
+  };
+
+  const resendVerification = async (email: string) => {
+    try {
+      const result = await api.post<{ message: string; verificationCode?: string }>('/auth/resend-verification', { email });
+      return { success: true, verificationCode: result.verificationCode };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to resend code' };
+    }
   };
 
   const login = async (data: LoginData) => {
-    const res = await mockApi.login(data);
-    if (res.success && res.data) {
-      persist(res.data.user, res.data.token);
-      return { success: true, user: res.data.user };
+    try {
+      const result = await api.post<{ user: User; accessToken: string; refreshToken: string }>('/auth/login', data);
+      persist(result.user, result.accessToken, result.refreshToken);
+      return { success: true, user: result.user };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Login failed' };
     }
-    return { success: false, error: res.error };
   };
 
   const logout = useCallback(() => {
+    const stored = getStoredAuth();
+    if (stored?.refreshToken) {
+      api.post('/auth/logout', { refreshToken: stored.refreshToken }).catch(() => {});
+    }
     persist(null, null);
   }, []);
 
   const forgotPassword = async (email: string) => {
-    const res = await mockApi.forgotPassword(email);
-    return res.success ? { success: true } : { success: false, error: res.error };
+    try {
+      const result = await api.post<{ message: string; resetCode?: string }>('/auth/forgot-password', { email });
+      return { success: true, resetCode: result.resetCode };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to send reset code' };
+    }
   };
 
   const verifyResetOtp = async (email: string, otp: string) => {
-    const res = await mockApi.verifyResetOtp(email, otp);
-    return res.success ? { success: true } : { success: false, error: res.error };
+    try {
+      await api.post('/auth/verify-reset-otp', { email, otp });
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Invalid code' };
+    }
   };
 
-  const resetPassword = async (email: string, password: string) => {
-    const res = await mockApi.resetPassword(email, password);
-    return res.success ? { success: true } : { success: false, error: res.error };
+  const resetPassword = async (email: string, otp: string, password: string) => {
+    try {
+      await api.post('/auth/reset-password', { email, otp, password });
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Reset failed' };
+    }
   };
 
-  const updateUser = (u: User) => persist(u, token);
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      await api.post('/auth/change-password', { currentPassword, newPassword });
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to change password' };
+    }
+  };
+
+  const updateUser = (u: User) => {
+    const stored = getStoredAuth();
+    if (stored?.refreshToken) persist(u, token, stored.refreshToken);
+  };
 
   return (
     <AuthContext.Provider value={{
       user, token, isLoading,
-      register, verifyEmail, login, logout,
-      forgotPassword, verifyResetOtp, resetPassword, updateUser,
+      register, verifyEmail, resendVerification, login, logout,
+      forgotPassword, verifyResetOtp, resetPassword, changePassword, updateUser,
     }}>
       {children}
     </AuthContext.Provider>
