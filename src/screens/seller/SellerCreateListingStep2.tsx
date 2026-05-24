@@ -63,42 +63,46 @@ export default function SellerCreateListingStep2() {
               <div className="flex flex-col gap-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelCls}>Auction start date <span className="text-[#d0021b]">*</span></label>
+                    <label htmlFor="auction-start-date" className={labelCls}>Auction start date <span className="text-[#d0021b]">*</span></label>
                     <div className="relative">
                       <input
+                        id="auction-start-date"
                         type="date"
                         className={`${inputCls} pl-10`}
                         min={new Date().toISOString().split('T')[0]}
                         value={draft.startDate}
                         onChange={e => updateDraft({ startDate: e.target.value })}
                       />
-                      <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#adb5bd]" />
+                      <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#adb5bd]" aria-hidden="true" />
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelCls}>Start time <span className="text-[#d0021b]">*</span></label>
+                    <label htmlFor="auction-start-time" className={labelCls}>Start time <span className="text-[#d0021b]">*</span></label>
                     <div className="relative">
                       <input
+                        id="auction-start-time"
                         type="time"
                         className={`${inputCls} pl-10`}
                         value={draft.startTime}
                         onChange={e => updateDraft({ startTime: e.target.value })}
                       />
-                      <Clock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#adb5bd]" />
+                      <Clock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#adb5bd]" aria-hidden="true" />
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelCls}>Duration <span className="text-[#d0021b]">*</span></label>
-                    <div className="flex gap-1.5">
+                    <span id="duration-label" className={labelCls}>Duration <span className="text-[#d0021b]">*</span></span>
+                    <div role="group" aria-labelledby="duration-label" className="flex gap-1.5">
                       {DURATIONS.map(d => (
                         <button
                           key={d}
                           type="button"
+                          aria-pressed={draft.duration === d}
+                          aria-label={`${d} days`}
                           onClick={() => updateDraft({ duration: d })}
-                          className={`flex-1 h-10 rounded-lg font-semibold text-xs border transition-colors cursor-pointer ${
+                          className={`flex-1 h-10 rounded-lg font-semibold text-xs border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d0021b] focus-visible:ring-offset-1 ${
                             draft.duration === d
                               ? 'border-[#d0021b] text-[#d0021b] bg-[#fff0f2]'
                               : 'border-[#dee2e6] text-[#6c757d] hover:border-[#d0021b]'
@@ -110,9 +114,11 @@ export default function SellerCreateListingStep2() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className={labelCls}>Starting price (PKR) <span className="text-[#d0021b]">*</span></label>
+                    <label htmlFor="starting-price" className={labelCls}>Starting price (PKR) <span className="text-[#d0021b]">*</span></label>
                     <input
+                      id="starting-price"
                       type="number"
+                      inputMode="numeric"
                       className={inputCls}
                       placeholder="e.g. 85000"
                       value={draft.startingPrice || ''}
@@ -122,9 +128,11 @@ export default function SellerCreateListingStep2() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className={labelCls}>Minimum bid increment (PKR) <span className="text-[#d0021b]">*</span></label>
+                  <label htmlFor="min-increment" className={labelCls}>Minimum bid increment (PKR) <span className="text-[#d0021b]">*</span></label>
                   <input
+                    id="min-increment"
                     type="number"
+                    inputMode="numeric"
                     className={inputCls}
                     placeholder="e.g. 1000"
                     value={draft.minIncrement || ''}
@@ -141,15 +149,21 @@ export default function SellerCreateListingStep2() {
                     </div>
                     <button
                       type="button"
+                      role="switch"
+                      aria-checked={draft.hasReserve}
+                      aria-label="Enable reserve price"
                       onClick={() => updateDraft({ hasReserve: !draft.hasReserve, reservePrice: 0 })}
-                      className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${draft.hasReserve ? 'bg-[#d0021b]' : 'bg-[#dee2e6]'}`}
+                      className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d0021b] focus-visible:ring-offset-1 ${draft.hasReserve ? 'bg-[#d0021b]' : 'bg-[#dee2e6]'}`}
                     >
                       <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${draft.hasReserve ? 'left-[22px]' : 'left-0.5'}`} />
                     </button>
                   </div>
                   {draft.hasReserve && (
                     <input
+                      id="reserve-price"
                       type="number"
+                      inputMode="numeric"
+                      aria-label="Reserve price in PKR"
                       className="bg-white border border-[#d0021b] shadow-[0_0_0_3px_rgba(208,2,27,0.08)] h-10 px-3 rounded-lg text-sm text-[#343a40] w-full outline-none"
                       placeholder="e.g. 95000"
                       value={draft.reservePrice || ''}

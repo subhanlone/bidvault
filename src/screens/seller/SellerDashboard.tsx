@@ -6,6 +6,41 @@ import { mockApi } from '../../services/mockApi';
 import { SellerNavbar, Badge, Button } from '../../components/ui';
 import type { Listing } from '../../types';
 
+function StatCardSkeleton() {
+  return (
+    <div className="bg-white border border-[#e9ecef] rounded-xl p-4 sm:p-5">
+      <div className="h-3 w-24 bg-[#e9ecef] rounded animate-pulse mb-3" />
+      <div className="h-8 w-10 bg-[#e9ecef] rounded animate-pulse" />
+    </div>
+  );
+}
+
+function ListingRowSkeleton() {
+  return (
+    <div className="border-b border-[#f8f9fa] last:border-0">
+      <div className="hidden sm:grid grid-cols-[40px_1fr_140px_110px_120px_90px] gap-4 items-center px-5 py-3.5">
+        <div className="w-9 h-9 bg-[#e9ecef] rounded-lg animate-pulse" />
+        <div>
+          <div className="h-4 w-3/4 bg-[#e9ecef] rounded animate-pulse mb-1.5" />
+          <div className="h-3 w-1/3 bg-[#e9ecef] rounded animate-pulse" />
+        </div>
+        <div className="h-4 w-20 bg-[#e9ecef] rounded animate-pulse" />
+        <div className="h-4 w-16 bg-[#e9ecef] rounded animate-pulse" />
+        <div className="h-5 w-24 bg-[#e9ecef] rounded-full animate-pulse" />
+        <div className="h-3 w-12 bg-[#e9ecef] rounded animate-pulse" />
+      </div>
+      <div className="sm:hidden flex items-center gap-3 px-4 py-3">
+        <div className="w-11 h-11 bg-[#e9ecef] rounded-lg animate-pulse flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="h-4 w-3/4 bg-[#e9ecef] rounded animate-pulse mb-1.5" />
+          <div className="h-3 w-1/2 bg-[#e9ecef] rounded animate-pulse" />
+        </div>
+        <div className="h-5 w-16 bg-[#e9ecef] rounded-full animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 const STATUS_CONFIG = {
   PENDING:  { label: 'Pending Review', variant: 'warning'     as const },
   APPROVED: { label: 'Live / Approved', variant: 'success'    as const },
@@ -52,29 +87,33 @@ export default function SellerDashboard() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          {[
-            { label: 'Total Listings', value: total,    color: 'text-[#0b1f3a]' },
-            { label: 'Pending Review', value: pending,  color: 'text-[#d97706]' },
-            { label: 'Live / Approved', value: approved, color: 'text-[#16a34a]' },
-            { label: 'Rejected',       value: rejected, color: 'text-[#d0021b]' },
-          ].map(s => (
-            <div key={s.label} className="bg-white border border-[#e9ecef] rounded-xl p-4 sm:p-5">
-              <p className="text-[11px] font-medium text-[#6c757d] mb-1.5">{s.label}</p>
-              <p className={`text-3xl font-extrabold leading-none ${s.color}`}>{s.value}</p>
-            </div>
-          ))}
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+          ) : (
+            [
+              { label: 'Total Listings', value: total,    color: 'text-[#0b1f3a]' },
+              { label: 'Pending Review', value: pending,  color: 'text-[#d97706]' },
+              { label: 'Live / Approved', value: approved, color: 'text-[#16a34a]' },
+              { label: 'Rejected',       value: rejected, color: 'text-[#d0021b]' },
+            ].map(s => (
+              <div key={s.label} className="bg-white border border-[#e9ecef] rounded-xl p-4 sm:p-5">
+                <p className="text-[11px] font-medium text-[#6c757d] mb-1.5">{s.label}</p>
+                <p className={`text-3xl font-extrabold leading-none ${s.color}`}>{s.value}</p>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Listings table */}
         <div className="bg-white border border-[#e9ecef] rounded-xl">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#e9ecef]">
             <h2 className="text-sm font-bold text-[#0b1f3a]">My Listings</h2>
-            {total > 0 && <span className="text-xs text-[#6c757d]">{total} listing{total !== 1 ? 's' : ''}</span>}
+            {!loading && total > 0 && <span className="text-xs text-[#6c757d]">{total} listing{total !== 1 ? 's' : ''}</span>}
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="w-8 h-8 border-[3px] border-[#d0021b] border-t-transparent rounded-full animate-spin" />
+            <div className="divide-y divide-[#f8f9fa]">
+              {Array.from({ length: 4 }).map((_, i) => <ListingRowSkeleton key={i} />)}
             </div>
           ) : total === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">

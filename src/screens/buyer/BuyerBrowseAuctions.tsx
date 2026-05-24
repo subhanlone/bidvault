@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Heart, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +8,30 @@ import { BuyerNavbar } from '../../components/ui';
 import type { Auction } from '../../types';
 
 const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Sports & Fitness'];
+
+function AuctionCardSkeleton() {
+  return (
+    <div className="bg-white border border-[#e9ecef] rounded-[14px] overflow-hidden">
+      <div className="h-[160px] sm:h-[180px] bg-[#e9ecef] animate-pulse" />
+      <div className="p-4">
+        <div className="flex gap-1.5 mb-2">
+          <div className="h-[18px] w-20 bg-[#e9ecef] rounded-full animate-pulse" />
+          <div className="h-[18px] w-14 bg-[#e9ecef] rounded-full animate-pulse" />
+        </div>
+        <div className="h-4 bg-[#e9ecef] rounded animate-pulse mb-1.5" />
+        <div className="h-4 w-3/4 bg-[#e9ecef] rounded animate-pulse mb-4" />
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="h-3 w-16 bg-[#e9ecef] rounded animate-pulse mb-1" />
+            <div className="h-5 w-28 bg-[#e9ecef] rounded animate-pulse" />
+            <div className="h-3 w-12 bg-[#e9ecef] rounded animate-pulse mt-1" />
+          </div>
+          <div className="h-8 w-20 bg-[#e9ecef] rounded-lg animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AuctionCard({ auction }: { auction: Auction }) {
   const navigate = useNavigate();
@@ -69,6 +93,12 @@ export default function BuyerBrowseAuctions() {
   const [category, setCategory]         = useState('All');
   const [showEndingSoon, setShowEndingSoon] = useState(false);
   const [sidebarOpen, setSidebarOpen]   = useState(false);
+  const [loading, setLoading]           = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 900);
+    return () => clearTimeout(t);
+  }, []);
 
   const filtered = auctions.filter(a => {
     if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -184,7 +214,11 @@ export default function BuyerBrowseAuctions() {
             </div>
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="bg-[#f1f3f5] rounded-full p-5">
                 <Search size={40} strokeWidth={1.3} className="text-[#adb5bd]" />

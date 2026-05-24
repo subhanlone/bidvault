@@ -89,10 +89,11 @@ export default function BuyerLiveBidding() {
               <div className="absolute inset-0 bg-gradient-to-t from-[rgba(11,31,58,0.3)] to-transparent" />
               <button
                 onClick={() => auction && toggleWatchlist(auction.auctionId)}
-                className={`absolute top-4 right-4 rounded-full size-[36px] flex items-center justify-center transition-all shadow-md cursor-pointer ${watched ? 'bg-[#d0021b]' : 'bg-white hover:bg-[#fff0f2]'}`}
-                title={watched ? 'Remove from watchlist' : 'Add to watchlist'}
+                aria-label={watched ? 'Remove from watchlist' : 'Add to watchlist'}
+                aria-pressed={watched}
+                className={`absolute top-4 right-4 rounded-full size-[36px] flex items-center justify-center transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 ${watched ? 'bg-[#d0021b]' : 'bg-white hover:bg-[#fff0f2]'}`}
               >
-                <Heart size={18} className={watched ? 'text-white' : 'text-[#d0021b]'} fill={watched ? 'white' : 'none'} />
+                <Heart size={18} aria-hidden="true" className={watched ? 'text-white' : 'text-[#d0021b]'} fill={watched ? 'white' : 'none'} />
               </button>
             </div>
             <div className="flex gap-3 p-4">
@@ -222,18 +223,20 @@ export default function BuyerLiveBidding() {
             </div>
 
             <form className="flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); handleBid(Number(customBid)); }}>
-              <label className="font-bold text-[11px] text-[#6c757d] uppercase tracking-[0.3px]">Custom amount (PKR)</label>
+              <label htmlFor="custom-bid-amount" className="font-bold text-[11px] text-[#6c757d] uppercase tracking-[0.3px]">Custom amount (PKR)</label>
               <div className="flex gap-2">
                 <input
+                  id="custom-bid-amount"
                   type="number"
-                  className="flex-1 border border-[#dee2e6] h-[44px] px-3 rounded-[8px] text-[14px] text-[#343a40] outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
+                  inputMode="numeric"
+                  className="flex-1 border border-[#dee2e6] h-[44px] px-3 rounded-[8px] text-[14px] text-[#343a40] outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] focus-visible:ring-2 focus-visible:ring-[rgba(208,2,27,0.2)] transition-shadow"
                   placeholder={`Min ${minNext.toLocaleString()}`}
                   value={customBid}
                   onChange={e => setCustomBid(e.target.value)}
                 />
                 <button
                   type="submit"
-                  className="bg-[#0b1f3a] font-bold text-[13px] text-white px-4 rounded-[8px] hover:bg-[#1a3356] transition-colors cursor-pointer"
+                  className="bg-[#0b1f3a] font-bold text-[13px] text-white px-4 rounded-[8px] hover:bg-[#1a3356] active:scale-[0.97] transition-colors cursor-pointer"
                 >
                   Bid
                 </button>

@@ -37,21 +37,22 @@ export default function BuyerConfirmBid() {
       <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       <main className="min-h-[calc(100vh-56px)] bg-[rgba(11,31,58,0.45)] flex items-center justify-center p-4 sm:p-6">
-        <div role="dialog" aria-modal="true" className="bg-white rounded-[16px] shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[400px] overflow-hidden">
+        <div role="dialog" aria-modal="true" aria-labelledby="confirm-bid-title" className="bg-white rounded-[16px] shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[400px] overflow-hidden">
           <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-0">
             <div className="bg-[#fff0f2] flex items-center justify-center rounded-full size-[44px]">
-              <AlertTriangle size={20} strokeWidth={2} className="text-[#d0021b]" />
+              <AlertTriangle size={20} strokeWidth={2} className="text-[#d0021b]" aria-hidden="true" />
             </div>
             <button
               onClick={() => navigate(-1)}
-              className="bg-[#f8f9fa] flex items-center justify-center rounded-full size-[32px] hover:bg-[#e9ecef] transition-colors cursor-pointer"
+              aria-label="Close"
+              className="bg-[#f8f9fa] flex items-center justify-center rounded-full size-[32px] hover:bg-[#e9ecef] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d0021b] focus-visible:ring-offset-1"
             >
-              <X size={16} className="text-[#6c757d]" />
+              <X size={16} className="text-[#6c757d]" aria-hidden="true" />
             </button>
           </div>
 
           <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-4">
-            <h3 className="font-extrabold text-[18px] text-[#0b1f3a] mb-1">Confirm Your Bid</h3>
+            <h3 id="confirm-bid-title" className="font-extrabold text-[18px] text-[#0b1f3a] mb-1">Confirm Your Bid</h3>
             <p className="text-[13px] text-[#6c757d] mb-5 leading-[20px]">
               Once confirmed, this is a binding commitment and cannot be cancelled if you become the highest bidder.
             </p>

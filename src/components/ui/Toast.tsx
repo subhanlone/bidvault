@@ -24,7 +24,7 @@ const config = {
 export function Toast({ toast, onClose }: ToastProps) {
   const { border, icon } = config[toast.type];
   return (
-    <div className={`animate-toast-in bg-white rounded-xl shadow-[0_10px_15px_rgba(0,0,0,0.1)] border border-[#e5e7eb] border-l-4 ${border} p-4 flex gap-3 w-80 max-w-full`}>
+    <div role="alert" aria-live="assertive" aria-atomic="true" className={`animate-toast-in bg-white rounded-xl shadow-[0_10px_15px_rgba(0,0,0,0.1)] border border-[#e5e7eb] border-l-4 ${border} p-4 flex gap-3 w-80 max-w-full`}>
       <div className="flex-shrink-0 mt-0.5">{icon}</div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[#0b1f3a]">{toast.title}</p>
@@ -35,8 +35,8 @@ export function Toast({ toast, onClose }: ToastProps) {
           </button>
         )}
       </div>
-      <button onClick={() => onClose(toast.id)} className="flex-shrink-0 text-[#9ca3af] hover:text-[#374151] transition-colors cursor-pointer">
-        <X size={16} />
+      <button onClick={() => onClose(toast.id)} aria-label="Close notification" className="flex-shrink-0 text-[#9ca3af] hover:text-[#374151] transition-colors cursor-pointer">
+        <X size={16} aria-hidden="true" />
       </button>
     </div>
   );

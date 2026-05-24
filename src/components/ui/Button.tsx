@@ -20,9 +20,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#d0021b] disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variants = {
-    primary: 'bg-[#d0021b] text-white hover:bg-[#b8011a] hover:-translate-y-px active:translate-y-0',
-    outline: 'bg-white border border-[#e5e7eb] text-[#374151] hover:border-[#d0021b] hover:text-[#d0021b]',
-    ghost: 'bg-transparent text-[#d0021b] hover:bg-[#fee2e2]',
+    primary: 'bg-[#d0021b] text-white hover:bg-[#b8011a] hover:-translate-y-px active:translate-y-0 active:scale-[0.97]',
+    outline: 'bg-white border border-[#e5e7eb] text-[#374151] hover:border-[#d0021b] hover:text-[#d0021b] active:scale-[0.97]',
+    ghost: 'bg-transparent text-[#d0021b] hover:bg-[#fee2e2] active:scale-[0.97]',
   };
 
   const sizes = {

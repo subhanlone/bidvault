@@ -112,8 +112,9 @@ export default function SellerCreateListingStep1() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#343a40]">Category <span className="text-[#d0021b]">*</span></label>
+                  <label htmlFor="listing-category" className="text-xs font-bold text-[#343a40]">Category <span className="text-[#d0021b]">*</span></label>
                   <select
+                    id="listing-category"
                     className="bg-white border border-[#dee2e6] h-10 px-3 rounded-lg text-sm text-[#343a40] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow appearance-none cursor-pointer"
                     value={draft.category}
                     onChange={e => updateDraft({ category: e.target.value })}
@@ -124,14 +125,15 @@ export default function SellerCreateListingStep1() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#343a40]">Condition <span className="text-[#d0021b]">*</span></label>
-                  <div className="flex gap-2">
+                  <span id="condition-label" className="text-xs font-bold text-[#343a40]">Condition <span className="text-[#d0021b]">*</span></span>
+                  <div role="group" aria-labelledby="condition-label" className="flex gap-2">
                     {CONDITIONS.map(c => (
                       <button
                         key={c.value}
                         type="button"
+                        aria-pressed={draft.condition === c.value}
                         onClick={() => updateDraft({ condition: c.value })}
-                        className={`flex-1 h-10 rounded-lg font-semibold text-xs border transition-colors cursor-pointer ${
+                        className={`flex-1 h-10 rounded-lg font-semibold text-xs border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d0021b] focus-visible:ring-offset-1 ${
                           draft.condition === c.value
                             ? 'border-[#d0021b] text-[#d0021b] bg-[#fff0f2]'
                             : 'border-[#dee2e6] text-[#6c757d] hover:border-[#d0021b] hover:text-[#d0021b]'
