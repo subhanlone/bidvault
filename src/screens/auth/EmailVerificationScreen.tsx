@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, RefreshCw, ArrowRight, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -104,40 +104,40 @@ export default function EmailVerificationScreen() {
         {/* Mobile logo */}
         <div className="lg:hidden mb-2">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-[#d0021b] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-white font-extrabold text-sm">BV</span>
             </div>
-            <span className="font-extrabold text-xl text-[#0b1f3a]">Bid<span className="text-[#d0021b]">Vault</span></span>
+            <span className="font-extrabold text-xl text-navy">Bid<span className="text-primary">Vault</span></span>
           </Link>
         </div>
 
         {/* Icon + heading */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#fff0f2] border border-[#d0021b]/15 flex items-center justify-center">
-            <Mail size={28} className="text-[#d0021b]" />
+          <div className="w-16 h-16 rounded-lg bg-primary-surface border border-primary/15 flex items-center justify-center">
+            <Mail size={28} className="text-primary" />
           </div>
           <div>
-            <h2 className="text-2xl font-extrabold text-[#0b1f3a]">Check your inbox</h2>
-            <p className="text-sm text-[#6c757d] mt-1">
+            <h2 className="text-2xl font-extrabold text-navy">Check your inbox</h2>
+            <p className="text-sm text-muted mt-1">
               We sent a 6-digit code to<br />
-              <span className="font-bold text-[#343a40]">{email || 'your email'}</span>
+              <span className="font-bold text-secondary">{email || 'your email'}</span>
             </p>
           </div>
         </div>
 
         {/* Email row */}
-        <div className="flex items-center gap-3 bg-[#f8f9fa] border border-[#e9ecef] rounded-lg px-4 py-3">
-          <Mail size={17} className="text-[#6c757d] flex-shrink-0" />
+        <div className="flex items-center gap-3 bg-bg border border-border-light rounded-lg px-4 py-3">
+          <Mail size={17} className="text-muted flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#343a40] truncate">{email || 'your email'}</p>
-            <p className="text-[11.5px] text-[#adb5bd]">Code expires in {fmtTime(codeExpiry)}</p>
+            <p className="text-sm font-bold text-secondary truncate">{email || 'your email'}</p>
+            <p className="text-[11.5px] text-placeholder">Code expires in {fmtTime(codeExpiry)}</p>
           </div>
-          <Link to="/register" className="text-xs font-bold text-[#d0021b] hover:underline flex-shrink-0">Change</Link>
+          <Link to="/register" className="text-xs font-bold text-primary hover:underline flex-shrink-0">Change</Link>
         </div>
 
         {/* OTP inputs */}
         <div className="flex flex-col gap-2">
-          <p className="text-[12px] font-bold text-[#343a40] text-center">Enter 6-digit verification code</p>
+          <p className="text-[12px] font-bold text-secondary text-center">Enter 6-digit verification code</p>
           <div className="flex gap-2.5 justify-center" onPaste={handlePaste}>
             {otp.map((val, i) => (
               <input
@@ -150,19 +150,19 @@ export default function EmailVerificationScreen() {
                 onKeyDown={e => handleKeyDown(i, e)}
                 className={`w-12 h-14 rounded-lg text-center font-extrabold text-2xl border outline-none transition-all ${
                   val
-                    ? 'bg-[#fff0f2] border-[#d0021b] text-[#a80016]'
-                    : 'bg-[#f8f9fa] border-[#e9ecef] text-[#343a40] focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] focus:bg-white'
+                    ? 'bg-primary-surface border-primary text-primary-dark'
+                    : 'bg-bg border-border-light text-secondary focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] focus:bg-surface'
                 }`}
               />
             ))}
           </div>
-          <p className="text-[11px] text-[#adb5bd] text-center">Hint: use code <strong>123456</strong> for demo</p>
+          <p className="text-[11px] text-placeholder text-center">Hint: use code <strong>123456</strong> for demo</p>
         </div>
 
         {/* Info banner */}
-        <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-[#bfdbfe] rounded-lg px-4 py-3">
-          <Info size={15} className="text-[#1e40af] flex-shrink-0 mt-0.5" />
-          <p className="text-[12px] text-[#1e40af] leading-relaxed">
+        <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3">
+          <Info size={15} className="text-info flex-shrink-0 mt-0.5" />
+          <p className="text-[12px] text-info leading-relaxed">
             Check your <span className="font-bold">spam or junk folder</span> if you don't see the email. Code is valid for <span className="font-bold">10 minutes</span>.
           </p>
         </div>
@@ -174,13 +174,13 @@ export default function EmailVerificationScreen() {
 
         {/* Resend */}
         <div className="flex items-center justify-center gap-1.5">
-          <RefreshCw size={13} className="text-[#6c757d]" />
-          <span className="text-sm text-[#6c757d]">Didn't receive code?</span>
+          <RefreshCw size={13} className="text-muted" />
+          <span className="text-sm text-muted">Didn't receive code?</span>
           <button
             type="button"
             onClick={handleResend}
             disabled={resendSecs > 0}
-            className={`text-sm font-bold cursor-pointer transition-colors ${resendSecs > 0 ? 'text-[#adb5bd] cursor-not-allowed' : 'text-[#d0021b] hover:underline'}`}
+            className={`text-sm font-bold cursor-pointer transition-colors ${resendSecs > 0 ? 'text-placeholder cursor-not-allowed' : 'text-primary hover:underline'}`}
           >
             {resendSecs > 0 ? `Resend (${fmtTime(resendSecs)})` : 'Resend Code'}
           </button>

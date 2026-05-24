@@ -1,9 +1,9 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Menu } from 'lucide-react';
-import { AdminSidebarContent } from '../../components/AdminSidebar';
+import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import type { Auction } from '../../types';
 
 function AuctionRow({ auction }: { auction: Auction }) {
@@ -14,47 +14,47 @@ function AuctionRow({ auction }: { auction: Auction }) {
   return (
     <div className="border-b border-[#f8f9fa] last:border-0">
       {/* Desktop row */}
-      <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_80px] gap-4 items-center px-5 py-4 hover:bg-[#f8f9fa] transition-colors">
-        <div className="bg-[#f8f9fa] rounded-[8px] size-[36px] overflow-hidden shrink-0">
+      <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_80px] gap-4 items-center px-5 py-4 hover:bg-bg transition-colors">
+        <div className="bg-bg rounded-sm size-[36px] overflow-hidden shrink-0">
           <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
         </div>
         <div className="min-w-0">
-          <p className="font-semibold text-[13px] text-[#343a40] truncate">{auction.title}</p>
-          <span className="text-[10px] text-[#adb5bd]">{auction.category} · {auction.condition}</span>
+          <p className="font-semibold text-[13px] text-secondary truncate">{auction.title}</p>
+          <span className="text-[10px] text-placeholder">{auction.category} · {auction.condition}</span>
         </div>
-        <p className="text-[12px] text-[#495057] truncate">{auction.sellerName}</p>
-        <p className="font-bold text-[13px] text-[#d0021b]">PKR {auction.currentBid.toLocaleString()}</p>
-        <p className={`font-bold text-[13px] ${urgent ? 'text-[#d0021b]' : timer.isExpired ? 'text-[#6c757d]' : 'text-[#343a40]'}`}>
+        <p className="text-[12px] text-tertiary truncate">{auction.sellerName}</p>
+        <p className="font-bold text-[13px] text-primary">PKR {auction.currentBid.toLocaleString()}</p>
+        <p className={`font-bold text-[13px] ${urgent ? 'text-primary' : timer.isExpired ? 'text-muted' : 'text-secondary'}`}>
           {timer.isExpired ? 'Ended' : timer.display}
         </p>
-        <p className="font-semibold text-[12px] text-[#495057]">{auction.bidCount}</p>
+        <p className="font-semibold text-[12px] text-tertiary">{auction.bidCount}</p>
         <button
           onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
-          className="bg-[#0b1f3a] font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-[#1a3356] whitespace-nowrap"
+          className="bg-navy font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-navy-mid whitespace-nowrap"
         >
           View →
         </button>
       </div>
 
       {/* Mobile card */}
-      <div className="sm:hidden flex items-center gap-3 px-4 py-3 hover:bg-[#f8f9fa] transition-colors">
-        <div className="bg-[#f8f9fa] rounded-[8px] size-[44px] overflow-hidden shrink-0">
+      <div className="sm:hidden flex items-center gap-3 px-4 py-3 hover:bg-bg transition-colors">
+        <div className="bg-bg rounded-sm size-[44px] overflow-hidden shrink-0">
           <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[13px] text-[#343a40] truncate">{auction.title}</p>
+          <p className="font-semibold text-[13px] text-secondary truncate">{auction.title}</p>
           <div className="flex items-center gap-2 mt-[2px]">
-            <span className="font-bold text-[12px] text-[#d0021b]">PKR {auction.currentBid.toLocaleString()}</span>
-            <span className="text-[10px] text-[#adb5bd]">·</span>
-            <span className={`text-[11px] font-semibold ${urgent ? 'text-[#d0021b]' : timer.isExpired ? 'text-[#6c757d]' : 'text-[#495057]'}`}>
+            <span className="font-bold text-[12px] text-primary">PKR {auction.currentBid.toLocaleString()}</span>
+            <span className="text-[10px] text-placeholder">·</span>
+            <span className={`text-[11px] font-semibold ${urgent ? 'text-primary' : timer.isExpired ? 'text-muted' : 'text-tertiary'}`}>
               {timer.isExpired ? 'Ended' : timer.display}
             </span>
           </div>
-          <p className="text-[10px] text-[#adb5bd] mt-[2px]">{auction.sellerName} · {auction.bidCount} bids</p>
+          <p className="text-[10px] text-placeholder mt-[2px]">{auction.sellerName} · {auction.bidCount} bids</p>
         </div>
         <button
           onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
-          className="bg-[#0b1f3a] font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-[#1a3356] whitespace-nowrap shrink-0"
+          className="bg-navy font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-navy-mid whitespace-nowrap shrink-0"
         >
           View →
         </button>
@@ -76,7 +76,7 @@ export default function AdminLiveAuctions() {
   const highestBid = auctions.reduce((m, a) => Math.max(m, a.currentBid), 0);
 
   return (
-    <div className="flex min-h-screen bg-[#f8f9fa]">
+    <div className="flex min-h-screen bg-bg">
       {/* Desktop sidebar */}
       <div className="hidden md:block md:w-[200px] md:shrink-0">
         <AdminSidebarContent active="Live Auctions" />
@@ -91,20 +91,20 @@ export default function AdminLiveAuctions() {
       )}
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-[#e9ecef] flex items-center justify-between px-4 sm:px-6 py-4">
+        <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
           <div className="flex items-center gap-3">
             <button
-              className="md:hidden p-2 rounded-[6px] border border-[#e9ecef] hover:bg-[#f8f9fa]"
+              className="md:hidden p-2 rounded-[6px] border border-border-light hover:bg-bg"
               onClick={() => setSidebarOpen(true)}
             >
-              <Menu size={18} className="text-[#495057]" />
+              <Menu size={18} className="text-tertiary" />
             </button>
             <div>
-              <h1 className="font-extrabold text-[18px] sm:text-[20px] text-[#0b1f3a]">Live Auctions</h1>
-              <p className="text-[12px] text-[#6c757d]">Real-time view of all active auctions</p>
+              <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Live Auctions</h1>
+              <p className="text-[12px] text-muted">Real-time view of all active auctions</p>
             </div>
           </div>
-          <span className="flex items-center gap-1 text-[12px] text-[#1a7a4a] font-bold">
+          <span className="flex items-center gap-1 text-[12px] text-success-dark font-bold">
             <span className="size-[8px] rounded-full bg-[#1a7a4a] inline-block animate-pulse" />
             Live
           </span>
@@ -114,28 +114,28 @@ export default function AdminLiveAuctions() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { label: 'Total Active', value: String(active.length), color: 'text-[#0b1f3a]', sub: 'Across all categories' },
+              { label: 'Total Active', value: String(active.length), color: 'text-navy', sub: 'Across all categories' },
               { label: 'Ending in <1hr', value: String(endingSoon.length), color: 'text-[#ef4444]', sub: 'Needs attention' },
-              { label: 'Total Bids', value: totalBids.toLocaleString(), color: 'text-[#1a7a4a]', sub: 'Across all auctions' },
-              { label: 'Highest Bid', value: `PKR ${(highestBid / 1000).toFixed(0)}K`, color: 'text-[#d0021b]', sub: 'Single item' },
+              { label: 'Total Bids', value: totalBids.toLocaleString(), color: 'text-success-dark', sub: 'Across all auctions' },
+              { label: 'Highest Bid', value: `PKR ${(highestBid / 1000).toFixed(0)}K`, color: 'text-primary', sub: 'Single item' },
             ].map(s => (
-              <div key={s.label} className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
-                <p className="font-medium text-[11px] sm:text-[12px] text-[#6c757d] mb-1 sm:mb-2">{s.label}</p>
+              <div key={s.label} className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
+                <p className="font-medium text-[11px] sm:text-[12px] text-muted mb-1 sm:mb-2">{s.label}</p>
                 <p className={`font-extrabold text-[24px] sm:text-[28px] ${s.color} leading-none`}>{s.value}</p>
-                <p className="text-[10px] text-[#adb5bd] mt-1">{s.sub}</p>
+                <p className="text-[10px] text-placeholder mt-1">{s.sub}</p>
               </div>
             ))}
           </div>
 
           {/* Auctions table */}
-          <div className="bg-white border border-[#e9ecef] rounded-[12px]">
-            <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-[#e9ecef]">
-              <h2 className="font-bold text-[14px] text-[#0b1f3a]">Active Auctions ({auctions.length})</h2>
-              <span className="hidden sm:block font-bold text-[11px] text-[#6c757d]">Auto-refreshing live data</span>
+          <div className="bg-surface border border-border-light rounded-md">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-border-light">
+              <h2 className="font-bold text-[14px] text-navy">Active Auctions ({auctions.length})</h2>
+              <span className="hidden sm:block font-bold text-[11px] text-muted">Auto-refreshing live data</span>
             </div>
 
             {/* Desktop column headers */}
-            <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_80px] gap-4 px-5 py-3 text-[11px] text-[#adb5bd] font-bold uppercase tracking-[0.5px] border-b border-[#f8f9fa]">
+            <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_80px] gap-4 px-5 py-3 text-[11px] text-placeholder font-bold uppercase tracking-[0.5px] border-b border-[#f8f9fa]">
               <span />
               <span>Item</span>
               <span>Seller</span>
@@ -148,8 +148,8 @@ export default function AdminLiveAuctions() {
             <div className="flex flex-col">
               {auctions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <p className="font-bold text-[15px] text-[#343a40] mb-1">No active auctions</p>
-                  <p className="text-[13px] text-[#6c757d]">There are no live auctions at the moment.</p>
+                  <p className="font-bold text-[15px] text-secondary mb-1">No active auctions</p>
+                  <p className="text-[13px] text-muted">There are no live auctions at the moment.</p>
                 </div>
               ) : auctions.map(auction => (
                 <AuctionRow key={auction.auctionId} auction={auction} />

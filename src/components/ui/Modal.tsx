@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -15,11 +15,28 @@ const maxWidthMap = {
 };
 
 export default function Modal({ open, onClose, children, maxWidth = 'md' }: ModalProps) {
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [open, onClose]);
+
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = 'hidden';
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      setTimeout(() => modalRef.current?.focus(), 0);
+    } else {
+      previousFocusRef.current?.focus();
     }
-    return () => { document.body.style.overflow = ''; };
   }, [open]);
 
   if (!open) return null;
@@ -31,12 +48,17 @@ export default function Modal({ open, onClose, children, maxWidth = 'md' }: Moda
       onClick={onClose}
     >
       <div
-        className={`bg-white rounded-2xl shadow-[0_20px_25px_rgba(0,0,0,0.15)] w-full ${maxWidthMap[maxWidth]} relative`}
+        ref={modalRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        className={`bg-surface rounded-lg shadow-xl w-full ${maxWidthMap[maxWidth]} relative animate-scale-in focus:outline-none`}
         onClick={e => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-[#6c757d] hover:bg-[#f3f4f6] hover:text-[#374151] transition-colors duration-150 cursor-pointer"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-muted hover:bg-surface-raised hover:text-body transition-colors duration-150 cursor-pointer"
           aria-label="Close modal"
         >
           <X size={18} />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Car, Package, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -34,24 +34,24 @@ export default function SellerCreateListingStep4() {
   const conditionLabel = draft.condition === 'NEW' ? 'New' : draft.condition === 'LIKE_NEW' ? 'Like New' : draft.condition === 'USED' ? 'Used' : '—';
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
+    <div className="min-h-screen bg-bg">
       <ListingStepperHeader currentStep={2} />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
-        <h1 className="text-xl font-extrabold text-[#0b1f3a] mb-1">Review Your Listing</h1>
-        <p className="text-sm text-[#6c757d] mb-5">Check all details before submitting to admin for review.</p>
+        <h1 className="text-xl font-extrabold text-navy mb-1">Review Your Listing</h1>
+        <p className="text-sm text-muted mb-5">Check all details before submitting to admin for review.</p>
 
         <Stepper current={2} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
           {/* Item details */}
-          <div className="bg-white border border-[#e9ecef] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#e9ecef]">
-              <h3 className="text-sm font-bold text-[#0b1f3a]">Item Details</h3>
-              <button onClick={() => navigate('/seller/create-listing/step-1')} className="text-xs font-bold text-[#d0021b] hover:underline cursor-pointer">Edit</button>
+          <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
+              <h3 className="text-sm font-bold text-navy">Item Details</h3>
+              <button onClick={() => navigate('/seller/create-listing/step-1')} className="text-xs font-bold text-primary hover:underline cursor-pointer">Edit</button>
             </div>
             <div className="p-5">
-              <div className="bg-[#0b1f3a] rounded-xl h-40 flex items-center justify-center mb-4">
+              <div className="bg-navy rounded-md h-40 flex items-center justify-center mb-4">
                 {draft.category?.includes('Electronics')
                   ? <Smartphone size={52} strokeWidth={1.2} className="text-white/40" />
                   : draft.category?.includes('Vehicles')
@@ -65,9 +65,9 @@ export default function SellerCreateListingStep4() {
                   { label: 'CONDITION', value: conditionLabel },
                   { label: 'PHOTOS',    value: draft.hasPhoto ? '3 uploaded' : 'None' },
                 ].map(d => (
-                  <div key={d.label} className="bg-[#f8f9fa] rounded-lg px-3 py-3">
-                    <p className="text-[10px] text-[#adb5bd] font-bold tracking-wide uppercase">{d.label}</p>
-                    <p className="text-sm font-semibold text-[#343a40] mt-0.5 truncate">{d.value}</p>
+                  <div key={d.label} className="bg-bg rounded-lg px-3 py-3">
+                    <p className="text-[10px] text-placeholder font-bold tracking-wide uppercase">{d.label}</p>
+                    <p className="text-sm font-semibold text-secondary mt-0.5 truncate">{d.value}</p>
                   </div>
                 ))}
               </div>
@@ -75,10 +75,10 @@ export default function SellerCreateListingStep4() {
           </div>
 
           {/* Auction parameters */}
-          <div className="bg-white border border-[#e9ecef] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#e9ecef]">
-              <h3 className="text-sm font-bold text-[#0b1f3a]">Auction Parameters</h3>
-              <button onClick={() => navigate('/seller/create-listing/step-2')} className="text-xs font-bold text-[#d0021b] hover:underline cursor-pointer">Edit</button>
+          <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
+              <h3 className="text-sm font-bold text-navy">Auction Parameters</h3>
+              <button onClick={() => navigate('/seller/create-listing/step-2')} className="text-xs font-bold text-primary hover:underline cursor-pointer">Edit</button>
             </div>
             <div className="p-5 grid grid-cols-2 gap-3">
               {[
@@ -88,18 +88,18 @@ export default function SellerCreateListingStep4() {
                 { label: 'DURATION',       value: `${draft.duration} Days`    },
                 ...(draft.hasReserve ? [{ label: 'RESERVE PRICE', value: fmtPKR(draft.reservePrice), red: false }] : []),
               ].map(d => (
-                <div key={d.label} className="bg-[#f8f9fa] rounded-lg px-3 py-3">
-                  <p className="text-[10px] text-[#adb5bd] font-bold tracking-wide uppercase">{d.label}</p>
-                  <p className={`text-sm font-bold mt-0.5 ${d.red ? 'text-[#d0021b]' : 'text-[#343a40]'}`}>{d.value}</p>
+                <div key={d.label} className="bg-bg rounded-lg px-3 py-3">
+                  <p className="text-[10px] text-placeholder font-bold tracking-wide uppercase">{d.label}</p>
+                  <p className={`text-sm font-bold mt-0.5 ${d.red ? 'text-primary' : 'text-secondary'}`}>{d.value}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-[#bfdbfe] rounded-lg px-4 py-3 mt-5">
-          <Info size={15} className="text-[#1e40af] flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-[#1e40af] leading-relaxed">
+        <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3 mt-5">
+          <Info size={15} className="text-info flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-info leading-relaxed">
             After submission, admin will review your listing within <span className="font-bold">24–48 hours</span>. You'll be notified by email once it's approved.
           </p>
         </div>

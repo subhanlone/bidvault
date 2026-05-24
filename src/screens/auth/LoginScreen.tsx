@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -60,30 +60,30 @@ export default function LoginScreen() {
         {/* Mobile logo */}
         <div className="lg:hidden mb-2">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-[#d0021b] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-white font-extrabold text-sm">BV</span>
             </div>
-            <span className="font-extrabold text-xl text-[#0b1f3a]">Bid<span className="text-[#d0021b]">Vault</span></span>
+            <span className="font-extrabold text-xl text-navy">Bid<span className="text-primary">Vault</span></span>
           </Link>
         </div>
 
         <div>
-          <h2 className="text-2xl font-extrabold text-[#0b1f3a]">Sign in to BidVault</h2>
-          <p className="text-sm text-[#6c757d] mt-1">
+          <h2 className="text-2xl font-extrabold text-navy">Sign in to BidVault</h2>
+          <p className="text-sm text-muted mt-1">
             Don't have an account?{' '}
-            <Link to="/register" className="font-bold text-[#d0021b] hover:underline">Create one free</Link>
+            <Link to="/register" className="font-bold text-primary hover:underline">Create one free</Link>
           </p>
         </div>
 
         {/* Demo accounts */}
-        <div className="bg-[#f8f9fa] border border-[#e9ecef] rounded-lg px-4 py-3">
-          <p className="text-[11px] font-bold text-[#6c757d] uppercase tracking-wider mb-1.5">Demo Accounts</p>
+        <div className="bg-bg border border-border-light rounded-lg px-4 py-3">
+          <p className="text-[11px] font-bold text-muted uppercase tracking-wider mb-1.5">Demo Accounts</p>
           {DEMO_ACCOUNTS.map(({ role, email: em, password: pw }) => (
             <button
               key={role}
               type="button"
               onClick={() => { setEmail(em); setPassword(pw); }}
-              className="block w-full text-left text-[11.5px] text-[#0b1f3a] hover:text-[#d0021b] font-medium py-0.5 cursor-pointer transition-colors"
+              className="block w-full text-left text-[11.5px] text-navy hover:text-primary font-medium py-0.5 cursor-pointer transition-colors"
             >
               <span className="font-bold">{role}:</span> {em}
             </button>
@@ -108,7 +108,7 @@ export default function LoginScreen() {
           onChange={e => setPassword(e.target.value)}
           leftIcon={<Lock size={16} />}
           rightIcon={
-            <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide password' : 'Show password'} className="cursor-pointer text-[#9ca3af] hover:text-[#374151]">
+            <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide password' : 'Show password'} className="cursor-pointer text-placeholder hover:text-body">
               {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           }
@@ -120,13 +120,13 @@ export default function LoginScreen() {
             <button
               type="button"
               onClick={() => setRemember(p => !p)}
-              className={`w-[18px] h-[18px] rounded flex items-center justify-center border-2 transition-colors ${remember ? 'bg-[#d0021b] border-[#d0021b]' : 'bg-white border-[#dee2e6]'}`}
+              className={`w-[18px] h-[18px] rounded flex items-center justify-center border-2 transition-colors ${remember ? 'bg-primary border-primary' : 'bg-surface border-[#dee2e6]'}`}
             >
               {remember && <svg viewBox="0 0 10 8" className="w-2.5 h-2 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1" /></svg>}
             </button>
-            <span className="text-[12.5px] text-[#495057]">Keep me signed in</span>
+            <span className="text-[12.5px] text-tertiary">Keep me signed in</span>
           </label>
-          <Link to="/forgot-password" className="text-[12.5px] font-bold text-[#d0021b] hover:underline">Forgot password?</Link>
+          <Link to="/forgot-password" className="text-[12.5px] font-bold text-primary hover:underline">Forgot password?</Link>
         </div>
 
         <div className="flex gap-2.5 items-start bg-[#f0f4ff] border border-[#c7d7fe] rounded-lg px-4 py-3">
@@ -142,9 +142,9 @@ export default function LoginScreen() {
           Sign In to BidVault
         </Button>
 
-        <p className="text-center text-sm text-[#6c757d]">
+        <p className="text-center text-sm text-muted">
           New to BidVault?{' '}
-          <Link to="/register" className="font-bold text-[#d0021b] hover:underline">Create a free account</Link>
+          <Link to="/register" className="font-bold text-primary hover:underline">Create a free account</Link>
         </p>
       </form>
     </AuthLayout>

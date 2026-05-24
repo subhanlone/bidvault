@@ -1,4 +1,4 @@
-import BidVaultLogo from './BidVaultLogo';
+﻿import BidVaultLogo from './BidVaultLogo';
 
 interface AuthLayoutProps {
   headline: string;
@@ -25,8 +25,8 @@ export default function AuthLayout({ headline, subtext, bullets, stats, children
               <ul className="space-y-3">
                 {bullets.map((b, i) => (
                   <li key={i} className="flex items-center gap-3 text-white/80 text-sm">
-                    <div className="w-5 h-5 rounded-full bg-[#d0021b]/20 border border-[#d0021b]/40 flex items-center justify-center flex-shrink-0">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#d0021b]" />
+                    <div className="w-5 h-5 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center flex-shrink-0">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                     </div>
                     {b}
                   </li>
@@ -48,13 +48,14 @@ export default function AuthLayout({ headline, subtext, bullets, stats, children
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 bg-white flex flex-col">
+      {/* TODO: Add preconnect for Google Fonts in index.html for performance. */}
+      <main className="flex-1 bg-surface flex flex-col">
         <div className="flex-1 flex items-center justify-center p-8">
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-[480px] mx-auto">
             {children}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useToast } from '../context/ToastContext';
+﻿import { useToast } from '../context/ToastContext';
 import { IconX } from './Icons';
 
 export default function ToastContainer() {
@@ -15,13 +15,13 @@ export default function ToastContainer() {
         <li
           key={t.id}
           className={`
-            pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-[10px]
+            pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-md
             shadow-[0px_8px_24px_rgba(0,0,0,0.25)] min-w-[300px] max-w-[370px]
             animate-toast-in
             ${t.type === 'success' ? 'bg-[#1a7a4a]'
-              : t.type === 'error' ? 'bg-[#d0021b]'
+              : t.type === 'error' ? 'bg-primary'
               : t.type === 'warning' ? 'bg-[#d97706]'
-              : 'bg-[#0b1f3a]'}
+              : 'bg-navy'}
           `}
         >
           <div className="flex-1 min-w-0">

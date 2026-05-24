@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { Gavel } from 'lucide-react';
 
 const SECTIONS = [
@@ -38,21 +38,21 @@ const SECTIONS = [
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface">
       {/* Nav */}
-      <nav className="sticky top-0 z-20 bg-[#0b1f3a] border-b border-[rgba(255,255,255,0.08)]">
+      <nav className="sticky top-0 z-20 bg-navy border-b border-[rgba(255,255,255,0.08)]">
         <div className="max-w-[900px] mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between">
           <Link to="/" className="flex gap-[10px] items-center">
-            <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
+            <div className="bg-primary flex items-center justify-center rounded-sm size-[32px]">
               <Gavel size={16} strokeWidth={2} className="text-white" />
             </div>
             <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
-              Bid<span className="text-[#d0021b]">Vault</span>
+              Bid<span className="text-primary">Vault</span>
             </span>
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/login" className="font-semibold text-[13px] text-[rgba(255,255,255,0.65)] hover:text-white">Log In</Link>
-            <Link to="/register" className="bg-[#d0021b] font-bold text-[12px] text-white px-4 py-2 rounded-[8px] hover:bg-[#a80016]">Get Started</Link>
+            <Link to="/register" className="bg-primary font-bold text-[12px] text-white px-4 py-2 rounded-sm hover:bg-primary-dark">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -60,11 +60,11 @@ export default function PrivacyPolicy() {
       <main className="max-w-[760px] mx-auto px-4 sm:px-6 py-10 sm:py-14">
         {/* Header */}
         <div className="mb-10">
-          <p className="font-bold text-[12px] text-[#d0021b] uppercase tracking-[1.5px] mb-2">Legal</p>
-          <h1 className="font-extrabold text-[28px] sm:text-[36px] text-[#0b1f3a] tracking-[-0.5px] mb-3">Privacy Policy</h1>
-          <p className="text-[14px] text-[#6c757d]">Last updated: May 2026 · Effective for all BidVault users</p>
-          <div className="mt-4 bg-[#f8f9fa] border border-[#e9ecef] rounded-[10px] px-4 py-3">
-            <p className="text-[13px] text-[#495057] leading-[1.6]">
+          <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">Legal</p>
+          <h1 className="font-extrabold text-[28px] sm:text-[36px] text-navy tracking-[-0.5px] mb-3">Privacy Policy</h1>
+          <p className="text-[14px] text-muted">Last updated: May 2026 · Effective for all BidVault users</p>
+          <div className="mt-4 bg-bg border border-border-light rounded-md px-4 py-3">
+            <p className="text-[13px] text-tertiary leading-[1.6]">
               BidVault ("we", "us", "our") is committed to protecting your privacy. This policy explains what information we collect, how we use it, and your rights regarding your personal data. By using BidVault, you agree to this policy.
             </p>
           </div>
@@ -74,27 +74,27 @@ export default function PrivacyPolicy() {
         <div className="flex flex-col gap-8">
           {SECTIONS.map(s => (
             <div key={s.title}>
-              <h2 className="font-bold text-[16px] text-[#0b1f3a] mb-3">{s.title}</h2>
-              <p className="text-[14px] text-[#495057] leading-[1.75]">{s.body}</p>
+              <h2 className="font-bold text-[16px] text-navy mb-3">{s.title}</h2>
+              <p className="text-[14px] text-tertiary leading-[1.75]">{s.body}</p>
             </div>
           ))}
         </div>
 
         {/* Contact */}
-        <div className="mt-10 bg-[#0b1f3a] rounded-[12px] px-5 py-5">
+        <div className="mt-10 bg-navy rounded-md px-5 py-5">
           <p className="font-bold text-[14px] text-white mb-1">Questions about this policy?</p>
           <p className="text-[13px] text-[rgba(255,255,255,0.55)]">
             Contact our privacy team at{' '}
-            <a href="mailto:privacy@bidvault.com" className="text-[#d0021b] font-bold hover:underline">privacy@bidvault.com</a>.
+            <a href="mailto:privacy@bidvault.com" className="text-primary font-bold hover:underline">privacy@bidvault.com</a>.
             We respond within 14 business days.
           </p>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-[#e9ecef] flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-[#adb5bd]">
+        <div className="mt-8 pt-6 border-t border-border-light flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-placeholder">
           <p>© 2026 BidVault · CUST Islamabad, Spring 2026 FYP</p>
           <div className="flex items-center gap-4">
-            <Link to="/terms" className="hover:text-[#d0021b]">Terms of Service</Link>
-            <Link to="/" className="hover:text-[#d0021b]">Home</Link>
+            <Link to="/terms" className="hover:text-primary">Terms of Service</Link>
+            <Link to="/" className="hover:text-primary">Home</Link>
           </div>
         </div>
       </main>

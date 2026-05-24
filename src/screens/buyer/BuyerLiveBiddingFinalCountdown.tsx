@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
@@ -48,8 +48,8 @@ export default function BuyerLiveBiddingFinalCountdown() {
 
   if (!auction) {
     return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
-        <p className="font-bold text-[18px] text-[#343a40]">Auction not found</p>
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <p className="font-bold text-[18px] text-secondary">Auction not found</p>
       </div>
     );
   }
@@ -63,11 +63,11 @@ export default function BuyerLiveBiddingFinalCountdown() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
+    <div className="min-h-screen bg-bg">
       <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       {/* Urgent banner */}
-      <div className="bg-[#d0021b] px-4 sm:px-8 py-3">
+      <div className="bg-primary px-4 sm:px-8 py-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
             })}
             <button
               onClick={handleBid}
-              className="bg-white font-bold text-[12px] sm:text-[13px] text-[#d0021b] px-3 sm:px-5 py-2 rounded-[8px] hover:bg-[#f8f9fa] ml-2 whitespace-nowrap transition-colors cursor-pointer"
+              className="bg-surface font-bold text-[12px] sm:text-[13px] text-primary px-3 sm:px-5 py-2 rounded-sm hover:bg-bg ml-2 whitespace-nowrap transition-colors cursor-pointer"
             >
               Place Final Bid
             </button>
@@ -104,27 +104,27 @@ export default function BuyerLiveBiddingFinalCountdown() {
 
         {/* Bid panel — first on mobile */}
         <div className="flex flex-col gap-4 order-1 md:order-2">
-          <div className="bg-[#d0021b] rounded-[12px] p-5 text-center">
+          <div className="bg-primary rounded-md p-5 text-center">
             <p className="font-bold text-[11px] text-[rgba(255,255,255,0.7)] uppercase tracking-[1px] mb-1 flex items-center justify-center gap-1">
               <Timer size={11} strokeWidth={2} /> Final Countdown
             </p>
             <p className="font-extrabold text-[48px] sm:text-[52px] text-white leading-none">{timer.display}</p>
           </div>
 
-          <div className="bg-white border border-[#e9ecef] rounded-[12px] p-5">
-            <p className="text-[12px] text-[#6c757d] mb-1">Current Bid</p>
-            <p className="font-extrabold text-[26px] sm:text-[28px] text-[#d0021b] leading-none mb-3">PKR {auction.currentBid.toLocaleString()}</p>
+          <div className="bg-surface border border-border-light rounded-md p-5">
+            <p className="text-[12px] text-muted mb-1">Current Bid</p>
+            <p className="font-extrabold text-[26px] sm:text-[28px] text-primary leading-none mb-3">PKR {auction.currentBid.toLocaleString()}</p>
             {isHighest && (
-              <div className="mb-3 bg-[#f0faf4] border border-[rgba(26,122,74,0.3)] px-3 py-2 rounded-[8px] flex items-center gap-2">
+              <div className="mb-3 bg-success-bg border border-[rgba(26,122,74,0.3)] px-3 py-2 rounded-sm flex items-center gap-2">
                 <div className="bg-[rgba(26,122,74,0.15)] border border-[rgba(26,122,74,0.3)] rounded-full p-[2px] shrink-0">
                   <Check size={10} color="#1a7a4a" strokeWidth={3} />
                 </div>
-                <p className="font-bold text-[12px] text-[#1a7a4a]">You are the highest bidder!</p>
+                <p className="font-bold text-[12px] text-success-dark">You are the highest bidder!</p>
               </div>
             )}
             <button
               onClick={handleBid}
-              className="w-full bg-[#d0021b] font-bold text-[14px] text-white py-3 rounded-[8px] hover:bg-[#a80016] transition-colors shadow-[0_4px_12px_rgba(208,2,27,0.25)] cursor-pointer"
+              className="w-full bg-primary font-bold text-[14px] text-white py-3 rounded-sm hover:bg-primary-dark transition-colors shadow-primary cursor-pointer"
             >
               Bid PKR {minNext.toLocaleString()} Now →
             </button>
@@ -133,26 +133,26 @@ export default function BuyerLiveBiddingFinalCountdown() {
 
         {/* Item + bids */}
         <div className="flex flex-col gap-5 order-2 md:order-1">
-          <div className="bg-white border-2 border-[#d0021b] rounded-[12px] overflow-hidden">
-            <div className="h-[200px] sm:h-[260px] overflow-hidden bg-[#0b1f3a] relative">
+          <div className="bg-surface border-2 border-primary rounded-md overflow-hidden">
+            <div className="h-[200px] sm:h-[260px] overflow-hidden bg-navy relative">
               <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.4)] to-transparent" />
             </div>
             <div className="p-4 sm:p-5">
-              <h2 className="font-extrabold text-[16px] sm:text-[18px] text-[#0b1f3a] mb-1">{auction.title}</h2>
-              <p className="text-[13px] text-[#6c757d]">{auction.description}</p>
+              <h2 className="font-extrabold text-[16px] sm:text-[18px] text-navy mb-1">{auction.title}</h2>
+              <p className="text-[13px] text-muted">{auction.description}</p>
             </div>
           </div>
 
-          <div className="bg-white border border-[#e9ecef] rounded-[12px] p-4 sm:p-5">
-            <h3 className="font-bold text-[14px] text-[#0b1f3a] mb-4">Live Bid Feed</h3>
+          <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
+            <h3 className="font-bold text-[14px] text-navy mb-4">Live Bid Feed</h3>
             <div className="flex flex-col gap-1">
               {auctionBids.slice(0, 5).map((b, i) => (
-                <div key={b.bidId} className={`flex items-center justify-between py-3 ${i < Math.min(4, auctionBids.length - 1) ? 'border-b border-[#e9ecef]' : ''}`}>
-                  <span className="font-bold text-[12px] text-[#343a40]">{b.buyerName === user?.name ? `${b.buyerName} (You)` : b.buyerName}</span>
+                <div key={b.bidId} className={`flex items-center justify-between py-3 ${i < Math.min(4, auctionBids.length - 1) ? 'border-b border-border-light' : ''}`}>
+                  <span className="font-bold text-[12px] text-secondary">{b.buyerName === user?.name ? `${b.buyerName} (You)` : b.buyerName}</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[13px] text-[#343a40]">PKR {b.amount.toLocaleString()}</span>
-                    {i === 0 && <span className="bg-[#d0021b] text-white text-[10px] font-bold px-2 py-[1px] rounded-[99px]">Highest</span>}
+                    <span className="font-bold text-[13px] text-secondary">PKR {b.amount.toLocaleString()}</span>
+                    {i === 0 && <span className="bg-primary text-white text-[10px] font-bold px-2 py-[1px] rounded-[99px]">Highest</span>}
                   </div>
                 </div>
               ))}

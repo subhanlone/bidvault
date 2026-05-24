@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ShoppingBag, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -76,24 +76,24 @@ export default function RegisterScreen() {
         {/* Mobile logo */}
         <div className="lg:hidden mb-2">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-[#d0021b] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-white font-extrabold text-sm">BV</span>
             </div>
-            <span className="font-extrabold text-xl text-[#0b1f3a]">Bid<span className="text-[#d0021b]">Vault</span></span>
+            <span className="font-extrabold text-xl text-navy">Bid<span className="text-primary">Vault</span></span>
           </Link>
         </div>
 
         <div>
-          <h2 className="text-2xl font-extrabold text-[#0b1f3a]">Create your account</h2>
-          <p className="text-sm text-[#6c757d] mt-1">
+          <h2 className="text-2xl font-extrabold text-navy">Create your account</h2>
+          <p className="text-sm text-muted mt-1">
             Already have an account?{' '}
-            <Link to="/login" className="font-bold text-[#d0021b] hover:underline">Sign in here</Link>
+            <Link to="/login" className="font-bold text-primary hover:underline">Sign in here</Link>
           </p>
         </div>
 
         {/* Role selector */}
         <div>
-          <p className="text-[12px] font-bold text-[#343a40] mb-2">I want to <span className="text-[#d0021b]">*</span></p>
+          <p className="text-[12px] font-bold text-secondary mb-2">I want to <span className="text-primary">*</span></p>
           <div className="grid grid-cols-2 gap-3">
             {([
               { r: 'BUYER'  as UserRole, label: 'Buyer',  desc: 'Browse & bid on live auctions', Icon: ShoppingBag },
@@ -105,18 +105,18 @@ export default function RegisterScreen() {
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`relative rounded-xl h-[110px] border-2 text-left transition-all cursor-pointer p-4 ${sel ? 'bg-[#fff0f2] border-[#d0021b]' : 'bg-[#f8f9fa] border-[#e9ecef] hover:border-[#d0021b]'}`}
+                  className={`relative rounded-md h-[110px] border-2 text-left transition-all cursor-pointer p-4 ${sel ? 'bg-primary-surface border-primary' : 'bg-bg border-border-light hover:border-primary'}`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${sel ? 'bg-[#d0021b]/12' : 'bg-[#e9ecef]'}`}>
-                      <Icon size={16} className={sel ? 'text-[#d0021b]' : 'text-[#6c757d]'} />
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${sel ? 'bg-primary/12' : 'bg-[#e9ecef]'}`}>
+                      <Icon size={16} className={sel ? 'text-primary' : 'text-muted'} />
                     </div>
-                    <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${sel ? 'border-[#d0021b]' : 'border-[#dee2e6]'}`}>
-                      {sel && <div className="w-2 h-2 rounded-full bg-[#d0021b]" />}
+                    <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${sel ? 'border-primary' : 'border-[#dee2e6]'}`}>
+                      {sel && <div className="w-2 h-2 rounded-full bg-primary" />}
                     </div>
                   </div>
-                  <p className={`text-[13px] font-bold leading-tight ${sel ? 'text-[#a80016]' : 'text-[#343a40]'}`}>{label}</p>
-                  <p className="text-[11px] text-[#6c757d] mt-0.5">{desc}</p>
+                  <p className={`text-[13px] font-bold leading-tight ${sel ? 'text-primary-dark' : 'text-secondary'}`}>{label}</p>
+                  <p className="text-[11px] text-muted mt-0.5">{desc}</p>
                 </button>
               );
             })}
@@ -156,7 +156,7 @@ export default function RegisterScreen() {
             onChange={e => { setPassword(e.target.value); clearError('password'); }}
             leftIcon={<Lock size={16} />}
             rightIcon={
-              <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide' : 'Show'} className="cursor-pointer text-[#9ca3af] hover:text-[#374151]">
+              <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide' : 'Show'} className="cursor-pointer text-placeholder hover:text-body">
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             }
@@ -166,7 +166,7 @@ export default function RegisterScreen() {
           {password.length > 0 && (
             <div className="mt-2 flex flex-col gap-1">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-[#6c757d]">Password strength</span>
+                <span className="text-[11px] font-semibold text-muted">Password strength</span>
                 <span className="text-[11px] font-semibold" style={{ color: pwColor }}>{pwLabel}</span>
               </div>
               <div className="h-1 bg-[#e9ecef] rounded-full overflow-hidden">
@@ -182,17 +182,17 @@ export default function RegisterScreen() {
             <button
               type="button"
               onClick={() => { setAgree(p => !p); clearError('agree'); }}
-              className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center flex-shrink-0 mt-px transition-colors cursor-pointer ${agree ? 'bg-[#d0021b] border-[#d0021b]' : 'bg-white border-[#dee2e6]'}`}
+              className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center flex-shrink-0 mt-px transition-colors cursor-pointer ${agree ? 'bg-primary border-primary' : 'bg-surface border-[#dee2e6]'}`}
             >
               {agree && <svg viewBox="0 0 10 8" className="w-2.5 h-2 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1" /></svg>}
             </button>
-            <span className="text-[12.5px] text-[#495057] leading-relaxed">
+            <span className="text-[12.5px] text-tertiary leading-relaxed">
               I agree to BidVault's{' '}
-              <Link to="/terms" className="font-bold text-[#d0021b] hover:underline">Terms of Service</Link>{' '}and{' '}
-              <Link to="/privacy" className="font-bold text-[#d0021b] hover:underline">Privacy Policy</Link>
+              <Link to="/terms" className="font-bold text-primary hover:underline">Terms of Service</Link>{' '}and{' '}
+              <Link to="/privacy" className="font-bold text-primary hover:underline">Privacy Policy</Link>
             </span>
           </label>
-          {errors.agree && <p className="text-[11px] text-[#d0021b] mt-1">{errors.agree}</p>}
+          {errors.agree && <p className="text-[11px] text-primary mt-1">{errors.agree}</p>}
         </div>
 
         <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>
@@ -200,9 +200,9 @@ export default function RegisterScreen() {
           <ArrowRight size={17} />
         </Button>
 
-        <p className="text-center text-sm text-[#6c757d]">
+        <p className="text-center text-sm text-muted">
           Already have an account?{' '}
-          <Link to="/login" className="font-bold text-[#d0021b] hover:underline">Sign in to BidVault</Link>
+          <Link to="/login" className="font-bold text-primary hover:underline">Sign in to BidVault</Link>
         </p>
       </form>
     </AuthLayout>

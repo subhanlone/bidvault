@@ -13,9 +13,18 @@ const paddingMap = {
 };
 
 export default function Card({ children, className = '', padding = 'md', onClick }: CardProps) {
+  const interactive = !!onClick;
   return (
     <div
-      className={`bg-white rounded-xl border border-[#e5e7eb] shadow-[0_4px_6px_rgba(0,0,0,0.08)] ${paddingMap[padding]} ${onClick ? 'cursor-pointer hover:shadow-[0_10px_15px_rgba(0,0,0,0.1)] transition-shadow duration-200' : ''} ${className}`}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onKeyDown={interactive ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick!();
+        }
+      } : undefined}
+      className={`bg-surface rounded-md border border-border shadow-md ${paddingMap[padding]} ${interactive ? 'cursor-pointer hover:shadow-lg transition-shadow duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary' : ''} ${className}`}
       onClick={onClick}
     >
       {children}

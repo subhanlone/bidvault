@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
@@ -28,26 +28,26 @@ export default function SellerListingSubmitted() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface">
       <ListingStepperHeader currentStep={2} />
 
       <main className="flex flex-col items-center justify-center py-20 px-4">
         {/* Success icon */}
-        <div className="w-20 h-20 rounded-2xl bg-[#f0faf4] border border-[#16a34a]/20 flex items-center justify-center mb-6">
+        <div className="w-20 h-20 rounded-lg bg-success-bg border border-[#16a34a]/20 flex items-center justify-center mb-6">
           <div className="w-12 h-12 rounded-full bg-[#16a34a] flex items-center justify-center">
             <Check size={24} strokeWidth={3} className="text-white" />
           </div>
         </div>
 
-        <h1 className="text-3xl font-extrabold text-[#0b1f3a] mb-3">Listing Submitted!</h1>
-        <p className="text-sm text-[#6c757d] text-center leading-relaxed max-w-md mb-5">
+        <h1 className="text-3xl font-extrabold text-navy mb-3">Listing Submitted!</h1>
+        <p className="text-sm text-muted text-center leading-relaxed max-w-md mb-5">
           Your listing has been submitted for admin review. You'll receive an email at{' '}
-          <span className="font-bold text-[#343a40]">{user?.email ?? 'your email'}</span> once it's approved.
+          <span className="font-bold text-secondary">{user?.email ?? 'your email'}</span> once it's approved.
         </p>
 
         {submittedListingId && (
-          <div className="border border-[#dee2e6] text-sm font-semibold text-[#343a40] px-5 py-2 rounded-lg mb-10">
-            Listing ID: <span className="font-bold text-[#d0021b]">{submittedListingId}</span>
+          <div className="border border-[#dee2e6] text-sm font-semibold text-secondary px-5 py-2 rounded-lg mb-10">
+            Listing ID: <span className="font-bold text-primary">{submittedListingId}</span>
           </div>
         )}
 
@@ -58,19 +58,19 @@ export default function SellerListingSubmitted() {
               <div className="flex flex-col items-center">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                   done   ? 'bg-[#16a34a]' :
-                  active ? 'border-2 border-[#f59e0b] bg-white' :
-                           'border-2 border-[#e9ecef] bg-white'
+                  active ? 'border-2 border-[#f59e0b] bg-surface' :
+                           'border-2 border-border-light bg-surface'
                 }`}>
                   {done
                     ? <Check size={12} strokeWidth={2.5} className="text-white" />
-                    : <span className={`font-extrabold text-xs ${active ? 'text-[#f59e0b]' : 'text-[#adb5bd]'}`}>{i + 1}</span>
+                    : <span className={`font-extrabold text-xs ${active ? 'text-gold' : 'text-placeholder'}`}>{i + 1}</span>
                   }
                 </div>
                 {i < timeline.length - 1 && <div className="w-0.5 h-10 bg-[#e9ecef]" />}
               </div>
               <div className="pt-1 pb-2">
-                <p className="text-sm font-bold text-[#0b1f3a]">{label}</p>
-                <p className="text-xs text-[#6c757d]">{sub}</p>
+                <p className="text-sm font-bold text-navy">{label}</p>
+                <p className="text-xs text-muted">{sub}</p>
               </div>
             </div>
           ))}

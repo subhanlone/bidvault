@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { Gavel } from 'lucide-react';
 
 const SECTIONS = [
@@ -46,21 +46,21 @@ const SECTIONS = [
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface">
       {/* Nav */}
-      <nav className="sticky top-0 z-20 bg-[#0b1f3a] border-b border-[rgba(255,255,255,0.08)]">
+      <nav className="sticky top-0 z-20 bg-navy border-b border-[rgba(255,255,255,0.08)]">
         <div className="max-w-[900px] mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between">
           <Link to="/" className="flex gap-[10px] items-center">
-            <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
+            <div className="bg-primary flex items-center justify-center rounded-sm size-[32px]">
               <Gavel size={16} strokeWidth={2} className="text-white" />
             </div>
             <span className="font-extrabold text-[18px] text-white tracking-[-0.3px]">
-              Bid<span className="text-[#d0021b]">Vault</span>
+              Bid<span className="text-primary">Vault</span>
             </span>
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/login" className="font-semibold text-[13px] text-[rgba(255,255,255,0.65)] hover:text-white">Log In</Link>
-            <Link to="/register" className="bg-[#d0021b] font-bold text-[12px] text-white px-4 py-2 rounded-[8px] hover:bg-[#a80016]">Get Started</Link>
+            <Link to="/register" className="bg-primary font-bold text-[12px] text-white px-4 py-2 rounded-sm hover:bg-primary-dark">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -68,19 +68,19 @@ export default function TermsOfService() {
       <main className="max-w-[760px] mx-auto px-4 sm:px-6 py-10 sm:py-14">
         {/* Header */}
         <div className="mb-10">
-          <p className="font-bold text-[12px] text-[#d0021b] uppercase tracking-[1.5px] mb-2">Legal</p>
-          <h1 className="font-extrabold text-[28px] sm:text-[36px] text-[#0b1f3a] tracking-[-0.5px] mb-3">Terms of Service</h1>
-          <p className="text-[14px] text-[#6c757d]">Last updated: May 2026 · Effective for all BidVault users</p>
-          <div className="mt-4 bg-[#fff0f2] border border-[rgba(208,2,27,0.2)] rounded-[10px] px-4 py-3">
-            <p className="text-[13px] text-[#343a40] leading-[1.6]">
+          <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">Legal</p>
+          <h1 className="font-extrabold text-[28px] sm:text-[36px] text-navy tracking-[-0.5px] mb-3">Terms of Service</h1>
+          <p className="text-[14px] text-muted">Last updated: May 2026 · Effective for all BidVault users</p>
+          <div className="mt-4 bg-primary-surface border border-[rgba(208,2,27,0.2)] rounded-md px-4 py-3">
+            <p className="text-[13px] text-secondary leading-[1.6]">
               <span className="font-bold">Please read these terms carefully.</span> By registering an account or using BidVault, you enter into a binding agreement with these Terms of Service. These terms define your rights and obligations as a platform user.
             </p>
           </div>
         </div>
 
         {/* Quick nav */}
-        <div className="mb-8 bg-[#f8f9fa] border border-[#e9ecef] rounded-[10px] p-4">
-          <p className="font-bold text-[12px] text-[#6c757d] uppercase tracking-[0.5px] mb-3">Jump to Section</p>
+        <div className="mb-8 bg-bg border border-border-light rounded-md p-4">
+          <p className="font-bold text-[12px] text-muted uppercase tracking-[0.5px] mb-3">Jump to Section</p>
           <div className="flex flex-wrap gap-2">
             {SECTIONS.map(s => {
               const anchor = s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -88,7 +88,7 @@ export default function TermsOfService() {
                 <button
                   key={s.title}
                   onClick={() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="font-medium text-[11px] text-[#495057] bg-white border border-[#e9ecef] px-2.5 py-1 rounded-[6px] hover:border-[#d0021b] hover:text-[#d0021b] transition-colors"
+                  className="font-medium text-[11px] text-tertiary bg-surface border border-border-light px-2.5 py-1 rounded-[6px] hover:border-primary hover:text-primary transition-colors"
                 >
                   {s.title.split('. ')[1]}
                 </button>
@@ -103,28 +103,28 @@ export default function TermsOfService() {
             const anchor = s.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
             return (
               <div key={s.title} id={anchor}>
-                <h2 className="font-bold text-[16px] text-[#0b1f3a] mb-3">{s.title}</h2>
-                <p className="text-[14px] text-[#495057] leading-[1.75]">{s.body}</p>
+                <h2 className="font-bold text-[16px] text-navy mb-3">{s.title}</h2>
+                <p className="text-[14px] text-tertiary leading-[1.75]">{s.body}</p>
               </div>
             );
           })}
         </div>
 
         {/* Contact */}
-        <div className="mt-10 bg-[#0b1f3a] rounded-[12px] px-5 py-5">
+        <div className="mt-10 bg-navy rounded-md px-5 py-5">
           <p className="font-bold text-[14px] text-white mb-1">Questions about these terms?</p>
           <p className="text-[13px] text-[rgba(255,255,255,0.55)]">
             Contact us at{' '}
-            <a href="mailto:legal@bidvault.com" className="text-[#d0021b] font-bold hover:underline">legal@bidvault.com</a>.
+            <a href="mailto:legal@bidvault.com" className="text-primary font-bold hover:underline">legal@bidvault.com</a>.
             For urgent matters, use the support form on the platform.
           </p>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-[#e9ecef] flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-[#adb5bd]">
+        <div className="mt-8 pt-6 border-t border-border-light flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-placeholder">
           <p>© 2026 BidVault · CUST Islamabad, Spring 2026 FYP</p>
           <div className="flex items-center gap-4">
-            <Link to="/privacy" className="hover:text-[#d0021b]">Privacy Policy</Link>
-            <Link to="/" className="hover:text-[#d0021b]">Home</Link>
+            <Link to="/privacy" className="hover:text-primary">Privacy Policy</Link>
+            <Link to="/" className="hover:text-primary">Home</Link>
           </div>
         </div>
       </main>

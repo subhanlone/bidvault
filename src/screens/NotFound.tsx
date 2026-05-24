@@ -1,4 +1,4 @@
-import { useNavigate, Link } from 'react-router-dom';
+﻿import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Gavel } from 'lucide-react';
 
@@ -15,7 +15,7 @@ export default function NotFound() {
     : '/';
 
   return (
-    <main className="min-h-screen bg-[#0b1f3a] flex flex-col items-center justify-center px-4 relative overflow-hidden">
+    <main className="min-h-screen bg-navy flex flex-col items-center justify-center px-4 relative overflow-hidden">
       {/* Background grid */}
       <div className="absolute inset-0 opacity-[0.035]" style={{
         backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
@@ -23,17 +23,17 @@ export default function NotFound() {
       }} />
 
       {/* Glow orbs */}
-      <div className="absolute top-[-80px] left-[-80px] w-[400px] h-[400px] bg-[#d0021b] opacity-[0.06] rounded-full blur-[100px]" />
+      <div className="absolute top-[-80px] left-[-80px] w-[400px] h-[400px] bg-primary opacity-[0.06] rounded-full blur-[100px]" />
       <div className="absolute bottom-[-80px] right-[-80px] w-[400px] h-[400px] bg-[#1a7a4a] opacity-[0.05] rounded-full blur-[100px]" />
 
       <div className="relative z-10 text-center max-w-[560px] mx-auto">
         {/* Brand */}
         <Link to="/" className="inline-flex items-center gap-2 mb-12 opacity-70 hover:opacity-100 transition-opacity">
-          <div className="bg-[#d0021b] flex items-center justify-center rounded-[8px] size-[32px]">
+          <div className="bg-primary flex items-center justify-center rounded-sm size-[32px]">
             <Gavel size={16} strokeWidth={2} className="text-white" />
           </div>
           <span className="font-extrabold text-[20px] text-white tracking-[-0.3px]">
-            Bid<span className="text-[#d0021b]">Vault</span>
+            Bid<span className="text-primary">Vault</span>
           </span>
         </Link>
 
@@ -68,13 +68,13 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="border border-[rgba(255,255,255,0.2)] font-bold text-[14px] text-[rgba(255,255,255,0.75)] px-6 py-3 rounded-[10px] hover:border-white hover:text-white transition-all"
+            className="border border-[rgba(255,255,255,0.2)] font-bold text-[14px] text-[rgba(255,255,255,0.75)] px-6 py-3 rounded-md hover:border-white hover:text-white transition-all"
           >
             ← Go Back
           </button>
           <Link
             to={homeLink}
-            className="bg-[#d0021b] font-bold text-[14px] text-white px-6 py-3 rounded-[10px] hover:bg-[#a80016] transition-colors shadow-[0_8px_24px_rgba(208,2,27,0.35)]"
+            className="bg-primary font-bold text-[14px] text-white px-6 py-3 rounded-md hover:bg-primary-dark transition-colors shadow-[0_8px_24px_rgba(208,2,27,0.35)]"
           >
             {user ? 'Back to Dashboard' : 'Go Home'} →
           </Link>

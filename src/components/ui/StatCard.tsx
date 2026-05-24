@@ -6,19 +6,43 @@ interface StatCardProps {
   trend?: 'up' | 'down' | 'neutral';
   trendLabel?: string;
   icon?: React.ReactNode;
+  iconColor?: 'default' | 'success' | 'warning' | 'error' | 'info';
+  padding?: 'sm' | 'md';
   className?: string;
 }
 
-export default function StatCard({ label, value, trend, trendLabel, icon, className = '' }: StatCardProps) {
+const iconColorMap = {
+  default: 'bg-surface-raised text-muted',
+  success: 'bg-success-bg text-success',
+  warning: 'bg-warning-bg text-warning',
+  error: 'bg-error-bg text-error',
+  info: 'bg-info-bg text-info',
+};
+
+const paddingMap = {
+  sm: 'p-4',
+  md: 'p-6',
+};
+
+export default function StatCard({
+  label,
+  value,
+  trend,
+  trendLabel,
+  icon,
+  iconColor = 'default',
+  padding = 'md',
+  className = '',
+}: StatCardProps) {
   return (
-    <div className={`bg-white rounded-xl border border-[#e5e7eb] p-6 ${className}`}>
+    <div className={`bg-surface rounded-md border border-border ${paddingMap[padding]} ${className}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-[13px] text-[#6c757d] font-medium mb-1">{label}</p>
-          <p className="text-[28px] font-bold text-[#0b1f3a] leading-none">{value}</p>
+          <p className="text-[13px] text-muted font-medium mb-1">{label}</p>
+          <p className="text-[28px] font-bold text-navy leading-none">{value}</p>
           {trendLabel && (
             <div className={`flex items-center gap-1 mt-2 text-[12px] font-medium
-              ${trend === 'up' ? 'text-[#16a34a]' : trend === 'down' ? 'text-[#d0021b]' : 'text-[#6c757d]'}
+              ${trend === 'up' ? 'text-success' : trend === 'down' ? 'text-primary' : 'text-muted'}
             `}>
               {trend === 'up' && <TrendingUp size={13} />}
               {trend === 'down' && <TrendingDown size={13} />}
@@ -27,7 +51,7 @@ export default function StatCard({ label, value, trend, trendLabel, icon, classN
           )}
         </div>
         {icon && (
-          <div className="w-10 h-10 rounded-lg bg-[#f8f9fa] flex items-center justify-center text-[#6c757d]">
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconColorMap[iconColor]}`}>
             {icon}
           </div>
         )}

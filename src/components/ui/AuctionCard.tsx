@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
 import Badge from './Badge';
 import Button from './Button';
@@ -34,12 +34,12 @@ export default function AuctionCard({ id, title, imageUrl, currentPrice, bidCoun
   const linkTo = to || `/buyer/auction/${id}`;
 
   return (
-    <div className="bg-white rounded-xl border border-[#e5e7eb] shadow-[0_4px_6px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col hover:shadow-[0_10px_15px_rgba(0,0,0,0.1)] transition-shadow duration-200">
-      <div className="relative h-48 bg-[#f3f4f6]">
+    <div className="bg-surface rounded-md border border-border shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow duration-200">
+      <div className="relative h-48 bg-surface-raised">
         {imageUrl ? (
           <img src={imageUrl} alt={title} className="w-full h-full object-cover" loading="lazy" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[#9ca3af] text-sm">No image</div>
+          <div className="w-full h-full flex items-center justify-center text-placeholder text-sm">No image</div>
         )}
         <div className="absolute top-2 left-2">
           <Countdown hours={h} minutes={m} seconds={s} />
@@ -51,13 +51,13 @@ export default function AuctionCard({ id, title, imageUrl, currentPrice, bidCoun
           <Badge variant="tag">{category}</Badge>
           <Badge variant={condition === 'New' ? 'success' : 'tag'}>{condition}</Badge>
         </div>
-        <h3 className="text-sm font-semibold text-[#0b1f3a] line-clamp-2 leading-snug">{title}</h3>
+        <h3 className="text-sm font-semibold text-navy line-clamp-2 leading-snug">{title}</h3>
         <div className="flex items-center justify-between mt-auto pt-1">
           <div>
-            <p className="text-[11px] text-[#6c757d]">Current Bid</p>
-            <p className="text-base font-bold text-[#d0021b]">{formatPrice(currentPrice)}</p>
+            <p className="text-[11px] text-muted">Current Bid</p>
+            <p className="text-base font-bold text-primary">{formatPrice(currentPrice)}</p>
           </div>
-          <div className="flex items-center gap-1 text-[#6c757d] text-xs">
+          <div className="flex items-center gap-1 text-muted text-xs">
             <Users size={12} />
             {bidCount} bids
             {watchers != null && <span className="ml-1">· {watchers} watching</span>}

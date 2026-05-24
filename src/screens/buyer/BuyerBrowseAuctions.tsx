@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Heart, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +11,7 @@ const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fash
 
 function AuctionCardSkeleton() {
   return (
-    <div className="bg-white border border-[#e9ecef] rounded-[14px] overflow-hidden">
+    <div className="bg-surface border border-border-light rounded-md overflow-hidden">
       <div className="h-[160px] sm:h-[180px] bg-[#e9ecef] animate-pulse" />
       <div className="p-4">
         <div className="flex gap-1.5 mb-2">
@@ -39,10 +39,10 @@ function AuctionCard({ auction }: { auction: Auction }) {
 
   return (
     <div
-      className="bg-white border border-[#e9ecef] rounded-[14px] overflow-hidden hover:shadow-[0_8px_28px_rgba(11,31,58,0.12)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
+      className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group"
       onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
     >
-      <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-[#0b1f3a]">
+      <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-navy">
         <img
           src={auction.imageUrl}
           alt={auction.title}
@@ -55,29 +55,29 @@ function AuctionCard({ auction }: { auction: Auction }) {
             {auction.badge}
           </span>
         )}
-        <span className={`absolute bottom-3 left-3 font-bold text-[11px] px-2 py-1 rounded-md flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-[#d0021b] text-white' : 'bg-white/15 backdrop-blur-sm text-white'}`}>
+        <span className={`absolute bottom-3 left-3 font-bold text-[11px] px-2 py-1 rounded-md flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-surface/15 backdrop-blur-sm text-white'}`}>
           {timer.isExpired ? 'Closed' : timer.display}
         </span>
         <button
           onClick={e => e.stopPropagation()}
-          className="absolute top-3 right-3 bg-white rounded-full w-[30px] h-[30px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:scale-110 cursor-pointer"
+          className="absolute top-3 right-3 bg-surface rounded-full w-[30px] h-[30px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:scale-110 cursor-pointer"
         >
-          <Heart size={14} className="text-[#d0021b]" />
+          <Heart size={14} className="text-primary" />
         </button>
       </div>
       <div className="p-4">
         <div className="flex items-center gap-1.5 mb-2">
-          <span className="bg-[#f1f3f5] font-medium text-[10px] text-[#6c757d] px-2 py-[3px] rounded-full">{auction.category}</span>
-          <span className="bg-[#f1f3f5] font-medium text-[10px] text-[#6c757d] px-2 py-[3px] rounded-full">{auction.condition}</span>
+          <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
+          <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{auction.condition}</span>
         </div>
-        <h3 className="font-bold text-[13px] text-[#0b1f3a] leading-[19px] mb-3 line-clamp-2">{auction.title}</h3>
+        <h3 className="font-bold text-[13px] text-navy leading-[19px] mb-3 line-clamp-2">{auction.title}</h3>
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-[10px] text-[#6c757d] mb-[2px]">Current bid</p>
-            <p className="font-extrabold text-[17px] text-[#d0021b] leading-none">PKR {auction.currentBid.toLocaleString()}</p>
-            <p className="text-[10px] text-[#adb5bd] mt-1">{auction.bidCount} bids</p>
+            <p className="text-[10px] text-muted mb-[2px]">Current bid</p>
+            <p className="font-extrabold text-[17px] text-primary leading-none">PKR {auction.currentBid.toLocaleString()}</p>
+            <p className="text-[10px] text-placeholder mt-1">{auction.bidCount} bids</p>
           </div>
-          <button className="flex items-center gap-1 font-bold text-[12px] text-[#d0021b] bg-[#fff0f2] px-3 py-1.5 rounded-lg hover:bg-[#ffe0e4] transition-colors cursor-pointer">
+          <button className="flex items-center gap-1 font-bold text-[12px] text-primary bg-primary-surface px-3 py-1.5 rounded-lg hover:bg-[#ffe0e4] transition-colors cursor-pointer">
             Bid Now <ChevronRight size={11} />
           </button>
         </div>
@@ -110,43 +110,43 @@ export default function BuyerBrowseAuctions() {
   const FilterCheckbox = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
     <div
       onClick={onClick}
-      className={`w-[14px] h-[14px] rounded-[3px] border-2 flex items-center justify-center shrink-0 transition-colors cursor-pointer ${checked ? 'bg-[#d0021b] border-[#d0021b]' : 'border-[#dee2e6]'}`}
+      className={`w-[14px] h-[14px] rounded-[3px] border-2 flex items-center justify-center shrink-0 transition-colors cursor-pointer ${checked ? 'bg-primary border-primary' : 'border-[#dee2e6]'}`}
     >
       {checked && <svg className="h-[5px] w-[7px]" viewBox="0 0 7 5" fill="none"><path d="M0.5 2.5L2.5 4.5L6.5 0.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" /></svg>}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
+    <div className="min-h-screen bg-bg">
       <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       <div className="flex">
         {/* Desktop sidebar */}
-        <aside className="hidden md:block bg-white border-r border-[#e9ecef] w-[220px] shrink-0 sticky top-14 self-start max-h-[calc(100vh-56px)] overflow-y-auto p-5">
+        <aside className="hidden md:block bg-surface border-r border-border-light w-[220px] shrink-0 sticky top-14 self-start max-h-[calc(100vh-56px)] overflow-y-auto p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-[13px] text-[#0b1f3a] flex items-center gap-1.5">
+            <h3 className="font-bold text-[13px] text-navy flex items-center gap-1.5">
               <SlidersHorizontal size={13} strokeWidth={2.5} /> Filters
             </h3>
-            <button onClick={() => { setCategory('All'); setShowEndingSoon(false); setSearch(''); }} className="text-[11px] text-[#d0021b] font-bold hover:underline cursor-pointer">
+            <button onClick={() => { setCategory('All'); setShowEndingSoon(false); setSearch(''); }} className="text-[11px] text-primary font-bold hover:underline cursor-pointer">
               Clear All
             </button>
           </div>
           <div className="mb-5">
-            <p className="font-bold text-[11px] text-[#adb5bd] tracking-wide uppercase mb-3">Category</p>
+            <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Category</p>
             <div className="flex flex-col gap-2">
               {CATEGORIES.map(c => (
                 <label key={c} className="flex items-center gap-2 cursor-pointer">
                   <FilterCheckbox checked={category === c} onClick={() => setCategory(c)} />
-                  <span className={`text-[12.5px] ${category === c ? 'font-bold text-[#343a40]' : 'text-[#6c757d]'}`}>{c}</span>
+                  <span className={`text-[12.5px] ${category === c ? 'font-bold text-secondary' : 'text-muted'}`}>{c}</span>
                 </label>
               ))}
             </div>
           </div>
           <div>
-            <p className="font-bold text-[11px] text-[#adb5bd] tracking-wide uppercase mb-3">Status</p>
+            <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Status</p>
             <label className="flex items-center gap-2 cursor-pointer">
               <FilterCheckbox checked={showEndingSoon} onClick={() => setShowEndingSoon(p => !p)} />
-              <span className="text-[12.5px] text-[#6c757d]">Ending Soon</span>
+              <span className="text-[12.5px] text-muted">Ending Soon</span>
             </label>
           </div>
         </aside>
@@ -156,16 +156,16 @@ export default function BuyerBrowseAuctions() {
           <div className="md:hidden flex gap-2 mb-4">
             <div className="relative flex-1">
               <input
-                className="bg-white border border-[#dee2e6] h-[42px] pl-[38px] pr-4 rounded-lg text-[13px] w-full outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
+                className="bg-surface border border-[#dee2e6] h-[42px] pl-[38px] pr-4 rounded-lg text-[13px] w-full outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
                 placeholder="Search auctions…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
-              <Search size={16} className="absolute left-3 top-[13px] text-[#adb5bd]" />
+              <Search size={16} className="absolute left-3 top-[13px] text-placeholder" />
             </div>
             <button
               onClick={() => setSidebarOpen(o => !o)}
-              className="bg-white border border-[#dee2e6] h-[42px] px-3 rounded-lg flex items-center gap-2 font-semibold text-[13px] text-[#343a40] shrink-0 cursor-pointer"
+              className="bg-surface border border-[#dee2e6] h-[42px] px-3 rounded-lg flex items-center gap-2 font-semibold text-[13px] text-secondary shrink-0 cursor-pointer"
             >
               <SlidersHorizontal size={15} strokeWidth={2} /> Filters
             </button>
@@ -173,18 +173,18 @@ export default function BuyerBrowseAuctions() {
 
           {/* Mobile filter panel */}
           {sidebarOpen && (
-            <div className="md:hidden bg-white border border-[#e9ecef] rounded-xl p-4 mb-4 shadow-sm">
+            <div className="md:hidden bg-surface border border-border-light rounded-md p-4 mb-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-[13px] text-[#0b1f3a]">Filters</h3>
-                <button onClick={() => { setCategory('All'); setShowEndingSoon(false); }} className="text-[11px] text-[#d0021b] font-bold cursor-pointer">Clear All</button>
+                <h3 className="font-bold text-[13px] text-navy">Filters</h3>
+                <button onClick={() => { setCategory('All'); setShowEndingSoon(false); }} className="text-[11px] text-primary font-bold cursor-pointer">Clear All</button>
               </div>
-              <p className="font-bold text-[11px] text-[#adb5bd] uppercase tracking-wide mb-2">Category</p>
+              <p className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Category</p>
               <div className="flex flex-wrap gap-2 mb-3">
                 {CATEGORIES.map(c => (
                   <button
                     key={c}
                     onClick={() => setCategory(c)}
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${category === c ? 'bg-[#d0021b] text-white border-[#d0021b]' : 'bg-white text-[#6c757d] border-[#e9ecef]'}`}
+                    className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${category === c ? 'bg-primary text-white border-primary' : 'bg-surface text-muted border-border-light'}`}
                   >
                     {c}
                   </button>
@@ -192,7 +192,7 @@ export default function BuyerBrowseAuctions() {
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <FilterCheckbox checked={showEndingSoon} onClick={() => setShowEndingSoon(p => !p)} />
-                <span className="text-[12.5px] text-[#6c757d]">Ending Soon</span>
+                <span className="text-[12.5px] text-muted">Ending Soon</span>
               </label>
             </div>
           )}
@@ -200,17 +200,17 @@ export default function BuyerBrowseAuctions() {
           {/* Desktop title + search */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
-              <h1 className="font-extrabold text-[20px] sm:text-[22px] text-[#0b1f3a]">Live Auctions</h1>
-              <p className="text-[12px] sm:text-[13px] text-[#6c757d]">{filtered.length} auction{filtered.length !== 1 ? 's' : ''} found</p>
+              <h1 className="font-extrabold text-[20px] sm:text-[22px] text-navy">Live Auctions</h1>
+              <p className="text-[12px] sm:text-[13px] text-muted">{filtered.length} auction{filtered.length !== 1 ? 's' : ''} found</p>
             </div>
             <div className="relative hidden md:block">
               <input
-                className="bg-white border border-[#dee2e6] h-[40px] pl-[38px] pr-4 rounded-lg text-[13px] text-[#343a40] w-[240px] outline-none focus:border-[#d0021b] focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
+                className="bg-surface border border-[#dee2e6] h-[40px] pl-[38px] pr-4 rounded-lg text-[13px] text-secondary w-[240px] outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
                 placeholder="Search auctions…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
-              <Search size={16} className="absolute left-3 top-[12px] text-[#adb5bd]" />
+              <Search size={16} className="absolute left-3 top-[12px] text-placeholder" />
             </div>
           </div>
 
@@ -220,12 +220,12 @@ export default function BuyerBrowseAuctions() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="bg-[#f1f3f5] rounded-full p-5">
-                <Search size={40} strokeWidth={1.3} className="text-[#adb5bd]" />
+              <div className="bg-surface-raised rounded-full p-5">
+                <Search size={40} strokeWidth={1.3} className="text-placeholder" />
               </div>
-              <p className="font-bold text-[16px] text-[#343a40]">No auctions found</p>
-              <p className="text-[13px] text-[#6c757d]">Try adjusting your search or filters</p>
-              <button onClick={() => { setSearch(''); setCategory('All'); setShowEndingSoon(false); }} className="mt-1 font-bold text-[13px] text-[#d0021b] hover:underline cursor-pointer">
+              <p className="font-bold text-[16px] text-secondary">No auctions found</p>
+              <p className="text-[13px] text-muted">Try adjusting your search or filters</p>
+              <button onClick={() => { setSearch(''); setCategory('All'); setShowEndingSoon(false); }} className="mt-1 font-bold text-[13px] text-primary hover:underline cursor-pointer">
                 Clear filters
               </button>
             </div>

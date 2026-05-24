@@ -1,4 +1,4 @@
-import { useAuth } from '../../context/AuthContext';
+﻿import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { BuyerNavbar } from '../../components/ui';
 
@@ -15,7 +15,7 @@ const DEMO_TOASTS = [
     title: 'Outbid!',
     message: 'Someone placed a higher bid. Current: PKR 315,000',
     label: 'Error Toast',
-    color: 'bg-[#d0021b]',
+    color: 'bg-primary',
   },
   {
     type: 'info' as const,
@@ -29,7 +29,7 @@ const DEMO_TOASTS = [
     title: 'New Competing Bid',
     message: 'Ali placed a bid of PKR 310,000 on MacBook Pro.',
     label: 'Info Toast',
-    color: 'bg-[#0b1f3a]',
+    color: 'bg-navy',
   },
 ];
 
@@ -38,19 +38,19 @@ export default function BuyerToastNotifications() {
   const { showToast } = useToast();
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa]">
+    <div className="min-h-screen bg-bg">
       <BuyerNavbar userName={user?.name} onLogout={logout} />
 
       <main className="max-w-[700px] mx-auto px-6 py-10">
-        <h1 className="font-extrabold text-[24px] text-[#0b1f3a] mb-1">Toast Notification Demo</h1>
-        <p className="text-[13px] text-[#6c757d] mb-8">Click each button to trigger a notification. These appear in the top-right corner.</p>
+        <h1 className="font-extrabold text-[24px] text-navy mb-1">Toast Notification Demo</h1>
+        <p className="text-[13px] text-muted mb-8">Click each button to trigger a notification. These appear in the top-right corner.</p>
 
         <div className="grid grid-cols-2 gap-4">
           {DEMO_TOASTS.map((t, i) => (
             <button
               key={i}
               onClick={() => showToast({ type: t.type, title: t.title, message: t.message })}
-              className={`${t.color} text-white rounded-[12px] p-5 text-left hover:opacity-90 transition-opacity cursor-pointer`}
+              className={`${t.color} text-white rounded-md p-5 text-left hover:opacity-90 transition-opacity cursor-pointer`}
             >
               <p className="font-bold text-[14px] mb-1">{t.label}</p>
               <p className="font-semibold text-[13px] opacity-90 mb-1">{t.title}</p>
@@ -59,11 +59,11 @@ export default function BuyerToastNotifications() {
           ))}
         </div>
 
-        <div className="mt-8 bg-white border border-[#e9ecef] rounded-[12px] p-6">
-          <h2 className="font-bold text-[14px] text-[#0b1f3a] mb-4">Trigger All at Once</h2>
+        <div className="mt-8 bg-surface border border-border-light rounded-md p-6">
+          <h2 className="font-bold text-[14px] text-navy mb-4">Trigger All at Once</h2>
           <button
             onClick={() => DEMO_TOASTS.forEach((t, i) => setTimeout(() => showToast({ type: t.type, title: t.title, message: t.message }), i * 600))}
-            className="bg-[#0b1f3a] font-bold text-[14px] text-white px-6 py-3 rounded-[8px] hover:bg-[#1a3356] transition-colors cursor-pointer"
+            className="bg-navy font-bold text-[14px] text-white px-6 py-3 rounded-sm hover:bg-navy-mid transition-colors cursor-pointer"
           >
             Fire All 4 Notifications
           </button>
