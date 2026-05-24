@@ -1,16 +1,16 @@
 ﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package } from 'lucide-react';
+import { Plus, Package, Banknote, Gavel, PackageCheck, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { mockApi } from '../../services/mockApi';
-import { SellerNavbar, Badge, Button } from '../../components/ui';
+import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
 import type { Listing } from '../../types';
 
 function StatCardSkeleton() {
   return (
     <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
-      <div className="h-3 w-24 bg-[#e9ecef] rounded animate-pulse mb-3" />
-      <div className="h-8 w-10 bg-[#e9ecef] rounded animate-pulse" />
+      <div className="h-3 w-24 bg-[#e9ecef] rounded-md animate-pulse mb-3" />
+      <div className="h-8 w-12 bg-[#e9ecef] rounded-md animate-pulse" />
     </div>
   );
 }
@@ -19,21 +19,21 @@ function ListingRowSkeleton() {
   return (
     <div className="border-b border-[#f8f9fa] last:border-0">
       <div className="hidden sm:grid grid-cols-[40px_1fr_140px_110px_120px_90px] gap-4 items-center px-5 py-3.5">
-        <div className="w-9 h-9 bg-[#e9ecef] rounded-lg animate-pulse" />
+        <div className="w-9 h-9 bg-[#e9ecef] rounded-md animate-pulse" />
         <div>
-          <div className="h-4 w-3/4 bg-[#e9ecef] rounded animate-pulse mb-1.5" />
-          <div className="h-3 w-1/3 bg-[#e9ecef] rounded animate-pulse" />
+          <div className="h-4 w-3/4 bg-[#e9ecef] rounded-md animate-pulse mb-1.5" />
+          <div className="h-3 w-1/3 bg-[#e9ecef] rounded-md animate-pulse" />
         </div>
-        <div className="h-4 w-20 bg-[#e9ecef] rounded animate-pulse" />
-        <div className="h-4 w-16 bg-[#e9ecef] rounded animate-pulse" />
+        <div className="h-4 w-20 bg-[#e9ecef] rounded-md animate-pulse" />
+        <div className="h-4 w-16 bg-[#e9ecef] rounded-md animate-pulse" />
         <div className="h-5 w-24 bg-[#e9ecef] rounded-full animate-pulse" />
-        <div className="h-3 w-12 bg-[#e9ecef] rounded animate-pulse" />
+        <div className="h-3 w-12 bg-[#e9ecef] rounded-md animate-pulse" />
       </div>
       <div className="sm:hidden flex items-center gap-3 px-4 py-3">
-        <div className="w-11 h-11 bg-[#e9ecef] rounded-lg animate-pulse flex-shrink-0" />
+        <div className="w-11 h-11 bg-[#e9ecef] rounded-md animate-pulse flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="h-4 w-3/4 bg-[#e9ecef] rounded animate-pulse mb-1.5" />
-          <div className="h-3 w-1/2 bg-[#e9ecef] rounded animate-pulse" />
+          <div className="h-4 w-3/4 bg-[#e9ecef] rounded-md animate-pulse mb-1.5" />
+          <div className="h-3 w-1/2 bg-[#e9ecef] rounded-md animate-pulse" />
         </div>
         <div className="h-5 w-16 bg-[#e9ecef] rounded-full animate-pulse" />
       </div>
@@ -65,7 +65,10 @@ export default function SellerDashboard() {
   const total    = listings.length;
   const pending  = listings.filter(l => l.status === 'PENDING').length;
   const approved = listings.filter(l => l.status === 'APPROVED').length;
-  const rejected = listings.filter(l => l.status === 'REJECTED').length;
+  const revenue = listings
+    .filter(l => l.status === 'APPROVED')
+    .reduce((sum, l) => sum + l.startPrice, 0);
+  const itemsSold = Math.max(0, total - pending);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -90,17 +93,36 @@ export default function SellerDashboard() {
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
           ) : (
-            [
-              { label: 'Total Listings', value: total,    color: 'text-navy' },
-              { label: 'Pending Review', value: pending,  color: 'text-warning' },
-              { label: 'Live / Approved', value: approved, color: 'text-success' },
-              { label: 'Rejected',       value: rejected, color: 'text-primary' },
-            ].map(s => (
-              <div key={s.label} className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
-                <p className="text-[11px] font-medium text-muted mb-1.5">{s.label}</p>
-                <p className={`text-3xl font-extrabold leading-none ${s.color}`}>{s.value}</p>
-              </div>
-            ))
+            <>
+              <StatCard
+                label="Revenue"
+                value={`PKR ${revenue.toLocaleString()}`}
+                icon={<Banknote size={18} />}
+                iconColor="success"
+                padding="sm"
+              />
+              <StatCard
+                label="Active Auctions"
+                value={approved}
+                icon={<Gavel size={18} />}
+                iconColor="info"
+                padding="sm"
+              />
+              <StatCard
+                label="Items Sold"
+                value={itemsSold}
+                icon={<PackageCheck size={18} />}
+                iconColor="success"
+                padding="sm"
+              />
+              <StatCard
+                label="Pending Review"
+                value={pending}
+                icon={<Clock size={18} />}
+                iconColor="warning"
+                padding="sm"
+              />
+            </>
           )}
         </div>
 

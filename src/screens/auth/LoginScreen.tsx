@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, LogIn, Info } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, Info, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button, Input } from '../../components/ui';
@@ -21,13 +21,29 @@ export default function LoginScreen() {
   const [showPw, setShowPw]     = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading]   = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      showToast({ type: 'error', title: 'Missing Fields', message: 'Enter your email and password.' });
-      return;
+    setEmailError('');
+    setPasswordError('');
+    let invalidCount = 0;
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      invalidCount += 1;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Enter a valid email address');
+      invalidCount += 1;
     }
+    if (!password) {
+      setPasswordError('Password is required');
+      invalidCount += 1;
+    }
+    if (invalidCount > 1) {
+      showToast({ type: 'error', title: 'Missing Fields', message: 'Enter your email and password.' });
+    }
+    if (invalidCount > 0) return;
     setLoading(true);
     const result = await login({ email, password });
     setLoading(false);
@@ -37,6 +53,7 @@ export default function LoginScreen() {
       else if (result.user.role === 'SELLER')  navigate('/seller/dashboard');
       else                                     navigate('/buyer/browse');
     } else {
+      setPasswordError(result.error || 'Invalid credentials.');
       showToast({ type: 'error', title: 'Sign In Failed', message: result.error || 'Invalid credentials.' });
     }
   };
@@ -95,9 +112,10 @@ export default function LoginScreen() {
           type="email"
           placeholder="you@email.com"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={e => { setEmail(e.target.value); setEmailError(''); }}
           leftIcon={<Mail size={16} />}
           autoComplete="email"
+          error={emailError}
         />
 
         <Input
@@ -105,7 +123,7 @@ export default function LoginScreen() {
           type={showPw ? 'text' : 'password'}
           placeholder="Your password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={e => { setPassword(e.target.value); setPasswordError(''); }}
           leftIcon={<Lock size={16} />}
           rightIcon={
             <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide password' : 'Show password'} className="cursor-pointer text-placeholder hover:text-body">
@@ -113,17 +131,21 @@ export default function LoginScreen() {
             </button>
           }
           autoComplete="current-password"
+          error={passwordError}
         />
 
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 cursor-pointer select-none">
-            <button
-              type="button"
-              onClick={() => setRemember(p => !p)}
-              className={`w-[18px] h-[18px] rounded flex items-center justify-center border-2 transition-colors ${remember ? 'bg-primary border-primary' : 'bg-surface border-[#dee2e6]'}`}
-            >
-              {remember && <svg viewBox="0 0 10 8" className="w-2.5 h-2 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1" /></svg>}
-            </button>
+            <input
+              id="remember"
+              type="checkbox"
+              checked={remember}
+              onChange={e => setRemember(e.target.checked)}
+              className="sr-only peer"
+            />
+            <span className="w-[18px] h-[18px] rounded flex items-center justify-center border-2 transition-colors bg-surface border-border peer-checked:bg-primary peer-checked:border-primary">
+              <Check size={12} className="text-white opacity-0 peer-checked:opacity-100" aria-hidden="true" />
+            </span>
             <span className="text-[12.5px] text-tertiary">Keep me signed in</span>
           </label>
           <Link to="/forgot-password" className="text-[12.5px] font-bold text-primary hover:underline">Forgot password?</Link>

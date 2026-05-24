@@ -4,6 +4,7 @@ import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hamm
 import { SEED_AUCTIONS } from '../services/mockData';
 import { useTimer } from '../hooks/useTimer';
 import type { Auction } from '../types';
+import { Button } from '../components/ui';
 
 // ─── Auction card with live timer ─────────────────────────────────────────────
 function FeaturedCard({ auction }: { auction: Auction }) {
@@ -40,12 +41,14 @@ function FeaturedCard({ auction }: { auction: Auction }) {
             <p className="font-extrabold text-[20px] text-primary leading-none">PKR {auction.currentBid.toLocaleString()}</p>
             <p className="text-[11px] text-placeholder mt-1">{auction.bidCount} bids</p>
           </div>
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => navigate('/login')}
-            className="bg-primary font-bold text-[13px] text-white px-4 py-2 rounded-sm hover:bg-primary-dark transition-colors"
+            className="text-[13px]"
           >
             Bid Now →
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -124,19 +127,21 @@ export default function LandingPage() {
             </Link>
 
             {/* Desktop nav */}
-            <div className="hidden md:flex items-center gap-6">
+            <ul className="hidden md:flex items-center gap-6">
               {navLinks.map(l => (
-                <button key={l} className="font-semibold text-[13px] text-[rgba(255,255,255,0.65)] hover:text-white transition-colors">{l}</button>
+                <li key={l}>
+                  <button className="font-semibold text-[13px] text-[rgba(255,255,255,0.65)] hover:text-white transition-colors">{l}</button>
+                </li>
               ))}
-            </div>
+            </ul>
 
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
               <Link to="/login" className="font-semibold text-[13px] text-[rgba(255,255,255,0.75)] hover:text-white px-4 py-2">
                 Log In
               </Link>
-              <Link to="/register" className="bg-primary font-bold text-[13px] text-white px-5 py-2 rounded-sm hover:bg-primary-dark transition-colors">
-                Get Started Free
+              <Link to="/register">
+                <Button variant="primary" size="sm">Get Started Free</Button>
               </Link>
             </div>
 
@@ -144,7 +149,7 @@ export default function LandingPage() {
             <button
               className="md:hidden flex flex-col gap-[5px] p-2"
               onClick={() => setMenuOpen(o => !o)}
-              aria-label="Toggle menu"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             >
               <span className={`block w-5 h-[2px] bg-surface transition-transform duration-200 ${menuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
               <span className={`block w-5 h-[2px] bg-surface transition-opacity duration-200 ${menuOpen ? 'opacity-0' : ''}`} />
@@ -156,20 +161,28 @@ export default function LandingPage() {
         {/* Mobile menu */}
         {menuOpen && (
           <div className="md:hidden bg-[#0d2545] border-t border-[rgba(255,255,255,0.08)] px-4 py-4 flex flex-col gap-3">
-            {navLinks.map(l => (
-              <button key={l} onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.75)] hover:text-white text-left py-2">{l}</button>
-            ))}
+            <ul className="flex flex-col gap-1">
+              {navLinks.map(l => (
+                <li key={l}>
+                  <button onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.75)] hover:text-white text-left py-2 w-full">{l}</button>
+                </li>
+              ))}
+            </ul>
             <div className="flex flex-col gap-2 pt-2 border-t border-[rgba(255,255,255,0.08)]">
-              <Link to="/login" onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-white border border-[rgba(255,255,255,0.3)] px-4 py-2.5 rounded-sm text-center">
-                Log In
+              <Link to="/login" onClick={() => setMenuOpen(false)}>
+                <Button variant="outline" fullWidth className="bg-transparent border-white/30 text-white hover:border-white hover:text-white">
+                  Log In
+                </Button>
               </Link>
-              <Link to="/register" onClick={() => setMenuOpen(false)} className="bg-primary font-bold text-[14px] text-white px-4 py-2.5 rounded-sm text-center hover:bg-primary-dark">
-                Get Started Free
+              <Link to="/register" onClick={() => setMenuOpen(false)}>
+                <Button variant="primary" fullWidth>Get Started Free</Button>
               </Link>
             </div>
           </div>
         )}
       </nav>
+
+      <main aria-label="BidVault marketing content">
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       <section className="bg-navy relative overflow-hidden">
@@ -188,7 +201,7 @@ export default function LandingPage() {
 
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-[rgba(208,2,27,0.15)] border border-[rgba(208,2,27,0.3)] rounded-[99px] px-4 py-1.5 mb-6">
-              <span className="size-[6px] rounded-full bg-primary inline-block animate-pulse" />
+              <span className="size-[6px] rounded-full bg-primary inline-block animate-pulse" aria-hidden="true" />
               <span className="font-bold text-[12px] text-[#ff6b7a]">Live Auctions Running Now</span>
             </div>
 
@@ -203,18 +216,22 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
-              <button
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={() => navigate('/register')}
-                className="w-full sm:w-auto bg-primary font-bold text-[15px] text-white px-8 py-4 rounded-md hover:bg-primary-dark transition-colors shadow-[0_8px_24px_rgba(208,2,27,0.35)]"
+                className="w-full sm:w-auto px-8 shadow-[0_8px_24px_rgba(208,2,27,0.35)]"
               >
                 Start Bidding Free →
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
                 onClick={() => navigate('/register')}
-                className="w-full sm:w-auto border-2 border-[rgba(255,255,255,0.25)] font-bold text-[15px] text-white px-8 py-4 rounded-md hover:border-white hover:bg-[rgba(255,255,255,0.05)] transition-all"
+                className="w-full sm:w-auto bg-transparent border-white/25 text-white hover:border-white hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
               >
                 Sell Your Items
-              </button>
+              </Button>
             </div>
 
             <p className="mt-4 text-[12px] text-[rgba(255,255,255,0.35)]">
@@ -365,21 +382,28 @@ export default function LandingPage() {
             Join 18,000+ Pakistanis already buying and selling on BidVault. Free to join, no hidden fees.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               onClick={() => navigate('/register')}
-              className="w-full sm:w-auto bg-primary font-bold text-[15px] text-white px-8 py-4 rounded-md hover:bg-primary-dark transition-colors shadow-[0_8px_24px_rgba(208,2,27,0.4)]"
+              className="w-full sm:w-auto px-8 shadow-[0_8px_24px_rgba(208,2,27,0.4)]"
             >
               Create Free Account →
-            </button>
-            <Link
-              to="/login"
-              className="w-full sm:w-auto font-bold text-[15px] text-[rgba(255,255,255,0.75)] hover:text-white px-8 py-4 border border-[rgba(255,255,255,0.2)] rounded-md hover:border-white transition-all"
-            >
-              I already have an account
+            </Button>
+            <Link to="/login" className="w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto bg-transparent border-white/20 text-[rgba(255,255,255,0.75)] hover:border-white hover:text-white"
+              >
+                I already have an account
+              </Button>
             </Link>
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
       <footer className="bg-[#07162a] py-10 sm:py-12">

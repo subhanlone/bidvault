@@ -7,10 +7,10 @@ import type { UserRole } from '../../types';
 import { AuthLayout, Button, Input } from '../../components/ui';
 
 const PW_CONFIG = [
-  { width: '0%',   color: '',         label: ''       },
-  { width: '30%',  color: '#ef4444',  label: 'Weak'   },
-  { width: '55%',  color: '#f59e0b',  label: 'Medium' },
-  { width: '100%', color: '#16a34a',  label: 'Strong' },
+  { width: '0%',   label: '',       labelClass: 'text-muted',  barClass: 'bg-border' },
+  { width: '30%',  label: 'Weak',   labelClass: 'text-error',  barClass: 'bg-error' },
+  { width: '55%',  label: 'Medium', labelClass: 'text-warning', barClass: 'bg-warning' },
+  { width: '100%', label: 'Strong', labelClass: 'text-success', barClass: 'bg-success' },
 ] as const;
 
 export default function RegisterScreen() {
@@ -28,7 +28,7 @@ export default function RegisterScreen() {
   const [errors, setErrors]   = useState<Record<string, string>>({});
 
   const pwStrength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
-  const { width: pwWidth, color: pwColor, label: pwLabel } = PW_CONFIG[pwStrength];
+  const { width: pwWidth, label: pwLabel, labelClass: pwLabelClass, barClass: pwBarClass } = PW_CONFIG[pwStrength];
 
   const clearError = (key: string) => setErrors(p => ({ ...p, [key]: '' }));
 
@@ -167,10 +167,10 @@ export default function RegisterScreen() {
             <div className="mt-2 flex flex-col gap-1">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-muted">Password strength</span>
-                <span className="text-[11px] font-semibold" style={{ color: pwColor }}>{pwLabel}</span>
+                <span className={`text-[11px] font-semibold ${pwLabelClass}`}>{pwLabel}</span>
               </div>
               <div className="h-1 bg-[#e9ecef] rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-300" style={{ width: pwWidth, backgroundColor: pwColor }} />
+                <div className={`h-full rounded-full transition-all duration-300 ${pwBarClass}`} style={{ width: pwWidth }} />
               </div>
             </div>
           )}

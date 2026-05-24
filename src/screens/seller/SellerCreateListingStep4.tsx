@@ -6,22 +6,23 @@ import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
 import { mockApi } from '../../services/mockApi';
 import { Button } from '../../components/ui';
-import { ListingStepperHeader, Stepper } from './SellerCreateListingStep1';
+import StepProgress from '../../components/ui/StepProgress';
+import { ListingStepperHeader } from './SellerCreateListingStep1';
 
 export default function SellerCreateListingStep4() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { draft, setSubmittedListingId } = useListing();
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fmtPKR = (n: number) => n > 0 ? `PKR ${n.toLocaleString()}` : '—';
 
   const handleSubmit = async () => {
     if (!user) return;
-    setLoading(true);
+    setIsSubmitting(true);
     const res = await mockApi.submitListing(draft, user.userId, user.name);
-    setLoading(false);
+    setIsSubmitting(false);
     if (res.success && res.data) {
       setSubmittedListingId(res.data.listingId);
       showToast({ type: 'success', title: 'Listing Submitted!', message: 'Your listing is under admin review.' });
@@ -41,7 +42,14 @@ export default function SellerCreateListingStep4() {
         <h1 className="text-xl font-extrabold text-navy mb-1">Review Your Listing</h1>
         <p className="text-sm text-muted mb-5">Check all details before submitting to admin for review.</p>
 
-        <Stepper current={2} />
+        <StepProgress
+          steps={[
+            { label: 'Item Details' },
+            { label: 'Auction Setup' },
+            { label: 'Review & Submit' },
+          ]}
+          currentStep={3}
+        />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
           {/* Item details */}
@@ -53,10 +61,10 @@ export default function SellerCreateListingStep4() {
             <div className="p-5">
               <div className="bg-navy rounded-md h-40 flex items-center justify-center mb-4">
                 {draft.category?.includes('Electronics')
-                  ? <Smartphone size={52} strokeWidth={1.2} className="text-white/40" />
+                  ? <Smartphone size={52} strokeWidth={1.2} className="text-white/40" aria-hidden="true" />
                   : draft.category?.includes('Vehicles')
-                  ? <Car size={52} strokeWidth={1.2} className="text-white/40" />
-                  : <Package size={52} strokeWidth={1.2} className="text-white/40" />}
+                  ? <Car size={52} strokeWidth={1.2} className="text-white/40" aria-hidden="true" />
+                  : <Package size={52} strokeWidth={1.2} className="text-white/40" aria-hidden="true" />}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[
@@ -104,9 +112,9 @@ export default function SellerCreateListingStep4() {
           </p>
         </div>
 
-        <div className="flex justify-between mt-5">
+        <div className="flex flex-col sm:flex-row gap-3 sm:justify-between mt-5">
           <Button variant="outline" onClick={() => navigate('/seller/create-listing/step-2')}>← Back</Button>
-          <Button variant="primary" loading={loading} onClick={handleSubmit}>
+          <Button variant="primary" fullWidth loading={isSubmitting} onClick={handleSubmit} className="sm:w-auto">
             Submit Listing for Review →
           </Button>
         </div>

@@ -65,6 +65,7 @@ export function AdminSidebarContent({ active, onClose }: AdminSidebarContentProp
                 key={to}
                 to={to}
                 onClick={() => onClose?.()}
+                aria-current={isActive ? 'page' : undefined}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 no-underline
                   ${isActive
                     ? 'bg-white/10 text-white border-l-[3px] border-primary pl-[9px]'

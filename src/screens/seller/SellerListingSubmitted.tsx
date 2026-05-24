@@ -33,8 +33,8 @@ export default function SellerListingSubmitted() {
 
       <main className="flex flex-col items-center justify-center py-20 px-4">
         {/* Success icon */}
-        <div className="w-20 h-20 rounded-lg bg-success-bg border border-[#16a34a]/20 flex items-center justify-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-[#16a34a] flex items-center justify-center">
+        <div className="w-20 h-20 rounded-lg bg-success-bg border border-success-border flex items-center justify-center mb-6">
+          <div className="w-12 h-12 rounded-full bg-success flex items-center justify-center">
             <Check size={24} strokeWidth={3} className="text-white" />
           </div>
         </div>
@@ -46,7 +46,7 @@ export default function SellerListingSubmitted() {
         </p>
 
         {submittedListingId && (
-          <div className="border border-[#dee2e6] text-sm font-semibold text-secondary px-5 py-2 rounded-lg mb-10">
+          <div className="border border-border text-sm font-semibold text-secondary px-5 py-2 rounded-lg mb-10">
             Listing ID: <span className="font-bold text-primary">{submittedListingId}</span>
           </div>
         )}
@@ -57,16 +57,16 @@ export default function SellerListingSubmitted() {
             <div key={label} className="flex items-start gap-5">
               <div className="flex flex-col items-center">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  done   ? 'bg-[#16a34a]' :
-                  active ? 'border-2 border-[#f59e0b] bg-surface' :
-                           'border-2 border-border-light bg-surface'
+                  done   ? 'bg-success' :
+                  active ? 'border-2 border-warning-border bg-warning-bg' :
+                           'border-2 border-border bg-surface'
                 }`}>
                   {done
                     ? <Check size={12} strokeWidth={2.5} className="text-white" />
-                    : <span className={`font-extrabold text-xs ${active ? 'text-gold' : 'text-placeholder'}`}>{i + 1}</span>
+                    : <span className={`font-extrabold text-xs ${active ? 'text-warning' : 'text-placeholder'}`}>{i + 1}</span>
                   }
                 </div>
-                {i < timeline.length - 1 && <div className="w-0.5 h-10 bg-[#e9ecef]" />}
+                {i < timeline.length - 1 && <div className={`w-0.5 h-10 ${done ? 'bg-success' : 'bg-border'}`} />}
               </div>
               <div className="pt-1 pb-2">
                 <p className="text-sm font-bold text-navy">{label}</p>

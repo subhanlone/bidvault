@@ -1,9 +1,11 @@
-﻿import { useNavigate } from 'react-router-dom';
+﻿import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, Calendar, Package, Smartphone, Car } from 'lucide-react';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
-import { Button } from '../../components/ui';
-import { ListingStepperHeader, Stepper } from './SellerCreateListingStep1';
+import { Button, Input } from '../../components/ui';
+import StepProgress from '../../components/ui/StepProgress';
+import { ListingStepperHeader } from './SellerCreateListingStep1';
 
 const DURATIONS = [3, 5, 7, 14];
 
@@ -11,6 +13,11 @@ export default function SellerCreateListingStep2() {
   const navigate = useNavigate();
   const { draft, updateDraft } = useListing();
   const { showToast } = useToast();
+  const [startDateError, setStartDateError] = useState('');
+  const [startTimeError, setStartTimeError] = useState('');
+  const [startingPriceError, setStartingPriceError] = useState('');
+  const [minIncrementError, setMinIncrementError] = useState('');
+  const [reservePriceError, setReservePriceError] = useState('');
 
   const fmtPrice = (n: number) => n > 0 ? `PKR ${n.toLocaleString()}` : '';
   const endDate = (() => {
@@ -21,18 +28,27 @@ export default function SellerCreateListingStep2() {
   })();
 
   const handleNext = () => {
-    if (!draft.startDate)   { showToast({ type: 'error', title: 'Missing Start Date', message: 'Select an auction start date.' }); return; }
-    if (!draft.startTime)   { showToast({ type: 'error', title: 'Missing Start Time', message: 'Select an auction start time.' }); return; }
-    if (draft.startingPrice <= 0) { showToast({ type: 'error', title: 'Missing Price', message: 'Enter a starting price.' }); return; }
+    setStartDateError('');
+    setStartTimeError('');
+    setStartingPriceError('');
+    setMinIncrementError('');
+    setReservePriceError('');
+
+    let invalidCount = 0;
+    if (!draft.startDate)   { setStartDateError('Start date is required'); invalidCount += 1; }
+    if (!draft.startTime)   { setStartTimeError('Start time is required'); invalidCount += 1; }
+    if (draft.startingPrice <= 0) { setStartingPriceError('Starting price is required'); invalidCount += 1; }
+    if (draft.minIncrement <= 0) { setMinIncrementError('Minimum increment is required'); invalidCount += 1; }
     if (draft.hasReserve && draft.reservePrice <= draft.startingPrice) {
-      showToast({ type: 'error', title: 'Invalid Reserve', message: 'Reserve price must be higher than starting price.' });
-      return;
+      setReservePriceError('Reserve price must be higher than starting price');
+      invalidCount += 1;
     }
+    if (invalidCount > 1) {
+      showToast({ type: 'error', title: 'Missing Fields', message: 'Please fill in the highlighted fields.' });
+    }
+    if (invalidCount > 0) return;
     navigate('/seller/create-listing/step-4');
   };
-
-  const inputCls = "bg-surface border border-[#dee2e6] h-10 px-3 rounded-lg text-sm text-secondary w-full outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow";
-  const labelCls = "text-xs font-bold text-secondary";
 
   return (
     <div className="min-h-screen bg-bg">
@@ -44,7 +60,14 @@ export default function SellerCreateListingStep2() {
           <p className="text-sm text-muted">Set your auction parameters</p>
         </div>
 
-        <Stepper current={1} />
+        <StepProgress
+          steps={[
+            { label: 'Item Details' },
+            { label: 'Auction Setup' },
+            { label: 'Review & Submit' },
+          ]}
+          currentStep={2}
+        />
 
         <form onSubmit={e => { e.preventDefault(); handleNext(); }}>
           <div className="flex flex-col md:grid md:grid-cols-[1fr_280px] gap-5">
@@ -62,38 +85,34 @@ export default function SellerCreateListingStep2() {
 
               <div className="flex flex-col gap-5">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="auction-start-date" className={labelCls}>Auction start date <span className="text-primary">*</span></label>
-                    <div className="relative">
-                      <input
-                        id="auction-start-date"
-                        type="date"
-                        className={`${inputCls} pl-10`}
-                        min={new Date().toISOString().split('T')[0]}
-                        value={draft.startDate}
-                        onChange={e => updateDraft({ startDate: e.target.value })}
-                      />
-                      <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-placeholder" aria-hidden="true" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="auction-start-time" className={labelCls}>Start time <span className="text-primary">*</span></label>
-                    <div className="relative">
-                      <input
-                        id="auction-start-time"
-                        type="time"
-                        className={`${inputCls} pl-10`}
-                        value={draft.startTime}
-                        onChange={e => updateDraft({ startTime: e.target.value })}
-                      />
-                      <Clock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-placeholder" aria-hidden="true" />
-                    </div>
-                  </div>
+                  <Input
+                    label="Auction start date"
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={draft.startDate}
+                    onChange={e => {
+                      updateDraft({ startDate: e.target.value });
+                      setStartDateError('');
+                    }}
+                    leftIcon={<Calendar size={15} aria-hidden="true" />}
+                    error={startDateError}
+                  />
+                  <Input
+                    label="Start time"
+                    type="time"
+                    value={draft.startTime}
+                    onChange={e => {
+                      updateDraft({ startTime: e.target.value });
+                      setStartTimeError('');
+                    }}
+                    leftIcon={<Clock size={15} aria-hidden="true" />}
+                    error={startTimeError}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <span id="duration-label" className={labelCls}>Duration <span className="text-primary">*</span></span>
+                    <span id="duration-label" className="text-xs font-bold text-secondary">Duration <span className="text-primary">*</span></span>
                     <div role="group" aria-labelledby="duration-label" className="flex gap-1.5">
                       {DURATIONS.map(d => (
                         <button
@@ -104,8 +123,8 @@ export default function SellerCreateListingStep2() {
                           onClick={() => updateDraft({ duration: d })}
                           className={`flex-1 h-10 rounded-lg font-semibold text-xs border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                             draft.duration === d
-                              ? 'border-primary text-primary bg-primary-surface'
-                              : 'border-[#dee2e6] text-muted hover:border-primary'
+                              ? 'bg-primary text-white border-primary'
+                              : 'bg-surface border-border text-body hover:border-primary'
                           }`}
                         >
                           {d}d
@@ -113,32 +132,32 @@ export default function SellerCreateListingStep2() {
                       ))}
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="starting-price" className={labelCls}>Starting price (PKR) <span className="text-primary">*</span></label>
-                    <input
-                      id="starting-price"
-                      type="number"
-                      inputMode="numeric"
-                      className={inputCls}
-                      placeholder="e.g. 85000"
-                      value={draft.startingPrice || ''}
-                      onChange={e => updateDraft({ startingPrice: Number(e.target.value) })}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="min-increment" className={labelCls}>Minimum bid increment (PKR) <span className="text-primary">*</span></label>
-                  <input
-                    id="min-increment"
+                  <Input
+                    label="Starting price (PKR)"
                     type="number"
                     inputMode="numeric"
-                    className={inputCls}
-                    placeholder="e.g. 1000"
-                    value={draft.minIncrement || ''}
-                    onChange={e => updateDraft({ minIncrement: Number(e.target.value) })}
+                    placeholder="e.g. 85000"
+                    value={draft.startingPrice || ''}
+                    onChange={e => {
+                      updateDraft({ startingPrice: Number(e.target.value) });
+                      setStartingPriceError('');
+                    }}
+                    error={startingPriceError}
                   />
                 </div>
+
+                <Input
+                  label="Minimum bid increment (PKR)"
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="e.g. 1000"
+                  value={draft.minIncrement || ''}
+                  onChange={e => {
+                    updateDraft({ minIncrement: Number(e.target.value) });
+                    setMinIncrementError('');
+                  }}
+                  error={minIncrementError}
+                />
 
                 {/* Reserve toggle */}
                 <div>
@@ -152,22 +171,28 @@ export default function SellerCreateListingStep2() {
                       role="switch"
                       aria-checked={draft.hasReserve}
                       aria-label="Enable reserve price"
-                      onClick={() => updateDraft({ hasReserve: !draft.hasReserve, reservePrice: 0 })}
-                      className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${draft.hasReserve ? 'bg-primary' : 'bg-[#dee2e6]'}`}
+                      onClick={() => {
+                        updateDraft({ hasReserve: !draft.hasReserve, reservePrice: 0 });
+                        setReservePriceError('');
+                      }}
+                      className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${draft.hasReserve ? 'bg-primary' : 'bg-border'}`}
                     >
                       <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-surface shadow transition-all ${draft.hasReserve ? 'left-[22px]' : 'left-0.5'}`} />
                     </button>
                   </div>
                   {draft.hasReserve && (
-                    <input
-                      id="reserve-price"
+                    <Input
+                      label="Reserve price (PKR)"
                       type="number"
                       inputMode="numeric"
                       aria-label="Reserve price in PKR"
-                      className="bg-surface border border-primary shadow-[0_0_0_3px_rgba(208,2,27,0.08)] h-10 px-3 rounded-lg text-sm text-secondary w-full outline-none"
                       placeholder="e.g. 95000"
                       value={draft.reservePrice || ''}
-                      onChange={e => updateDraft({ reservePrice: Number(e.target.value) })}
+                      onChange={e => {
+                        updateDraft({ reservePrice: Number(e.target.value) });
+                        setReservePriceError('');
+                      }}
+                      error={reservePriceError}
                     />
                   )}
                 </div>
@@ -179,10 +204,10 @@ export default function SellerCreateListingStep2() {
               <h3 className="text-sm font-bold text-navy mb-4">Auction Preview</h3>
               <div className="bg-navy rounded-md h-40 flex items-center justify-center mb-4">
                 {draft.category?.includes('Electronics')
-                  ? <Smartphone size={52} strokeWidth={1.2} className="text-white/30" />
+                  ? <Smartphone size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />
                   : draft.category?.includes('Vehicles')
-                  ? <Car size={52} strokeWidth={1.2} className="text-white/30" />
-                  : <Package size={52} strokeWidth={1.2} className="text-white/30" />}
+                  ? <Car size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />
+                  : <Package size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />}
               </div>
               <h4 className="text-sm font-bold text-secondary mb-3 truncate">{draft.title || 'Your Item Title'}</h4>
               <div className="flex flex-col gap-2">

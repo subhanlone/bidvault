@@ -44,6 +44,13 @@ function fmtTime(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
+const PW_CONFIG = [
+  { width: '0%',   label: '',       labelClass: 'text-muted',  barClass: 'bg-border' },
+  { width: '30%',  label: 'Weak',   labelClass: 'text-error',  barClass: 'bg-error' },
+  { width: '55%',  label: 'Medium', labelClass: 'text-warning', barClass: 'bg-warning' },
+  { width: '100%', label: 'Strong', labelClass: 'text-success', barClass: 'bg-success' },
+] as const;
+
 export default function ForgotPasswordScreen() {
   const navigate = useNavigate();
   const { forgotPassword, verifyResetOtp, resetPassword } = useAuth();
@@ -58,7 +65,14 @@ export default function ForgotPasswordScreen() {
   const [showConfirm,setShowConfirm]= useState(false);
   const [loading,    setLoading]    = useState(false);
   const [resendSecs, setResendSecs] = useState(0);
+  const [emailError, setEmailError] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [newPwError, setNewPwError] = useState('');
+  const [confirmPwError, setConfirmPwError] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const pwStrength = newPw.length === 0 ? 0 : newPw.length < 6 ? 1 : newPw.length < 10 ? 2 : 3;
+  const { width: pwWidth, label: pwLabel, labelClass: pwLabelClass, barClass: pwBarClass } = PW_CONFIG[pwStrength];
 
   useEffect(() => {
     if (step !== 2) return;
@@ -78,6 +92,7 @@ export default function ForgotPasswordScreen() {
   const handleOtpInput = (i: number, val: string) => {
     const digit = val.replace(/\D/, '').slice(-1);
     const next = [...otp]; next[i] = digit; setOtp(next);
+    if (digit) setOtpError('');
     if (digit && i < 5) inputRefs.current[i + 1]?.focus();
   };
 
@@ -87,7 +102,13 @@ export default function ForgotPasswordScreen() {
 
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) {
+    setEmailError('');
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Enter a valid email address');
       showToast({ type: 'error', title: 'Invalid Email', message: 'Enter a valid email address.' });
       return;
     }
@@ -105,11 +126,16 @@ export default function ForgotPasswordScreen() {
   const handleStep2 = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join('');
-    if (code.length < 6) { showToast({ type: 'error', title: 'Incomplete', message: 'Enter all 6 digits.' }); return; }
+    if (code.length < 6) {
+      setOtpError('Enter all 6 digits');
+      showToast({ type: 'error', title: 'Incomplete', message: 'Enter all 6 digits.' });
+      return;
+    }
     setLoading(true);
     const res = await verifyResetOtp(email, code);
     setLoading(false);
     if (res.success) {
+      setOtpError('');
       setStep(3);
     } else {
       showToast({ type: 'error', title: 'Invalid Code', message: res.error || 'The code is incorrect.' });
@@ -120,8 +146,21 @@ export default function ForgotPasswordScreen() {
 
   const handleStep3 = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPw.length < 6) { showToast({ type: 'error', title: 'Weak Password', message: 'Password must be at least 6 characters.' }); return; }
-    if (newPw !== confirmPw) { showToast({ type: 'error', title: 'Mismatch', message: 'Passwords do not match.' }); return; }
+    setNewPwError('');
+    setConfirmPwError('');
+    let invalidCount = 0;
+    if (newPw.length < 6) {
+      setNewPwError('Password must be at least 6 characters');
+      invalidCount += 1;
+    }
+    if (newPw !== confirmPw) {
+      setConfirmPwError('Passwords do not match');
+      invalidCount += 1;
+    }
+    if (invalidCount > 0) {
+      showToast({ type: 'error', title: 'Fix Errors', message: 'Please correct the highlighted fields.' });
+      return;
+    }
     setLoading(true);
     const res = await resetPassword(email, newPw);
     setLoading(false);
@@ -179,8 +218,9 @@ export default function ForgotPasswordScreen() {
                 type="email"
                 placeholder="you@email.com"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => { setEmail(e.target.value); setEmailError(''); }}
                 autoComplete="email"
+                error={emailError}
               />
               <p className="text-[11px] text-placeholder mt-1">Hint: try <strong>sawera@gmail.com</strong></p>
             </div>
@@ -224,6 +264,7 @@ export default function ForgotPasswordScreen() {
                   />
                 ))}
               </div>
+              {otpError && <p className="text-[11px] text-error text-center" role="alert">{otpError}</p>}
               <p className="text-[11px] text-placeholder text-center">Hint: use code <strong>654321</strong> for demo</p>
             </div>
 
@@ -264,7 +305,7 @@ export default function ForgotPasswordScreen() {
               type={showPw ? 'text' : 'password'}
               placeholder="Min. 6 characters"
               value={newPw}
-              onChange={e => setNewPw(e.target.value)}
+              onChange={e => { setNewPw(e.target.value); setNewPwError(''); }}
               leftIcon={<Lock size={16} />}
               rightIcon={
                 <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide' : 'Show'} className="cursor-pointer text-placeholder hover:text-body">
@@ -272,14 +313,27 @@ export default function ForgotPasswordScreen() {
                 </button>
               }
               autoComplete="new-password"
+              error={newPwError}
             />
+
+            {newPw.length > 0 && (
+              <div className="mt-1 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-muted">Password strength</span>
+                  <span className={`text-[11px] font-semibold ${pwLabelClass}`}>{pwLabel}</span>
+                </div>
+                <div className="h-1 bg-[#e9ecef] rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-300 ${pwBarClass}`} style={{ width: pwWidth }} />
+                </div>
+              </div>
+            )}
 
             <Input
               label="Confirm password"
               type={showConfirm ? 'text' : 'password'}
               placeholder="Repeat password"
               value={confirmPw}
-              onChange={e => setConfirmPw(e.target.value)}
+              onChange={e => { setConfirmPw(e.target.value); setConfirmPwError(''); }}
               leftIcon={<Lock size={16} />}
               rightIcon={
                 <button type="button" onClick={() => setShowConfirm(p => !p)} aria-label={showConfirm ? 'Hide' : 'Show'} className="cursor-pointer text-placeholder hover:text-body">
@@ -287,6 +341,7 @@ export default function ForgotPasswordScreen() {
                 </button>
               }
               autoComplete="new-password"
+              error={confirmPwError}
             />
 
             <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3">

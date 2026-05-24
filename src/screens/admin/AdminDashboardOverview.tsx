@@ -1,8 +1,18 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
-import { CheckCircle2, Smartphone, Car, Laptop, Gamepad2, Menu, Bell, Download, Plus, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Smartphone, Car, Laptop, Gamepad2, Menu, Bell, Download, Plus, ChevronRight, Gavel, Banknote, BarChart3, Clock } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import StatCard from '../../components/ui/StatCard';
+
+function StatCardSkeleton() {
+  return (
+    <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
+      <div className="h-3 w-24 bg-[#e9ecef] rounded-md animate-pulse mb-3" />
+      <div className="h-8 w-16 bg-[#e9ecef] rounded-md animate-pulse" />
+    </div>
+  );
+}
 
 const recentBids = [
   { icon: <Smartphone size={16} strokeWidth={1.5} className="text-muted" />, title: 'iPhone 15 Pro Max', amount: 'PKR 312,000', tag: 'Highest' },
@@ -18,6 +28,12 @@ export default function AdminDashboardOverview() {
   const navigate = useNavigate();
   const { pendingListings } = useAuction();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const pendingCount = pendingListings.length;
 
@@ -72,18 +88,43 @@ export default function AdminDashboardOverview() {
 
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            {[
-              { label: 'Active Auctions', value: '24', sub: '+3 Today', color: 'text-navy' },
-              { label: 'Total Bids Today', value: '1,847', sub: '+10% vs last week', color: 'text-success-dark' },
-              { label: 'Revenue Today', value: 'PKR 2.4M', sub: '+8% vs yesterday', color: 'text-[#3b82f6]' },
-              { label: 'Pending Listings', value: String(pendingCount), sub: 'Awaiting review', color: 'text-gold' },
-            ].map(s => (
-              <div key={s.label} className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
-                <p className="font-medium text-[11px] sm:text-[12px] text-muted mb-2">{s.label}</p>
-                <p className={`font-extrabold text-[26px] sm:text-[32px] ${s.color} leading-none`}>{s.value}</p>
-                <p className="text-[10px] sm:text-[11px] text-muted mt-1">{s.sub}</p>
-              </div>
-            ))}
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+            ) : (
+              <>
+                <StatCard
+                  label="Active Auctions"
+                  value="24"
+                  trend="up"
+                  trendLabel="+3 Today"
+                  icon={<Gavel size={18} />}
+                  iconColor="info"
+                />
+                <StatCard
+                  label="Total Bids Today"
+                  value="1,847"
+                  trend="up"
+                  trendLabel="+10% vs last week"
+                  icon={<BarChart3 size={18} />}
+                  iconColor="success"
+                />
+                <StatCard
+                  label="Revenue Today"
+                  value="PKR 2.4M"
+                  trend="up"
+                  trendLabel="+8% vs yesterday"
+                  icon={<Banknote size={18} />}
+                  iconColor="success"
+                />
+                <StatCard
+                  label="Pending Listings"
+                  value={String(pendingCount)}
+                  trendLabel="Awaiting review"
+                  icon={<Clock size={18} />}
+                  iconColor="warning"
+                />
+              </>
+            )}
           </div>
 
           {/* Charts + Recent Bids */}

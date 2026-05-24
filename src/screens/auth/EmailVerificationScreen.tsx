@@ -138,13 +138,14 @@ export default function EmailVerificationScreen() {
         {/* OTP inputs */}
         <div className="flex flex-col gap-2">
           <p className="text-[12px] font-bold text-secondary text-center">Enter 6-digit verification code</p>
-          <div className="flex gap-2.5 justify-center" onPaste={handlePaste}>
+          <div className="flex gap-2.5 justify-center" onPaste={handlePaste} role="group" aria-label="6-digit verification code">
             {otp.map((val, i) => (
               <input
                 key={i}
                 ref={el => { inputRefs.current[i] = el; }}
                 maxLength={1}
                 inputMode="numeric"
+                aria-label={`Digit ${i + 1}`}
                 value={val}
                 onChange={e => handleInput(i, e.target.value)}
                 onKeyDown={e => handleKeyDown(i, e)}

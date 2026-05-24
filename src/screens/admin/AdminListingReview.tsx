@@ -4,6 +4,7 @@ import { useAuction } from '../../context/AuctionContext';
 import { useToast } from '../../context/ToastContext';
 import { Menu, ChevronLeft, ChevronRight, Download, Star } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import { Button } from '../../components/ui';
 
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
@@ -52,9 +53,9 @@ export default function AdminListingReview() {
       <div className="flex min-h-screen bg-bg items-center justify-center">
         <div className="text-center">
           <p className="font-bold text-[18px] text-secondary mb-4">Listing not found or already reviewed.</p>
-          <button onClick={() => navigate('/admin/listing-reviews')} className="bg-primary font-bold text-[14px] text-white px-6 py-3 rounded-sm hover:bg-primary-dark">
+          <Button variant="primary" onClick={() => navigate('/admin/listing-reviews')}>
             Back to Review Queue
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -216,20 +217,22 @@ export default function AdminListingReview() {
 
               {!rejecting ? (
                 <div className="flex gap-3 mb-4">
-                  <button
+                  <Button
+                    variant="success"
                     onClick={handleApprove}
-                    disabled={loading}
-                    className="flex-1 bg-[#1a7a4a] font-bold text-[13px] text-white py-2.5 rounded-sm hover:bg-[#15643d] disabled:opacity-60"
+                    loading={loading}
+                    className="flex-1"
                   >
-                    {loading ? '...' : '✓ Approve & Publish'}
-                  </button>
-                  <button
+                    Approve &amp; Publish
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => setRejecting(true)}
                     disabled={loading}
-                    className="flex-1 bg-[#ef4444] font-bold text-[13px] text-white py-2.5 rounded-sm hover:bg-[#dc2626] disabled:opacity-60"
+                    className="flex-1 text-error border-error hover:border-error hover:text-error"
                   >
-                    ✕ Reject Listing
-                  </button>
+                    Reject Listing
+                  </Button>
                 </div>
               ) : (
                 <div className="mb-4">

@@ -3,11 +3,13 @@ import { useAuth } from '../../context/AuthContext';
 import { Menu, Save } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import { Button, Input } from '../../components/ui';
 
 export default function AdminSettings() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [autoApprove, setAutoApprove] = useState(false);
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -19,11 +21,16 @@ export default function AdminSettings() {
   const [supportEmail, setSupportEmail] = useState('support@bidvault.com');
 
   const handleSave = () => {
-    showToast({ type: 'success', title: 'Settings Saved', message: 'Platform settings updated successfully.' });
+    setIsSaving(true);
+    setTimeout(() => {
+      showToast({ type: 'success', title: 'Settings Saved', message: 'Platform settings updated successfully.' });
+      setIsSaving(false);
+    }, 400);
   };
 
   const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
     <button
+      type="button"
       onClick={onChange}
       className={`shrink-0 w-[42px] h-[24px] rounded-full transition-colors relative ${value ? 'bg-[#1a7a4a]' : 'bg-[#dee2e6]'}`}
     >
@@ -54,13 +61,10 @@ export default function AdminSettings() {
               <p className="text-[12px] text-muted">Manage platform configuration</p>
             </div>
           </div>
-          <button
-            onClick={handleSave}
-            className="bg-[#1a7a4a] flex items-center gap-2 font-bold text-[13px] text-white px-4 py-2.5 rounded-sm hover:bg-[#15643d] transition-colors"
-          >
+          <Button variant="success" onClick={handleSave} loading={isSaving}>
             <Save size={14} strokeWidth={2.5} />
             <span className="hidden sm:inline">Save Changes</span>
-          </button>
+          </Button>
         </header>
 
         <div className="flex-1 p-4 sm:p-6 flex flex-col gap-5 max-w-[800px]">
@@ -123,16 +127,14 @@ export default function AdminSettings() {
                 { label: 'Max. Bid Increment (PKR)', value: maxBidIncrement, set: setMaxBidIncrement, placeholder: '500000' },
                 { label: 'Review Timeout (hours)', value: reviewTimeout, set: setReviewTimeout, placeholder: '48' },
               ].map(f => (
-                <div key={f.label} className="flex flex-col gap-2">
-                  <label className="font-bold text-[12px] text-secondary">{f.label}</label>
-                  <input
-                    type="number"
-                    value={f.value}
-                    onChange={e => f.set(e.target.value)}
-                    placeholder={f.placeholder}
-                    className="border border-[#dee2e6] rounded-sm px-3 py-2.5 text-[13px] text-secondary outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
-                  />
-                </div>
+                <Input
+                  key={f.label}
+                  label={f.label}
+                  type="number"
+                  value={f.value}
+                  onChange={e => f.set(e.target.value)}
+                  placeholder={f.placeholder}
+                />
               ))}
             </div>
           </div>
@@ -143,24 +145,19 @@ export default function AdminSettings() {
               <h2 className="font-bold text-[14px] text-navy">Branding & Contact</h2>
             </div>
             <div className="p-5 flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <label className="font-bold text-[12px] text-secondary">Platform Name</label>
-                <input
-                  type="text"
-                  value={platformName}
-                  readOnly
-                  className="border border-[#dee2e6] rounded-sm px-3 py-2.5 text-[13px] text-placeholder outline-none bg-bg cursor-not-allowed"
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-bold text-[12px] text-secondary">Support Email</label>
-                <input
-                  type="email"
-                  value={supportEmail}
-                  onChange={e => setSupportEmail(e.target.value)}
-                  className="border border-[#dee2e6] rounded-sm px-3 py-2.5 text-[13px] text-secondary outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
-                />
-              </div>
+              <Input
+                label="Platform Name"
+                type="text"
+                value={platformName}
+                readOnly
+                className="bg-bg text-placeholder cursor-not-allowed"
+              />
+              <Input
+                label="Support Email"
+                type="email"
+                value={supportEmail}
+                onChange={e => setSupportEmail(e.target.value)}
+              />
             </div>
           </div>
           </form>

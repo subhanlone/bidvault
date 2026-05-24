@@ -1,12 +1,13 @@
-﻿import { useNavigate, Link } from 'react-router-dom';
-import { Check, ClipboardList, Camera, Package, Smartphone, Car, Upload } from 'lucide-react';
+﻿import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ClipboardList, Camera, Package, Smartphone, Car, Upload, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
 import { SellerNavbar, Button, Input, Textarea } from '../../components/ui';
+import StepProgress from '../../components/ui/StepProgress';
 import type { ItemCondition } from '../../types';
 
-const STEP_LABELS = ['Item Details', 'Auction Setup', 'Review & Submit'];
 const CATEGORIES = [
   'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion',
   'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles',
@@ -16,39 +17,6 @@ const CONDITIONS: { value: ItemCondition; label: string }[] = [
   { value: 'LIKE_NEW', label: 'Like New' },
   { value: 'USED',     label: 'Used'     },
 ];
-
-export function Stepper({ current }: { current: number }) {
-  return (
-    <div className="flex items-center mb-6 sm:mb-8">
-      {STEP_LABELS.map((s, i) => {
-        const done   = i < current;
-        const active = i === current;
-        return (
-          <div key={s} className="flex items-center flex-1">
-            <div className="flex flex-col items-center">
-              <div className={`flex items-center justify-center rounded-full w-7 h-7 sm:w-8 sm:h-8 border-2 font-bold text-xs sm:text-sm ${
-                done   ? 'bg-primary-surface border-primary' :
-                active ? 'bg-primary  border-primary text-white' :
-                         'bg-surface      border-border-light  text-placeholder'
-              }`}>
-                {done
-                  ? <Check size={12} strokeWidth={2.5} className="text-primary" />
-                  : <span className={active ? 'text-white' : 'text-placeholder'}>{i + 1}</span>
-                }
-              </div>
-              <span className={`hidden sm:block font-bold text-[10px] sm:text-[11px] mt-1.5 text-center max-w-[70px] leading-tight ${
-                active ? 'text-primary' : done ? 'text-tertiary' : 'text-placeholder'
-              }`}>{s}</span>
-            </div>
-            {i < STEP_LABELS.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-2 mb-0 sm:mb-5 ${done ? 'bg-primary' : 'bg-[#e9ecef]'}`} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export function ListingStepperHeader({ currentStep }: { currentStep: number }) {
   const { user, logout } = useAuth();
@@ -69,12 +37,27 @@ export default function SellerCreateListingStep1() {
   const navigate = useNavigate();
   const { draft, updateDraft } = useListing();
   const { showToast } = useToast();
+  const [titleError, setTitleError] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [conditionError, setConditionError] = useState('');
+  const [descriptionError, setDescriptionError] = useState('');
 
   const handleNext = () => {
-    if (!draft.title.trim())       { showToast({ type: 'error', title: 'Missing Title',       message: 'Enter an item title.' });       return; }
-    if (!draft.category)           { showToast({ type: 'error', title: 'Missing Category',    message: 'Select a category.' });          return; }
-    if (!draft.condition)          { showToast({ type: 'error', title: 'Missing Condition',   message: 'Select item condition.' });      return; }
-    if (!draft.description.trim()) { showToast({ type: 'error', title: 'Missing Description', message: 'Add an item description.' });   return; }
+    setTitleError('');
+    setCategoryError('');
+    setConditionError('');
+    setDescriptionError('');
+
+    let invalidCount = 0;
+    if (!draft.title.trim())       { setTitleError('Item title is required'); invalidCount += 1; }
+    if (!draft.category)           { setCategoryError('Category is required'); invalidCount += 1; }
+    if (!draft.condition)          { setConditionError('Condition is required'); invalidCount += 1; }
+    if (!draft.description.trim()) { setDescriptionError('Description is required'); invalidCount += 1; }
+
+    if (invalidCount > 1) {
+      showToast({ type: 'error', title: 'Missing Fields', message: 'Please fill in the highlighted fields.' });
+    }
+    if (invalidCount > 0) return;
     navigate('/seller/create-listing/step-2');
   };
 
@@ -88,7 +71,14 @@ export default function SellerCreateListingStep1() {
           <p className="text-sm text-muted">Fill in the details to list your item for auction</p>
         </div>
 
-        <Stepper current={0} />
+        <StepProgress
+          steps={[
+            { label: 'Item Details' },
+            { label: 'Auction Setup' },
+            { label: 'Review & Submit' },
+          ]}
+          currentStep={1}
+        />
 
         <div className="flex flex-col md:grid md:grid-cols-[1fr_300px] gap-5">
           {/* Item info */}
@@ -108,21 +98,32 @@ export default function SellerCreateListingStep1() {
                 label="Item title"
                 placeholder="e.g. Samsung Galaxy S24 Ultra — 256GB"
                 value={draft.title}
-                onChange={e => updateDraft({ title: e.target.value })}
+                onChange={e => {
+                  updateDraft({ title: e.target.value });
+                  setTitleError('');
+                }}
+                error={titleError}
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="listing-category" className="text-xs font-bold text-secondary">Category <span className="text-primary">*</span></label>
-                  <select
-                    id="listing-category"
-                    className="bg-surface border border-[#dee2e6] h-10 px-3 rounded-lg text-sm text-secondary w-full outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow appearance-none cursor-pointer"
-                    value={draft.category}
-                    onChange={e => updateDraft({ category: e.target.value })}
-                  >
-                    <option value="">Select category</option>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="listing-category"
+                      className={`bg-surface border h-10 px-3 pr-9 rounded-lg text-sm text-secondary w-full outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow appearance-none cursor-pointer ${categoryError ? 'border-error' : 'border-border'}`}
+                      value={draft.category}
+                      onChange={e => {
+                        updateDraft({ category: e.target.value });
+                        setCategoryError('');
+                      }}
+                    >
+                      <option value="">Select category</option>
+                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <ChevronDown size={16} aria-hidden="true" className="absolute right-3 top-1/2 -translate-y-1/2 text-placeholder" />
+                  </div>
+                  {categoryError && <p className="text-[12px] text-primary" role="alert">{categoryError}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -133,17 +134,21 @@ export default function SellerCreateListingStep1() {
                         key={c.value}
                         type="button"
                         aria-pressed={draft.condition === c.value}
-                        onClick={() => updateDraft({ condition: c.value })}
+                        onClick={() => {
+                          updateDraft({ condition: c.value });
+                          setConditionError('');
+                        }}
                         className={`flex-1 h-10 rounded-lg font-semibold text-xs border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                           draft.condition === c.value
-                            ? 'border-primary text-primary bg-primary-surface'
-                            : 'border-[#dee2e6] text-muted hover:border-primary hover:text-primary'
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-surface border-border text-body hover:border-primary'
                         }`}
                       >
                         {c.label}
                       </button>
                     ))}
                   </div>
+                  {conditionError && <p className="text-[12px] text-primary" role="alert">{conditionError}</p>}
                 </div>
               </div>
 
@@ -151,7 +156,11 @@ export default function SellerCreateListingStep1() {
                 label="Item description"
                 placeholder="Describe your item in detail — condition, specs, accessories included, etc."
                 value={draft.description}
-                onChange={e => updateDraft({ description: e.target.value })}
+                onChange={e => {
+                  updateDraft({ description: e.target.value });
+                  setDescriptionError('');
+                }}
+                error={descriptionError}
                 rows={5}
               />
             </div>
@@ -173,27 +182,27 @@ export default function SellerCreateListingStep1() {
               <>
                 <div className="bg-navy rounded-md w-full h-40 flex items-center justify-center mb-3">
                   {draft.category?.includes('Electronics')
-                    ? <Smartphone size={52} strokeWidth={1.2} className="text-white/30" />
+                    ? <Smartphone size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />
                     : draft.category?.includes('Vehicles')
-                    ? <Car size={52} strokeWidth={1.2} className="text-white/30" />
-                    : <Package size={52} strokeWidth={1.2} className="text-white/30" />}
+                    ? <Car size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />
+                    : <Package size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />}
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="bg-navy-mid rounded-lg h-16 flex items-center justify-center">
-                    <Package size={22} strokeWidth={1.3} className="text-white/30" />
+                    <Package size={22} strokeWidth={1.3} className="text-white/30" aria-hidden="true" />
                   </div>
                   <div className="bg-navy-mid rounded-lg h-16 flex items-center justify-center">
-                    <Package size={22} strokeWidth={1.3} className="text-white/30" />
+                    <Package size={22} strokeWidth={1.3} className="text-white/30" aria-hidden="true" />
                   </div>
                   <label className="border-2 border-dashed border-[#dee2e6] rounded-lg h-16 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary transition-colors">
-                    <Upload size={14} className="text-placeholder" />
+                    <Upload size={14} className="text-placeholder" aria-hidden="true" />
                     <span className="text-[10px] text-placeholder">Add photo</span>
                   </label>
                 </div>
               </>
             ) : (
               <label className="border-2 border-dashed border-[#dee2e6] rounded-md w-full h-48 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary hover:bg-primary-surface transition-colors">
-                <Upload size={26} className="text-placeholder" />
+                <Upload size={26} className="text-placeholder" aria-hidden="true" />
                 <p className="text-sm font-semibold text-muted">Upload photos</p>
                 <p className="text-[11px] text-placeholder">PNG or JPG · Max 10MB each</p>
                 <input type="file" className="hidden" accept=".png,.jpg,.jpeg" multiple onChange={() => updateDraft({ hasPhoto: true })} />
