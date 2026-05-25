@@ -18,6 +18,7 @@ interface BuyerNavbarProps {
 const defaultLinks: NavLink[] = [
   { label: 'Browse Auctions', to: '/buyer/browse' },
   { label: 'My Bids', to: '/buyer/my-bids' },
+  { label: 'My Wins', to: '/buyer/my-wins' },
   { label: 'Watchlist', to: '/buyer/watchlist' },
 ];
 

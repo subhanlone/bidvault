@@ -36,6 +36,7 @@ const BuyerLiveBidding = lazy(() => import('./screens/buyer/BuyerLiveBidding'));
 const BuyerLiveBiddingFinalCountdown = lazy(() => import('./screens/buyer/BuyerLiveBiddingFinalCountdown'));
 const BuyerConfirmBid = lazy(() => import('./screens/buyer/BuyerConfirmBid'));
 const BuyerAuctionWon = lazy(() => import('./screens/buyer/BuyerAuctionWon'));
+const BuyerMyWins = lazy(() => import('./screens/buyer/BuyerMyWins'));
 const BuyerProfile = lazy(() => import('./screens/buyer/BuyerProfile'));
 const BuyerToastNotifications = lazy(() => import('./screens/buyer/BuyerToastNotifications'));
 
@@ -172,6 +173,11 @@ export default function App() {
                   <Route path="/buyer/auction-won" element={
                     <ProtectedRoute allowedRoles={['BUYER']}>
                       <BuyerAuctionWon />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/buyer/my-wins" element={
+                    <ProtectedRoute allowedRoles={['BUYER']}>
+                      <BuyerMyWins />
                     </ProtectedRoute>
                   } />
                   <Route path="/buyer/profile" element={
