@@ -28,12 +28,17 @@ export default function BuyerMyWins() {
   const { user, logout } = useAuth();
   const [transactions, setTransactions] = useState<WinTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<WinTransaction | null>(null);
   const [paidTx, setPaidTx] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<WinTransaction[]>('/payments/my-wins')
       .then(setTransactions)
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to load wins.';
+        setError(message);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -63,6 +68,12 @@ export default function BuyerMyWins() {
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="text-center py-20">
+            <XCircle size={48} strokeWidth={1.2} className="text-error mx-auto mb-4" />
+            <p className="font-bold text-[16px] text-navy mb-1">Could not load wins</p>
+            <p className="text-[13px] text-muted">{error}</p>
           </div>
         ) : transactions.length === 0 ? (
           <div className="text-center py-20">

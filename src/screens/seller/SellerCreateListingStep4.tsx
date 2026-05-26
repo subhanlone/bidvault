@@ -35,7 +35,7 @@ export default function SellerCreateListingStep4() {
         category: draft.category,
         condition: draft.condition,
         description: draft.description,
-        startAt: `${draft.startDate}T${draft.startTime}:00`,
+        startAt: new Date(`${draft.startDate}T${draft.startTime}:00`).toISOString(),
         durationDays: draft.duration,
         startPrice: draft.startingPrice,
         minIncrement: draft.minIncrement,
