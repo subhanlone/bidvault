@@ -24,6 +24,7 @@ const AdminAnalytics = lazy(() => import('./screens/admin/AdminAnalytics'));
 const AdminSettings = lazy(() => import('./screens/admin/AdminSettings'));
 
 const SellerDashboard = lazy(() => import('./screens/seller/SellerDashboard'));
+const SellerMyListings = lazy(() => import('./screens/seller/SellerMyListings'));
 const SellerCreateListingStep1 = lazy(() => import('./screens/seller/SellerCreateListingStep1'));
 const SellerCreateListingStep2 = lazy(() => import('./screens/seller/SellerCreateListingStep2'));
 const SellerCreateListingStep4 = lazy(() => import('./screens/seller/SellerCreateListingStep4'));
@@ -106,10 +107,9 @@ export default function App() {
                       <SellerDashboard />
                     </ProtectedRoute>
                   } />
-                  {/* TODO: build dedicated My Listings screen; placeholder routes to dashboard so nav link resolves. */}
                   <Route path="/seller/listings" element={
                     <ProtectedRoute allowedRoles={['SELLER']}>
-                      <SellerDashboard />
+                      <SellerMyListings />
                     </ProtectedRoute>
                   } />
                   <Route path="/seller/create-listing/step-1" element={
