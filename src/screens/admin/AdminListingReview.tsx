@@ -1,15 +1,16 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuction } from '../../context/AuctionContext';
+import { usePendingListings } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
-import { Menu, ChevronLeft, ChevronRight, Download, Star } from 'lucide-react';
+import { Menu, ChevronLeft, ChevronRight, Download, Package, MessageSquare } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import { Button } from '../../components/ui';
+import Textarea from '../../components/ui/Textarea';
 
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
-  const { pendingListings, refreshListings, approveListing, rejectListing } = useAuction();
+  const { pendingListings, refreshListings, approveListing, rejectListing } = usePendingListings();
 
   useEffect(() => { refreshListings(); }, [refreshListings]);
   const { showToast } = useToast();
@@ -18,7 +19,6 @@ export default function AdminListingReview() {
   const [rejecting, setRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [loading, setLoading] = useState(false);
-  const [rating, setRating] = useState(4);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const listing = pendingListings.find(l => l.listingId === listingId);
@@ -66,12 +66,10 @@ export default function AdminListingReview() {
   return (
     <div className="flex min-h-screen bg-bg">
 
-      {/* Desktop sidebar */}
       <div className="hidden md:block md:w-[200px] md:shrink-0">
         <AdminSidebarContent active="Listing Review" />
       </div>
 
-      {/* Mobile sidebar drawer */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <AdminSidebarContent active="Listing Review" onClose={() => setSidebarOpen(false)} />
@@ -79,46 +77,45 @@ export default function AdminListingReview() {
         </div>
       )}
 
-      {/* MAIN */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
 
-        {/* Top bar */}
         <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
-              className="md:hidden p-2 rounded-[6px] border border-border-light hover:bg-bg shrink-0"
+              className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open navigation menu"
             >
               <Menu size={18} className="text-tertiary" />
             </button>
             <div className="min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <button onClick={() => navigate('/admin/listing-reviews')} className="text-[12px] text-muted hover:text-primary whitespace-nowrap cursor-pointer">Listing Review</button>
+                <button onClick={() => navigate('/admin/listing-reviews')} className="text-[12px] text-muted hover:text-primary whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">Listing Review</button>
                 <ChevronRight size={10} className="shrink-0 text-placeholder" />
                 <span className="font-semibold text-[12px] text-secondary truncate">{listing.title}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="bg-[#fff3cd] border border-warning-border font-bold text-[11px] text-warning px-2 py-[2px] rounded-[99px]">Pending Review</span>
+                <span className="bg-warning-badge-bg border border-warning-border font-bold text-[11px] text-warning px-2 py-[2px] rounded-full">Pending Review</span>
                 <span className="hidden sm:inline text-[11px] text-muted">#{listing.listingId} · Submitted {new Date(listing.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}</span>
                 <span className="text-[11px] text-placeholder">{currentIndex + 1} of {pendingListings.length}</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button className="hidden sm:flex border border-[#dee2e6] gap-2 items-center px-3 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer">
+            <button className="hidden sm:flex border border-border-medium gap-2 items-center px-3 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <Download size={14} strokeWidth={2} /> Export
             </button>
             <button
               onClick={() => prevListing && navigate(`/admin/listing-review/${prevListing.listingId}`)}
               disabled={!prevListing}
-              className="border border-[#dee2e6] flex gap-1 items-center px-3 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg disabled:opacity-40 cursor-pointer"
+              className="border border-border-medium flex gap-1 items-center px-3 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg disabled:opacity-40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <ChevronLeft size={14} /><span className="hidden sm:inline">Previous</span>
             </button>
             <button
               onClick={() => nextListing && navigate(`/admin/listing-review/${nextListing.listingId}`)}
               disabled={!nextListing}
-              className="border border-[#dee2e6] flex gap-1 items-center px-3 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg disabled:opacity-40 cursor-pointer"
+              className="border border-border-medium flex gap-1 items-center px-3 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg disabled:opacity-40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span className="hidden sm:inline">Next</span><ChevronRight size={14} />
             </button>
@@ -129,17 +126,16 @@ export default function AdminListingReview() {
 
           {/* LEFT */}
           <div className="flex flex-col gap-4 sm:gap-5">
-            {/* Listing Details */}
             <div className="bg-surface border border-border-light rounded-md overflow-hidden">
               <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-border-light">
                 <h3 className="font-bold text-[14px] text-navy">Listing Details</h3>
-                <span className="bg-[#fff3cd] border border-warning-border font-bold text-[11px] text-warning px-2 py-[2px] rounded-[99px]">Pending Review</span>
+                <span className="bg-warning-badge-bg border border-warning-border font-bold text-[11px] text-warning px-2 py-[2px] rounded-full">Pending Review</span>
               </div>
               <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-5">
-                <div className="bg-navy rounded-md w-full sm:w-[160px] h-[160px] shrink-0 overflow-hidden">
+                <div className="bg-navy rounded-md w-full sm:w-[160px] h-[160px] shrink-0 overflow-hidden flex items-center justify-center">
                   {listing.imageUrl
                     ? <img src={listing.imageUrl} alt={listing.title} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    : <span className="flex items-center justify-center w-full h-full text-[60px]">{listing.emoji}</span>
+                    : <Package size={48} strokeWidth={1.3} className="text-white/40" />
                   }
                 </div>
                 <div className="flex-1 grid grid-cols-2 gap-3 sm:gap-4">
@@ -168,7 +164,6 @@ export default function AdminListingReview() {
               </div>
             </div>
 
-            {/* Seller info + Price Analysis */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
               <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
                 <h3 className="font-bold text-[14px] text-navy mb-3">Seller Information</h3>
@@ -202,7 +197,7 @@ export default function AdminListingReview() {
                   <span className="text-[12px] text-placeholder mb-1">— PKR {(listing.startPrice * 1.25).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="bg-success-bg border border-[rgba(26,122,74,0.2)] font-bold text-[11px] text-success-dark px-2 py-1 rounded-[6px]">92%</span>
+                  <span className="bg-success-bg border border-[rgba(26,122,74,0.2)] font-bold text-[11px] text-success-dark px-2 py-1 rounded-sm">92%</span>
                   <span className="text-[12px] text-muted">Market confidence</span>
                 </div>
                 <div className="bg-bg border border-border-light rounded-sm px-3 py-2">
@@ -238,44 +233,46 @@ export default function AdminListingReview() {
                 </div>
               ) : (
                 <div className="mb-4">
-                  <label className="font-bold text-[12px] text-secondary block mb-2">Rejection Reason (required)</label>
-                  <textarea
-                    className="bg-bg border border-border-light rounded-sm p-3 text-[12px] text-tertiary w-full h-[80px] resize-none outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] mb-3"
+                  <Textarea
+                    label="Rejection Reason (required)"
                     placeholder="Explain why this listing is being rejected..."
                     value={rejectReason}
                     onChange={e => setRejectReason(e.target.value)}
+                    rows={3}
+                    className="mb-3 text-[12px]"
                   />
                   <div className="flex gap-3">
-                    <button
+                    <Button
+                      variant="outline"
+                      className="flex-1"
                       onClick={() => setRejecting(false)}
-                      className="flex-1 border border-[#dee2e6] font-semibold text-[13px] text-tertiary py-2.5 rounded-sm hover:bg-bg"
                     >
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      className="flex-1 bg-destructive hover:bg-destructive-hover border-destructive"
                       onClick={handleReject}
-                      disabled={loading}
-                      className="flex-1 bg-[#ef4444] font-bold text-[13px] text-white py-2.5 rounded-sm hover:bg-[#dc2626] disabled:opacity-60"
+                      loading={loading}
                     >
-                      {loading ? '...' : 'Confirm Reject'}
-                    </button>
+                      Confirm Reject
+                    </Button>
                   </div>
                 </div>
               )}
 
-              <div className="bg-primary-surface border border-[rgba(208,2,27,0.18)] rounded-sm p-3 mb-3">
-                <p className="font-bold text-[12px] text-primary">☰ Request More Info from Seller</p>
+              <div className="bg-primary-surface border border-[rgba(208,2,27,0.18)] rounded-sm p-3 mb-3 flex items-center gap-2">
+                <MessageSquare size={13} className="text-primary shrink-0" />
+                <p className="font-bold text-[12px] text-primary">Request More Info from Seller</p>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="font-bold text-[12px] text-secondary">Review notes (internal)</label>
-                <textarea
-                  className="bg-bg border border-border-light rounded-sm p-3 text-[12px] text-tertiary w-full h-[80px] resize-none outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow"
-                  placeholder="Add internal notes about this listing decision..."
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                />
-              </div>
+              <Textarea
+                label="Review notes (internal)"
+                placeholder="Add internal notes about this listing decision..."
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={3}
+                className="text-[12px]"
+              />
             </div>
 
             {/* Other Pending Listings */}
@@ -286,37 +283,23 @@ export default function AdminListingReview() {
               ) : (
                 <div className="flex flex-col gap-3">
                   {pendingListings.filter(l => l.listingId !== listingId).slice(0, 6).map(l => (
-                    <div
+                    <button
                       key={l.listingId}
                       onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
-                      className="flex items-center gap-3 bg-bg rounded-sm px-3 py-2 cursor-pointer hover:bg-[#f0f0f0]"
+                      className="flex items-center gap-3 bg-bg rounded-sm px-3 py-2 cursor-pointer hover:bg-surface-subtle transition-colors text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
-                      <div className="bg-[#e9ecef] rounded-[6px] size-[32px] overflow-hidden shrink-0">
+                      <div className="bg-border-light rounded-sm size-[32px] overflow-hidden shrink-0 flex items-center justify-center">
                         {l.imageUrl
                           ? <img src={l.imageUrl} alt={l.title} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                          : <span className="flex items-center justify-center w-full h-full text-[16px]">{l.emoji}</span>
+                          : <Package size={16} strokeWidth={1.5} className="text-muted" />
                         }
                       </div>
                       <p className="font-medium text-[11px] text-secondary flex-1 truncate">{l.title}</p>
                       <span className="font-bold text-[12px] text-navy shrink-0">{(l.startPrice / 1000).toFixed(0)}K</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Star rating */}
-            <div className="bg-surface border border-border-light rounded-md p-4 flex items-center gap-3">
-              <div>
-                <p className="font-bold text-[12px] text-secondary mb-1">Rate this listing quality</p>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <button key={n} onClick={() => setRating(n)} className="cursor-pointer">
-                      <Star size={18} className={n <= rating ? 'text-gold' : 'text-[#dee2e6]'} fill={n <= rating ? '#f59e0b' : 'none'} />
                     </button>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

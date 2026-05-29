@@ -151,9 +151,9 @@ export default function LoginScreen() {
           <Link to="/forgot-password" className="text-[12.5px] font-bold text-primary hover:underline">Forgot password?</Link>
         </div>
 
-        <div className="flex gap-2.5 items-start bg-[#f0f4ff] border border-[#c7d7fe] rounded-lg px-4 py-3">
-          <Info size={15} className="text-[#3451b2] flex-shrink-0 mt-0.5" />
-          <p className="text-[12px] text-[#3451b2] leading-relaxed">
+        <div className="flex gap-2.5 items-start bg-info-card-bg border border-info-border-strong rounded-lg px-4 py-3">
+          <Info size={15} className="text-info-text flex-shrink-0 mt-0.5" />
+          <p className="text-[12px] text-info-text leading-relaxed">
             <span className="font-bold">Role-based access:</span>{' '}
             After sign in, you'll be directed to your Buyer, Seller, or Admin dashboard automatically.
           </p>

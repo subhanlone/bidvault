@@ -21,8 +21,8 @@ const MONTHLY_REVENUE = [
 const CATEGORY_STATS = [
   { name: 'Electronics', pct: 58, count: 1392, color: 'bg-primary' },
   { name: 'Vehicles', pct: 19, count: 456, color: 'bg-navy' },
-  { name: 'Fashion', pct: 12, count: 288, color: 'bg-[#f59e0b]' },
-  { name: 'Sports & Fitness', pct: 7, count: 168, color: 'bg-[#1a7a4a]' },
+  { name: 'Fashion', pct: 12, count: 288, color: 'bg-gold' },
+  { name: 'Sports & Fitness', pct: 7, count: 168, color: 'bg-success-dark' },
   { name: 'Other', pct: 4, count: 96, color: 'bg-[#adb5bd]' },
 ];
 
@@ -72,7 +72,7 @@ export default function AdminAnalytics() {
       <main className="flex-1 flex flex-col min-w-0">
         <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
           <div className="flex items-center gap-3">
-            <button className="md:hidden p-2 rounded-[6px] border border-border-light hover:bg-bg" onClick={() => setSidebarOpen(true)}>
+            <button className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg" onClick={() => setSidebarOpen(true)}>
               <Menu size={18} className="text-tertiary" />
             </button>
             <div>
@@ -85,7 +85,7 @@ export default function AdminAnalytics() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`font-bold text-[11px] px-3 py-1.5 rounded-[6px] transition-colors ${period === p ? 'bg-navy text-white' : 'text-muted hover:text-secondary'}`}
+                className={`font-bold text-[11px] px-3 py-1.5 rounded-sm transition-colors ${period === p ? 'bg-navy text-white' : 'text-muted hover:text-secondary'}`}
               >
                 {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : '12 Months'}
               </button>
@@ -101,7 +101,7 @@ export default function AdminAnalytics() {
               <div key={k.label} className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
                 <div className="flex items-start justify-between mb-3">
                   <p className="font-medium text-[11px] sm:text-[12px] text-muted">{k.label}</p>
-                  <span className={`flex items-center gap-[2px] font-bold text-[10px] px-1.5 py-[2px] rounded-xs ${k.up ? 'bg-success-bg text-success-dark' : 'bg-[#fff5f5] text-[#ef4444]'}`}>
+                  <span className={`flex items-center gap-[2px] font-bold text-[10px] px-1.5 py-[2px] rounded-xs ${k.up ? 'bg-success-bg text-success-dark' : 'bg-danger-surface text-destructive'}`}>
                     {k.up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
                     {k.change}
                   </span>
@@ -177,7 +177,7 @@ export default function AdminAnalytics() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-[12px] text-secondary truncate">{s.name}</p>
-                      <p className="text-[10px] text-placeholder flex items-center gap-1">{s.sales} sales · <Star size={9} strokeWidth={2} className="inline text-gold fill-[#f59e0b]" /> {s.rating}</p>
+                      <p className="text-[10px] text-placeholder flex items-center gap-1">{s.sales} sales · <Star size={9} strokeWidth={2} className="inline text-gold fill-gold" /> {s.rating}</p>
                     </div>
                     <p className="font-bold text-[12px] text-primary shrink-0">
                       {(s.revenue / 1_000_000).toFixed(1)}M

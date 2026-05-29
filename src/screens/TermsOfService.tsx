@@ -88,7 +88,7 @@ export default function TermsOfService() {
                 <button
                   key={s.title}
                   onClick={() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="font-medium text-[11px] text-tertiary bg-surface border border-border-light px-2.5 py-1 rounded-[6px] hover:border-primary hover:text-primary transition-colors"
+                  className="font-medium text-[11px] text-tertiary bg-surface border border-border-light px-2.5 py-1 rounded-sm hover:border-primary hover:text-primary transition-colors"
                 >
                   {s.title.split('. ')[1]}
                 </button>

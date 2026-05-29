@@ -159,7 +159,7 @@ export default function EmailVerificationScreen() {
                 className={`w-12 h-14 rounded-lg text-center font-extrabold text-2xl border outline-none transition-all ${
                   val
                     ? 'bg-primary-surface border-primary text-primary-dark'
-                    : 'bg-bg border-border-light text-secondary focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] focus:bg-surface'
+                    : 'bg-bg border-border-light text-secondary focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary'
                 }`}
               />
             ))}
@@ -170,9 +170,9 @@ export default function EmailVerificationScreen() {
         </div>
 
         {/* Info banner */}
-        <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3">
-          <Info size={15} className="text-info flex-shrink-0 mt-0.5" />
-          <p className="text-[12px] text-info leading-relaxed">
+        <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3">
+          <Info size={15} className="text-info-text flex-shrink-0 mt-0.5" />
+          <p className="text-[12px] text-info-text leading-relaxed">
             Check your <span className="font-bold">spam or junk folder</span> if you don't see the email. Code is valid for <span className="font-bold">10 minutes</span>.
           </p>
         </div>

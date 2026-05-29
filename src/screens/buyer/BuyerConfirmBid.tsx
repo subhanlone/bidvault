@@ -50,7 +50,7 @@ export default function BuyerConfirmBid() {
             <button
               onClick={() => navigate(-1)}
               aria-label="Close"
-              className="bg-bg flex items-center justify-center rounded-full size-[32px] hover:bg-[#e9ecef] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+              className="bg-bg flex items-center justify-center rounded-full size-[32px] hover:bg-border-light transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             >
               <X size={16} className="text-muted" aria-hidden="true" />
             </button>
@@ -88,7 +88,7 @@ export default function BuyerConfirmBid() {
                   ))}
                 </div>
 
-                <div className="bg-[#fffbeb] border border-warning-border rounded-sm px-3 py-[10px] mb-5">
+                <div className="bg-warning-surface border border-warning-border rounded-sm px-3 py-[10px] mb-5">
                   <p className="text-[11.5px] text-warning font-medium leading-[18px]">
                     By confirming, you agree to purchase this item at this price if you win the auction.
                   </p>

@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
@@ -26,7 +26,6 @@ export default function BuyerLiveBidding() {
   const [customBidTouched, setCustomBidTouched] = useState(false);
   const watched = auction ? isWatched(auction.auctionId) : false;
 
-  // Load initial bids and subscribe to socket room
   useEffect(() => {
     if (!auctionId) return;
     void fetchBids(auctionId);
@@ -98,15 +97,15 @@ export default function BuyerLiveBidding() {
                 onClick={() => auction && toggleWatchlist(auction.auctionId)}
                 aria-label={watched ? 'Remove from watchlist' : 'Add to watchlist'}
                 aria-pressed={watched}
-                className={`absolute top-4 right-4 rounded-full size-[36px] flex items-center justify-center transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 ${watched ? 'bg-primary' : 'bg-surface hover:bg-primary-surface'}`}
+                className={`absolute top-4 right-4 rounded-full size-[36px] flex items-center justify-center transition-all shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${watched ? 'bg-primary' : 'bg-surface hover:bg-primary-surface'}`}
               >
                 <Heart size={18} aria-hidden="true" className={watched ? 'text-white' : 'text-primary'} fill={watched ? 'white' : 'none'} />
               </button>
             </div>
             <div className="flex gap-3 p-4">
               {(auction.images ?? [auction.imageUrl, auction.imageUrl, auction.imageUrl]).slice(0, 3).map((img, i) => (
-                <div key={i} className={`rounded-sm size-[52px] overflow-hidden border-2 cursor-pointer transition-transform hover:scale-105 ${i === 0 ? 'border-primary' : 'border-transparent hover:border-[#dee2e6]'}`}>
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                <div key={i} className={`rounded-sm size-[52px] overflow-hidden border-2 cursor-pointer transition-transform hover:scale-105 ${i === 0 ? 'border-primary' : 'border-transparent hover:border-border-medium'}`}>
+                  <img src={img} alt={`${auction.title} thumbnail ${i + 1}`} className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>
@@ -115,13 +114,11 @@ export default function BuyerLiveBidding() {
           {/* Item info */}
           <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-2">
-              <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-[99px]">{auction.category}</span>
-              <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-[99px]">{auction.condition}</span>
+              <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
+              <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.condition}</span>
             </div>
             <h2 className="font-extrabold text-[18px] sm:text-[20px] text-navy mb-3">{auction.title}</h2>
-
-
-<p className="text-[13px] text-muted leading-[20px]">{auction.description}</p>
+            <p className="text-[13px] text-muted leading-[20px]">{auction.description}</p>
 
             <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border-light">
               <div className="bg-navy size-[36px] rounded-full flex items-center justify-center text-white font-bold text-[14px] shrink-0">
@@ -130,12 +127,12 @@ export default function BuyerLiveBidding() {
               <div>
                 <p className="font-bold text-[13px] text-secondary">{auction.sellerName}</p>
                 <div className="flex items-center gap-1 flex-wrap">
-                  <Star size={12} fill="#f59e0b" className="text-gold" />
+                  <Star size={12} fill="currentColor" className="text-gold" />
                   <span className="text-[11px] text-muted">
                     {auction.sellerRating !== null ? auction.sellerRating : 'N/A'} · {auction.sellerSales !== null ? `${auction.sellerSales} sales` : 'No sales yet'}
                   </span>
                   {auction.sellerVerified && (
-                    <span className="bg-success-bg text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-[99px] flex items-center gap-[3px]">
+                    <span className="bg-success-bg text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-full flex items-center gap-[3px]">
                       <Check size={9} strokeWidth={3} />Verified
                     </span>
                   )}
@@ -152,7 +149,7 @@ export default function BuyerLiveBidding() {
             ) : (
               <div className="flex flex-col gap-1">
                 {auctionBids.slice(0, 8).map((b, i) => (
-                  <div key={b.bidId} className={`flex items-center justify-between py-3 ${i < auctionBids.length - 1 ? 'border-b border-[#f1f3f5]' : ''}`}>
+                  <div key={b.bidId} className={`flex items-center justify-between py-3 ${i < auctionBids.length - 1 ? 'border-b border-surface-raised' : ''}`}>
                     <div className="flex items-center gap-3">
                       <div className="bg-surface-raised size-[32px] rounded-full flex items-center justify-center font-bold text-[12px] text-secondary shrink-0">
                         {b.buyerName[0]}
@@ -165,7 +162,7 @@ export default function BuyerLiveBidding() {
                     <div className="text-right">
                       <p className="font-bold text-[13px] text-secondary">PKR {b.amount.toLocaleString()}</p>
                       {i === 0 && (
-                        <span className="bg-success-bg border border-success-border text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-[99px]">
+                        <span className="bg-success-bg border border-success-border text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-full">
                           Highest
                         </span>
                       )}
@@ -232,7 +229,7 @@ export default function BuyerLiveBidding() {
                 <button
                   key={amt}
                   onClick={() => handleBid(amt)}
-                  className={`w-full py-3 rounded-sm font-bold text-[14px] border-2 transition-colors transition-transform active:scale-[0.97] cursor-pointer ${i === 0 ? 'bg-primary border-primary text-white hover:bg-primary-dark shadow-primary' : 'border-border-light text-secondary hover:border-primary hover:text-primary hover:bg-primary-surface'}`}
+                  className={`w-full py-3 rounded-sm font-bold text-[14px] border-2 transition-colors active:scale-[0.97] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${i === 0 ? 'bg-primary border-primary text-white hover:bg-primary-dark shadow-primary' : 'border-border-light text-secondary hover:border-primary hover:text-primary hover:bg-primary-surface'}`}
                 >
                   PKR {amt.toLocaleString()}
                   {i === 0 && <span className="ml-2 text-[10px] opacity-75">Min bid</span>}
@@ -274,7 +271,7 @@ export default function BuyerLiveBidding() {
                 <button
                   type="submit"
                   aria-label={`Place bid of PKR ${effectiveBidAmount.toLocaleString()}`}
-                  className="bg-navy font-bold text-[13px] text-white px-4 rounded-sm hover:bg-navy-mid active:scale-[0.97] transition-colors cursor-pointer h-[44px]"
+                  className="bg-navy font-bold text-[13px] text-white px-4 rounded-sm hover:bg-navy-mid active:scale-[0.97] transition-colors cursor-pointer h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                 >
                   Bid
                 </button>

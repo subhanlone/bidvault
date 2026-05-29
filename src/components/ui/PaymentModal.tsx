@@ -64,7 +64,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
 
       <div>
         <label className="text-[12px] font-semibold text-navy mb-2 block">Card Details</label>
-        <div className="border border-border-light rounded-md px-4 py-3 bg-white">
+        <div className="border border-border-light rounded-md px-4 py-3 bg-surface">
           <CardElement options={{
             style: {
               base: { fontSize: '14px', color: '#1e293b', '::placeholder': { color: '#94a3b8' } },
@@ -90,13 +90,13 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
 export default function PaymentModal({ transactionId, auctionTitle, finalAmount, onSuccess, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-[440px] p-6">
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-[440px] p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <CreditCard size={18} className="text-primary" />
             <h2 className="font-bold text-[16px] text-navy">Complete Payment</h2>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-navy transition-colors">
+          <button onClick={onClose} aria-label="Close payment modal" className="text-muted hover:text-navy transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
             <X size={20} />
           </button>
         </div>

@@ -1,9 +1,9 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, BarChart2, Radio, Settings, Menu, X, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
 import { useAuth } from '../../context/AuthContext';
-import { useAuction } from '../../context/AuctionContext';
+import { usePendingListings } from '../../hooks/usePendingListings';
 
 interface SidebarItem {
   label: string;
@@ -28,7 +28,8 @@ interface AdminSidebarContentProps {
 export function AdminSidebarContent({ active, onClose }: AdminSidebarContentProps) {
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
-  const { pendingListings } = useAuction();
+  const { pendingListings, refreshListings } = usePendingListings();
+  useEffect(() => { void refreshListings(); }, [refreshListings]);
   const pendingCount = pendingListings.length;
 
   const badgeFor = (label: string): string | undefined => {

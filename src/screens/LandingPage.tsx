@@ -20,14 +20,14 @@ function FeaturedCard({ auction }: { auction: Auction }) {
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
-        <span className={`absolute top-3 right-3 font-bold text-[11px] px-2 py-1 rounded-[6px] flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-[rgba(11,31,58,0.7)] text-white'}`}>
+        <span className={`absolute top-3 right-3 font-bold text-[11px] px-2 py-1 rounded-sm flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-[rgba(11,31,58,0.7)] text-white'}`}>
           <Clock size={10} strokeWidth={2.5} /> {timer.display}
         </span>
       </div>
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-2">
-          <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-[99px]">{auction.category}</span>
-          <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-[99px]">{auction.condition === 'LIKE_NEW' ? 'Like New' : auction.condition === 'NEW' ? 'New' : 'Used'}</span>
+          <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
+          <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.condition === 'LIKE_NEW' ? 'Like New' : auction.condition === 'NEW' ? 'New' : 'Used'}</span>
         </div>
         <h3 className="font-bold text-[14px] text-navy mb-3 leading-[20px] line-clamp-2">{auction.title}</h3>
         <div className="flex items-end justify-between mt-auto">
@@ -67,7 +67,7 @@ export default function LandingPage() {
     { value: '2,400+', label: 'Active Auctions', icon: <Gavel size={28} strokeWidth={1.6} className="text-primary" /> },
     { value: '18,000+', label: 'Registered Users', icon: <Users size={28} strokeWidth={1.6} className="text-navy" /> },
     { value: 'PKR 850M+', label: 'in Transactions', icon: <Banknote size={28} strokeWidth={1.6} className="text-success-dark" /> },
-    { value: '4.9 / 5', label: 'Buyer Satisfaction', icon: <Star size={28} strokeWidth={1.6} className="text-gold" fill="#f59e0b" /> },
+    { value: '4.9 / 5', label: 'Buyer Satisfaction', icon: <Star size={28} strokeWidth={1.6} className="text-gold" fill="currentColor" /> },
   ];
 
   const features = [
@@ -80,14 +80,14 @@ export default function LandingPage() {
     },
     {
       icon: <Zap size={28} strokeWidth={1.5} className="text-gold" />,
-      accent: '#f59e0b',
+      accent: 'var(--color-gold)',
       iconBg: 'rgba(245,158,11,0.09)',
       title: 'Real-Time Bidding',
       desc: 'Experience live auction thrills with instant bid updates, countdown timers, and competing bid notifications.',
     },
     {
       icon: <BarChart2 size={28} strokeWidth={1.5} className="text-success-dark" />,
-      accent: '#1a7a4a',
+      accent: 'var(--color-success-dark)',
       iconBg: 'rgba(26,122,74,0.08)',
       title: 'Transparent Bidding',
       desc: 'Full bid history visible to all participants — see every bid, every amount, and every timestamp in real time.',
@@ -160,7 +160,7 @@ export default function LandingPage() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden bg-[#0d2545] border-t border-[rgba(255,255,255,0.08)] px-4 py-4 flex flex-col gap-3">
+          <div className="md:hidden bg-navy-dark border-t border-[rgba(255,255,255,0.08)] px-4 py-4 flex flex-col gap-3">
             <ul className="flex flex-col gap-1">
               {navLinks.map(l => (
                 <li key={l}>
@@ -194,15 +194,15 @@ export default function LandingPage() {
 
         {/* Decorative glow */}
         <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-primary opacity-[0.07] rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] bg-[#1a7a4a] opacity-[0.06] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
+        <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] bg-success-dark opacity-[0.06] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
 
         <div className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28">
           <div className="max-w-[720px] mx-auto text-center lg:text-left lg:mx-0">
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-[rgba(208,2,27,0.15)] border border-[rgba(208,2,27,0.3)] rounded-[99px] px-4 py-1.5 mb-6">
+            <div className="inline-flex items-center gap-2 bg-[rgba(208,2,27,0.15)] border border-[rgba(208,2,27,0.3)] rounded-full px-4 py-1.5 mb-6">
               <span className="size-[6px] rounded-full bg-primary inline-block animate-pulse" aria-hidden="true" />
-              <span className="font-bold text-[12px] text-[#ff6b7a]">Live Auctions Running Now</span>
+              <span className="font-bold text-[12px] text-primary-tint">Live Auctions Running Now</span>
             </div>
 
             <h1 className="font-extrabold text-[36px] sm:text-[48px] lg:text-[60px] text-white leading-[1.1] tracking-[-1.5px] mb-5">
@@ -305,7 +305,7 @@ export default function LandingPage() {
             {(activeTab === 'buyers' ? buyerSteps : sellerSteps).map((step, i) => (
               <div key={step.step} className="relative">
                 {i < 2 && (
-                  <div className="hidden md:block absolute top-[22px] left-[calc(50%+32px)] right-[-50%] h-[2px] z-0" style={{ background: 'linear-gradient(90deg, #0b1f3a 0%, #e9ecef 100%)' }} />
+                  <div className="hidden md:block absolute top-[22px] left-[calc(50%+32px)] right-[-50%] h-[2px] z-0" style={{ background: 'linear-gradient(90deg, var(--color-navy) 0%, var(--color-border-light) 100%)' }} />
                 )}
                 <div className="relative z-10 text-center flex flex-col items-center">
                   <div className="bg-navy text-white font-extrabold text-[14px] size-[46px] rounded-full flex items-center justify-center mb-4 shadow-[0_0_0_4px_rgba(11,31,58,0.1),0_4px_16px_rgba(11,31,58,0.2)]">
@@ -406,7 +406,7 @@ export default function LandingPage() {
       </main>
 
       {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
-      <footer className="bg-[#07162a] py-10 sm:py-12">
+      <footer className="bg-navy-deep py-10 sm:py-12">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
             {/* Brand */}

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
@@ -31,8 +31,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
         <button
           onClick={e => { e.stopPropagation(); onRemove(); }}
           aria-label="Remove from watchlist"
-          className="absolute top-3 right-3 bg-primary rounded-full size-[32px] flex items-center justify-center hover:bg-primary-dark transition-colors cursor-pointer"
-          title="Remove from watchlist"
+          className="absolute top-3 right-3 bg-primary rounded-full size-[32px] flex items-center justify-center hover:bg-primary-dark transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           <Heart size={14} fill="white" className="text-white" />
         </button>
@@ -40,8 +39,8 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
 
       <div className="p-4 flex flex-col flex-1 cursor-pointer" onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}>
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-[99px]">{auction.category}</span>
-          <span className={`font-bold text-[11px] px-2 py-[3px] rounded-[99px] ${isEnded ? 'bg-bg text-muted' : timer.totalSeconds < 3600 ? 'bg-[#fff5f5] text-primary' : 'bg-success-bg text-success-dark'}`}>
+          <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
+          <span className={`font-bold text-[11px] px-2 py-[3px] rounded-full ${isEnded ? 'bg-bg text-muted' : timer.totalSeconds < 3600 ? 'bg-primary-surface text-primary' : 'bg-success-bg text-success-dark'}`}>
             {isEnded ? 'Ended' : <span className="flex items-center gap-1"><Clock size={10} strokeWidth={2.5} />{timer.display}</span>}
           </span>
         </div>
@@ -55,7 +54,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
           {!isEnded && (
             <button
               onClick={e => { e.stopPropagation(); navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
-              className="bg-primary font-bold text-[12px] text-white px-4 py-2 rounded-[7px] hover:bg-primary-dark transition-colors cursor-pointer"
+              className="bg-primary font-bold text-[12px] text-white px-4 py-2 rounded-sm hover:bg-primary-dark transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             >
               Bid Now →
             </button>
@@ -117,7 +116,7 @@ export default function BuyerWatchlist() {
             <p className="text-[13px] sm:text-[14px] text-muted mb-6 max-w-[320px]">
               Tap the heart icon on any live auction to save it here and track it easily.
             </p>
-            <Link to="/buyer/browse" className="bg-primary font-bold text-[14px] text-white px-6 py-3 rounded-sm hover:bg-primary-dark transition-colors">
+            <Link to="/buyer/browse" className="bg-primary font-bold text-[14px] text-white px-6 py-3 rounded-sm hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1">
               Browse Auctions →
             </Link>
           </div>

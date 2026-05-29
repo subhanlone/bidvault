@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import type { Auction, Bid, Listing } from '../types';
+import type { Auction, Bid } from '../types';
 import { api, ApiError } from '../services/api';
 import { getSocket } from '../services/socket';
 import { useAuth } from './AuthContext';
@@ -8,15 +8,11 @@ interface AuctionContextType {
   auctions: Auction[];
   auctionsLoaded: boolean;
   bids: Record<string, Bid[]>;
-  pendingListings: Listing[];
   watchlist: string[];
   getAuction: (id: string) => Auction | undefined;
   placeBid: (auctionId: string, amount: number) => Promise<{ success: boolean; error?: string }>;
   fetchBids: (auctionId: string) => Promise<void>;
   fetchMyBids: () => Promise<void>;
-  approveListing: (listingId: string) => Promise<void>;
-  rejectListing: (listingId: string, reason: string) => Promise<void>;
-  refreshListings: () => Promise<void>;
   toggleWatchlist: (auctionId: string) => Promise<void>;
   isWatched: (auctionId: string) => boolean;
 }
@@ -28,7 +24,6 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [auctionsLoaded, setAuctionsLoaded] = useState(false);
   const [bids, setBids] = useState<Record<string, Bid[]>>({});
-  const [pendingListings, setPendingListings] = useState<Listing[]>([]);
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const socketSetupRef = useRef(false);
 
@@ -146,26 +141,6 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshListings = useCallback(async () => {
-    if (user?.role !== 'ADMIN') return;
-    try {
-      const data = await api.get<Listing[]>('/listings/pending');
-      setPendingListings(data);
-    } catch {
-      setPendingListings([]);
-    }
-  }, [user?.role]);
-
-  const approveListing = async (listingId: string) => {
-    await api.post(`/listings/${listingId}/approve`);
-    setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
-  };
-
-  const rejectListing = async (listingId: string, reason: string) => {
-    await api.post(`/listings/${listingId}/reject`, { reason });
-    setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
-  };
-
   const toggleWatchlist = useCallback(async (auctionId: string) => {
     if (!user) return;
 
@@ -194,9 +169,8 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuctionContext.Provider value={{
-      auctions, auctionsLoaded, bids, pendingListings, watchlist,
+      auctions, auctionsLoaded, bids, watchlist,
       getAuction, placeBid, fetchBids, fetchMyBids,
-      approveListing, rejectListing, refreshListings,
       toggleWatchlist, isWatched,
     }}>
       {children}

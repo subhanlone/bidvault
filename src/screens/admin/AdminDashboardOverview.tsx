@@ -1,6 +1,6 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuction } from '../../context/AuctionContext';
+import { usePendingListings } from '../../hooks/usePendingListings';
 import { CheckCircle2, Smartphone, Car, Laptop, Gamepad2, Menu, Bell, Download, Plus, ChevronRight, Gavel, Banknote, BarChart3, Clock } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import StatCard from '../../components/ui/StatCard';
@@ -8,8 +8,8 @@ import StatCard from '../../components/ui/StatCard';
 function StatCardSkeleton() {
   return (
     <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
-      <div className="h-3 w-24 bg-[#e9ecef] rounded-md animate-pulse mb-3" />
-      <div className="h-8 w-16 bg-[#e9ecef] rounded-md animate-pulse" />
+      <div className="h-3 w-24 bg-border-light rounded-md animate-pulse mb-3" />
+      <div className="h-8 w-16 bg-border-light rounded-md animate-pulse" />
     </div>
   );
 }
@@ -26,14 +26,15 @@ const barData = [22, 35, 18, 42, 38, 55, 30, 48, 22, 60, 45, 38, 52, 40, 25, 65,
 
 export default function AdminDashboardOverview() {
   const navigate = useNavigate();
-  const { pendingListings } = useAuction();
+  const { pendingListings, refreshListings } = usePendingListings();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    void refreshListings();
     const timeoutId = setTimeout(() => setLoading(false), 400);
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [refreshListings]);
 
   const pendingCount = pendingListings.length;
 
@@ -60,7 +61,7 @@ export default function AdminDashboardOverview() {
         <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
           <div className="flex items-center gap-3">
             <button
-              className="md:hidden p-2 rounded-[6px] border border-border-light hover:bg-bg cursor-pointer"
+              className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={18} className="text-muted" />
@@ -71,16 +72,20 @@ export default function AdminDashboardOverview() {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="hidden sm:flex border border-[#dee2e6] gap-2 items-center px-4 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer">
+            <button className="hidden sm:flex border border-border-medium gap-2 items-center px-4 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <Download size={14} strokeWidth={2} /> Export
             </button>
-            <button className="bg-primary flex gap-2 items-center px-3 sm:px-4 py-2 rounded-sm text-[12px] sm:text-[13px] text-white hover:bg-primary-dark cursor-pointer">
+            <button className="bg-primary flex gap-2 items-center px-3 sm:px-4 py-2 rounded-sm text-[12px] sm:text-[13px] text-white hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
               <Plus size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">New Auction</span><span className="sm:hidden">New</span>
             </button>
-            <div className="relative cursor-pointer">
+            <button
+              type="button"
+              aria-label="Notifications"
+              className="relative cursor-pointer p-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
               <Bell size={20} strokeWidth={1.8} className="text-muted" />
-              <span className="absolute -top-1 -right-1 bg-primary rounded-full size-[8px]" />
-            </div>
+              <span className="absolute top-0 right-0 bg-primary rounded-full size-[8px]" />
+            </button>
           </div>
         </header>
 
@@ -92,37 +97,10 @@ export default function AdminDashboardOverview() {
               Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
             ) : (
               <>
-                <StatCard
-                  label="Active Auctions"
-                  value="24"
-                  trend="up"
-                  trendLabel="+3 Today"
-                  icon={<Gavel size={18} />}
-                  iconColor="info"
-                />
-                <StatCard
-                  label="Total Bids Today"
-                  value="1,847"
-                  trend="up"
-                  trendLabel="+10% vs last week"
-                  icon={<BarChart3 size={18} />}
-                  iconColor="success"
-                />
-                <StatCard
-                  label="Revenue Today"
-                  value="PKR 2.4M"
-                  trend="up"
-                  trendLabel="+8% vs yesterday"
-                  icon={<Banknote size={18} />}
-                  iconColor="success"
-                />
-                <StatCard
-                  label="Pending Listings"
-                  value={String(pendingCount)}
-                  trendLabel="Awaiting review"
-                  icon={<Clock size={18} />}
-                  iconColor="warning"
-                />
+                <StatCard label="Active Auctions" value="24" trend="up" trendLabel="+3 Today" icon={<Gavel size={18} />} iconColor="info" />
+                <StatCard label="Total Bids Today" value="1,847" trend="up" trendLabel="+10% vs last week" icon={<BarChart3 size={18} />} iconColor="success" />
+                <StatCard label="Revenue Today" value="PKR 2.4M" trend="up" trendLabel="+8% vs yesterday" icon={<Banknote size={18} />} iconColor="success" />
+                <StatCard label="Pending Listings" value={String(pendingCount)} trendLabel="Awaiting review" icon={<Clock size={18} />} iconColor="warning" />
               </>
             )}
           </div>
@@ -142,7 +120,7 @@ export default function AdminDashboardOverview() {
                 {barData.map((h, i) => (
                   <div key={i} className="flex-1 flex flex-col justify-end">
                     <div
-                      className={`rounded-t-[2px] ${i === 15 || i === 16 ? 'bg-primary' : 'bg-[#e9ecef]'}`}
+                      className={`rounded-t-xs ${i === 15 || i === 16 ? 'bg-primary' : 'bg-border-light'}`}
                       style={{ height: `${h}%` }}
                     />
                   </div>
@@ -160,10 +138,10 @@ export default function AdminDashboardOverview() {
               <h3 className="font-bold text-[13px] sm:text-[14px] text-navy mb-4">By Category</h3>
               <div className="flex flex-col gap-3">
                 {[
-                  { label: 'Electronics', pct: 45, color: '#d0021b' },
-                  { label: 'Vehicles', pct: 28, color: '#f59e0b' },
-                  { label: 'Clothing', pct: 15, color: '#3b82f6' },
-                  { label: 'Other', pct: 12, color: '#6c757d' },
+                  { label: 'Electronics', pct: 45, color: 'var(--color-primary)' },
+                  { label: 'Vehicles',    pct: 28, color: 'var(--color-gold)' },
+                  { label: 'Clothing',    pct: 15, color: '#3b82f6' },
+                  { label: 'Other',       pct: 12, color: 'var(--color-muted)' },
                 ].map(c => (
                   <div key={c.label} className="flex items-center gap-3">
                     <span className="font-medium text-[12px] text-tertiary w-[72px] sm:w-[80px]">{c.label}</span>
@@ -190,7 +168,7 @@ export default function AdminDashboardOverview() {
                       <p className="font-semibold text-[11px] text-secondary truncate">{b.title}</p>
                       <p className="font-bold text-[12px] text-navy">{b.amount}</p>
                     </div>
-                    {b.tag && <span className="bg-primary font-bold text-[9px] text-white px-2 py-[2px] rounded-[99px]">{b.tag}</span>}
+                    {b.tag && <span className="bg-primary font-bold text-[9px] text-white px-2 py-[2px] rounded-full">{b.tag}</span>}
                   </div>
                 ))}
               </div>
@@ -202,7 +180,7 @@ export default function AdminDashboardOverview() {
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div className="flex items-center gap-3 flex-wrap">
                 <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Pending Listings — Review Queue</h3>
-                <span className="bg-[#f59e0b] font-bold text-[10px] text-white px-2 py-[2px] rounded-[99px]">{pendingCount} Pending</span>
+                <span className="bg-gold font-bold text-[10px] text-white px-2 py-[2px] rounded-full">{pendingCount} Pending</span>
               </div>
             </div>
 
@@ -221,7 +199,7 @@ export default function AdminDashboardOverview() {
                     <div key={l.listingId}>
                       <div className="hidden sm:grid sm:grid-cols-[1fr_120px_100px_80px_100px] gap-3 items-center bg-bg rounded-sm px-3 py-3">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="bg-[#e9ecef] rounded-sm size-[36px] overflow-hidden shrink-0">
+                          <div className="bg-border-light rounded-sm size-[36px] overflow-hidden shrink-0">
                             {l.imageUrl
                               ? <img src={l.imageUrl} alt={l.title} className="w-full h-full object-cover" />
                               : <span className="flex items-center justify-center w-full h-full text-[16px]">{l.emoji}</span>
@@ -237,13 +215,13 @@ export default function AdminDashboardOverview() {
                         <p className="font-bold text-[12px] text-navy">{(l.startPrice / 1000).toFixed(0)}K</p>
                         <button
                           onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
-                          className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-primary-dark cursor-pointer"
+                          className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                         >
                           Review
                         </button>
                       </div>
                       <div className="sm:hidden bg-bg rounded-sm px-3 py-3 flex items-center gap-3">
-                        <div className="bg-[#e9ecef] rounded-sm size-[40px] overflow-hidden shrink-0">
+                        <div className="bg-border-light rounded-sm size-[40px] overflow-hidden shrink-0">
                           {l.imageUrl
                             ? <img src={l.imageUrl} alt={l.title} className="w-full h-full object-cover" />
                             : <span className="flex items-center justify-center w-full h-full text-[16px]">{l.emoji}</span>
@@ -255,7 +233,7 @@ export default function AdminDashboardOverview() {
                         </div>
                         <button
                           onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
-                          className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-[6px] hover:bg-primary-dark shrink-0 cursor-pointer"
+                          className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                         >
                           Review
                         </button>
@@ -271,7 +249,7 @@ export default function AdminDashboardOverview() {
           <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Reports — Quick Access</h3>
-              <button className="text-[12px] text-primary font-bold flex items-center gap-1 cursor-pointer">View All <ChevronRight size={12} /></button>
+              <button className="text-[12px] text-primary font-bold flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xs">View All <ChevronRight size={12} /></button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {['Revenue Report', 'Bid Analytics', 'User Activity', 'Seller Reports'].map(r => (

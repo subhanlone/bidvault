@@ -111,7 +111,7 @@ export default function SellerCreateListingStep1() {
                   <div className="relative">
                     <select
                       id="listing-category"
-                      className={`bg-surface border h-10 px-3 pr-9 rounded-lg text-sm text-secondary w-full outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] transition-shadow appearance-none cursor-pointer ${categoryError ? 'border-error' : 'border-border'}`}
+                      className={`bg-surface border h-10 px-3 pr-9 rounded-lg text-sm text-secondary w-full outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow appearance-none cursor-pointer ${categoryError ? 'border-error' : 'border-border'}`}
                       value={draft.category}
                       onChange={e => {
                         updateDraft({ category: e.target.value });
@@ -194,14 +194,14 @@ export default function SellerCreateListingStep1() {
                   <div className="bg-navy-mid rounded-lg h-16 flex items-center justify-center">
                     <Package size={22} strokeWidth={1.3} className="text-white/30" aria-hidden="true" />
                   </div>
-                  <label className="border-2 border-dashed border-[#dee2e6] rounded-lg h-16 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary transition-colors">
+                  <label className="border-2 border-dashed border-border-medium rounded-lg h-16 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary transition-colors">
                     <Upload size={14} className="text-placeholder" aria-hidden="true" />
                     <span className="text-[10px] text-placeholder">Add photo</span>
                   </label>
                 </div>
               </>
             ) : (
-              <label className="border-2 border-dashed border-[#dee2e6] rounded-md w-full h-48 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary hover:bg-primary-surface transition-colors">
+              <label className="border-2 border-dashed border-border-medium rounded-md w-full h-48 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary hover:bg-primary-surface transition-colors">
                 <Upload size={26} className="text-placeholder" aria-hidden="true" />
                 <p className="text-sm font-semibold text-muted">Upload photos</p>
                 <p className="text-[11px] text-placeholder">PNG or JPG · Max 10MB each</p>

@@ -24,7 +24,7 @@ export default function NotFound() {
 
       {/* Glow orbs */}
       <div className="absolute top-[-80px] left-[-80px] w-[400px] h-[400px] bg-primary opacity-[0.06] rounded-full blur-[100px]" />
-      <div className="absolute bottom-[-80px] right-[-80px] w-[400px] h-[400px] bg-[#1a7a4a] opacity-[0.05] rounded-full blur-[100px]" />
+      <div className="absolute bottom-[-80px] right-[-80px] w-[400px] h-[400px] bg-success-dark opacity-[0.05] rounded-full blur-[100px]" />
 
       <div className="relative z-10 text-center max-w-[560px] mx-auto">
         {/* Brand */}

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
@@ -15,6 +15,33 @@ interface BidEntry {
   myHighestBid: number;
   myBidCount: number;
   isWinning: boolean;
+}
+
+function BidCardSkeleton() {
+  return (
+    <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+      <div className="flex items-stretch">
+        <div className="bg-border-light w-[80px] sm:w-[110px] shrink-0 animate-pulse" style={{ minHeight: 90 }} />
+        <div className="flex-1 p-3 sm:p-4">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="h-4 w-3/5 bg-border-light rounded animate-pulse" />
+            <div className="h-5 w-16 bg-border-light rounded-full animate-pulse" />
+          </div>
+          <div className="flex gap-4 mb-3">
+            <div>
+              <div className="h-3 w-20 bg-border-light rounded animate-pulse mb-1" />
+              <div className="h-5 w-24 bg-border-light rounded animate-pulse" />
+            </div>
+            <div>
+              <div className="h-3 w-20 bg-border-light rounded animate-pulse mb-1" />
+              <div className="h-5 w-24 bg-border-light rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="h-8 w-28 bg-border-light rounded-sm animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function BidCard({ entry }: { entry: BidEntry }) {
@@ -44,7 +71,7 @@ function BidCard({ entry }: { entry: BidEntry }) {
         <div className="flex-1 p-3 sm:p-4 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2 flex-wrap">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-navy leading-tight line-clamp-1">{auction.title}</h3>
-            <span className={`font-bold text-[10px] sm:text-[11px] px-2 py-[3px] rounded-[99px] border flex items-center gap-1 ${statusConfig.bg} ${statusConfig.border} ${statusConfig.text} shrink-0`}>
+            <span className={`font-bold text-[10px] sm:text-[11px] px-2 py-[3px] rounded-full border flex items-center gap-1 ${statusConfig.bg} ${statusConfig.border} ${statusConfig.text} shrink-0`}>
               {statusConfig.icon}{statusConfig.label}
             </span>
           </div>
@@ -69,10 +96,10 @@ function BidCard({ entry }: { entry: BidEntry }) {
           {!isEnded && (
             <button
               onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
-              className={`font-bold text-[12px] px-3 sm:px-4 py-[7px] sm:py-2 rounded-[7px] transition-colors cursor-pointer ${
+              className={`font-bold text-[12px] px-3 sm:px-4 py-[7px] sm:py-2 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                 status === 'outbid'
                   ? 'bg-primary text-white hover:bg-primary-dark'
-                  : 'border border-[#dee2e6] text-tertiary hover:bg-bg'
+                  : 'border border-border-medium text-tertiary hover:bg-bg'
               }`}
             >
               {status === 'outbid' ? 'Bid Again →' : 'View Live Auction'}
@@ -91,9 +118,12 @@ export default function BuyerMyBids() {
   const { user, logout } = useAuth();
   const { auctions, bids, fetchMyBids } = useAuction();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(INITIAL_NOW);
 
-  useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
+  useEffect(() => {
+    fetchMyBids().finally(() => setLoading(false));
+  }, [fetchMyBids]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => setNow(Date.now()), 0);
@@ -135,7 +165,7 @@ export default function BuyerMyBids() {
             <h1 className="font-extrabold text-[20px] sm:text-[22px] text-navy">My Bids</h1>
             <p className="text-[13px] text-muted mt-0.5">All auctions you've placed bids on</p>
           </div>
-          {myBidEntries.length > 0 && (
+          {!loading && myBidEntries.length > 0 && (
             <div className="flex gap-2 sm:gap-3">
               {[
                 { val: activeCount, label: 'Active', color: 'text-navy' },
@@ -151,7 +181,11 @@ export default function BuyerMyBids() {
           )}
         </div>
 
-        {myBidEntries.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <BidCardSkeleton key={i} />)}
+          </div>
+        ) : myBidEntries.length === 0 ? (
           <div className="bg-surface border border-border-light rounded-lg flex flex-col items-center justify-center py-14 sm:py-16 px-6 text-center">
             <div className="flex justify-center mb-4"><Hammer size={48} strokeWidth={1.3} className="text-placeholder" /></div>
             <h2 className="font-bold text-[17px] sm:text-[18px] text-navy mb-2">No bids yet</h2>

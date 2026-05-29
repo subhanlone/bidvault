@@ -18,9 +18,9 @@ export default function ToastContainer() {
             pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-md
             shadow-[0px_8px_24px_rgba(0,0,0,0.25)] min-w-[300px] max-w-[370px]
             animate-toast-in
-            ${t.type === 'success' ? 'bg-[#1a7a4a]'
+            ${t.type === 'success' ? 'bg-success-dark'
               : t.type === 'error' ? 'bg-primary'
-              : t.type === 'warning' ? 'bg-[#d97706]'
+              : t.type === 'warning' ? 'bg-gold'
               : 'bg-navy'}
           `}
         >

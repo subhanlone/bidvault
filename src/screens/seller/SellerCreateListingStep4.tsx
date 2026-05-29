@@ -57,7 +57,7 @@ export default function SellerCreateListingStep4() {
     <div className="min-h-screen bg-bg">
       <ListingStepperHeader currentStep={2} />
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         <h1 className="text-xl font-extrabold text-navy mb-1">Review Your Listing</h1>
         <p className="text-sm text-muted mb-5">Check all details before submitting to admin for review.</p>
 
@@ -67,7 +67,7 @@ export default function SellerCreateListingStep4() {
             { label: 'Auction Setup' },
             { label: 'Review & Submit' },
           ]}
-          currentStep={3}
+          currentStep={2}
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
@@ -124,7 +124,7 @@ export default function SellerCreateListingStep4() {
           </div>
         </div>
 
-        <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3 mt-5">
+        <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3 mt-5">
           <Info size={15} className="text-info flex-shrink-0 mt-0.5" />
           <p className="text-xs text-info leading-relaxed">
             After submission, admin will review your listing within <span className="font-bold">24–48 hours</span>. You'll be notified by email once it's approved.

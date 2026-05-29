@@ -18,7 +18,7 @@ function StepTracker({ step }: { step: Step }) {
         return (
           <div key={label} className="flex flex-1 flex-col gap-1.5 items-center relative">
             {i < steps.length - 1 && (
-              <div className={`absolute h-0.5 left-1/2 right-[-50%] top-[14px] ${done ? 'bg-primary' : 'bg-[#e9ecef]'}`} />
+              <div className={`absolute h-0.5 left-1/2 right-[-50%] top-[14px] ${done ? 'bg-primary' : 'bg-border-light'}`} />
             )}
             <div className={`flex items-center justify-center rounded-full w-7 h-7 border-2 z-10 ${
               done   ? 'bg-primary-surface border-primary' :
@@ -260,7 +260,7 @@ export default function ForgotPasswordScreen() {
                     className={`w-12 h-14 rounded-lg text-center font-extrabold text-2xl border outline-none transition-all ${
                       val
                         ? 'bg-primary-surface border-primary text-primary-dark'
-                        : 'bg-bg border-border-light text-secondary focus:border-primary focus:shadow-[0_0_0_3px_rgba(208,2,27,0.08)] focus:bg-surface'
+                        : 'bg-bg border-border-light text-secondary focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary'
                     }`}
                   />
                 ))}
@@ -271,9 +271,9 @@ export default function ForgotPasswordScreen() {
               )}
             </div>
 
-            <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3">
-              <Info size={15} className="text-info flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-info leading-relaxed">Code is valid for <span className="font-bold">10 minutes</span>. Check your spam folder if not found.</p>
+            <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3">
+              <Info size={15} className="text-info-text flex-shrink-0 mt-0.5" />
+              <p className="text-[12px] text-info-text leading-relaxed">Code is valid for <span className="font-bold">10 minutes</span>. Check your spam folder if not found.</p>
             </div>
 
             <Button type="submit" variant="primary" fullWidth size="lg" loading={loading} disabled={otp.join('').length < 6}>
@@ -334,7 +334,7 @@ export default function ForgotPasswordScreen() {
                   <span className="text-[11px] font-semibold text-muted">Password strength</span>
                   <span className={`text-[11px] font-semibold ${pwLabelClass}`}>{pwLabel}</span>
                 </div>
-                <div className="h-1 bg-[#e9ecef] rounded-full overflow-hidden">
+                <div className="h-1 bg-border-light rounded-full overflow-hidden">
                   <div className={`h-full rounded-full transition-all duration-300 ${pwBarClass}`} style={{ width: pwWidth }} />
                 </div>
               </div>
@@ -356,9 +356,9 @@ export default function ForgotPasswordScreen() {
               error={confirmPwError}
             />
 
-            <div className="flex gap-2.5 items-start bg-[#eff6ff] border border-info-border rounded-lg px-4 py-3">
-              <Info size={15} className="text-info flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-info leading-relaxed">Must be <span className="font-bold">8+ characters</span> long and match the confirm field.</p>
+            <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3">
+              <Info size={15} className="text-info-text flex-shrink-0 mt-0.5" />
+              <p className="text-[12px] text-info-text leading-relaxed">Must be <span className="font-bold">8+ characters</span> long and match the confirm field.</p>
             </div>
 
             <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>

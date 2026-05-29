@@ -80,7 +80,7 @@ export default function SellerListingSubmitted() {
           <Button variant="outline" fullWidth onClick={() => navigate('/seller/dashboard')}>
             View Dashboard
           </Button>
-          <Button variant="primary" fullWidth onClick={handleCreateAnother}>
+          <Button variant="primary" fullWidth onClick={handleCreateAnother} className="whitespace-nowrap">
             Create Another Listing
           </Button>
         </div>

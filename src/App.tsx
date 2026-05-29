@@ -38,7 +38,7 @@ const BuyerConfirmBid = lazy(() => import('./screens/buyer/BuyerConfirmBid'));
 const BuyerAuctionWon = lazy(() => import('./screens/buyer/BuyerAuctionWon'));
 const BuyerMyWins = lazy(() => import('./screens/buyer/BuyerMyWins'));
 const BuyerProfile = lazy(() => import('./screens/buyer/BuyerProfile'));
-const BuyerToastNotifications = lazy(() => import('./screens/buyer/BuyerToastNotifications'));
+
 
 export default function App() {
   return (
@@ -97,11 +97,6 @@ export default function App() {
                   <Route path="/admin/settings" element={
                     <ProtectedRoute allowedRoles={['ADMIN']}>
                       <AdminSettings />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/toast-notifications" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <BuyerToastNotifications />
                     </ProtectedRoute>
                   } />
 

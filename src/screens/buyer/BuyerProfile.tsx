@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingUp, Eye, EyeOff, Bell, BellOff, Search, Hammer } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -37,9 +37,9 @@ export default function BuyerProfile() {
 
   const stats = [
     { label: 'Total Bids', value: myBids.length, icon: <Gavel size={18} strokeWidth={1.8} className="text-primary" />, bg: 'bg-primary-surface' },
-    { label: 'Auctions Won', value: auctionsWon, icon: <Trophy size={18} strokeWidth={1.8} className="text-gold" />, bg: 'bg-[#fffbeb]' },
+    { label: 'Auctions Won', value: auctionsWon, icon: <Trophy size={18} strokeWidth={1.8} className="text-gold" />, bg: 'bg-warning-surface' },
     { label: 'Watchlist Items', value: watchlistCount, icon: <Heart size={18} strokeWidth={1.8} className="text-success-dark" />, bg: 'bg-success-bg' },
-    { label: 'Total Bid Value', value: `PKR ${(totalBidAmount / 1000).toFixed(0)}K`, icon: <TrendingUp size={18} strokeWidth={1.8} className="text-navy" />, bg: 'bg-[#f0f4ff]' },
+    { label: 'Total Bid Value', value: `PKR ${(totalBidAmount / 1000).toFixed(0)}K`, icon: <TrendingUp size={18} strokeWidth={1.8} className="text-navy" />, bg: 'bg-info-card-bg' },
   ];
 
   const quickLinks = [
@@ -67,7 +67,7 @@ export default function BuyerProfile() {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <h1 className="font-extrabold text-[22px] sm:text-[26px] text-white tracking-[-0.3px]">{user?.name ?? 'Buyer'}</h1>
-                  <span className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] font-bold text-[10px] text-[#4ade80] px-2 py-[3px] rounded-[99px] flex items-center gap-1">
+                  <span className="bg-[rgba(26,122,74,0.2)] border border-[rgba(26,122,74,0.4)] font-bold text-[10px] text-verified px-2 py-[3px] rounded-full flex items-center gap-1">
                     <Shield size={9} strokeWidth={2.5} /> Verified Buyer
                   </span>
                 </div>
@@ -82,7 +82,7 @@ export default function BuyerProfile() {
               </div>
               <button
                 onClick={logout}
-                className="shrink-0 border border-[rgba(255,255,255,0.18)] font-semibold text-[13px] text-[rgba(255,255,255,0.6)] px-4 py-2 rounded-sm hover:border-primary hover:text-[#ff6b7a] transition-colors cursor-pointer"
+                className="shrink-0 border border-[rgba(255,255,255,0.18)] font-semibold text-[13px] text-[rgba(255,255,255,0.6)] px-4 py-2 rounded-sm hover:border-primary hover:text-primary-tint transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
               >
                 Sign Out
               </button>
@@ -150,13 +150,13 @@ export default function BuyerProfile() {
                     <Link to="/buyer/browse" className="mt-3 font-bold text-[12px] text-primary hover:underline">Browse Auctions →</Link>
                   </div>
                 ) : (
-                  <div className="flex flex-col divide-y divide-[#f8f9fa]">
+                  <div className="flex flex-col divide-y divide-bg">
                     {myBids.slice(0, 5).map(bid => {
                       const auction = auctions.find(a => a.auctionId === bid.auctionId);
                       return (
                         <button
                           key={bid.bidId}
-                          className="flex items-center gap-3 px-5 py-3 hover:bg-bg transition-colors text-left w-full cursor-pointer"
+                          className="flex items-center gap-3 px-5 py-3 hover:bg-bg transition-colors text-left w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                           onClick={() => auction && navigate(`/buyer/live-bidding/${auction.auctionId}`)}
                           disabled={!auction}
                         >
@@ -194,7 +194,7 @@ export default function BuyerProfile() {
                     <Link
                       key={l.label}
                       to={l.to}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-bg transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-bg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                     >
                       {l.icon}
                       <span className="font-semibold text-[13px] text-secondary">{l.label}</span>
@@ -217,7 +217,7 @@ export default function BuyerProfile() {
                   ].map(n => (
                     <div key={n.label} className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2">
-                        {n.value ? <Bell size={14} strokeWidth={2} className="text-success-dark mt-[2px] shrink-0" /> : <BellOff size={14} strokeWidth={2} className="text-placeholder mt-[2px] shrink-0" />}
+                        {n.value ? <Bell size={14} strokeWidth={2} className="text-primary mt-[2px] shrink-0" /> : <BellOff size={14} strokeWidth={2} className="text-placeholder mt-[2px] shrink-0" />}
                         <div>
                           <p className="font-semibold text-[12px] text-secondary">{n.label}</p>
                           <p className="text-[11px] text-placeholder">{n.sub}</p>
@@ -225,7 +225,8 @@ export default function BuyerProfile() {
                       </div>
                       <button
                         onClick={() => n.set(v => !v)}
-                        className={`shrink-0 w-[38px] h-[22px] rounded-full transition-colors relative cursor-pointer ${n.value ? 'bg-[#1a7a4a]' : 'bg-[#dee2e6]'}`}
+                        aria-label={`Toggle ${n.label}`}
+                        className={`shrink-0 w-[38px] h-[22px] rounded-full transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${n.value ? 'bg-success-dark' : 'bg-border-medium'}`}
                       >
                         <span className={`absolute top-[3px] size-[16px] rounded-full bg-surface shadow transition-transform ${n.value ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
                       </button>
@@ -243,7 +244,7 @@ export default function BuyerProfile() {
                   {!showPwForm ? (
                     <button
                       onClick={() => setShowPwForm(true)}
-                      className="w-full border border-[#dee2e6] font-semibold text-[13px] text-tertiary py-2.5 rounded-sm hover:bg-bg hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                      className="w-full border border-border-medium font-semibold text-[13px] text-tertiary py-2.5 rounded-sm hover:bg-bg hover:border-primary hover:text-primary transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       Change Password
                     </button>
@@ -308,10 +309,10 @@ export default function BuyerProfile() {
                     </div>
                   )}
 
-                  <div className="mt-4 pt-4 border-t border-[#f8f9fa]">
+                  <div className="mt-4 pt-4 border-t border-bg">
                     <button
                       onClick={logout}
-                      className="w-full text-left font-semibold text-[12px] text-[#ef4444] hover:underline cursor-pointer"
+                      className="w-full text-left font-semibold text-[12px] text-destructive hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
                     >
                       Sign out of all devices →
                     </button>

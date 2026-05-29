@@ -49,13 +49,13 @@ export function BuyerNav({ active = '' }: { active?: string }) {
           <button onClick={logout} className="font-semibold text-[12px] text-[rgba(255,255,255,0.45)] hover:text-white ml-1 transition-colors">Logout</button>
         </div>
 
-        <button className="md:hidden p-2 rounded-[6px] hover:bg-[rgba(255,255,255,0.08)]" onClick={() => setMenuOpen(o => !o)}>
+        <button className="md:hidden p-2 rounded-sm hover:bg-[rgba(255,255,255,0.08)]" onClick={() => setMenuOpen(o => !o)}>
           {menuOpen ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
         </button>
       </div>
 
       {menuOpen && (
-        <div className="md:hidden bg-[#0d2545] border-t border-[rgba(255,255,255,0.08)] px-4 py-4 flex flex-col gap-1">
+        <div className="md:hidden bg-navy-dark border-t border-[rgba(255,255,255,0.08)] px-4 py-4 flex flex-col gap-1">
           {NAV_ITEMS.map(item =>
             item.label === active
               ? <span key={item.label} className="font-semibold text-[14px] text-white py-2">{item.mobileLabel}</span>

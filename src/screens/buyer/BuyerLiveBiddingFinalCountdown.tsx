@@ -132,9 +132,9 @@ export default function BuyerLiveBiddingFinalCountdown() {
               </span>
             </p>
             {isHighest && (
-              <div className="mb-3 bg-success-bg border border-[rgba(26,122,74,0.3)] px-3 py-2 rounded-sm flex items-center gap-2">
-                <div className="bg-[rgba(26,122,74,0.15)] border border-[rgba(26,122,74,0.3)] rounded-full p-[2px] shrink-0">
-                  <Check size={10} color="#1a7a4a" strokeWidth={3} />
+              <div className="mb-3 bg-success-bg border border-success-border px-3 py-2 rounded-sm flex items-center gap-2">
+                <div className="bg-success-bg border border-success-border rounded-full p-[2px] shrink-0">
+                  <Check size={10} className="text-success-dark" strokeWidth={3} />
                 </div>
                 <p className="font-bold text-[12px] text-success-dark">You are the highest bidder!</p>
               </div>
@@ -169,7 +169,7 @@ export default function BuyerLiveBiddingFinalCountdown() {
                   <span className="font-bold text-[12px] text-secondary">{b.buyerName === user?.name ? `${b.buyerName} (You)` : b.buyerName}</span>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-[13px] text-secondary">PKR {b.amount.toLocaleString()}</span>
-                    {i === 0 && <span className="bg-primary text-white text-[10px] font-bold px-2 py-[1px] rounded-[99px]">Highest</span>}
+                    {i === 0 && <span className="bg-primary text-white text-[10px] font-bold px-2 py-[1px] rounded-full">Highest</span>}
                   </div>
                 </div>
               ))}

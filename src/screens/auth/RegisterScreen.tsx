@@ -108,10 +108,10 @@ export default function RegisterScreen() {
                   className={`relative rounded-md h-[110px] border-2 text-left transition-all cursor-pointer p-4 ${sel ? 'bg-primary-surface border-primary' : 'bg-bg border-border-light hover:border-primary'}`}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${sel ? 'bg-primary/12' : 'bg-[#e9ecef]'}`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${sel ? 'bg-primary/12' : 'bg-border-light'}`}>
                       <Icon size={16} className={sel ? 'text-primary' : 'text-muted'} />
                     </div>
-                    <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${sel ? 'border-primary' : 'border-[#dee2e6]'}`}>
+                    <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${sel ? 'border-primary' : 'border-border-medium'}`}>
                       {sel && <div className="w-2 h-2 rounded-full bg-primary" />}
                     </div>
                   </div>
@@ -169,7 +169,7 @@ export default function RegisterScreen() {
                 <span className="text-[11px] font-semibold text-muted">Password strength</span>
                 <span className={`text-[11px] font-semibold ${pwLabelClass}`}>{pwLabel}</span>
               </div>
-              <div className="h-1 bg-[#e9ecef] rounded-full overflow-hidden">
+              <div className="h-1 bg-border-light rounded-full overflow-hidden">
                 <div className={`h-full rounded-full transition-all duration-300 ${pwBarClass}`} style={{ width: pwWidth }} />
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function RegisterScreen() {
             <button
               type="button"
               onClick={() => { setAgree(p => !p); clearError('agree'); }}
-              className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center flex-shrink-0 mt-px transition-colors cursor-pointer ${agree ? 'bg-primary border-primary' : 'bg-surface border-[#dee2e6]'}`}
+              className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center flex-shrink-0 mt-px transition-colors cursor-pointer ${agree ? 'bg-primary border-primary' : 'bg-surface border-border-medium'}`}
             >
               {agree && <svg viewBox="0 0 10 8" className="w-2.5 h-2 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1" /></svg>}
             </button>

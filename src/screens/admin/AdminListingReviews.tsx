@@ -1,12 +1,12 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuction } from '../../context/AuctionContext';
+import { usePendingListings } from '../../hooks/usePendingListings';
 import { CheckCircle2, ClipboardList, Menu } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
-  const { pendingListings, refreshListings } = useAuction();
+  const { pendingListings, refreshListings } = usePendingListings();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => { refreshListings(); }, [refreshListings]);
@@ -15,13 +15,9 @@ export default function AdminListingReviews() {
 
   return (
     <div className="flex min-h-screen bg-bg">
-
-      {/* Desktop sidebar */}
       <div className="hidden md:block md:w-[200px] md:shrink-0">
         <AdminSidebarContent active="Listing Review" />
       </div>
-
-      {/* Mobile sidebar drawer */}
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <AdminSidebarContent active="Listing Review" onClose={() => setSidebarOpen(false)} />
@@ -30,12 +26,10 @@ export default function AdminListingReviews() {
       )}
 
       <main className="flex-1 flex flex-col min-w-0">
-
-        {/* Top bar */}
         <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
           <div className="flex items-center gap-3">
             <button
-              className="md:hidden p-2 rounded-[6px] border border-border-light hover:bg-bg"
+              className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={18} className="text-muted" />
@@ -48,26 +42,24 @@ export default function AdminListingReviews() {
             </div>
           </div>
           {pendingCount > 0 && (
-            <span className="bg-[#fff3cd] border border-warning-border font-bold text-[12px] text-warning px-3 py-1 rounded-[99px]">
+            <span className="bg-warning-badge-bg border border-warning-border font-bold text-[12px] text-warning px-3 py-1 rounded-full">
               {pendingCount} Pending
             </span>
           )}
         </header>
 
         <div className="flex-1 p-4 sm:p-6">
-
           {pendingCount === 0 ? (
-            <div className="bg-surface border border-border-light rounded-md flex flex-col items-center justify-center py-20 px-6 text-center">
+            <div className="bg-surface border border-border-light rounded-md flex flex-col items-center justify-center py-16 px-6 text-center">
               <CheckCircle2 size={48} strokeWidth={1.3} className="text-success-dark mb-4" />
               <h2 className="font-bold text-[17px] text-navy mb-2">All caught up!</h2>
               <p className="text-[13px] text-muted">No pending listings to review right now.</p>
             </div>
           ) : (
             <div className="bg-surface border border-border-light rounded-md overflow-hidden">
-              {/* Table header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
                 <div className="flex items-center gap-3">
-                  <div className="bg-[#fff3cd] flex items-center justify-center rounded-sm size-[36px]">
+                  <div className="bg-warning-badge-bg flex items-center justify-center rounded-sm size-[36px]">
                     <ClipboardList size={18} strokeWidth={1.8} className="text-warning" />
                   </div>
                   <div>
@@ -77,21 +69,14 @@ export default function AdminListingReviews() {
                 </div>
               </div>
 
-              {/* Desktop column headers */}
-              <div className="hidden sm:grid sm:grid-cols-[40px_1fr_130px_110px_80px_110px] gap-3 px-5 py-3 text-[11px] text-placeholder font-bold uppercase tracking-[0.5px] border-b border-[#f8f9fa]">
-                <span />
-                <span>Item</span>
-                <span>Seller</span>
-                <span>Category</span>
-                <span>Price</span>
-                <span>Action</span>
+              <div className="hidden sm:grid sm:grid-cols-[40px_1fr_130px_110px_80px_110px] gap-3 px-5 py-3 text-[11px] text-placeholder font-bold uppercase tracking-[0.5px] border-b border-bg">
+                <span /><span>Item</span><span>Seller</span><span>Category</span><span>Price</span><span>Action</span>
               </div>
 
-              <div className="flex flex-col divide-y divide-[#f8f9fa]">
+              <div className="flex flex-col divide-y divide-bg">
                 {pendingListings.map((l, idx) => (
                   <div key={l.listingId}>
-                    {/* Desktop row */}
-                    <div className="hidden sm:grid sm:grid-cols-[40px_1fr_130px_110px_80px_110px] gap-3 items-center px-5 py-4 hover:bg-[#fafafa] transition-colors">
+                    <div className="hidden sm:grid sm:grid-cols-[40px_1fr_130px_110px_80px_110px] gap-3 items-center px-5 py-4 hover:bg-surface-hover transition-colors">
                       <span className="text-[12px] text-placeholder font-bold">{idx + 1}</span>
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="bg-bg rounded-sm size-[38px] overflow-hidden shrink-0">
@@ -110,15 +95,14 @@ export default function AdminListingReviews() {
                       <p className="font-bold text-[13px] text-navy">PKR {(l.startPrice / 1000).toFixed(0)}K</p>
                       <button
                         onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
-                        className="bg-primary font-bold text-[11px] text-white px-3 py-[6px] rounded-[6px] hover:bg-primary-dark transition-colors w-fit"
+                        className="bg-primary font-bold text-[11px] text-white px-3 py-[6px] rounded-sm hover:bg-primary-dark transition-colors w-fit cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                       >
                         Review →
                       </button>
                     </div>
 
-                    {/* Mobile card */}
                     <div
-                      className="sm:hidden flex items-center gap-3 px-4 py-3 hover:bg-[#fafafa] transition-colors cursor-pointer"
+                      className="sm:hidden flex items-center gap-3 px-4 py-3 hover:bg-surface-hover transition-colors cursor-pointer"
                       onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
                     >
                       <span className="text-[11px] text-placeholder font-bold w-5 shrink-0">{idx + 1}</span>
