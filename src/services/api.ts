@@ -68,7 +68,9 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
 
   let resp = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  if (resp.status === 401) {
+  // Only attempt token refresh if the user had an active session.
+  // A 401 with no stored token means wrong credentials, not an expired session.
+  if (resp.status === 401 && stored?.accessToken) {
     if (!refreshPromise) {
       refreshPromise = refreshAccessToken().finally(() => { refreshPromise = null; });
     }
