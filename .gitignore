@@ -26,3 +26,9 @@ dist-ssr
 .vercel
 .planning
 .kiro
+
+# Playwright
+playwright-report/
+test-results/
+e2e/.auth/
+.env.test
