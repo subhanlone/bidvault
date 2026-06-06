@@ -79,8 +79,10 @@ export default function SellerCreateListingStep3() {
               <button onClick={() => navigate('/seller/create-listing/step-1')} className="text-xs font-bold text-primary hover:underline cursor-pointer">Edit</button>
             </div>
             <div className="p-5">
-              <div className="bg-navy rounded-md h-40 flex items-center justify-center mb-4">
-                {draft.category?.includes('Electronics')
+              <div className="bg-navy rounded-md h-40 flex items-center justify-center mb-4 overflow-hidden">
+                {draft.imageUrl
+                  ? <img src={draft.imageUrl} alt={draft.title} className="w-full h-full object-cover" />
+                  : draft.category?.includes('Electronics')
                   ? <Smartphone size={52} strokeWidth={1.2} className="text-white/40" aria-hidden="true" />
                   : draft.category?.includes('Vehicles')
                   ? <Car size={52} strokeWidth={1.2} className="text-white/40" aria-hidden="true" />
