@@ -33,6 +33,7 @@ export interface Listing {
   submittedAt: string;
   emoji: string;
   imageUrl?: string;
+  sellerEmail?: string;
 }
 
 export interface Auction {
@@ -85,7 +86,7 @@ export interface ListingDraft {
   category: string;
   condition: ItemCondition | '';
   description: string;
-  hasPhoto: boolean;
+  imageUrl: string;
   startDate: string;
   startTime: string;
   duration: number;

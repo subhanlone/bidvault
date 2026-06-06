@@ -7,6 +7,7 @@ import { useAuth } from './AuthContext';
 interface AuctionContextType {
   auctions: Auction[];
   auctionsLoaded: boolean;
+  auctionsError: boolean;
   bids: Record<string, Bid[]>;
   watchlist: string[];
   getAuction: (id: string) => Auction | undefined;
@@ -23,16 +24,20 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [auctionsLoaded, setAuctionsLoaded] = useState(false);
+  const [auctionsError, setAuctionsError] = useState(false);
   const [bids, setBids] = useState<Record<string, Bid[]>>({});
   const [watchlist, setWatchlist] = useState<string[]>([]);
   const socketSetupRef = useRef(false);
 
-  // Fetch all auctions on mount
+  // Fetch only ACTIVE auctions on mount (BA-09)
   useEffect(() => {
-    api.get<Auction[]>('/auctions').then(data => {
+    api.get<Auction[]>('/auctions?status=ACTIVE').then(data => {
       setAuctions(data);
       setAuctionsLoaded(true);
-    }).catch(() => { setAuctionsLoaded(true); });
+    }).catch(() => {
+      setAuctionsLoaded(true);
+      setAuctionsError(true);  // BA-10: distinguish network error from empty results
+    });
   }, []);
 
   // Sync watchlist from backend when user logs in
@@ -44,7 +49,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
     api.get<Array<{ auctionId: string }>>('/watchlist').then(data => {
       setWatchlist(data.map(item => item.auctionId));
     }).catch(() => {});
-  }, [user?.userId]);
+  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Global Socket.IO bid:placed listener
   useEffect(() => {
@@ -169,7 +174,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuctionContext.Provider value={{
-      auctions, auctionsLoaded, bids, watchlist,
+      auctions, auctionsLoaded, auctionsError, bids, watchlist,
       getAuction, placeBid, fetchBids, fetchMyBids,
       toggleWatchlist, isWatched,
     }}>

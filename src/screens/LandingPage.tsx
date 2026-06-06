@@ -1,15 +1,42 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
 import { useTimer } from '../hooks/useTimer';
 import type { Auction } from '../types';
 import { Button } from '../components/ui';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
-// ─── Auction card with live timer ─────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function scrollToSection(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M+`;
+  if (n >= 1_000) return `${Math.floor(n / 1_000)}K+`;
+  return `${n}`;
+}
+
+function formatCurrency(n: number): string {
+  if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M+`;
+  if (n >= 1_000) return `PKR ${Math.floor(n / 1_000)}K+`;
+  return `PKR ${n.toLocaleString()}`;
+}
+
+// ─── Featured auction card with live timer ───────────────────────────────────
 function FeaturedCard({ auction }: { auction: Auction }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const timer = useTimer(auction.endTime);
+
+  function handleBidNow() {
+    if (user) {
+      navigate(`/buyer/live-bidding/${auction.auctionId}`);
+    } else {
+      navigate('/login');
+    }
+  }
 
   return (
     <div className="bg-surface border border-border-light rounded-lg overflow-hidden hover:shadow-[0_8px_32px_rgba(11,31,58,0.12)] hover:-translate-y-1 transition-all duration-200 flex flex-col">
@@ -27,7 +54,9 @@ function FeaturedCard({ auction }: { auction: Auction }) {
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-2">
           <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
-          <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.condition === 'LIKE_NEW' ? 'Like New' : auction.condition === 'NEW' ? 'New' : 'Used'}</span>
+          <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">
+            {auction.condition === 'LIKE_NEW' ? 'Like New' : auction.condition === 'NEW' ? 'New' : 'Used'}
+          </span>
         </div>
         <h3 className="font-bold text-[14px] text-navy mb-3 leading-[20px] line-clamp-2">{auction.title}</h3>
         <div className="flex items-end justify-between mt-auto">
@@ -39,7 +68,7 @@ function FeaturedCard({ auction }: { auction: Auction }) {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate('/login')}
+            onClick={handleBidNow}
             className="text-[13px]"
           >
             Bid Now →
@@ -50,24 +79,73 @@ function FeaturedCard({ auction }: { auction: Auction }) {
   );
 }
 
+// ─── Loading skeleton card ────────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="bg-surface border border-border-light rounded-lg overflow-hidden flex flex-col animate-pulse">
+      <div className="h-[160px] sm:h-[180px] bg-surface-raised" />
+      <div className="p-4 flex flex-col gap-3">
+        <div className="flex gap-2">
+          <div className="h-5 w-16 bg-surface-raised rounded-full" />
+          <div className="h-5 w-14 bg-surface-raised rounded-full" />
+        </div>
+        <div className="h-4 w-3/4 bg-surface-raised rounded" />
+        <div className="h-4 w-1/2 bg-surface-raised rounded" />
+        <div className="flex justify-between items-end mt-2">
+          <div className="space-y-1">
+            <div className="h-3 w-16 bg-surface-raised rounded" />
+            <div className="h-6 w-24 bg-surface-raised rounded" />
+          </div>
+          <div className="h-8 w-20 bg-surface-raised rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'buyers' | 'sellers'>('buyers');
   const [featured, setFeatured] = useState<Auction[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [liveStats, setLiveStats] = useState<{ userCount: number; activeAuctionCount: number; transactionTotal: number } | null>(null);
 
   useEffect(() => {
     api.get<Auction[]>('/auctions?status=ACTIVE').then(data => {
       setFeatured(data.slice(0, 3));
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setFeaturedLoading(false));
+  }, []);
+
+  useEffect(() => {
+    api.get<{ userCount: number; activeAuctionCount: number; transactionTotal: number }>('/stats')
+      .then(data => setLiveStats(data))
+      .catch(() => {});
   }, []);
 
   const stats = [
-    { value: '2,400+', label: 'Active Auctions', icon: <Gavel size={28} strokeWidth={1.6} className="text-primary" /> },
-    { value: '18,000+', label: 'Registered Users', icon: <Users size={28} strokeWidth={1.6} className="text-navy" /> },
-    { value: 'PKR 850M+', label: 'in Transactions', icon: <Banknote size={28} strokeWidth={1.6} className="text-success-dark" /> },
-    { value: '4.9 / 5', label: 'Buyer Satisfaction', icon: <Star size={28} strokeWidth={1.6} className="text-gold" fill="currentColor" /> },
+    {
+      value: liveStats ? `${formatCount(liveStats.activeAuctionCount)}` : '—',
+      label: 'Active Auctions',
+      icon: <Gavel size={28} strokeWidth={1.6} className="text-primary" />,
+    },
+    {
+      value: liveStats ? `${formatCount(liveStats.userCount)}` : '—',
+      label: 'Registered Users',
+      icon: <Users size={28} strokeWidth={1.6} className="text-navy" />,
+    },
+    {
+      value: liveStats ? formatCurrency(liveStats.transactionTotal) : '—',
+      label: 'in Transactions',
+      icon: <Banknote size={28} strokeWidth={1.6} className="text-success-dark" />,
+    },
+    {
+      value: '4.9 / 5',
+      label: 'Buyer Satisfaction',
+      icon: <Star size={28} strokeWidth={1.6} className="text-gold" fill="currentColor" />,
+    },
   ];
 
   const features = [
@@ -106,10 +184,18 @@ export default function LandingPage() {
     { step: '03', title: 'Go Live & Earn', desc: 'After admin approval, your auction goes live to thousands of active buyers. Watch bids roll in.' },
   ];
 
-  const navLinks = ['Browse Auctions', 'How It Works', 'About'];
+  const navLinks: Array<{ label: string; action: () => void }> = [
+    { label: 'Browse Auctions', action: () => scrollToSection('featured') },
+    { label: 'How It Works', action: () => scrollToSection('how-it-works') },
+    { label: 'About', action: () => scrollToSection('why-bidvault') },
+  ];
+
+  function handleViewAllAuctions() {
+    navigate(user ? '/buyer/browse' : '/login');
+  }
 
   return (
-    <div className="min-h-screen bg-surface font-[Plus_Jakarta_Sans,sans-serif]">
+    <div className="min-h-screen bg-surface">
 
       {/* ── NAV ─────────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-navy border-b border-[rgba(255,255,255,0.08)]">
@@ -128,9 +214,15 @@ export default function LandingPage() {
 
             {/* Desktop nav */}
             <ul className="hidden md:flex items-center gap-6">
-              {navLinks.map(l => (
-                <li key={l}>
-                  <button className="font-semibold text-[13px] text-[rgba(255,255,255,0.65)] hover:text-white transition-colors">{l}</button>
+              {navLinks.map(({ label, action }) => (
+                <li key={label}>
+                  <button
+                    type="button"
+                    onClick={action}
+                    className="font-semibold text-[13px] text-[rgba(255,255,255,0.65)] hover:text-white transition-colors"
+                  >
+                    {label}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -147,6 +239,7 @@ export default function LandingPage() {
 
             {/* Mobile hamburger */}
             <button
+              type="button"
               className="md:hidden flex flex-col gap-[5px] p-2"
               onClick={() => setMenuOpen(o => !o)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
@@ -162,9 +255,15 @@ export default function LandingPage() {
         {menuOpen && (
           <div className="md:hidden bg-navy-dark border-t border-[rgba(255,255,255,0.08)] px-4 py-4 flex flex-col gap-3">
             <ul className="flex flex-col gap-1">
-              {navLinks.map(l => (
-                <li key={l}>
-                  <button onClick={() => setMenuOpen(false)} className="font-semibold text-[14px] text-[rgba(255,255,255,0.75)] hover:text-white text-left py-2 w-full">{l}</button>
+              {navLinks.map(({ label, action }) => (
+                <li key={label}>
+                  <button
+                    type="button"
+                    onClick={() => { action(); setMenuOpen(false); }}
+                    className="font-semibold text-[14px] text-[rgba(255,255,255,0.75)] hover:text-white text-left py-2 w-full"
+                  >
+                    {label}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -186,20 +285,16 @@ export default function LandingPage() {
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
       <section className="bg-navy relative overflow-hidden">
-        {/* Background grid pattern */}
         <div className="absolute inset-0 opacity-[0.04]" style={{
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
           backgroundSize: '40px 40px',
         }} />
-
-        {/* Decorative glow */}
         <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-primary opacity-[0.07] rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
         <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] bg-success-dark opacity-[0.06] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
 
         <div className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28">
           <div className="max-w-[720px] mx-auto text-center lg:text-left lg:mx-0">
 
-            {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-[rgba(208,2,27,0.15)] border border-[rgba(208,2,27,0.3)] rounded-full px-4 py-1.5 mb-6">
               <span className="size-[6px] rounded-full bg-primary inline-block animate-pulse" aria-hidden="true" />
               <span className="font-bold text-[12px] text-primary-tint">Live Auctions Running Now</span>
@@ -227,7 +322,7 @@ export default function LandingPage() {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={() => navigate('/register')}
+                onClick={() => navigate('/register?role=SELLER')}
                 className="w-full sm:w-auto bg-transparent border-white/25 text-white hover:border-white hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
               >
                 Sell Your Items
@@ -246,9 +341,17 @@ export default function LandingPage() {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4">
             {stats.map((s, i) => (
-              <div key={s.label} className={`text-center py-4 px-4 sm:px-6 ${i < stats.length - 1 ? 'border-r border-border-light' : ''}`}>
+              <div
+                key={s.label}
+                className={`text-center py-4 px-4 sm:px-6
+                  ${i % 2 === 0 ? 'border-r border-border-light' : ''}
+                  ${i < stats.length - 1 ? 'lg:border-r lg:border-border-light' : ''}
+                `}
+              >
                 <div className="flex justify-center mb-3">{s.icon}</div>
-                <p className="font-extrabold text-[22px] sm:text-[28px] text-navy leading-none tracking-[-0.5px]">{s.value}</p>
+                <p className={`font-extrabold text-[22px] sm:text-[28px] text-navy leading-none tracking-[-0.5px] ${!liveStats && s.label !== 'Buyer Satisfaction' ? 'animate-pulse' : ''}`}>
+                  {s.value}
+                </p>
                 <p className="text-[12px] sm:text-[13px] text-muted mt-1.5 font-medium">{s.label}</p>
               </div>
             ))}
@@ -257,7 +360,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURED AUCTIONS ───────────────────────────────────────────────── */}
-      <section className="bg-bg py-14 sm:py-16 lg:py-20">
+      <section id="featured" className="bg-bg py-14 sm:py-16 lg:py-20">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
             <div>
@@ -265,33 +368,62 @@ export default function LandingPage() {
               <h2 className="font-extrabold text-[26px] sm:text-[32px] text-navy leading-tight">Featured Auctions</h2>
               <p className="text-[14px] text-muted mt-1">Verified items, live bidding, real countdowns</p>
             </div>
-            <Link to="/login" className="font-bold text-[14px] text-primary hover:underline flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={handleViewAllAuctions}
+              className="font-bold text-[14px] text-primary hover:underline flex items-center gap-1 shrink-0"
+            >
               View All Auctions →
-            </Link>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {featured.map(auction => (
-              <FeaturedCard key={auction.auctionId} auction={auction} />
-            ))}
+            {featuredLoading ? (
+              <>
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </>
+            ) : featured.length > 0 ? (
+              featured.map(auction => (
+                <FeaturedCard key={auction.auctionId} auction={auction} />
+              ))
+            ) : (
+              <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                <div className="bg-surface-raised rounded-full size-16 flex items-center justify-center mb-4">
+                  <Gavel size={28} strokeWidth={1.5} className="text-muted" />
+                </div>
+                <h3 className="font-bold text-[16px] text-navy mb-1">No Live Auctions Right Now</h3>
+                <p className="text-[13px] text-muted max-w-[280px]">
+                  Check back soon — new auctions go live every day.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/register')}
+                  className="mt-4 font-semibold text-[13px] text-primary hover:underline"
+                >
+                  Register to get notified →
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* ── HOW IT WORKS ────────────────────────────────────────────────────── */}
-      <section className="bg-surface py-14 sm:py-16 lg:py-20">
+      <section id="how-it-works" className="bg-surface py-14 sm:py-16 lg:py-20">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-10">
             <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">Simple Process</p>
             <h2 className="font-extrabold text-[26px] sm:text-[32px] text-navy">How BidVault Works</h2>
           </div>
 
-          {/* Tabs */}
           <div className="flex items-center justify-center mb-8 sm:mb-10">
             <div className="bg-bg border border-border-light rounded-md p-1 flex gap-1">
               {(['buyers', 'sellers'] as const).map(tab => (
                 <button
                   key={tab}
+                  type="button"
                   onClick={() => setActiveTab(tab)}
                   className={`font-bold text-[13px] px-5 py-2 rounded-sm transition-all ${activeTab === tab ? 'bg-navy text-white shadow-sm' : 'text-muted hover:text-secondary'}`}
                 >
@@ -321,7 +453,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── WHY BIDVAULT ────────────────────────────────────────────────────── */}
-      <section className="bg-bg py-14 sm:py-16 lg:py-20">
+      <section id="why-bidvault" className="bg-bg py-14 sm:py-16 lg:py-20">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">Built Different</p>
@@ -349,7 +481,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIAL / TRUST STRIP ───────────────────────────────────────── */}
+      {/* ── TRUST STRIP ─────────────────────────────────────────────────────── */}
       <section className="bg-surface border-y border-border-light py-10">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
@@ -379,7 +511,7 @@ export default function LandingPage() {
             Ready to Start Bidding?
           </h2>
           <p className="text-[15px] sm:text-[16px] text-[rgba(255,255,255,0.6)] mb-8 leading-[1.7]">
-            Join 18,000+ Pakistanis already buying and selling on BidVault. Free to join, no hidden fees.
+            Join Pakistan's fastest-growing auction platform. Free to join, no hidden fees.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
@@ -428,9 +560,10 @@ export default function LandingPage() {
             <div>
               <p className="font-bold text-[12px] text-[rgba(255,255,255,0.5)] uppercase tracking-[1px] mb-4">Platform</p>
               <div className="flex flex-col gap-2.5">
-                {['Browse Auctions', 'Sell an Item', 'How It Works', 'Pricing'].map(l => (
-                  <button key={l} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">{l}</button>
-                ))}
+                <button type="button" onClick={() => scrollToSection('featured')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Browse Auctions</button>
+                <button type="button" onClick={() => navigate('/register?role=SELLER')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Sell an Item</button>
+                <button type="button" onClick={() => scrollToSection('how-it-works')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">How It Works</button>
+                <button type="button" onClick={() => scrollToSection('how-it-works')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Pricing</button>
               </div>
             </div>
 
@@ -441,7 +574,7 @@ export default function LandingPage() {
                 <Link to="/login" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Log In</Link>
                 <Link to="/register" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Register</Link>
                 <Link to="/forgot-password" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Forgot Password</Link>
-                <button className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Seller Dashboard</button>
+                <Link to="/seller/dashboard" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Seller Dashboard</Link>
               </div>
             </div>
 
@@ -451,8 +584,8 @@ export default function LandingPage() {
               <div className="flex flex-col gap-2.5">
                 <Link to="/privacy" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Privacy Policy</Link>
                 <Link to="/terms" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Terms of Service</Link>
-                <button className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Refund Policy</button>
-                <button className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Contact Us</button>
+                <Link to="/terms" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Refund Policy</Link>
+                <a href="mailto:support@bidvault.pk" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Contact Us</a>
               </div>
             </div>
           </div>

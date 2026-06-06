@@ -14,9 +14,16 @@ export default function BuyerProfile() {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const [notifBids, setNotifBids] = useState(true);
-  const [notifWins, setNotifWins] = useState(true);
-  const [notifNews, setNotifNews] = useState(false);
+  const NOTIF_KEY = 'bidvault_notif_prefs_v1';
+  const [notifBids, setNotifBids] = useState(() => {
+    try { const s = localStorage.getItem(NOTIF_KEY); return s ? (JSON.parse(s) as { bids?: boolean }).bids ?? true : true; } catch { return true; }
+  });
+  const [notifWins, setNotifWins] = useState(() => {
+    try { const s = localStorage.getItem(NOTIF_KEY); return s ? (JSON.parse(s) as { wins?: boolean }).wins ?? true : true; } catch { return true; }
+  });
+  const [notifNews, setNotifNews] = useState(() => {
+    try { const s = localStorage.getItem(NOTIF_KEY); return s ? (JSON.parse(s) as { news?: boolean }).news ?? false : false; } catch { return false; }
+  });
   const [showPwForm, setShowPwForm] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
@@ -26,14 +33,26 @@ export default function BuyerProfile() {
 
   useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
 
+  useEffect(() => {
+    try { localStorage.setItem(NOTIF_KEY, JSON.stringify({ bids: notifBids, wins: notifWins, news: notifNews })); } catch { /* quota exceeded */ }
+  }, [notifBids, notifWins, notifNews]);
+
   const myBids = Object.values(bids).flat().filter(b => b.buyerId === user?.userId);
-  const totalBidAmount = myBids.reduce((s, b) => s + b.amount, 0);
-  const auctionsWon = myBids.filter(b => b.isWin === true).length;
+  const totalBidAmount = Object.entries(bids).reduce((total, [, bidList]) => {
+    const myHighest = Math.max(0, ...bidList.filter(b => b.buyerId === user?.userId).map(b => b.amount));
+    return total + myHighest;
+  }, 0);
+  const auctionsWon = Object.entries(bids).filter(([auctionId, bidList]) => {
+    const auction = auctions.find(a => a.auctionId === auctionId);
+    if (!auction || auction.status !== 'CLOSED') return false;
+    const myHighest = Math.max(0, ...bidList.filter(b => b.buyerId === user?.userId).map(b => b.amount));
+    return myHighest > 0 && myHighest === auction.currentBid;
+  }).length;
   const watchlistCount = watchlist.length;
 
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-PK', { year: 'numeric', month: 'long' })
-    : 'January 2026';
+    : '—';
 
   const stats = [
     { label: 'Total Bids', value: myBids.length, icon: <Gavel size={18} strokeWidth={1.8} className="text-primary" />, bg: 'bg-primary-surface' },
@@ -45,6 +64,7 @@ export default function BuyerProfile() {
   const quickLinks = [
     { label: 'Browse Auctions', to: '/buyer/browse', icon: <Search size={15} className="text-muted" /> },
     { label: 'My Bids', to: '/buyer/my-bids', icon: <Hammer size={15} className="text-muted" /> },
+    { label: 'My Wins', to: '/buyer/my-wins', icon: <Trophy size={15} className="text-muted" /> },
     { label: 'My Watchlist', to: '/buyer/watchlist', icon: <Heart size={15} className="text-muted" /> },
   ];
 
@@ -314,7 +334,7 @@ export default function BuyerProfile() {
                       onClick={logout}
                       className="w-full text-left font-semibold text-[12px] text-destructive hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
                     >
-                      Sign out of all devices →
+                      Sign out of this device →
                     </button>
                   </div>
                 </div>

@@ -62,7 +62,7 @@ export default function BuyerAuctionWon() {
                 {[
                   { label: 'Winning bid', value: `PKR ${finalBid.toLocaleString()}`, highlight: true },
                   { label: 'Status', value: 'Auction Closed' },
-                  { label: 'Next step', value: 'Seller will contact you within 24h' },
+                  { label: 'Next step', value: 'Complete payment in My Wins' },
                 ].map(d => (
                   <div key={d.label} className="flex justify-between gap-4">
                     <span className="text-[13px] text-muted">{d.label}</span>
@@ -72,20 +72,29 @@ export default function BuyerAuctionWon() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-[440px]">
+            <div className="flex flex-col gap-3 w-full max-w-[440px]">
               <Button
-                variant="outline"
-                className="flex-1 rounded-sm"
-                onClick={() => navigate('/buyer/my-bids')}
+                className="w-full rounded-sm"
+                onClick={() => navigate('/buyer/my-wins')}
               >
-                View My Bids
+                Complete Payment
               </Button>
-              <Button
-                className="flex-1 rounded-sm"
-                onClick={() => navigate('/buyer/browse')}
-              >
-                Browse More Auctions
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-sm"
+                  onClick={() => navigate('/buyer/my-bids')}
+                >
+                  View My Bids
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-sm"
+                  onClick={() => navigate('/buyer/browse')}
+                >
+                  Browse More
+                </Button>
+              </div>
             </div>
           </>
         ) : (

@@ -10,13 +10,19 @@ type Step = 1 | 2 | 3;
 function StepTracker({ step }: { step: Step }) {
   const steps = ['Email', 'Verify Code', 'New Password'];
   return (
-    <div className="flex items-start justify-center pb-2">
+    <div role="list" aria-label="Password reset progress" className="flex items-start justify-center pb-2">
       {steps.map((label, i) => {
         const n = (i + 1) as Step;
         const done   = step > n;
         const active = step === n;
         return (
-          <div key={label} className="flex flex-1 flex-col gap-1.5 items-center relative">
+          <div
+            key={label}
+            role="listitem"
+            aria-current={active ? 'step' : undefined}
+            aria-label={`Step ${n}: ${label}${done ? ' (completed)' : active ? ' (current)' : ''}`}
+            className="flex flex-1 flex-col gap-1.5 items-center relative"
+          >
             {i < steps.length - 1 && (
               <div className={`absolute h-0.5 left-1/2 right-[-50%] top-[14px] ${done ? 'bg-primary' : 'bg-border-light'}`} />
             )}
@@ -72,7 +78,15 @@ export default function ForgotPasswordScreen() {
   const [confirmPwError, setConfirmPwError] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const pwStrength = newPw.length === 0 ? 0 : newPw.length < 6 ? 1 : newPw.length < 10 ? 2 : 3;
+  const pwStrength = (() => {
+    if (!newPw) return 0;
+    let s = 0;
+    if (newPw.length >= 8) s++;
+    if (/[A-Z]/.test(newPw)) s++;
+    if (/[0-9]/.test(newPw)) s++;
+    if (/[^A-Za-z0-9]/.test(newPw)) s++;
+    return s >= 3 ? 3 : s >= 2 ? 2 : 1;
+  })() as 0 | 1 | 2 | 3;
   const { width: pwWidth, label: pwLabel, labelClass: pwLabelClass, barClass: pwBarClass } = PW_CONFIG[pwStrength];
 
   useEffect(() => {
@@ -91,14 +105,25 @@ export default function ForgotPasswordScreen() {
   }, [resendSecs]);
 
   const handleOtpInput = (i: number, val: string) => {
+    if (otpError) setOtpError('');
     const digit = val.replace(/\D/, '').slice(-1);
     const next = [...otp]; next[i] = digit; setOtp(next);
-    if (digit) setOtpError('');
     if (digit && i < 5) inputRefs.current[i + 1]?.focus();
   };
 
   const handleOtpKey = (i: number, e: React.KeyboardEvent) => {
     if (e.key === 'Backspace' && !otp[i] && i > 0) inputRefs.current[i - 1]?.focus();
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!text) return;
+    e.preventDefault();
+    if (otpError) setOtpError('');
+    const next = [...otp];
+    text.split('').forEach((ch, idx) => { next[idx] = ch; });
+    setOtp(next);
+    inputRefs.current[Math.min(text.length, 5)]?.focus();
   };
 
   const handleStep1 = async (e: React.FormEvent) => {
@@ -110,7 +135,6 @@ export default function ForgotPasswordScreen() {
     }
     if (!/\S+@\S+\.\S+/.test(email)) {
       setEmailError('Enter a valid email address');
-      showToast({ type: 'error', title: 'Invalid Email', message: 'Enter a valid email address.' });
       return;
     }
     setLoading(true);
@@ -130,7 +154,6 @@ export default function ForgotPasswordScreen() {
     const code = otp.join('');
     if (code.length < 6) {
       setOtpError('Enter all 6 digits');
-      showToast({ type: 'error', title: 'Incomplete', message: 'Enter all 6 digits.' });
       return;
     }
     setLoading(true);
@@ -140,7 +163,9 @@ export default function ForgotPasswordScreen() {
       setOtpError('');
       setStep(3);
     } else {
-      showToast({ type: 'error', title: 'Invalid Code', message: res.error || 'The code is incorrect.' });
+      const msg = res.error || 'The code is incorrect or expired.';
+      showToast({ type: 'error', title: 'Invalid Code', message: msg });
+      setOtpError(msg);
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     }
@@ -159,10 +184,7 @@ export default function ForgotPasswordScreen() {
       setConfirmPwError('Passwords do not match');
       invalidCount += 1;
     }
-    if (invalidCount > 0) {
-      showToast({ type: 'error', title: 'Fix Errors', message: 'Please correct the highlighted fields.' });
-      return;
-    }
+    if (invalidCount > 0) return;
     setLoading(true);
     const res = await resetPassword(email, otp.join(''), newPw);
     setLoading(false);
@@ -247,13 +269,14 @@ export default function ForgotPasswordScreen() {
 
             <div className="flex flex-col gap-2">
               <p className="text-[12px] font-bold text-secondary text-center">Enter 6-digit reset code</p>
-              <div className="flex gap-2.5 justify-center">
+              <div className="flex gap-2.5 justify-center" role="group" aria-label="6-digit reset code" onPaste={handleOtpPaste}>
                 {otp.map((val, i) => (
                   <input
                     key={i}
                     ref={el => { inputRefs.current[i] = el; }}
                     maxLength={1}
                     inputMode="numeric"
+                    aria-label={`Digit ${i + 1}`}
                     value={val}
                     onChange={e => handleOtpInput(i, e.target.value)}
                     onKeyDown={e => handleOtpKey(i, e)}
@@ -317,7 +340,7 @@ export default function ForgotPasswordScreen() {
               type={showPw ? 'text' : 'password'}
               placeholder="Min. 8 characters"
               value={newPw}
-              onChange={e => { setNewPw(e.target.value); setNewPwError(''); }}
+              onChange={e => { setNewPw(e.target.value); setNewPwError(''); if (confirmPw) setConfirmPwError(e.target.value !== confirmPw ? 'Passwords do not match' : ''); }}
               leftIcon={<Lock size={16} />}
               rightIcon={
                 <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide' : 'Show'} className="cursor-pointer text-placeholder hover:text-body">
@@ -345,7 +368,7 @@ export default function ForgotPasswordScreen() {
               type={showConfirm ? 'text' : 'password'}
               placeholder="Repeat password"
               value={confirmPw}
-              onChange={e => { setConfirmPw(e.target.value); setConfirmPwError(''); }}
+              onChange={e => { setConfirmPw(e.target.value); setConfirmPwError(e.target.value && newPw && e.target.value !== newPw ? 'Passwords do not match' : ''); }}
               leftIcon={<Lock size={16} />}
               rightIcon={
                 <button type="button" onClick={() => setShowConfirm(p => !p)} aria-label={showConfirm ? 'Hide' : 'Show'} className="cursor-pointer text-placeholder hover:text-body">

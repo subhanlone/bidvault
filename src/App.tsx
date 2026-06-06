@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AuctionProvider } from './context/AuctionContext';
 import { ListingProvider } from './context/ListingContext';
@@ -27,15 +27,13 @@ const SellerDashboard = lazy(() => import('./screens/seller/SellerDashboard'));
 const SellerMyListings = lazy(() => import('./screens/seller/SellerMyListings'));
 const SellerCreateListingStep1 = lazy(() => import('./screens/seller/SellerCreateListingStep1'));
 const SellerCreateListingStep2 = lazy(() => import('./screens/seller/SellerCreateListingStep2'));
-const SellerCreateListingStep4 = lazy(() => import('./screens/seller/SellerCreateListingStep4'));
+const SellerCreateListingStep3 = lazy(() => import('./screens/seller/SellerCreateListingStep3'));
 const SellerListingSubmitted = lazy(() => import('./screens/seller/SellerListingSubmitted'));
 
 const BuyerBrowseAuctions = lazy(() => import('./screens/buyer/BuyerBrowseAuctions'));
 const BuyerMyBids = lazy(() => import('./screens/buyer/BuyerMyBids'));
 const BuyerWatchlist = lazy(() => import('./screens/buyer/BuyerWatchlist'));
 const BuyerLiveBidding = lazy(() => import('./screens/buyer/BuyerLiveBidding'));
-const BuyerLiveBiddingFinalCountdown = lazy(() => import('./screens/buyer/BuyerLiveBiddingFinalCountdown'));
-const BuyerConfirmBid = lazy(() => import('./screens/buyer/BuyerConfirmBid'));
 const BuyerAuctionWon = lazy(() => import('./screens/buyer/BuyerAuctionWon'));
 const BuyerMyWins = lazy(() => import('./screens/buyer/BuyerMyWins'));
 const BuyerProfile = lazy(() => import('./screens/buyer/BuyerProfile'));
@@ -122,10 +120,9 @@ export default function App() {
                       <SellerCreateListingStep2 />
                     </ProtectedRoute>
                   } />
-                  <Route path="/seller/create-listing/step-3" element={<Navigate to="/seller/create-listing/step-4" replace />} />
-                  <Route path="/seller/create-listing/step-4" element={
+                  <Route path="/seller/create-listing/step-3" element={
                     <ProtectedRoute allowedRoles={['SELLER']}>
-                      <SellerCreateListingStep4 />
+                      <SellerCreateListingStep3 />
                     </ProtectedRoute>
                   } />
                   <Route path="/seller/listing-submitted" element={
@@ -155,16 +152,7 @@ export default function App() {
                       <BuyerLiveBidding />
                     </ProtectedRoute>
                   } />
-                  <Route path="/buyer/live-bidding/:auctionId/final-countdown" element={
-                    <ProtectedRoute allowedRoles={['BUYER', 'ADMIN']}>
-                      <BuyerLiveBiddingFinalCountdown />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/buyer/confirm-bid" element={
-                    <ProtectedRoute allowedRoles={['BUYER']}>
-                      <BuyerConfirmBid />
-                    </ProtectedRoute>
-                  } />
+
                   <Route path="/buyer/auction-won" element={
                     <ProtectedRoute allowedRoles={['BUYER']}>
                       <BuyerAuctionWon />

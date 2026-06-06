@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { ListingDraft } from '../types';
 
+const DRAFT_KEY = 'bidvault_listing_draft_v1';
+
 const DEFAULT_DRAFT: ListingDraft = {
   title: '',
   category: '',
   condition: '',
   description: '',
-  hasPhoto: false,
+  imageUrl: '',
   startDate: '',
   startTime: '',
   duration: 7,
@@ -27,13 +29,27 @@ interface ListingContextType {
 const ListingContext = createContext<ListingContextType | null>(null);
 
 export function ListingProvider({ children }: { children: React.ReactNode }) {
-  const [draft, setDraft] = useState<ListingDraft>({ ...DEFAULT_DRAFT });
+  const [draft, setDraft] = useState<ListingDraft>(() => {
+    try {
+      const stored = sessionStorage.getItem(DRAFT_KEY);
+      if (!stored) return { ...DEFAULT_DRAFT };
+      return { ...DEFAULT_DRAFT, ...(JSON.parse(stored) as Partial<ListingDraft>) };
+    } catch {
+      return { ...DEFAULT_DRAFT };
+    }
+  });
   const [submittedListingId, setSubmittedListingId] = useState<string | null>(null);
 
-  const updateDraft = (partial: Partial<ListingDraft>) =>
-    setDraft(prev => ({ ...prev, ...partial }));
+  const updateDraft = (partial: Partial<ListingDraft>) => {
+    setDraft(prev => {
+      const next = { ...prev, ...partial };
+      try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(next)); } catch { /* quota */ }
+      return next;
+    });
+  };
 
   const clearDraft = () => {
+    try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
     setDraft({ ...DEFAULT_DRAFT });
     setSubmittedListingId(null);
   };

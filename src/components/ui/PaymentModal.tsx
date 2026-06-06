@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { X, CreditCard, Lock } from 'lucide-react';
 import { api } from '../../services/api';
 import Button from './Button';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
+
+const elementStyle = {
+  base: { fontSize: '14px', color: '#1e293b', '::placeholder': { color: '#94a3b8' } },
+  invalid: { color: '#ef4444' },
+};
 
 interface Props {
   transactionId: string;
@@ -35,7 +40,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
       );
 
       const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: elements.getElement(CardElement)! },
+        payment_method: { card: elements.getElement(CardNumberElement)! },
       });
 
       if (result.error) {
@@ -62,17 +67,32 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
         <span className="font-extrabold text-[18px] text-success">PKR {finalAmount.toLocaleString()}</span>
       </div>
 
-      <div>
-        <label className="text-[12px] font-semibold text-navy mb-2 block">Card Details</label>
-        <div className="border border-border-light rounded-md px-4 py-3 bg-surface">
-          <CardElement options={{
-            style: {
-              base: { fontSize: '14px', color: '#1e293b', '::placeholder': { color: '#94a3b8' } },
-              invalid: { color: '#ef4444' },
-            },
-          }} />
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="text-[12px] font-semibold text-navy mb-2 block">Card Number</label>
+          <div className="border border-border-light rounded-md px-4 py-[14px] bg-surface">
+            <CardNumberElement options={{ style: elementStyle }} />
+          </div>
         </div>
-        <p className="text-[11px] text-muted mt-1">Test card: 4242 4242 4242 4242 · Any future date · Any CVC</p>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-[12px] font-semibold text-navy mb-2 block">Expiry Date</label>
+            <div className="border border-border-light rounded-md px-4 py-[14px] bg-surface">
+              <CardExpiryElement options={{ style: elementStyle }} />
+            </div>
+          </div>
+          <div>
+            <label className="text-[12px] font-semibold text-navy mb-2 block">CVC</label>
+            <div className="border border-border-light rounded-md px-4 py-[14px] bg-surface">
+              <CardCvcElement options={{ style: elementStyle }} />
+            </div>
+          </div>
+        </div>
+
+        {import.meta.env.DEV && (
+          <p className="text-[11px] text-muted">Test card: 4242 4242 4242 4242 · Any future date · Any CVC</p>
+        )}
       </div>
 
       {error && (
@@ -89,8 +109,8 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
 
 export default function PaymentModal({ transactionId, auctionTitle, finalAmount, onSuccess, onClose }: Props) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="bg-surface rounded-xl shadow-xl w-full max-w-[440px] p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
+      <div className="bg-surface rounded-xl shadow-xl w-full max-w-[440px] p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <CreditCard size={18} className="text-primary" />

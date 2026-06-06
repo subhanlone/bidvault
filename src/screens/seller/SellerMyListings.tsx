@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Package, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button } from '../../components/ui';
@@ -75,15 +75,16 @@ export default function SellerMyListings() {
   const { user, logout } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
   const [tab, setTab]           = useState<Tab>('ALL');
 
   useEffect(() => {
     if (!user) return;
     api.get<Listing[]>('/listings/mine')
       .then(data => setListings(data))
-      .catch(() => {})
+      .catch(() => setError('Could not load listings. Please try again.'))
       .finally(() => setLoading(false));
-  }, [user?.userId]);
+  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const counts: Record<Tab, number> = {
     ALL:      listings.length,
@@ -141,6 +142,13 @@ export default function SellerMyListings() {
           ))}
         </div>
 
+        {error && (
+          <div className="bg-error-bg border border-error-border rounded-md flex items-center gap-3 px-4 py-3 mb-4">
+            <XCircle size={16} className="text-error shrink-0" />
+            <p className="text-[13px] text-error font-medium">{error}</p>
+          </div>
+        )}
+
         {/* Listings table */}
         <div className="bg-surface border border-border-light rounded-md overflow-hidden">
           {loading ? (
@@ -161,6 +169,13 @@ export default function SellerMyListings() {
                   const cfg = STATUS_CONFIG[l.status] ?? STATUS_CONFIG.DRAFT;
                   return (
                     <div key={l.listingId}>
+                      {/* Rejection reason banner */}
+                      {l.status === 'REJECTED' && l.rejectionReason && (
+                        <div className="flex items-start gap-2 px-5 pt-3 pb-1">
+                          <AlertCircle size={13} className="text-error shrink-0 mt-[2px]" />
+                          <p className="text-[12px] text-error"><span className="font-bold">Rejection reason:</span> {l.rejectionReason}</p>
+                        </div>
+                      )}
                       {/* Desktop row */}
                       <div className="hidden sm:grid grid-cols-[44px_1fr_140px_120px_130px_100px] gap-4 items-center px-5 py-4 hover:bg-bg transition-colors">
                         <div className="w-9 h-9 bg-bg rounded-md overflow-hidden shrink-0 flex items-center justify-center border border-border-light">

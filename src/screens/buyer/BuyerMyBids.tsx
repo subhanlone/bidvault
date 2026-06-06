@@ -8,8 +8,6 @@ import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
 
-const INITIAL_NOW = Date.now();
-
 interface BidEntry {
   auction: Auction;
   myHighestBid: number;
@@ -106,7 +104,7 @@ function BidCard({ entry }: { entry: BidEntry }) {
             </button>
           )}
           {isEnded && status === 'won' && (
-            <span className="font-bold text-[11px] sm:text-[12px] text-success-dark">Seller will contact you within 24h</span>
+            <span className="font-bold text-[11px] sm:text-[12px] text-success-dark">Complete payment in My Wins</span>
           )}
         </div>
       </div>
@@ -119,21 +117,13 @@ export default function BuyerMyBids() {
   const { auctions, bids, fetchMyBids } = useAuction();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [now, setNow] = useState(INITIAL_NOW);
 
   useEffect(() => {
     fetchMyBids().finally(() => setLoading(false));
   }, [fetchMyBids]);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => setNow(Date.now()), 0);
-    const intervalId = setInterval(() => setNow(Date.now()), 30_000);
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, []);
-
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const myBidEntries: BidEntry[] = Object.entries(bids)
     .map(([auctionId, bidList]) => {
       const myBids = bidList.filter(b => b.buyerId === user?.userId);
@@ -141,7 +131,7 @@ export default function BuyerMyBids() {
       const auction = auctions.find(a => a.auctionId === auctionId);
       if (!auction) return null;
       const myHighestBid = Math.max(...myBids.map(b => b.amount));
-      const isWinning = bidList[0]?.buyerId === user?.userId;
+      const isWinning = myHighestBid === auction.currentBid;
       return { auction, myHighestBid, myBidCount: myBids.length, isWinning };
     })
     .filter((e): e is BidEntry => e !== null)

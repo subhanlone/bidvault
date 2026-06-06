@@ -37,6 +37,13 @@ export default function SellerCreateListingStep2() {
     let invalidCount = 0;
     if (!draft.startDate)   { setStartDateError('Start date is required'); invalidCount += 1; }
     if (!draft.startTime)   { setStartTimeError('Start time is required'); invalidCount += 1; }
+    if (draft.startDate && draft.startTime) {
+      const startDateTime = new Date(`${draft.startDate}T${draft.startTime}:00`);
+      if (startDateTime <= new Date()) {
+        setStartDateError('Start date and time must be in the future');
+        invalidCount += 1;
+      }
+    }
     if (draft.startingPrice <= 0) { setStartingPriceError('Starting price is required'); invalidCount += 1; }
     if (draft.minIncrement <= 0) { setMinIncrementError('Minimum increment is required'); invalidCount += 1; }
     if (draft.hasReserve && draft.reservePrice <= draft.startingPrice) {
@@ -47,12 +54,12 @@ export default function SellerCreateListingStep2() {
       showToast({ type: 'error', title: 'Missing Fields', message: 'Please fill in the highlighted fields.' });
     }
     if (invalidCount > 0) return;
-    navigate('/seller/create-listing/step-4');
+    navigate('/seller/create-listing/step-3');
   };
 
   return (
     <div className="min-h-screen bg-bg">
-      <ListingStepperHeader currentStep={1} />
+      <ListingStepperHeader />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         <div className="mb-5">
@@ -146,18 +153,21 @@ export default function SellerCreateListingStep2() {
                   />
                 </div>
 
-                <Input
-                  label="Minimum bid increment (PKR)"
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="e.g. 1000"
-                  value={draft.minIncrement || ''}
-                  onChange={e => {
-                    updateDraft({ minIncrement: Number(e.target.value) });
-                    setMinIncrementError('');
-                  }}
-                  error={minIncrementError}
-                />
+                <div>
+                  <Input
+                    label="Minimum bid increment (PKR)"
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="e.g. 1000"
+                    value={draft.minIncrement || ''}
+                    onChange={e => {
+                      updateDraft({ minIncrement: Number(e.target.value) });
+                      setMinIncrementError('');
+                    }}
+                    error={minIncrementError}
+                  />
+                  <p className="text-[11px] text-muted mt-1">The minimum amount each bid must be raised by</p>
+                </div>
 
                 {/* Reserve toggle */}
                 <div>

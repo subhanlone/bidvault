@@ -54,14 +54,16 @@ export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', 
         })}
       </ul>
       <div className="hidden md:flex items-center gap-3 ml-auto">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt={userName} className="w-8 h-8 rounded-full object-cover" />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-navy-mid flex items-center justify-center text-white text-sm font-semibold">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <span className="text-sm text-white/80 font-medium hidden sm:block">{userName}</span>
+        <Link to="/buyer/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={userName} className="w-8 h-8 rounded-full object-cover" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-navy-mid flex items-center justify-center text-white text-sm font-semibold">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span className="text-sm text-white/80 font-medium hidden sm:block">{userName}</span>
+        </Link>
         {onLogout && (
           <button onClick={onLogout} className="text-sm text-white/60 hover:text-white transition-colors cursor-pointer ml-1">Logout</button>
         )}
@@ -95,7 +97,9 @@ export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', 
               })}
             </ul>
             <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between gap-3">
-              <span className="text-sm text-white/70 truncate">{userName}</span>
+              <Link to="/buyer/profile" onClick={() => setMobileOpen(false)} className="text-sm text-white/70 hover:text-white transition-colors truncate">
+                {userName}
+              </Link>
               {onLogout && (
                 <button onClick={onLogout} className="text-sm text-white/60 hover:text-white transition-colors">
                   Logout

@@ -8,8 +8,8 @@ import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
 
-const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Sports & Fitness'];
-const INITIAL_NOW = Date.now();
+// Kept in sync with SellerCreateListingStep1.tsx CATEGORIES
+const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles'];
 
 const FilterCheckbox = ({ checked, onClick, label }: { checked: boolean; onClick: () => void; label: string }) => (
   <label className="flex items-center gap-2.5 cursor-pointer group">
@@ -57,8 +57,11 @@ function AuctionCard({ auction }: { auction: Auction }) {
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer group"
       onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
     >
       <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-navy">
         <img
@@ -117,18 +120,19 @@ function AuctionCard({ auction }: { auction: Auction }) {
 
 export default function BuyerBrowseAuctions() {
   const { user, logout } = useAuth();
-  const { auctions, auctionsLoaded } = useAuction();
+  const { auctions, auctionsLoaded, auctionsError } = useAuction();
   const [search, setSearch]             = useState('');
   const [category, setCategory]         = useState('All');
   const [showEndingSoon, setShowEndingSoon] = useState(false);
   const [sidebarOpen, setSidebarOpen]   = useState(false);
-  const [now] = useState(INITIAL_NOW);
 
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const filtered = auctions.filter(a => {
     if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false;
-    if (category !== 'All' && !a.category.toLowerCase().includes(category.split('&')[0].trim().toLowerCase())) return false;
+    if (category !== 'All' && a.category !== category) return false;  // BA-06: exact match (categories now in sync)
     if (showEndingSoon) {
-      const msLeft = new Date(a.endTime).getTime() - now;
+      const msLeft = new Date(a.endTime).getTime() - now;  // BA-01: live time, not mount snapshot
       if (msLeft <= 0 || msLeft > 3_600_000) return false;
     }
     return true;
@@ -226,6 +230,17 @@ export default function BuyerBrowseAuctions() {
           {!auctionsLoaded ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
+            </div>
+          ) : auctionsError ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <div className="bg-surface-raised rounded-full p-5">
+                <Search size={40} strokeWidth={1.3} className="text-error" />
+              </div>
+              <p className="font-bold text-[16px] text-secondary">Could not load auctions</p>
+              <p className="text-[13px] text-muted">Check your connection and try refreshing the page</p>
+              <Button variant="ghost" onClick={() => window.location.reload()} className="mt-1">
+                Refresh
+              </Button>
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">

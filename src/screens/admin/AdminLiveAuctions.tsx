@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Menu, Radio } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import type { Auction } from '../../types';
-
-const INITIAL_NOW = Date.now();
 
 function AuctionRow({ auction }: { auction: Auction }) {
   const timer = useTimer(auction.endTime);
@@ -18,7 +16,10 @@ function AuctionRow({ auction }: { auction: Auction }) {
       {/* Desktop row */}
       <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_80px] gap-4 items-center px-5 py-4 hover:bg-bg transition-colors">
         <div className="bg-bg rounded-sm size-[36px] overflow-hidden shrink-0">
-          <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
+          {auction.imageUrl
+            ? <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
+            : <span className="flex items-center justify-center w-full h-full text-[16px]">{auction.emoji}</span>
+          }
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-[13px] text-secondary truncate">{auction.title}</p>
@@ -34,14 +35,17 @@ function AuctionRow({ auction }: { auction: Auction }) {
           onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
           className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
         >
-          View →
+          Monitor →
         </button>
       </div>
 
       {/* Mobile card */}
       <div className="sm:hidden flex items-center gap-3 px-4 py-3 hover:bg-bg transition-colors">
         <div className="bg-bg rounded-sm size-[44px] overflow-hidden shrink-0">
-          <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
+          {auction.imageUrl
+            ? <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
+            : <span className="flex items-center justify-center w-full h-full text-[18px]">{auction.emoji}</span>
+          }
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-[13px] text-secondary truncate">{auction.title}</p>
@@ -58,7 +62,7 @@ function AuctionRow({ auction }: { auction: Auction }) {
           onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
           className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
         >
-          View →
+          Monitor →
         </button>
       </div>
     </div>
@@ -68,24 +72,17 @@ function AuctionRow({ auction }: { auction: Auction }) {
 export default function AdminLiveAuctions() {
   const { auctions } = useAuction();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [now, setNow] = useState(INITIAL_NOW);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => setNow(Date.now()), 0);
-    const intervalId = setInterval(() => setNow(Date.now()), 30_000);
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, []);
-
+  // AL-01: filter to ACTIVE only for table rendering
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const active = auctions.filter(a => a.status === 'ACTIVE');
   const endingSoon = active.filter(a => {
     const secs = Math.max(0, (new Date(a.endTime).getTime() - now) / 1000);
     return secs < 3600;
   });
-  const totalBids = auctions.reduce((s, a) => s + a.bidCount, 0);
-  const highestBid = auctions.reduce((m, a) => Math.max(m, a.currentBid), 0);
+  const totalBids    = active.reduce((s, a) => s + a.bidCount, 0);
+  const highestBid   = active.reduce((m, a) => Math.max(m, a.currentBid), 0);
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -123,10 +120,10 @@ export default function AdminLiveAuctions() {
         <div className="flex-1 p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { label: 'Total Active',   value: String(active.length),                          color: 'text-navy',         sub: 'Across all categories' },
-              { label: 'Ending in <1hr', value: String(endingSoon.length),                      color: 'text-destructive',  sub: 'Needs attention' },
-              { label: 'Total Bids',     value: totalBids.toLocaleString(),                     color: 'text-success-dark', sub: 'Across all auctions' },
-              { label: 'Highest Bid',    value: `PKR ${(highestBid / 1000).toFixed(0)}K`,       color: 'text-primary',      sub: 'Single item' },
+              { label: 'Total Active',    value: String(active.length),                    color: 'text-navy',         sub: 'Across all categories' },
+              { label: 'Ending in <1hr', value: String(endingSoon.length),                 color: 'text-destructive',  sub: 'Needs attention' },
+              { label: 'Total Bids',      value: totalBids.toLocaleString(),               color: 'text-success-dark', sub: 'Active auctions' },
+              { label: 'Highest Bid',     value: `PKR ${(highestBid / 1000).toFixed(0)}K`, color: 'text-primary',      sub: 'Single item' },
             ].map(s => (
               <div key={s.label} className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
                 <p className="font-medium text-[11px] sm:text-[12px] text-muted mb-1 sm:mb-2">{s.label}</p>
@@ -138,8 +135,10 @@ export default function AdminLiveAuctions() {
 
           <div className="bg-surface border border-border-light rounded-md">
             <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-border-light">
-              <h2 className="font-bold text-[14px] text-navy">Active Auctions ({auctions.length})</h2>
-              <span className="hidden sm:block font-bold text-[11px] text-muted">Auto-refreshing live data</span>
+              {/* AL-01: header count uses active.length */}
+              <h2 className="font-bold text-[14px] text-navy">Active Auctions ({active.length})</h2>
+              {/* AL-03: accurate label */}
+              <span className="hidden sm:block font-bold text-[11px] text-muted">Updates via socket events</span>
             </div>
 
             <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_80px] gap-4 px-5 py-3 text-[11px] text-placeholder font-bold uppercase tracking-[0.5px] border-b border-bg">
@@ -147,13 +146,14 @@ export default function AdminLiveAuctions() {
             </div>
 
             <div className="flex flex-col">
-              {auctions.length === 0 ? (
+              {/* AL-01: render active.map, not auctions.map */}
+              {active.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
                   <Radio size={48} strokeWidth={1.3} className="text-placeholder" />
                   <p className="font-bold text-[15px] text-secondary">No active auctions</p>
                   <p className="text-[13px] text-muted">There are no live auctions at the moment.</p>
                 </div>
-              ) : auctions.map(auction => (
+              ) : active.map(auction => (
                 <AuctionRow key={auction.auctionId} auction={auction} />
               ))}
             </div>

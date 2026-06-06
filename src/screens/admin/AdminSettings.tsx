@@ -5,27 +5,60 @@ import { useToast } from '../../context/ToastContext';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import { Button, Input } from '../../components/ui';
 
+const SETTINGS_KEY = 'bidvault_admin_settings_v1';
+const PLATFORM_NAME = 'BidVault';
+
+interface SettingsState {
+  autoApprove:       boolean;
+  emailNotifs:       boolean;
+  maintenanceMode:   boolean;
+  maxBidIncrement:   string;
+  minListingPrice:   string;
+  reviewTimeout:     string;
+  supportEmail:      string;
+}
+
+const DEFAULT_SETTINGS: SettingsState = {
+  autoApprove:     false,
+  emailNotifs:     true,
+  maintenanceMode: false,
+  maxBidIncrement: '500000',
+  minListingPrice: '1000',
+  reviewTimeout:   '48',
+  supportEmail:    'support@bidvault.com',
+};
+
+function loadSettings(): SettingsState {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return { ...DEFAULT_SETTINGS };
+    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<SettingsState>) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
 export default function AdminSettings() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [settings, setSettings] = useState<SettingsState>(() => loadSettings());
 
-  const [autoApprove, setAutoApprove] = useState(false);
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [maxBidIncrement, setMaxBidIncrement] = useState('500000');
-  const [minListingPrice, setMinListingPrice] = useState('1000');
-  const [reviewTimeout, setReviewTimeout] = useState('48');
-  const [platformName] = useState('BidVault');
-  const [supportEmail, setSupportEmail] = useState('support@bidvault.com');
+  const updateSetting = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleSave = () => {
     setIsSaving(true);
-    setTimeout(() => {
-      showToast({ type: 'success', title: 'Settings Saved', message: 'Platform settings updated successfully.' });
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      showToast({ type: 'success', title: 'Settings Saved', message: 'Platform settings saved to this device.' });
+    } catch {
+      showToast({ type: 'error', title: 'Save Failed', message: 'Could not save settings.' });
+    } finally {
       setIsSaving(false);
-    }, 400);
+    }
   };
 
   const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
@@ -95,23 +128,23 @@ export default function AdminSettings() {
               <p className="text-[12px] text-muted mt-0.5">Enable or disable platform-wide features</p>
             </div>
             <div className="divide-y divide-surface-raised">
-              {[
-                { label: 'Auto-Approve Listings', sub: 'Skip manual review and publish listings immediately', value: autoApprove, set: setAutoApprove, danger: true },
-                { label: 'Email Notifications',   sub: 'Send bid/win alerts to buyers and sellers',          value: emailNotifs,     set: setEmailNotifs },
-                { label: 'Maintenance Mode',       sub: 'Show maintenance page to all users',                value: maintenanceMode, set: setMaintenanceMode, danger: true },
-              ].map(t => (
+              {([
+                { label: 'Auto-Approve Listings', sub: 'Skip manual review and publish listings immediately', key: 'autoApprove'     as const, danger: true  },
+                { label: 'Email Notifications',   sub: 'Send bid/win alerts to buyers and sellers',          key: 'emailNotifs'     as const, danger: false },
+                { label: 'Maintenance Mode',       sub: 'Show maintenance page to all users',                key: 'maintenanceMode' as const, danger: true  },
+              ] as const).map(t => (
                 <div key={t.label} className="flex items-center justify-between px-5 py-4 gap-4">
                   <div>
                     <p className="font-semibold text-[13px] text-secondary">{t.label}</p>
                     <p className="text-[12px] text-muted">{t.sub}</p>
-                    {t.danger && t.value && (
+                    {t.danger && settings[t.key] && (
                       <p className="text-[11px] text-destructive font-medium mt-1 flex items-center gap-1">
                         <AlertTriangle size={11} className="shrink-0" />
                         This setting is active
                       </p>
                     )}
                   </div>
-                  <Toggle value={t.value} onChange={() => t.set(v => !v)} />
+                  <Toggle value={settings[t.key]} onChange={() => updateSetting(t.key, !settings[t.key])} />
                 </div>
               ))}
             </div>
@@ -125,12 +158,19 @@ export default function AdminSettings() {
                 <p className="text-[12px] text-muted mt-0.5">Configure bidding and listing constraints</p>
               </div>
               <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: 'Min. Listing Price (PKR)', value: minListingPrice, set: setMinListingPrice, placeholder: '1000' },
-                  { label: 'Max. Bid Increment (PKR)', value: maxBidIncrement, set: setMaxBidIncrement, placeholder: '500000' },
-                  { label: 'Review Timeout (hours)',   value: reviewTimeout,   set: setReviewTimeout,   placeholder: '48' },
-                ].map(f => (
-                  <Input key={f.label} label={f.label} type="number" value={f.value} onChange={e => f.set(e.target.value)} placeholder={f.placeholder} />
+                {([
+                  { label: 'Min. Listing Price (PKR)', key: 'minListingPrice' as const, placeholder: '1000'   },
+                  { label: 'Max. Bid Increment (PKR)', key: 'maxBidIncrement' as const, placeholder: '500000' },
+                  { label: 'Review Timeout (hours)',   key: 'reviewTimeout'   as const, placeholder: '48'     },
+                ] as const).map(f => (
+                  <Input
+                    key={f.label}
+                    label={f.label}
+                    type="number"
+                    value={settings[f.key]}
+                    onChange={e => updateSetting(f.key, e.target.value)}
+                    placeholder={f.placeholder}
+                  />
                 ))}
               </div>
             </div>
@@ -141,27 +181,11 @@ export default function AdminSettings() {
                 <h2 className="font-bold text-[14px] text-navy">Branding & Contact</h2>
               </div>
               <div className="p-5 flex flex-col gap-4">
-                <Input label="Platform Name" type="text" value={platformName} readOnly className="bg-bg text-placeholder cursor-not-allowed" />
-                <Input label="Support Email" type="email" value={supportEmail} onChange={e => setSupportEmail(e.target.value)} />
+                <Input label="Platform Name" type="text" value={PLATFORM_NAME} readOnly className="bg-bg text-placeholder cursor-not-allowed" />
+                <Input label="Support Email" type="email" value={settings.supportEmail} onChange={e => updateSetting('supportEmail', e.target.value)} />
               </div>
             </div>
           </form>
-
-          {/* Danger zone */}
-          <div className="bg-surface border border-error-border rounded-md overflow-hidden">
-            <div className="px-5 py-4 border-b border-error-border bg-danger-surface">
-              <h2 className="font-bold text-[14px] text-destructive">Danger Zone</h2>
-              <p className="text-[12px] text-destructive opacity-70 mt-0.5">Irreversible actions. Proceed with extreme caution.</p>
-            </div>
-            <div className="p-5 flex flex-col sm:flex-row gap-3">
-              <button className="flex-1 border border-error-border font-bold text-[12px] text-destructive px-4 py-2.5 rounded-sm hover:bg-danger-surface transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive">
-                Clear All Pending Listings
-              </button>
-              <button className="flex-1 border border-error-border font-bold text-[12px] text-destructive px-4 py-2.5 rounded-sm hover:bg-danger-surface transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive">
-                Reset Platform Statistics
-              </button>
-            </div>
-          </div>
 
         </div>
       </main>

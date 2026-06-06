@@ -29,7 +29,7 @@ export default function SellerListingSubmitted() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <ListingStepperHeader currentStep={2} />
+      <ListingStepperHeader />
 
       <main className="flex flex-col items-center justify-center py-20 px-4">
         {/* Success icon */}
@@ -77,7 +77,7 @@ export default function SellerListingSubmitted() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 mt-10 w-full max-w-sm">
-          <Button variant="outline" fullWidth onClick={() => navigate('/seller/dashboard')}>
+          <Button variant="outline" fullWidth onClick={() => { clearDraft(); navigate('/seller/dashboard'); }}>
             View Dashboard
           </Button>
           <Button variant="primary" fullWidth onClick={handleCreateAnother} className="whitespace-nowrap">

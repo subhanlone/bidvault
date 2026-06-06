@@ -32,7 +32,8 @@ function WinCardSkeleton() {
         <div className="bg-border-light rounded-lg size-[56px] shrink-0 animate-pulse" />
         <div className="flex-1 min-w-0">
           <div className="h-4 w-3/4 bg-border-light rounded animate-pulse mb-2" />
-          <div className="h-3 w-1/3 bg-border-light rounded animate-pulse mb-4" />
+          <div className="h-3 w-1/3 bg-border-light rounded animate-pulse mb-1" />
+          <div className="h-3 w-1/4 bg-border-light rounded animate-pulse mb-3" />
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="h-3 w-16 bg-border-light rounded animate-pulse mb-1" />
@@ -53,7 +54,6 @@ export default function BuyerMyWins() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<WinTransaction | null>(null);
-  const [paidTx, setPaidTx] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<WinTransaction[]>('/payments/my-wins')
@@ -66,16 +66,16 @@ export default function BuyerMyWins() {
   }, []);
 
   function handlePaymentSuccess() {
-    if (!selectedTx) return;
-    setPaidTx(selectedTx.transactionId);
-    setTransactions(prev =>
-      prev.map(tx =>
-        tx.transactionId === selectedTx.transactionId
-          ? { ...tx, status: 'COMPLETED' }
-          : tx
-      )
-    );
+    const txId = selectedTx?.transactionId;
     setSelectedTx(null);
+    api.get<WinTransaction[]>('/payments/my-wins')
+      .then(setTransactions)
+      .catch(() => {
+        if (!txId) return;
+        setTransactions(prev =>
+          prev.map(tx => tx.transactionId === txId ? { ...tx, status: 'COMPLETED' } : tx)
+        );
+      });
   }
 
   return (
@@ -112,7 +112,6 @@ export default function BuyerMyWins() {
             {transactions.map(tx => {
               const cfg = statusConfig[tx.status];
               const StatusIcon = cfg.icon;
-              const justPaid = paidTx === tx.transactionId;
 
               return (
                 <div key={tx.transactionId} className="bg-surface border border-border-light rounded-xl p-5">
@@ -125,7 +124,8 @@ export default function BuyerMyWins() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-[14px] text-navy truncate mb-1">{tx.auctionTitle}</h3>
-                      <p className="text-[12px] text-muted mb-3">Seller: {tx.sellerName}</p>
+                      <p className="text-[12px] text-muted">Seller: {tx.sellerName}</p>
+                      <p className="text-[11px] text-placeholder mb-3">{new Date(tx.createdAt).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
 
                       <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div>
@@ -135,7 +135,7 @@ export default function BuyerMyWins() {
 
                         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-semibold ${cfg.bg} ${cfg.color}`}>
                           <StatusIcon size={12} />
-                          {justPaid ? 'Payment Complete' : cfg.label}
+                          {cfg.label}
                         </div>
                       </div>
 

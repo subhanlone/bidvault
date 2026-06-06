@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
-import { Menu, ChevronLeft, ChevronRight, Download, Package, MessageSquare } from 'lucide-react';
+import { Menu, ChevronLeft, ChevronRight, Package, MessageSquare } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import { Button } from '../../components/ui';
 import Textarea from '../../components/ui/Textarea';
+
+const NOTES_KEY = (id: string) => `admin_review_notes_${id}`;
 
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
@@ -20,19 +22,47 @@ export default function AdminListingReview() {
   const [rejectReason, setRejectReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [navigating, setNavigating] = useState(false);
 
   const listing = pendingListings.find(l => l.listingId === listingId);
   const currentIndex = pendingListings.findIndex(l => l.listingId === listingId);
   const prevListing = currentIndex > 0 ? pendingListings[currentIndex - 1] : null;
   const nextListing = currentIndex < pendingListings.length - 1 ? pendingListings[currentIndex + 1] : null;
 
+  // AR-03: Load persisted notes for this listing
+  useEffect(() => {
+    if (!listingId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    try { setNotes(localStorage.getItem(NOTES_KEY(listingId)) ?? ''); } catch { setNotes(''); }
+  }, [listingId]);
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setNotes(val);
+    if (listingId) {
+      try { localStorage.setItem(NOTES_KEY(listingId), val); } catch { /* noop */ }
+    }
+  };
+
+  // AR-04: only removes from UI on success (hook throws on API failure)
+  // AR-05: delay navigate 800ms so toast is visible
   const handleApprove = async () => {
     if (!listing) return;
     setLoading(true);
-    await approveListing(listing.listingId);
-    setLoading(false);
-    showToast({ type: 'success', title: 'Listing Approved', message: `"${listing.title}" is now published.` });
-    navigate('/admin/listing-reviews');
+    try {
+      const result = await approveListing(listing.listingId);
+      setLoading(false);
+      setNavigating(true);
+      if (result.warning === 'scheduling-failed') {
+        showToast({ type: 'warning', title: 'Listing Approved', message: `"${listing.title}" approved — auction scheduling may need attention.` });
+      } else {
+        showToast({ type: 'success', title: 'Listing Approved', message: `"${listing.title}" is now published.` });
+      }
+      setTimeout(() => navigate('/admin/listing-reviews'), 800);
+    } catch {
+      setLoading(false);
+      showToast({ type: 'error', title: 'Approval Failed', message: 'Could not approve listing. Please try again.' });
+    }
   };
 
   const handleReject = async () => {
@@ -42,15 +72,23 @@ export default function AdminListingReview() {
       return;
     }
     setLoading(true);
-    await rejectListing(listing.listingId, rejectReason);
-    setLoading(false);
-    showToast({ type: 'info', title: 'Listing Rejected', message: `"${listing.title}" has been rejected.` });
-    navigate('/admin/listing-reviews');
+    try {
+      await rejectListing(listing.listingId, rejectReason);
+      setLoading(false);
+      setNavigating(true);
+      showToast({ type: 'info', title: 'Listing Rejected', message: `"${listing.title}" has been rejected.` });
+      setTimeout(() => navigate('/admin/listing-reviews'), 800);
+    } catch {
+      setLoading(false);
+      showToast({ type: 'error', title: 'Rejection Failed', message: 'Could not reject listing. Please try again.' });
+    }
   };
 
   const conditionLabel: Record<string, string> = { NEW: 'New', LIKE_NEW: 'Like New', USED: 'Used' };
 
   if (!listing) {
+    // suppress "not found" flash during the 800ms navigate delay after approve/reject
+    if (navigating) return null;
     return (
       <div className="flex min-h-screen bg-bg items-center justify-center">
         <div className="text-center">
@@ -102,9 +140,6 @@ export default function AdminListingReview() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button className="hidden sm:flex border border-border-medium gap-2 items-center px-3 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <Download size={14} strokeWidth={2} /> Export
-            </button>
             <button
               onClick={() => prevListing && navigate(`/admin/listing-review/${prevListing.listingId}`)}
               disabled={!prevListing}
@@ -140,9 +175,9 @@ export default function AdminListingReview() {
                 </div>
                 <div className="flex-1 grid grid-cols-2 gap-3 sm:gap-4">
                   {[
-                    { label: 'TITLE', value: listing.title },
-                    { label: 'CATEGORY', value: listing.category },
-                    { label: 'CONDITION', value: conditionLabel[listing.condition] ?? listing.condition },
+                    { label: 'TITLE',       value: listing.title },
+                    { label: 'CATEGORY',    value: listing.category },
+                    { label: 'CONDITION',   value: conditionLabel[listing.condition] ?? listing.condition },
                     { label: 'STARTING PRICE', value: `PKR ${listing.startPrice.toLocaleString()}` },
                   ].map(d => (
                     <div key={d.label}>
@@ -154,12 +189,6 @@ export default function AdminListingReview() {
                     <p className="text-[10px] text-placeholder font-bold tracking-[0.5px] uppercase">DESCRIPTION</p>
                     <p className="text-[12px] text-tertiary leading-[18px] mt-[2px]">{listing.description || 'No description provided.'}</p>
                   </div>
-                  {listing.reservePrice && (
-                    <div>
-                      <p className="text-[10px] text-placeholder font-bold tracking-[0.5px] uppercase">RESERVE PRICE</p>
-                      <p className="font-semibold text-[13px] text-secondary mt-[2px]">PKR {listing.reservePrice.toLocaleString()}</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -179,8 +208,8 @@ export default function AdminListingReview() {
                 <div className="flex flex-col gap-2">
                   {[
                     { label: 'Listing ID', value: listing.listingId },
-                    { label: 'Status', value: listing.status },
-                    { label: 'Submitted', value: new Date(listing.submittedAt).toLocaleDateString('en-PK') },
+                    { label: 'Status',     value: listing.status },
+                    { label: 'Submitted',  value: new Date(listing.submittedAt).toLocaleDateString('en-PK') },
                   ].map(d => (
                     <div key={d.label} className="flex justify-between">
                       <span className="text-[12px] text-muted">{d.label}</span>
@@ -190,19 +219,22 @@ export default function AdminListingReview() {
                 </div>
               </div>
 
+              {/* AR-01: Honest price summary — no fake confidence */}
               <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
-                <h3 className="font-bold text-[14px] text-navy mb-3">Price Assessment</h3>
+                <h3 className="font-bold text-[14px] text-navy mb-3">Price Summary</h3>
                 <div className="flex items-end gap-2 mb-3">
-                  <span className="font-extrabold text-[24px] sm:text-[28px] text-success-dark">PKR {(listing.startPrice * 0.9).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  <span className="text-[12px] text-placeholder mb-1">— PKR {(listing.startPrice * 1.25).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                </div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="bg-success-bg border border-[rgba(26,122,74,0.2)] font-bold text-[11px] text-success-dark px-2 py-1 rounded-sm">92%</span>
-                  <span className="text-[12px] text-muted">Market confidence</span>
+                  <span className="font-extrabold text-[24px] sm:text-[28px] text-navy">PKR {listing.startPrice.toLocaleString()}</span>
+                  <span className="text-[12px] text-placeholder mb-1">starting price</span>
                 </div>
                 <div className="bg-bg border border-border-light rounded-sm px-3 py-2">
-                  <span className="text-[11px] text-muted">→ Seller price is within the recommended range</span>
+                  <span className="text-[11px] text-muted">No automated market data available for this item.</span>
                 </div>
+                {listing.reservePrice && (
+                  <div className="mt-3 bg-bg border border-border-light rounded-sm px-3 py-2">
+                    <p className="text-[10px] text-placeholder font-bold uppercase tracking-wide">Reserve Price</p>
+                    <p className="font-bold text-[13px] text-secondary mt-0.5">PKR {listing.reservePrice.toLocaleString()}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -214,12 +246,7 @@ export default function AdminListingReview() {
 
               {!rejecting ? (
                 <div className="flex gap-3 mb-4">
-                  <Button
-                    variant="success"
-                    onClick={handleApprove}
-                    loading={loading}
-                    className="flex-1"
-                  >
+                  <Button variant="success" onClick={handleApprove} loading={loading} className="flex-1">
                     Approve &amp; Publish
                   </Button>
                   <Button
@@ -242,34 +269,38 @@ export default function AdminListingReview() {
                     className="mb-3 text-[12px]"
                   />
                   <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => setRejecting(false)}
-                    >
+                    <Button variant="outline" className="flex-1" onClick={() => setRejecting(false)}>
                       Cancel
                     </Button>
-                    <Button
-                      className="flex-1 bg-destructive hover:bg-destructive-hover border-destructive"
-                      onClick={handleReject}
-                      loading={loading}
-                    >
+                    <Button className="flex-1 bg-destructive hover:bg-destructive-hover border-destructive" onClick={handleReject} loading={loading}>
                       Confirm Reject
                     </Button>
                   </div>
                 </div>
               )}
 
-              <div className="bg-primary-surface border border-[rgba(208,2,27,0.18)] rounded-sm p-3 mb-3 flex items-center gap-2">
+              {/* AR-02: Real mailto button */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!listing.sellerEmail) return;
+                  const subject = encodeURIComponent(`BidVault: More info needed for "${listing.title}"`);
+                  const body = encodeURIComponent(`Hello ${listing.sellerName},\n\nWe need additional information about your listing "${listing.title}" before we can proceed with the review.\n\nPlease provide:\n\n\nThank you,\nBidVault Admin`);
+                  window.open(`mailto:${listing.sellerEmail}?subject=${subject}&body=${body}`, '_blank');
+                }}
+                disabled={!listing.sellerEmail}
+                className="w-full bg-primary-surface border border-[rgba(208,2,27,0.18)] rounded-sm p-3 mb-3 flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary text-left disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 <MessageSquare size={13} className="text-primary shrink-0" />
                 <p className="font-bold text-[12px] text-primary">Request More Info from Seller</p>
-              </div>
+              </button>
 
+              {/* AR-03: Notes saved to localStorage */}
               <Textarea
                 label="Review notes (internal)"
                 placeholder="Add internal notes about this listing decision..."
                 value={notes}
-                onChange={e => setNotes(e.target.value)}
+                onChange={handleNotesChange}
                 rows={3}
                 className="text-[12px]"
               />

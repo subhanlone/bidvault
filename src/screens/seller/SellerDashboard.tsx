@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Banknote, Gavel, PackageCheck, Clock } from 'lucide-react';
+import { Plus, Package, Banknote, Gavel, PackageCheck, Clock, XCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
@@ -52,20 +52,27 @@ export default function SellerDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [sellerStats, setSellerStats] = useState({ totalRevenue: 0, itemsSold: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    api.get<Listing[]>('/listings/mine').then(data => {
-      setListings(data);
-    }).catch(() => {}).finally(() => setLoading(false));
-  }, [user?.userId]);
+    Promise.allSettled([
+      api.get<Listing[]>('/listings/mine'),
+      api.get<{ totalRevenue: number; itemsSold: number }>('/payments/seller-stats'),
+    ]).then(([listingsResult, statsResult]) => {
+      if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
+      if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
+      if (listingsResult.status === 'rejected' || statsResult.status === 'rejected') {
+        setError('Some dashboard data could not be loaded.');
+      }
+    }).finally(() => setLoading(false));
+  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const total    = listings.length;
   const pending  = listings.filter(l => l.status === 'PENDING').length;
   const approved = listings.filter(l => l.status === 'APPROVED').length;
-  const revenue  = listings.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + l.startPrice, 0);
-  const itemsSold = Math.max(0, total - pending);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -84,15 +91,22 @@ export default function SellerDashboard() {
           </Button>
         </div>
 
+        {error && (
+          <div className="bg-error-bg border border-error-border rounded-md flex items-center gap-3 px-4 py-3 mb-4">
+            <XCircle size={16} className="text-error shrink-0" />
+            <p className="text-[13px] text-error font-medium">{error}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
           ) : (
             <>
-              <StatCard label="Revenue"         value={`PKR ${revenue.toLocaleString()}`} icon={<Banknote size={18} />}    iconColor="success" padding="sm" />
-              <StatCard label="Active Auctions" value={approved}                           icon={<Gavel size={18} />}       iconColor="info"    padding="sm" />
-              <StatCard label="Items Sold"      value={itemsSold}                          icon={<PackageCheck size={18} />} iconColor="success" padding="sm" />
-              <StatCard label="Pending Review"  value={pending}                            icon={<Clock size={18} />}       iconColor="warning" padding="sm" />
+              <StatCard label="Revenue"            value={`PKR ${sellerStats.totalRevenue.toLocaleString()}`} icon={<Banknote size={18} />}     iconColor="success" padding="sm" />
+              <StatCard label="Approved Listings" value={approved}                                               icon={<Gavel size={18} />}        iconColor="info"    padding="sm" />
+              <StatCard label="Items Sold"         value={sellerStats.itemsSold}                                 icon={<PackageCheck size={18} />}  iconColor="success" padding="sm" />
+              <StatCard label="Pending Review"     value={pending}                                               icon={<Clock size={18} />}         iconColor="warning" padding="sm" />
             </>
           )}
         </div>

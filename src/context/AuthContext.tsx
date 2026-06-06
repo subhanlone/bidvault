@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { User, RegisterData, LoginData } from '../types';
 import { api, getStoredAuth, setStoredAuth, clearStoredAuth } from '../services/api';
+import { reconnectSocket } from '../services/socket';
 
 interface AuthContextType {
   user: User | null;
@@ -9,7 +10,7 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
   verifyEmail: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   resendVerification: (email: string) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
-  login: (data: LoginData) => Promise<{ success: boolean; error?: string; user?: User }>;
+  login: (data: LoginData, remember?: boolean) => Promise<{ success: boolean; error?: string; user?: User }>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; resetCode?: string; error?: string }>;
   verifyResetOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
@@ -31,10 +32,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const [isLoading] = useState(false);
 
-  const persist = (u: User | null, accessToken: string | null, refreshToken?: string) => {
+  const persist = (u: User | null, accessToken: string | null, refreshToken?: string, remember = true) => {
     if (u && accessToken) {
       const stored = getStoredAuth();
-      setStoredAuth({ user: u, accessToken, refreshToken: refreshToken ?? stored?.refreshToken ?? '' });
+      setStoredAuth({ user: u, accessToken, refreshToken: refreshToken ?? stored?.refreshToken ?? '' }, remember);
     } else {
       clearStoredAuth();
     }
@@ -69,10 +70,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (data: LoginData) => {
+  const login = async (data: LoginData, remember = true) => {
     try {
       const result = await api.post<{ user: User; accessToken: string; refreshToken: string }>('/auth/login', data);
-      persist(result.user, result.accessToken, result.refreshToken);
+      persist(result.user, result.accessToken, result.refreshToken, remember);
+      reconnectSocket();
       return { success: true, user: result.user };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Login failed' };

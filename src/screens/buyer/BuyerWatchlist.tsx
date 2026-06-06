@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
@@ -6,8 +5,6 @@ import { useTimer } from '../../hooks/useTimer';
 import { Clock, Heart } from 'lucide-react';
 import { BuyerNavbar } from '../../components/ui';
 import type { Auction } from '../../types';
-
-const INITIAL_NOW = Date.now();
 
 function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => void }) {
   const navigate = useNavigate();
@@ -68,19 +65,12 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
 export default function BuyerWatchlist() {
   const { user, logout } = useAuth();
   const { auctions, watchlist, toggleWatchlist } = useAuction();
-  const [now, setNow] = useState(INITIAL_NOW);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => setNow(Date.now()), 0);
-    const intervalId = setInterval(() => setNow(Date.now()), 30_000);
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, []);
-
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const watched = auctions.filter(a => watchlist.includes(a.auctionId));
-  const activeCount = watched.filter(a => new Date(a.endTime).getTime() > now).length;
+  const endedWatched = watched.filter(a => new Date(a.endTime).getTime() <= now);
+  const activeCount = watched.length - endedWatched.length;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -93,16 +83,26 @@ export default function BuyerWatchlist() {
             <p className="text-[13px] text-muted mt-0.5">Auctions you're keeping an eye on</p>
           </div>
           {watched.length > 0 && (
-            <div className="flex gap-2 sm:gap-3">
-              {[
-                { val: activeCount, label: 'Active', color: 'text-navy' },
-                { val: watched.length, label: 'Total', color: 'text-secondary' },
-              ].map(s => (
-                <div key={s.label} className="bg-surface border border-border-light rounded-md px-3 sm:px-4 py-2 text-center min-w-[60px]">
-                  <p className={`font-extrabold text-[18px] sm:text-[20px] ${s.color}`}>{s.val}</p>
-                  <p className="text-[10px] sm:text-[11px] text-muted">{s.label}</p>
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              {endedWatched.length > 0 && (
+                <button
+                  onClick={() => endedWatched.forEach(a => toggleWatchlist(a.auctionId))}
+                  className="text-[12px] font-bold text-error hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error rounded-sm"
+                >
+                  Clear Ended ({endedWatched.length})
+                </button>
+              )}
+              <div className="flex gap-2 sm:gap-3">
+                {[
+                  { val: activeCount, label: 'Active', color: 'text-navy' },
+                  { val: watched.length, label: 'Total', color: 'text-secondary' },
+                ].map(s => (
+                  <div key={s.label} className="bg-surface border border-border-light rounded-md px-3 sm:px-4 py-2 text-center min-w-[60px]">
+                    <p className={`font-extrabold text-[18px] sm:text-[20px] ${s.color}`}>{s.val}</p>
+                    <p className="text-[10px] sm:text-[11px] text-muted">{s.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

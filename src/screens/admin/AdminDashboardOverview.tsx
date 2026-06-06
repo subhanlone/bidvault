@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
-import { CheckCircle2, Smartphone, Car, Laptop, Gamepad2, Menu, Bell, Download, Plus, ChevronRight, Gavel, Banknote, BarChart3, Clock } from 'lucide-react';
+import { useAuction } from '../../context/AuctionContext';
+import { api } from '../../services/api';
+import { CheckCircle2, Menu, Bell, BarChart3, Gavel, Banknote, Clock, ChevronRight } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import StatCard from '../../components/ui/StatCard';
+
+interface PlatformStats {
+  userCount: number;
+  activeAuctionCount: number;
+  transactionTotal: number;
+}
 
 function StatCardSkeleton() {
   return (
@@ -14,29 +22,57 @@ function StatCardSkeleton() {
   );
 }
 
-const recentBids = [
-  { icon: <Smartphone size={16} strokeWidth={1.5} className="text-muted" />, title: 'iPhone 15 Pro Max', amount: 'PKR 312,000', tag: 'Highest' },
-  { icon: <Car size={16} strokeWidth={1.5} className="text-muted" />, title: 'Toyota Corolla 2023', amount: 'PKR 185,000', tag: '' },
-  { icon: <Laptop size={16} strokeWidth={1.5} className="text-muted" />, title: 'MacBook Pro M2', amount: 'PKR 422,000', tag: '' },
-  { icon: <Smartphone size={16} strokeWidth={1.5} className="text-muted" />, title: 'Samsung Galaxy S24 Ultra', amount: 'PKR 195,000', tag: '' },
-  { icon: <Gamepad2 size={16} strokeWidth={1.5} className="text-muted" />, title: 'Xbox Series X', amount: 'PKR 85,000', tag: '' },
+const CATEGORY_COLORS = [
+  'var(--color-primary)',
+  'var(--color-navy)',
+  'var(--color-gold)',
+  'var(--color-success-dark)',
 ];
-
-const barData = [22, 35, 18, 42, 38, 55, 30, 48, 22, 60, 45, 38, 52, 40, 25, 65, 42, 58, 35, 70, 48, 55, 38, 42, 60, 52, 45, 38];
 
 export default function AdminDashboardOverview() {
   const navigate = useNavigate();
   const { pendingListings, refreshListings } = usePendingListings();
+  const { auctions } = useAuction();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
 
   useEffect(() => {
-    void refreshListings();
-    const timeoutId = setTimeout(() => setLoading(false), 400);
-    return () => clearTimeout(timeoutId);
+    Promise.allSettled([
+      refreshListings(),
+      api.get<PlatformStats>('/stats').then(d => setPlatformStats(d)).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, [refreshListings]);
 
   const pendingCount = pendingListings.length;
+  const active = auctions.filter(a => a.status === 'ACTIVE');
+  const totalBids = auctions.reduce((s, a) => s + a.bidCount, 0);
+
+  // Top auctions by current bid for "Top Auctions" panel
+  const topAuctions = [...auctions].sort((a, b) => b.currentBid - a.currentBid).slice(0, 5);
+
+  // Bar chart: bid counts per active auction (up to 28 bars)
+  const chartBars = active.slice(0, 28).map(a => a.bidCount);
+  const chartMax = Math.max(1, ...chartBars);
+
+  // Category breakdown from auctions context
+  const categoryMap: Record<string, number> = {};
+  auctions.forEach(a => { categoryMap[a.category] = (categoryMap[a.category] ?? 0) + 1; });
+  const totalAuctions = auctions.length;
+  const categoryStats = Object.entries(categoryMap)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 4)
+    .map(([label, count], i) => ({
+      label: label.split('&')[0].trim(),
+      pct: totalAuctions > 0 ? Math.round((count / totalAuctions) * 100) : 0,
+      color: CATEGORY_COLORS[i] ?? 'var(--color-muted)',
+    }));
+
+  const fmtRevenue = (n: number) => {
+    if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000)     return `PKR ${(n / 1_000).toFixed(0)}K`;
+    return `PKR ${n.toLocaleString()}`;
+  };
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -72,11 +108,11 @@ export default function AdminDashboardOverview() {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="hidden sm:flex border border-border-medium gap-2 items-center px-4 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <Download size={14} strokeWidth={2} /> Export
-            </button>
-            <button className="bg-primary flex gap-2 items-center px-3 sm:px-4 py-2 rounded-sm text-[12px] sm:text-[13px] text-white hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-              <Plus size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">New Auction</span><span className="sm:hidden">New</span>
+            <button
+              onClick={() => navigate('/admin/analytics')}
+              className="hidden sm:flex border border-border-medium gap-2 items-center px-4 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <BarChart3 size={14} strokeWidth={2} /> Analytics
             </button>
             <button
               type="button"
@@ -97,81 +133,92 @@ export default function AdminDashboardOverview() {
               Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
             ) : (
               <>
-                <StatCard label="Active Auctions" value="24" trend="up" trendLabel="+3 Today" icon={<Gavel size={18} />} iconColor="info" />
-                <StatCard label="Total Bids Today" value="1,847" trend="up" trendLabel="+10% vs last week" icon={<BarChart3 size={18} />} iconColor="success" />
-                <StatCard label="Revenue Today" value="PKR 2.4M" trend="up" trendLabel="+8% vs yesterday" icon={<Banknote size={18} />} iconColor="success" />
-                <StatCard label="Pending Listings" value={String(pendingCount)} trendLabel="Awaiting review" icon={<Clock size={18} />} iconColor="warning" />
+                <StatCard label="Active Auctions"  value={platformStats?.activeAuctionCount ?? '—'}           icon={<Gavel size={18} />}    iconColor="info"    padding="sm" />
+                <StatCard label="Total Bids"        value={totalBids.toLocaleString()}                         icon={<BarChart3 size={18} />} iconColor="success" padding="sm" />
+                <StatCard label="Platform Revenue"  value={fmtRevenue(platformStats?.transactionTotal ?? 0)}   icon={<Banknote size={18} />}  iconColor="success" padding="sm" />
+                <StatCard label="Pending Listings"  value={String(pendingCount)} trendLabel="Awaiting review"  icon={<Clock size={18} />}     iconColor="warning" padding="sm" />
               </>
             )}
           </div>
 
-          {/* Charts + Recent Bids */}
+          {/* Charts + Top Auctions */}
           <div className="flex flex-col lg:grid lg:grid-cols-[1fr_1fr_300px] gap-4">
-            {/* Bids over time */}
+
+            {/* Bid Activity chart */}
             <div className="bg-surface border border-border-light rounded-md p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Bids Over Time — Today</h3>
+                <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Bid Activity — Active Auctions</h3>
                 <div className="flex items-center gap-2">
-                  <span className="size-[8px] rounded-full bg-primary inline-block" />
+                  <span className="size-[8px] rounded-full bg-success-dark inline-block animate-pulse" />
                   <span className="text-[11px] text-muted">Live</span>
                 </div>
               </div>
               <div className="flex items-end gap-[3px] h-[100px]">
-                {barData.map((h, i) => (
+                {chartBars.length > 0 ? chartBars.map((count, i) => (
                   <div key={i} className="flex-1 flex flex-col justify-end">
                     <div
-                      className={`rounded-t-xs ${i === 15 || i === 16 ? 'bg-primary' : 'bg-border-light'}`}
-                      style={{ height: `${h}%` }}
+                      className="rounded-t-xs bg-primary"
+                      style={{ height: `${Math.max(4, (count / chartMax) * 100)}%` }}
                     />
                   </div>
-                ))}
+                )) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-[11px] text-placeholder">No active auctions</p>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-[10px] text-placeholder">12 AM</span>
-                <span className="text-[10px] text-placeholder">12 PM</span>
-                <span className="text-[10px] text-placeholder">Now</span>
-              </div>
+              <p className="text-[10px] text-placeholder mt-2">Each bar = 1 active auction · height = bid count</p>
             </div>
 
             {/* By Category */}
             <div className="bg-surface border border-border-light rounded-md p-5">
               <h3 className="font-bold text-[13px] sm:text-[14px] text-navy mb-4">By Category</h3>
-              <div className="flex flex-col gap-3">
-                {[
-                  { label: 'Electronics', pct: 45, color: 'var(--color-primary)' },
-                  { label: 'Vehicles',    pct: 28, color: 'var(--color-gold)' },
-                  { label: 'Clothing',    pct: 15, color: '#3b82f6' },
-                  { label: 'Other',       pct: 12, color: 'var(--color-muted)' },
-                ].map(c => (
-                  <div key={c.label} className="flex items-center gap-3">
-                    <span className="font-medium text-[12px] text-tertiary w-[72px] sm:w-[80px]">{c.label}</span>
-                    <div className="flex-1 bg-bg rounded-full h-[6px]">
-                      <div className="h-full rounded-full" style={{ width: `${c.pct}%`, background: c.color }} />
+              {categoryStats.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {categoryStats.map(c => (
+                    <div key={c.label} className="flex items-center gap-3">
+                      <span className="font-medium text-[12px] text-tertiary w-[72px] sm:w-[80px] truncate">{c.label}</span>
+                      <div className="flex-1 bg-bg rounded-full h-[6px]">
+                        <div className="h-full rounded-full" style={{ width: `${c.pct}%`, background: c.color }} />
+                      </div>
+                      <span className="font-bold text-[12px] text-secondary w-[35px] text-right">{c.pct}%</span>
                     </div>
-                    <span className="font-bold text-[12px] text-secondary w-[35px] text-right">{c.pct}%</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[12px] text-placeholder py-4 text-center">No auction data yet</p>
+              )}
             </div>
 
-            {/* Recent Bids */}
+            {/* Top Auctions */}
             <div className="bg-surface border border-border-light rounded-md p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Recent Bids</h3>
-                <span className="text-[12px] text-primary font-bold">Live</span>
+                <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Top Auctions</h3>
+                <span className="text-[12px] text-success-dark font-bold">
+                  {active.length > 0 ? `${active.length} Active` : 'None Active'}
+                </span>
               </div>
-              <div className="flex flex-col gap-3">
-                {recentBids.map((b, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="bg-bg rounded-sm size-[32px] flex items-center justify-center shrink-0">{b.icon}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[11px] text-secondary truncate">{b.title}</p>
-                      <p className="font-bold text-[12px] text-navy">{b.amount}</p>
+              {topAuctions.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {topAuctions.map((a, i) => (
+                    <div key={a.auctionId} className="flex items-center gap-3">
+                      <div className="bg-bg rounded-sm size-[32px] flex items-center justify-center shrink-0 overflow-hidden">
+                        {a.imageUrl
+                          ? <img src={a.imageUrl} alt={a.title} className="w-full h-full object-cover" />
+                          : <span className="text-[14px]">{a.emoji}</span>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[11px] text-secondary truncate">{a.title}</p>
+                        <p className="font-bold text-[12px] text-navy">PKR {a.currentBid.toLocaleString()}</p>
+                      </div>
+                      {i === 0 && <span className="bg-primary font-bold text-[9px] text-white px-2 py-[2px] rounded-full">Highest</span>}
                     </div>
-                    {b.tag && <span className="bg-primary font-bold text-[9px] text-white px-2 py-[2px] rounded-full">{b.tag}</span>}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[12px] text-placeholder py-4 text-center">No auctions yet</p>
+              )}
             </div>
           </div>
 
@@ -249,14 +296,28 @@ export default function AdminDashboardOverview() {
           <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Reports — Quick Access</h3>
-              <button className="text-[12px] text-primary font-bold flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xs">View All <ChevronRight size={12} /></button>
+              <button
+                onClick={() => navigate('/admin/analytics')}
+                className="text-[12px] text-primary font-bold flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xs"
+              >
+                View All <ChevronRight size={12} />
+              </button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {['Revenue Report', 'Bid Analytics', 'User Activity', 'Seller Reports'].map(r => (
-                <div key={r} className="bg-bg border border-border-light rounded-sm px-3 sm:px-4 py-3 flex items-center justify-between hover:border-primary cursor-pointer group">
-                  <span className="font-semibold text-[12px] text-tertiary group-hover:text-primary">{r}</span>
+              {[
+                { label: 'Revenue Report',  to: '/admin/analytics' },
+                { label: 'Bid Analytics',   to: '/admin/analytics' },
+                { label: 'Live Auctions',   to: '/admin/live-auctions' },
+                { label: 'Review Queue',    to: '/admin/listing-reviews' },
+              ].map(r => (
+                <button
+                  key={r.label}
+                  onClick={() => navigate(r.to)}
+                  className="bg-bg border border-border-light rounded-sm px-3 sm:px-4 py-3 flex items-center justify-between hover:border-primary cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary text-left"
+                >
+                  <span className="font-semibold text-[12px] text-tertiary group-hover:text-primary">{r.label}</span>
                   <ChevronRight size={12} className="text-primary" />
-                </div>
+                </button>
               ))}
             </div>
           </div>

@@ -18,7 +18,8 @@ interface StoredAuth {
 
 export function getStoredAuth(): StoredAuth | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    // sessionStorage takes priority (remember=false login); fall back to localStorage
+    const raw = sessionStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as StoredAuth;
   } catch {
@@ -26,12 +27,16 @@ export function getStoredAuth(): StoredAuth | null {
   }
 }
 
-export function setStoredAuth(auth: StoredAuth): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(auth));
+export function setStoredAuth(auth: StoredAuth, remember = true): void {
+  // If the current session already lives in sessionStorage, keep it there (preserves remember=false across refreshes)
+  const inSession = !!sessionStorage.getItem(STORAGE_KEY);
+  const storage = (inSession || !remember) ? sessionStorage : localStorage;
+  storage.setItem(STORAGE_KEY, JSON.stringify(auth));
 }
 
 export function clearStoredAuth(): void {
   localStorage.removeItem(STORAGE_KEY);
+  sessionStorage.removeItem(STORAGE_KEY);
 }
 
 let refreshPromise: Promise<string | null> | null = null;

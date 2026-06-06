@@ -1,33 +1,71 @@
-﻿import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ShoppingBag, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import type { UserRole } from '../../types';
 import { AuthLayout, Button, Input } from '../../components/ui';
+import { api } from '../../services/api';
 
 const PW_CONFIG = [
-  { width: '0%',   label: '',       labelClass: 'text-muted',  barClass: 'bg-border' },
-  { width: '30%',  label: 'Weak',   labelClass: 'text-error',  barClass: 'bg-error' },
+  { width: '0%',   label: '',       labelClass: 'text-muted',   barClass: 'bg-border' },
+  { width: '30%',  label: 'Weak',   labelClass: 'text-error',   barClass: 'bg-error' },
   { width: '55%',  label: 'Medium', labelClass: 'text-warning', barClass: 'bg-warning' },
   { width: '100%', label: 'Strong', labelClass: 'text-success', barClass: 'bg-success' },
 ] as const;
 
+function pwScore(pw: string): 0 | 1 | 2 | 3 {
+  if (!pw) return 0;
+  let s = 0;
+  if (pw.length >= 8) s++;
+  if (/[A-Z]/.test(pw)) s++;
+  if (/[0-9]/.test(pw)) s++;
+  if (/[^A-Za-z0-9]/.test(pw)) s++;
+  return (s >= 3 ? 3 : s >= 2 ? 2 : 1) as 1 | 2 | 3;
+}
+
 export default function RegisterScreen() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { user, register } = useAuth();
   const { showToast } = useToast();
 
-  const [role, setRole]       = useState<UserRole>('BUYER');
-  const [name, setName]       = useState('');
-  const [email, setEmail]     = useState('');
+  const [role, setRole] = useState<UserRole>(
+    searchParams.get('role') === 'SELLER' ? 'SELLER' : 'BUYER',
+  );
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [showPw, setShowPw]   = useState(false);
-  const [agree, setAgree]     = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors]   = useState<Record<string, string>>({});
+  const [showPw, setShowPw]     = useState(false);
+  const [agree, setAgree]       = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [errors, setErrors]     = useState<Record<string, string>>({});
+  const [panelStats, setPanelStats] = useState([
+    { value: '—', label: 'Active Users' },
+    { value: '—', label: 'Active Auctions' },
+    { value: '99%', label: 'Satisfaction' },
+  ]);
 
-  const pwStrength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : 3;
+  // RG-02: redirect already-logged-in users to their role dashboard
+  useEffect(() => {
+    if (!user) return;
+    if (user.role === 'ADMIN')       navigate('/admin/dashboard',  { replace: true });
+    else if (user.role === 'SELLER') navigate('/seller/dashboard', { replace: true });
+    else                             navigate('/buyer/browse',     { replace: true });
+  }, [user, navigate]);
+
+  // RG-03: replace hardcoded stats with live API data
+  useEffect(() => {
+    api.get<{ userCount: number; activeAuctionCount: number }>('/stats')
+      .then(d => setPanelStats([
+        { value: d.userCount >= 1000 ? `${Math.floor(d.userCount / 1000)}K+` : String(d.userCount), label: 'Active Users' },
+        { value: String(d.activeAuctionCount), label: 'Active Auctions' },
+        { value: '99%', label: 'Satisfaction' },
+      ]))
+      .catch(() => {});
+  }, []);
+
+  const pwStrength = pwScore(password);
   const { width: pwWidth, label: pwLabel, labelClass: pwLabelClass, barClass: pwBarClass } = PW_CONFIG[pwStrength];
 
   const clearError = (key: string) => setErrors(p => ({ ...p, [key]: '' }));
@@ -66,11 +104,7 @@ export default function RegisterScreen() {
         'Admin-reviewed listings before going live',
         'Real-time bidding with live countdowns',
       ]}
-      stats={[
-        { value: '50K+', label: 'Active Users' },
-        { value: '12K+', label: 'Auctions Done' },
-        { value: '99%',  label: 'Satisfaction'  },
-      ]}
+      stats={panelStats}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {/* Mobile logo */}
@@ -146,7 +180,7 @@ export default function RegisterScreen() {
           />
         </div>
 
-        {/* Password */}
+        {/* Password + strength bar */}
         <div>
           <Input
             label="Password"
@@ -176,23 +210,30 @@ export default function RegisterScreen() {
           )}
         </div>
 
-        {/* Terms */}
+        {/* Terms — RG-04: real <input type="checkbox"> for screen-reader semantics */}
         <div>
-          <label className="flex gap-2.5 items-start cursor-pointer">
-            <button
-              type="button"
-              onClick={() => { setAgree(p => !p); clearError('agree'); }}
+          <div className="flex gap-2.5 items-start">
+            <input
+              type="checkbox"
+              id="terms-agree"
+              checked={agree}
+              onChange={e => { setAgree(e.target.checked); clearError('agree'); }}
+              className="sr-only"
+              aria-describedby={errors.agree ? 'agree-error' : undefined}
+            />
+            <label
+              htmlFor="terms-agree"
               className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center flex-shrink-0 mt-px transition-colors cursor-pointer ${agree ? 'bg-primary border-primary' : 'bg-surface border-border-medium'}`}
             >
               {agree && <svg viewBox="0 0 10 8" className="w-2.5 h-2 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1" /></svg>}
-            </button>
+            </label>
             <span className="text-[12.5px] text-tertiary leading-relaxed">
               I agree to BidVault's{' '}
               <Link to="/terms" className="font-bold text-primary hover:underline">Terms of Service</Link>{' '}and{' '}
               <Link to="/privacy" className="font-bold text-primary hover:underline">Privacy Policy</Link>
             </span>
-          </label>
-          {errors.agree && <p className="text-[11px] text-primary mt-1">{errors.agree}</p>}
+          </div>
+          {errors.agree && <p id="agree-error" className="text-[11px] text-error mt-1">{errors.agree}</p>}
         </div>
 
         <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>

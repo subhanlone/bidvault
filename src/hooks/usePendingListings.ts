@@ -14,12 +14,13 @@ export function usePendingListings() {
     }
   }, []);
 
-  const approveListing = async (listingId: string) => {
-    await api.post(`/listings/${listingId}/approve`);
+  const approveListing = async (listingId: string): Promise<{ warning?: string }> => {
+    const result = await api.post<{ warning?: string }>(`/listings/${listingId}/approve`);
     setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
+    return result ?? {};
   };
 
-  const rejectListing = async (listingId: string, reason: string) => {
+  const rejectListing = async (listingId: string, reason: string): Promise<void> => {
     await api.post(`/listings/${listingId}/reject`, { reason });
     setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
   };

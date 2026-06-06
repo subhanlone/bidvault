@@ -1,12 +1,21 @@
-﻿import { useState } from 'react';
+﻿import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ClipboardList, Camera, Package, Smartphone, Car, Upload, ChevronDown } from 'lucide-react';
+import { ClipboardList, Camera, ChevronDown, Upload, Loader2, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
+import { api } from '../../services/api';
 import { SellerNavbar, Button, Input, Textarea } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import type { ItemCondition } from '../../types';
+
+interface UploadSignature {
+  signature: string;
+  timestamp: number;
+  apiKey: string;
+  cloudName: string;
+  folder: string;
+}
 
 const CATEGORIES = [
   'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion',
@@ -18,9 +27,8 @@ const CONDITIONS: { value: ItemCondition; label: string }[] = [
   { value: 'USED',     label: 'Used'     },
 ];
 
-export function ListingStepperHeader({ currentStep }: { currentStep: number }) {
+export function ListingStepperHeader() {
   const { user, logout } = useAuth();
-  void currentStep;
   return (
     <SellerNavbar
       userName={user?.name}
@@ -33,6 +41,8 @@ export function ListingStepperHeader({ currentStep }: { currentStep: number }) {
   );
 }
 
+type UploadState = 'idle' | 'uploading' | 'done' | 'error';
+
 export default function SellerCreateListingStep1() {
   const navigate = useNavigate();
   const { draft, updateDraft } = useListing();
@@ -41,6 +51,53 @@ export default function SellerCreateListingStep1() {
   const [categoryError, setCategoryError] = useState('');
   const [conditionError, setConditionError] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
+  const [uploadState, setUploadState] = useState<UploadState>(draft.imageUrl ? 'done' : 'idle');
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ''; // allow re-selecting the same file
+
+    if (!file.type.startsWith('image/')) {
+      showToast({ type: 'error', title: 'Invalid File', message: 'Please select an image file (JPG, PNG, WebP).' });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast({ type: 'error', title: 'File Too Large', message: 'Image must be under 10 MB.' });
+      return;
+    }
+
+    setUploadState('uploading');
+    try {
+      const sig = await api.post<UploadSignature>('/listings/upload-signature');
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('signature', sig.signature);
+      formData.append('timestamp', String(sig.timestamp));
+      formData.append('api_key', sig.apiKey);
+      formData.append('folder', sig.folder);
+
+      const resp = await fetch(
+        `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
+        { method: 'POST', body: formData },
+      );
+      if (!resp.ok) throw new Error('upload failed');
+
+      const data = await resp.json() as { secure_url: string };
+      updateDraft({ imageUrl: data.secure_url });
+      setUploadState('done');
+    } catch {
+      setUploadState('error');
+      showToast({ type: 'error', title: 'Upload Failed', message: 'Could not upload image. Please try again.' });
+    }
+  };
+
+  const handleRemoveImage = () => {
+    updateDraft({ imageUrl: '' });
+    setUploadState('idle');
+  };
 
   const handleNext = () => {
     setTitleError('');
@@ -63,7 +120,7 @@ export default function SellerCreateListingStep1() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <ListingStepperHeader currentStep={0} />
+      <ListingStepperHeader />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         <div className="mb-5">
@@ -166,47 +223,84 @@ export default function SellerCreateListingStep1() {
             </div>
           </div>
 
-          {/* Photos */}
+          {/* Image Upload */}
           <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-md bg-primary-surface flex items-center justify-center flex-shrink-0">
                 <Camera size={18} strokeWidth={1.8} className="text-primary" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-navy">Photos</h2>
-                <p className="text-xs text-muted">Add up to 8 clear photos</p>
+                <h2 className="text-sm font-bold text-navy">Item Image</h2>
+                <p className="text-xs text-muted">Upload a photo of your item (optional)</p>
               </div>
             </div>
 
-            {draft.hasPhoto ? (
-              <>
-                <div className="bg-navy rounded-md w-full h-40 flex items-center justify-center mb-3">
-                  {draft.category?.includes('Electronics')
-                    ? <Smartphone size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />
-                    : draft.category?.includes('Vehicles')
-                    ? <Car size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />
-                    : <Package size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />}
+            {/* Hidden file input */}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={handleFileChange}
+            />
+
+            {uploadState === 'idle' && (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="w-full border-2 border-dashed border-border rounded-md p-6 flex flex-col items-center gap-2 hover:border-primary hover:bg-primary-surface/30 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Upload size={22} strokeWidth={1.5} className="text-placeholder" />
+                <p className="text-sm font-semibold text-secondary">Click to upload an image</p>
+                <p className="text-xs text-placeholder">JPG, PNG, WebP · Max 10 MB</p>
+              </button>
+            )}
+
+            {uploadState === 'uploading' && (
+              <div className="w-full border-2 border-dashed border-primary/40 rounded-md p-6 flex flex-col items-center gap-2">
+                <Loader2 size={22} className="text-primary animate-spin" />
+                <p className="text-sm font-semibold text-primary">Uploading to Cloudinary…</p>
+              </div>
+            )}
+
+            {uploadState === 'done' && draft.imageUrl && (
+              <div>
+                <div className="rounded-md overflow-hidden bg-navy h-44 relative">
+                  <img
+                    src={draft.imageUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 bg-[rgba(0,0,0,0.55)] hover:bg-[rgba(0,0,0,0.75)] rounded-full p-1 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    aria-label="Remove image"
+                  >
+                    <X size={14} className="text-white" />
+                  </button>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-navy-mid rounded-lg h-16 flex items-center justify-center">
-                    <Package size={22} strokeWidth={1.3} className="text-white/30" aria-hidden="true" />
-                  </div>
-                  <div className="bg-navy-mid rounded-lg h-16 flex items-center justify-center">
-                    <Package size={22} strokeWidth={1.3} className="text-white/30" aria-hidden="true" />
-                  </div>
-                  <label className="border-2 border-dashed border-border-medium rounded-lg h-16 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-primary transition-colors">
-                    <Upload size={14} className="text-placeholder" aria-hidden="true" />
-                    <span className="text-[10px] text-placeholder">Add photo</span>
-                  </label>
-                </div>
-              </>
-            ) : (
-              <label className="border-2 border-dashed border-border-medium rounded-md w-full h-48 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary hover:bg-primary-surface transition-colors">
-                <Upload size={26} className="text-placeholder" aria-hidden="true" />
-                <p className="text-sm font-semibold text-muted">Upload photos</p>
-                <p className="text-[11px] text-placeholder">PNG or JPG · Max 10MB each</p>
-                <input type="file" className="hidden" accept=".png,.jpg,.jpeg" multiple onChange={() => updateDraft({ hasPhoto: true })} />
-              </label>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="mt-2 flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer focus-visible:outline-none"
+                >
+                  <RefreshCw size={11} /> Change image
+                </button>
+              </div>
+            )}
+
+            {uploadState === 'error' && (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="w-full border-2 border-dashed border-error rounded-md p-6 flex flex-col items-center gap-2 hover:bg-error-bg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
+              >
+                <Upload size={22} strokeWidth={1.5} className="text-error" />
+                <p className="text-sm font-semibold text-error">Upload failed — click to retry</p>
+                <p className="text-xs text-placeholder">JPG, PNG, WebP · Max 10 MB</p>
+              </button>
             )}
           </div>
         </div>

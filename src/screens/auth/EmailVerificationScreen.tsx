@@ -22,7 +22,13 @@ export default function EmailVerificationScreen() {
   const [loading, setLoading]     = useState(false);
   const [resendSecs, setResendSecs] = useState(60);
   const [codeExpiry, setCodeExpiry] = useState(600);
+  const [otpError, setOtpError]   = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // EV-01: guard — no email means user navigated directly, not from registration
+  useEffect(() => {
+    if (!email) navigate('/register', { replace: true });
+  }, [email, navigate]);
 
   useEffect(() => { inputRefs.current[0]?.focus(); }, []);
 
@@ -39,6 +45,7 @@ export default function EmailVerificationScreen() {
   }, [codeExpiry]);
 
   const handleInput = (i: number, val: string) => {
+    if (otpError) setOtpError('');
     const digit = val.replace(/\D/, '').slice(-1);
     const next = [...otp];
     next[i] = digit;
@@ -54,6 +61,7 @@ export default function EmailVerificationScreen() {
     const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     if (!text) return;
     e.preventDefault();
+    if (otpError) setOtpError('');
     const next = [...otp];
     text.split('').forEach((ch, idx) => { next[idx] = ch; });
     setOtp(next);
@@ -74,7 +82,9 @@ export default function EmailVerificationScreen() {
       showToast({ type: 'success', title: 'Email Verified!', message: 'Your account is now active. Please sign in.' });
       navigate('/login');
     } else {
-      showToast({ type: 'error', title: 'Invalid Code', message: result.error || 'The code is incorrect or expired.' });
+      const msg = result.error || 'The code is incorrect or expired.';
+      showToast({ type: 'error', title: 'Invalid Code', message: msg });
+      setOtpError(msg);
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     }
@@ -164,6 +174,9 @@ export default function EmailVerificationScreen() {
               />
             ))}
           </div>
+          {otpError && (
+            <p role="alert" className="text-[12px] text-error text-center font-medium">{otpError}</p>
+          )}
           {import.meta.env.DEV && verificationCode && (
             <p className="text-[11px] text-placeholder text-center">Dev hint: your code is <strong>{verificationCode}</strong></p>
           )}

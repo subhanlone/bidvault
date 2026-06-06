@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Car, Package, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -9,7 +9,7 @@ import { Button } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
 
-export default function SellerCreateListingStep4() {
+export default function SellerCreateListingStep3() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { draft, setSubmittedListingId } = useListing();
@@ -40,6 +40,7 @@ export default function SellerCreateListingStep4() {
         startPrice: draft.startingPrice,
         minIncrement: draft.minIncrement,
         reservePrice: draft.hasReserve ? draft.reservePrice : undefined,
+        imageUrl: draft.imageUrl || undefined,
       });
       setSubmittedListingId(data.listingId);
       showToast({ type: 'success', title: 'Listing Submitted!', message: 'Your listing is under admin review.' });
@@ -55,7 +56,7 @@ export default function SellerCreateListingStep4() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <ListingStepperHeader currentStep={2} />
+      <ListingStepperHeader />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         <h1 className="text-xl font-extrabold text-navy mb-1">Review Your Listing</h1>
@@ -67,7 +68,7 @@ export default function SellerCreateListingStep4() {
             { label: 'Auction Setup' },
             { label: 'Review & Submit' },
           ]}
-          currentStep={2}
+          currentStep={3}
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
@@ -90,7 +91,7 @@ export default function SellerCreateListingStep4() {
                   { label: 'TITLE',     value: draft.title || '—' },
                   { label: 'CATEGORY',  value: draft.category?.split('&')[0].trim() || '—' },
                   { label: 'CONDITION', value: conditionLabel },
-                  { label: 'PHOTOS',    value: draft.hasPhoto ? '3 uploaded' : 'None' },
+                  { label: 'IMAGE',     value: draft.imageUrl ? 'Image uploaded' : 'No image' },
                 ].map(d => (
                   <div key={d.label} className="bg-bg rounded-lg px-3 py-3">
                     <p className="text-[10px] text-placeholder font-bold tracking-wide uppercase">{d.label}</p>
@@ -111,7 +112,7 @@ export default function SellerCreateListingStep4() {
               {[
                 { label: 'STARTING PRICE', value: fmtPKR(draft.startingPrice), red: true },
                 { label: 'MIN INCREMENT',  value: fmtPKR(draft.minIncrement)  },
-                { label: 'START DATE',     value: draft.startDate || '—'      },
+                { label: 'START DATE',     value: draft.startDate ? new Date(draft.startDate + 'T00:00:00').toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }) : '—' },
                 { label: 'DURATION',       value: `${draft.duration} Days`    },
                 ...(draft.hasReserve ? [{ label: 'RESERVE PRICE', value: fmtPKR(draft.reservePrice), red: false }] : []),
               ].map(d => (
