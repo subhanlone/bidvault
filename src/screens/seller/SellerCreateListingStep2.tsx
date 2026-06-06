@@ -212,8 +212,10 @@ export default function SellerCreateListingStep2() {
             {/* Preview */}
             <div className="bg-surface border border-border-light rounded-md p-5 h-fit">
               <h3 className="text-sm font-bold text-navy mb-4">Auction Preview</h3>
-              <div className="bg-navy rounded-md h-40 flex items-center justify-center mb-4">
-                {draft.category?.includes('Electronics')
+              <div className="bg-navy rounded-md h-40 flex items-center justify-center mb-4 overflow-hidden">
+                {draft.imageUrl
+                  ? <img src={draft.imageUrl} alt={draft.title} className="w-full h-full object-cover" />
+                  : draft.category?.includes('Electronics')
                   ? <Smartphone size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />
                   : draft.category?.includes('Vehicles')
                   ? <Car size={52} strokeWidth={1.2} className="text-white/30" aria-hidden="true" />
