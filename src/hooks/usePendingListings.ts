@@ -2,6 +2,12 @@ import { useState, useCallback } from 'react';
 import type { Listing } from '../types';
 import { api } from '../services/api';
 
+export interface BulkApproveResult {
+  approved: number;
+  failed: number;
+  failures: { listingId: string; error: string }[];
+}
+
 export function usePendingListings() {
   const [pendingListings, setPendingListings] = useState<Listing[]>([]);
 
@@ -25,5 +31,11 @@ export function usePendingListings() {
     setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
   };
 
-  return { pendingListings, refreshListings, approveListing, rejectListing };
+  const approveAll = async (): Promise<BulkApproveResult> => {
+    const result = await api.post<BulkApproveResult>('/listings/approve-all');
+    await refreshListings();
+    return result;
+  };
+
+  return { pendingListings, refreshListings, approveListing, rejectListing, approveAll };
 }

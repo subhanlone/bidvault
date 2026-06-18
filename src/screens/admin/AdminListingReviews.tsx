@@ -1,17 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
-import { CheckCircle2, ClipboardList, Menu } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { CheckCircle2, ClipboardList, Menu, X } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
-  const { pendingListings, refreshListings } = usePendingListings();
+  const { pendingListings, refreshListings, approveAll } = usePendingListings();
+  const { showToast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   useEffect(() => { refreshListings(); }, [refreshListings]);
 
   const pendingCount = pendingListings.length;
+
+  const handleApproveAll = async () => {
+    setApproving(true);
+    try {
+      const result = await approveAll();
+      if (result.failed === 0) {
+        showToast({ type: 'success', title: 'Listings Approved', message: `${result.approved} listing${result.approved !== 1 ? 's' : ''} approved.` });
+      } else {
+        showToast({ type: 'warning', title: 'Partially Approved', message: `${result.approved} approved, ${result.failed} failed.` });
+      }
+    } catch {
+      showToast({ type: 'error', title: 'Approval Failed', message: 'Could not approve listings.' });
+    } finally {
+      setApproving(false);
+      setConfirmOpen(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -41,11 +62,21 @@ export default function AdminListingReviews() {
               </p>
             </div>
           </div>
-          {pendingCount > 0 && (
-            <span className="bg-warning-badge-bg border border-warning-border font-bold text-[12px] text-warning px-3 py-1 rounded-full">
-              {pendingCount} Pending
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {pendingCount > 0 && (
+              <span className="bg-warning-badge-bg border border-warning-border font-bold text-[12px] text-warning px-3 py-1 rounded-full">
+                {pendingCount} Pending
+              </span>
+            )}
+            <button
+              type="button"
+              disabled={pendingCount === 0}
+              onClick={() => setConfirmOpen(true)}
+              className="bg-primary font-bold text-[12px] text-white px-3 py-[7px] rounded-sm hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+            >
+              Approve All Pending
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 p-4 sm:p-6">
@@ -125,6 +156,46 @@ export default function AdminListingReviews() {
           )}
         </div>
       </main>
+
+      {confirmOpen && (
+        <div className="fixed inset-0 bg-[rgba(11,31,58,0.45)] flex items-center justify-center p-4 z-50">
+          <div role="dialog" aria-modal="true" aria-labelledby="approve-all-title" className="bg-surface rounded-lg shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[420px] overflow-hidden">
+            <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-0 flex items-center justify-between">
+              <div className="bg-warning-badge-bg flex items-center justify-center rounded-full size-[44px]">
+                <ClipboardList size={20} strokeWidth={2} className="text-warning" aria-hidden="true" />
+              </div>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                aria-label="Close"
+                className="bg-bg flex items-center justify-center rounded-full size-[32px] hover:bg-border-light transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+              >
+                <X size={16} className="text-muted" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-4">
+              <h3 id="approve-all-title" className="font-extrabold text-[18px] text-navy mb-1">Approve all {pendingCount} listings?</h3>
+              <p className="text-[13px] text-muted mb-5 leading-[20px]">This cannot be undone. Each listing will go live as an auction immediately.</p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmOpen(false)}
+                  className="flex-1 border border-border-medium rounded-sm py-3 font-bold text-[13px] text-secondary hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApproveAll}
+                  disabled={approving}
+                  className="flex-1 bg-primary rounded-sm py-3 font-bold text-[13px] text-white hover:bg-primary-dark disabled:opacity-60 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+                >
+                  {approving ? 'Approving…' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
