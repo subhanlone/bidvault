@@ -9,7 +9,6 @@ const SETTINGS_KEY = 'bidvault_admin_settings_v1';
 const PLATFORM_NAME = 'BidVault';
 
 interface SettingsState {
-  autoApprove:       boolean;
   emailNotifs:       boolean;
   maintenanceMode:   boolean;
   maxBidIncrement:   string;
@@ -19,7 +18,6 @@ interface SettingsState {
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
-  autoApprove:     false,
   emailNotifs:     true,
   maintenanceMode: false,
   maxBidIncrement: '500000',
@@ -129,7 +127,6 @@ export default function AdminSettings() {
             </div>
             <div className="divide-y divide-surface-raised">
               {([
-                { label: 'Auto-Approve Listings', sub: 'Skip manual review and publish listings immediately', key: 'autoApprove'     as const, danger: true  },
                 { label: 'Email Notifications',   sub: 'Send bid/win alerts to buyers and sellers',          key: 'emailNotifs'     as const, danger: false },
                 { label: 'Maintenance Mode',       sub: 'Show maintenance page to all users',                key: 'maintenanceMode' as const, danger: true  },
               ] as const).map(t => (
