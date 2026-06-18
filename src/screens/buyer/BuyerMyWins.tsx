@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, CheckCircle, Clock, XCircle, Package } from 'lucide-react';
+import { Trophy, CheckCircle, Clock, XCircle, Package, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { BuyerNavbar } from '../../components/ui';
+import { BuyerNavbar, RatingModal } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { api } from '../../services/api';
@@ -17,6 +17,7 @@ interface WinTransaction {
   finalAmount: number;
   status: 'PENDING' | 'COMPLETED' | 'FAILED';
   createdAt: string;
+  reviewed: boolean;
 }
 
 const statusConfig = {
@@ -54,6 +55,7 @@ export default function BuyerMyWins() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<WinTransaction | null>(null);
+  const [ratingTx, setRatingTx] = useState<WinTransaction | null>(null);
 
   useEffect(() => {
     api.get<WinTransaction[]>('/payments/my-wins')
@@ -157,6 +159,22 @@ export default function BuyerMyWins() {
                           Retry Payment
                         </Button>
                       )}
+
+                      {tx.status === 'COMPLETED' && !tx.reviewed && (
+                        <Button
+                          variant="outline"
+                          className="mt-4 w-full text-[13px]"
+                          onClick={() => setRatingTx(tx)}
+                        >
+                          <Star size={14} /> Rate Seller
+                        </Button>
+                      )}
+
+                      {tx.status === 'COMPLETED' && tx.reviewed && (
+                        <p className="mt-4 text-[12px] text-success font-semibold text-center">
+                          ✓ You rated this seller
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -173,6 +191,21 @@ export default function BuyerMyWins() {
           finalAmount={selectedTx.finalAmount}
           onSuccess={handlePaymentSuccess}
           onClose={() => setSelectedTx(null)}
+        />
+      )}
+
+      {ratingTx && (
+        <RatingModal
+          transactionId={ratingTx.transactionId}
+          sellerName={ratingTx.sellerName}
+          auctionTitle={ratingTx.auctionTitle}
+          onSuccess={() => {
+            setTransactions(prev =>
+              prev.map(t => t.transactionId === ratingTx.transactionId ? { ...t, reviewed: true } : t)
+            );
+            setRatingTx(null);
+          }}
+          onClose={() => setRatingTx(null)}
         />
       )}
     </div>
