@@ -32,7 +32,7 @@ function AuctionRow({ auction }: { auction: Auction }) {
         </p>
         <p className="font-semibold text-[12px] text-tertiary">{auction.bidCount}</p>
         <button
-          onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
+          onClick={() => navigate(`/admin/monitor/${auction.auctionId}`)}
           className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
         >
           Monitor →
@@ -59,7 +59,7 @@ function AuctionRow({ auction }: { auction: Auction }) {
           <p className="text-[10px] text-placeholder mt-[2px]">{auction.sellerName} · {auction.bidCount} bids</p>
         </div>
         <button
-          onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
+          onClick={() => navigate(`/admin/monitor/${auction.auctionId}`)}
           className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
         >
           Monitor →

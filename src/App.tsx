@@ -19,6 +19,7 @@ const ForgotPasswordScreen = lazy(() => import('./screens/auth/ForgotPasswordScr
 const AdminDashboardOverview = lazy(() => import('./screens/admin/AdminDashboardOverview'));
 const AdminListingReview = lazy(() => import('./screens/admin/AdminListingReview'));
 const AdminLiveAuctions = lazy(() => import('./screens/admin/AdminLiveAuctions'));
+const AdminAuctionMonitor = lazy(() => import('./screens/admin/AdminAuctionMonitor'));
 const AdminListingReviews = lazy(() => import('./screens/admin/AdminListingReviews'));
 const AdminAnalytics = lazy(() => import('./screens/admin/AdminAnalytics'));
 const AdminSettings = lazy(() => import('./screens/admin/AdminSettings'));
@@ -81,6 +82,11 @@ export default function App() {
                   <Route path="/admin/live-auctions" element={
                     <ProtectedRoute allowedRoles={['ADMIN']}>
                       <AdminLiveAuctions />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/monitor/:auctionId" element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <AdminAuctionMonitor />
                     </ProtectedRoute>
                   } />
                   <Route path="/admin/listing-reviews" element={
