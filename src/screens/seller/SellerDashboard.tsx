@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Banknote, Gavel, PackageCheck, Clock, XCircle } from 'lucide-react';
+import { Plus, Package, Banknote, Gavel, PackageCheck, Clock, XCircle, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
-import type { Listing } from '../../types';
+import type { Listing, SellerReview } from '../../types';
 
 function StatCardSkeleton() {
   return (
@@ -53,6 +53,7 @@ export default function SellerDashboard() {
   const { user, logout } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
   const [sellerStats, setSellerStats] = useState({ totalRevenue: 0, itemsSold: 0 });
+  const [reviewStats, setReviewStats] = useState<{ average: number | null; count: number; reviews: SellerReview[] }>({ average: null, count: 0, reviews: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,10 +62,12 @@ export default function SellerDashboard() {
     Promise.allSettled([
       api.get<Listing[]>('/listings/mine'),
       api.get<{ totalRevenue: number; itemsSold: number }>('/payments/seller-stats'),
-    ]).then(([listingsResult, statsResult]) => {
+      api.get<{ sellerId: string; average: number | null; count: number; reviews: SellerReview[] }>(`/reviews/seller/${user.userId}`),
+    ]).then(([listingsResult, statsResult, reviewsResult]) => {
       if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
       if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
-      if (listingsResult.status === 'rejected' || statsResult.status === 'rejected') {
+      if (reviewsResult.status === 'fulfilled') setReviewStats(reviewsResult.value);
+      if (listingsResult.status === 'rejected' || statsResult.status === 'rejected' || reviewsResult.status === 'rejected') {
         setError('Some dashboard data could not be loaded.');
       }
     }).finally(() => setLoading(false));
@@ -108,6 +111,44 @@ export default function SellerDashboard() {
               <StatCard label="Items Sold"         value={sellerStats.itemsSold}                                 icon={<PackageCheck size={18} />}  iconColor="success" padding="sm" />
               <StatCard label="Pending Review"     value={pending}                                               icon={<Clock size={18} />}         iconColor="warning" padding="sm" />
             </>
+          )}
+        </div>
+
+        <div className="bg-surface border border-border-light rounded-md p-5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-navy">Reviews</h2>
+            {!loading && (
+              <span className="text-xs text-muted">
+                {reviewStats.average !== null ? `${reviewStats.average} ★ average · ` : ''}
+                {reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          {loading ? (
+            <div className="h-12 bg-border-light rounded-md animate-pulse" />
+          ) : reviewStats.count === 0 ? (
+            <p className="text-sm text-muted text-center py-4">No reviews yet — they'll show up here after buyers rate completed purchases.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {reviewStats.reviews.slice(0, 5).map(r => (
+                <div key={r.reviewId} className="border-b border-bg last:border-0 pb-3 last:pb-0">
+                  <div className="flex items-center gap-1 mb-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={12}
+                        className={i < r.stars ? 'text-gold' : 'text-border-medium'}
+                        fill={i < r.stars ? 'currentColor' : 'none'}
+                      />
+                    ))}
+                    <span className="text-[11px] text-placeholder ml-1">
+                      {new Date(r.createdAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  {r.comment && <p className="text-[13px] text-secondary">{r.comment}</p>}
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
