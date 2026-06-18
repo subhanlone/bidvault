@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
 import { useAuction } from '../../context/AuctionContext';
 import { api } from '../../services/api';
+import { getSocket } from '../../services/socket';
+import { useToast } from '../../context/ToastContext';
 import { CheckCircle2, Menu, Bell, BarChart3, Gavel, Banknote, Clock, ChevronRight } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import StatCard from '../../components/ui/StatCard';
@@ -33,6 +35,7 @@ export default function AdminDashboardOverview() {
   const navigate = useNavigate();
   const { pendingListings, refreshListings } = usePendingListings();
   const { auctions } = useAuction();
+  const { showToast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
@@ -43,6 +46,17 @@ export default function AdminDashboardOverview() {
       api.get<PlatformStats>('/stats').then(d => setPlatformStats(d)).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, [refreshListings]);
+
+  // AD-07: live-update the pending queue when a seller submits a new listing
+  useEffect(() => {
+    const socket = getSocket();
+    const onSubmitted = (data: { listingId: string; title: string }) => {
+      void refreshListings();
+      showToast({ type: 'info', title: 'New listing submitted', message: data.title });
+    };
+    socket.on('listing:submitted', onSubmitted);
+    return () => { socket.off('listing:submitted', onSubmitted); };
+  }, [refreshListings, showToast]);
 
   const pendingCount = pendingListings.length;
   const active = auctions.filter(a => a.status === 'ACTIVE');
