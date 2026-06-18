@@ -8,11 +8,11 @@ const SECTIONS = [
   },
   {
     title: '2. How We Use Your Information',
-    body: `Your information is used solely to operate the BidVault platform: facilitating auctions, verifying seller identities, processing bids, sending transactional email notifications (bid confirmations, win alerts, listing approvals), and administering user accounts. We do not sell, rent, or share your personal data with third parties for marketing purposes.`,
+    body: `Your information is used solely to operate the BidVault platform: facilitating auctions, reviewing and approving listings, processing bids, sending transactional email notifications (bid confirmations, win alerts, listing approvals), and administering user accounts. We do not sell, rent, or share your personal data with third parties for marketing purposes.`,
   },
   {
-    title: '3. Seller Account Review',
-    body: `Seller accounts are subject to admin review before listing privileges are granted. BidVault administrators may request additional information to confirm account legitimacy. Account review data is used solely to maintain platform integrity and is not shared externally. Rejected applications may be resubmitted after addressing the stated concerns.`,
+    title: '3. Listing Review',
+    body: `Listings submitted by sellers are subject to admin review before going live. BidVault administrators may request additional information or reject a listing that does not meet platform standards. Review data is used solely to maintain platform integrity and is not shared externally. Rejected listings may be resubmitted after addressing the stated concerns.`,
   },
   {
     title: '4. Data Security',

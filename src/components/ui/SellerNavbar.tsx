@@ -2,7 +2,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
-import Badge from './Badge';
 
 interface NavLink {
   label: string;
@@ -12,7 +11,6 @@ interface NavLink {
 interface SellerNavbarProps {
   links?: NavLink[];
   userName?: string;
-  verificationStatus?: 'verified' | 'review' | 'unverified';
   onLogout?: () => void;
 }
 
@@ -22,13 +20,7 @@ const defaultLinks: NavLink[] = [
   { label: 'Create Listing', to: '/seller/create-listing' },
 ];
 
-const statusBadge = {
-  verified: <Badge variant="verified">Verified Seller</Badge>,
-  review: <Badge variant="review">Under Review</Badge>,
-  unverified: <Badge variant="unverified">Unverified Seller</Badge>,
-};
-
-export default function SellerNavbar({ links = defaultLinks, userName = 'Seller', verificationStatus = 'verified', onLogout }: SellerNavbarProps) {
+export default function SellerNavbar({ links = defaultLinks, userName = 'Seller', onLogout }: SellerNavbarProps) {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -60,7 +52,6 @@ export default function SellerNavbar({ links = defaultLinks, userName = 'Seller'
         })}
       </ul>
       <div className="hidden md:flex items-center gap-3 ml-auto">
-        {statusBadge[verificationStatus]}
         <div className="w-8 h-8 rounded-full bg-navy-mid flex items-center justify-center text-white text-sm font-semibold">
           {userName.charAt(0).toUpperCase()}
         </div>
@@ -99,7 +90,6 @@ export default function SellerNavbar({ links = defaultLinks, userName = 'Seller'
             </ul>
             <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
-                {statusBadge[verificationStatus]}
                 <span className="text-sm text-white/70 truncate">{userName}</span>
               </div>
               {onLogout && (

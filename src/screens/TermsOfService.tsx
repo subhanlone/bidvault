@@ -12,7 +12,7 @@ const SECTIONS = [
   },
   {
     title: '3. Buyer Responsibilities',
-    body: `Placing a bid is a binding commitment to purchase if you win. Buyers must not place bids they do not intend to honor. BidVault is not responsible for the quality, condition, or accuracy of item descriptions — buyers are encouraged to review listing details carefully before bidding. Payment and delivery arrangements are made directly between winning buyers and verified sellers.`,
+    body: `Placing a bid is a binding commitment to purchase if you win. Buyers must not place bids they do not intend to honor. BidVault is not responsible for the quality, condition, or accuracy of item descriptions — buyers are encouraged to review listing details carefully before bidding. Payment and delivery arrangements are made directly between winning buyers and sellers.`,
   },
   {
     title: '4. Seller Responsibilities',

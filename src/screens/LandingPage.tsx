@@ -153,8 +153,8 @@ export default function LandingPage() {
       icon: <Lock size={28} strokeWidth={1.5} className="text-navy" />,
       accent: '#0b1f3a',
       iconBg: 'rgba(11,31,58,0.07)',
-      title: 'Verified Sellers Only',
-      desc: 'Every seller is reviewed and approved by our admin team before listing. Buy with confidence, every time.',
+      title: 'Admin-Reviewed Listings',
+      desc: 'Every listing is reviewed and approved by our admin team before going live. Buy with confidence, every time.',
     },
     {
       icon: <Zap size={28} strokeWidth={1.5} className="text-gold" />,
@@ -173,13 +173,13 @@ export default function LandingPage() {
   ];
 
   const buyerSteps = [
-    { step: '01', title: 'Browse & Discover', desc: 'Search thousands of verified auctions across Electronics, Vehicles, Fashion, and more. Filter by price, time left, or category.' },
+    { step: '01', title: 'Browse & Discover', desc: 'Search thousands of live auctions across Electronics, Vehicles, Fashion, and more. Filter by price, time left, or category.' },
     { step: '02', title: 'Place Your Bid', desc: 'Enter your amount, review the binding commitment, and confirm. Watch the live bid feed update in real-time.' },
-    { step: '03', title: 'Win & Connect', desc: 'If you win, the verified seller contacts you within 24 hours to arrange payment and delivery. Simple.' },
+    { step: '03', title: 'Win & Connect', desc: 'If you win, the seller contacts you within 24 hours to arrange payment and delivery. Simple.' },
   ];
 
   const sellerSteps = [
-    { step: '01', title: 'Create Your Account', desc: 'Register as a seller and set up your profile. Our admin team reviews and activates your seller account.' },
+    { step: '01', title: 'Create Your Account', desc: 'Register as a seller and set up your profile. Verify your email to get started.' },
     { step: '02', title: 'Create a Listing', desc: 'Upload photos and describe your item in detail. Set your own starting price for the auction.' },
     { step: '03', title: 'Go Live & Earn', desc: 'After admin approval, your auction goes live to thousands of active buyers. Watch bids roll in.' },
   ];

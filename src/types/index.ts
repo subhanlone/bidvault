@@ -46,7 +46,6 @@ export interface Auction {
   emoji: string;
   sellerId: string;
   sellerName: string;
-  sellerVerified: boolean;
   sellerRating: number | null;
   sellerSales: number | null;
   startPrice: number;

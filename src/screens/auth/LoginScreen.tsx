@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, LogIn, Check } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button, Input } from '../../components/ui';
@@ -159,7 +159,6 @@ export default function LoginScreen() {
         </div>
 
         <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>
-          <LogIn size={17} />
           Sign In
         </Button>
 

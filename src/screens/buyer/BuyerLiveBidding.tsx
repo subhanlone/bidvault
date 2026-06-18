@@ -252,11 +252,6 @@ export default function BuyerLiveBidding() {
                   <span className="text-[11px] text-muted">
                     {auction.sellerRating !== null ? auction.sellerRating : 'N/A'} · {auction.sellerSales !== null ? `${auction.sellerSales} sales` : 'No sales yet'}
                   </span>
-                  {auction.sellerVerified && (
-                    <span className="bg-success-bg text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-full flex items-center gap-[3px]">
-                      <Check size={9} strokeWidth={3} />Verified
-                    </span>
-                  )}
                 </div>
               </div>
             </div>

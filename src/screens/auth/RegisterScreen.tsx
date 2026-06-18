@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ShoppingBag, Tag } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, ShoppingBag, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import type { UserRole } from '../../types';
@@ -237,7 +237,6 @@ export default function RegisterScreen() {
 
         <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>
           Create Account
-          <ArrowRight size={17} />
         </Button>
 
         <p className="text-center text-sm text-muted">

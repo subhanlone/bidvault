@@ -1,21 +1,18 @@
 interface BadgeProps {
-  variant?: 'verified' | 'review' | 'unverified' | 'tag' | 'success' | 'warning' | 'error';
+  variant?: 'tag' | 'success' | 'warning' | 'error';
   children: React.ReactNode;
   className?: string;
 }
 
-const verifiedStyle = 'bg-success-bg text-success border border-success-border';
-const reviewStyle = 'bg-warning-bg text-warning border border-warning-border';
-const unverifiedStyle = 'bg-primary-light text-primary border border-primary';
+const successStyle = 'bg-success-bg text-success border border-success-border';
+const warningStyle = 'bg-warning-bg text-warning border border-warning-border';
+const errorStyle = 'bg-primary-light text-primary border border-primary';
 const tagStyle = 'bg-surface-raised text-body border border-border';
 
 const variantStyles = {
-  verified: verifiedStyle,
-  success: verifiedStyle,
-  review: reviewStyle,
-  warning: reviewStyle,
-  unverified: unverifiedStyle,
-  error: unverifiedStyle,
+  success: successStyle,
+  warning: warningStyle,
+  error: errorStyle,
   tag: tagStyle,
 };
 
