@@ -11,6 +11,11 @@ test.describe('Seller — Dashboard', () => {
     await page.goto('/seller/dashboard');
     await expect(page.getByRole('link', { name: /create listing|new listing/i })).toBeVisible();
   });
+
+  test('reviews panel is visible', async ({ page }) => {
+    await page.goto('/seller/dashboard');
+    await expect(page.getByRole('heading', { name: /reviews/i })).toBeVisible();
+  });
 });
 
 test.describe('Seller — Create Listing Wizard', () => {

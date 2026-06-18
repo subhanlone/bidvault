@@ -54,6 +54,17 @@ test.describe('Buyer — My Wins', () => {
       await expect(page).toHaveURL(/buyer\/browse/);
     }
   });
+
+  test('rate seller button opens the rating modal', async ({ page }) => {
+    await page.goto('/buyer/my-wins');
+    const rateBtn = page.getByRole('button', { name: /rate seller/i }).first();
+    const hasRateBtn = await rateBtn.isVisible().catch(() => false);
+    if (hasRateBtn) {
+      await rateBtn.click();
+      await expect(page.getByRole('heading', { name: /^rate / })).toBeVisible();
+      await expect(page.getByRole('radiogroup', { name: /star rating/i })).toBeVisible();
+    }
+  });
 });
 
 test.describe('Buyer — Watchlist', () => {
