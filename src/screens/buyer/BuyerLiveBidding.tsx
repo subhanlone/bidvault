@@ -12,6 +12,8 @@ import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { getSocket } from '../../services/socket';
+import { api } from '../../services/api';
+import type { SellerReview } from '../../types';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
@@ -31,10 +33,15 @@ export default function BuyerLiveBidding() {
   const [isConfirming, setIsConfirming]         = useState(false);
   const [flashTimer, setFlashTimer]             = useState(false);
   const [visibleBidCount, setVisibleBidCount]   = useState(8);
+  const [reviewsOpen, setReviewsOpen]           = useState(false);
+  const [reviewsData, setReviewsData]           = useState<{ average: number | null; count: number; reviews: SellerReview[] } | null>(null);
+  const [reviewsLoading, setReviewsLoading]     = useState(false);
   const [trackedAuctionId, setTrackedAuctionId] = useState(auctionId);
   if (auctionId !== trackedAuctionId) {
     setTrackedAuctionId(auctionId);
     setVisibleBidCount(8);
+    setReviewsOpen(false);
+    setReviewsData(null);
   }
 
   const wonRef         = useRef(false);
@@ -169,6 +176,26 @@ export default function BuyerLiveBidding() {
     }
   };
 
+  const toggleReviews = async () => {
+    if (reviewsOpen) {
+      setReviewsOpen(false);
+      return;
+    }
+    setReviewsOpen(true);
+    if (reviewsData) return;
+    setReviewsLoading(true);
+    try {
+      const data = await api.get<{ sellerId: string; average: number | null; count: number; reviews: SellerReview[] }>(
+        `/reviews/seller/${auction.sellerId}`,
+      );
+      setReviewsData(data);
+    } catch {
+      setReviewsData({ average: null, count: 0, reviews: [] });
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-bg">
       <BuyerNavbar userName={user?.name} onLogout={logout} />
@@ -256,11 +283,52 @@ export default function BuyerLiveBidding() {
                 <div className="flex items-center gap-1 flex-wrap">
                   <Star size={12} fill="currentColor" className="text-gold" />
                   <span className="text-[11px] text-muted">
-                    {auction.sellerRating !== null ? auction.sellerRating : 'N/A'} · {auction.sellerSales !== null ? `${auction.sellerSales} sales` : 'No sales yet'}
+                    {auction.sellerRating ? `${auction.sellerRating} rating` : 'No ratings yet'} · {auction.sellerSales ? `${auction.sellerSales} sales` : 'No sales yet'}
                   </span>
+                  <button
+                    type="button"
+                    onClick={toggleReviews}
+                    className="text-[11px] font-bold text-primary hover:underline cursor-pointer ml-1"
+                  >
+                    {reviewsOpen ? 'Hide reviews' : 'See reviews'}
+                  </button>
                 </div>
               </div>
             </div>
+
+            {reviewsOpen && (
+              <div className="mt-3 pt-3 border-t border-border-light">
+                {reviewsLoading ? (
+                  <p className="text-[12px] text-muted">Loading reviews…</p>
+                ) : !reviewsData || reviewsData.count === 0 ? (
+                  <p className="text-[12px] text-muted">No reviews yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-[11px] font-bold text-placeholder uppercase tracking-wide">
+                      {reviewsData.count} review{reviewsData.count !== 1 ? 's' : ''}
+                    </p>
+                    {reviewsData.reviews.map(r => (
+                      <div key={r.reviewId} className="text-[12px]">
+                        <div className="flex items-center gap-1 mb-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              size={11}
+                              className={i < r.stars ? 'text-gold' : 'text-border-medium'}
+                              fill={i < r.stars ? 'currentColor' : 'none'}
+                            />
+                          ))}
+                          <span className="text-[10px] text-placeholder ml-1">
+                            {new Date(r.createdAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
+                        {r.comment && <p className="text-secondary">{r.comment}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Bid history */}

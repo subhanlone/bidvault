@@ -60,6 +60,14 @@ export interface Auction {
   images?: string[];
 }
 
+export interface SellerReview {
+  reviewId: string;
+  stars: number;
+  comment: string | null;
+  buyerName: string;
+  createdAt: string;
+}
+
 export interface Bid {
   bidId: string;
   auctionId: string;
