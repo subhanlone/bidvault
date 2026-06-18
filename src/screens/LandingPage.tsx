@@ -233,7 +233,7 @@ export default function LandingPage() {
                 Log In
               </Link>
               <Link to="/register">
-                <Button variant="primary" size="sm">Get Started Free</Button>
+                <Button variant="primary" size="sm">Get Started</Button>
               </Link>
             </div>
 
@@ -274,7 +274,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link to="/register" onClick={() => setMenuOpen(false)}>
-                <Button variant="primary" fullWidth>Get Started Free</Button>
+                <Button variant="primary" fullWidth>Get Started</Button>
               </Link>
             </div>
           </div>
@@ -317,7 +317,7 @@ export default function LandingPage() {
                 onClick={() => navigate('/register')}
                 className="w-full sm:w-auto px-8 shadow-[0_8px_24px_rgba(208,2,27,0.35)]"
               >
-                Start Bidding Free →
+                Start Bidding
               </Button>
               <Button
                 variant="outline"
@@ -330,7 +330,7 @@ export default function LandingPage() {
             </div>
 
             <p className="mt-4 text-[12px] text-[rgba(255,255,255,0.35)]">
-              Free to join · No listing fees · Verified sellers only
+              Join · Create listings · Place bids · Win auctions · Buy & sell with confidence
             </p>
           </div>
         </div>
@@ -373,7 +373,7 @@ export default function LandingPage() {
               onClick={handleViewAllAuctions}
               className="font-bold text-[14px] text-primary hover:underline flex items-center gap-1 shrink-0"
             >
-              View All Auctions →
+              View All Auctions
             </button>
           </div>
 
@@ -402,7 +402,7 @@ export default function LandingPage() {
                   onClick={() => navigate('/register')}
                   className="mt-4 font-semibold text-[13px] text-primary hover:underline"
                 >
-                  Register to get notified →
+                  Register to get notified
                 </button>
               </div>
             )}
@@ -520,7 +520,7 @@ export default function LandingPage() {
               onClick={() => navigate('/register')}
               className="w-full sm:w-auto px-8 shadow-[0_8px_24px_rgba(208,2,27,0.4)]"
             >
-              Create Free Account →
+              Create Account 
             </Button>
             <Link to="/login" className="w-full sm:w-auto">
               <Button

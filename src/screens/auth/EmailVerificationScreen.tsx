@@ -15,9 +15,10 @@ export default function EmailVerificationScreen() {
   const { verifyEmail, resendVerification } = useAuth();
   const { showToast }   = useToast();
 
-  const state = location.state as { email?: string; verificationCode?: string } | null;
+  const state = location.state as { email?: string; verificationCode?: string; autoResend?: boolean } | null;
   const email: string = state?.email ?? '';
   const verificationCode: string | undefined = state?.verificationCode;
+  const autoResend: boolean = state?.autoResend ?? false;
   const [otp, setOtp]             = useState(['', '', '', '', '', '']);
   const [loading, setLoading]     = useState(false);
   const [resendSecs, setResendSecs] = useState(60);
@@ -31,6 +32,14 @@ export default function EmailVerificationScreen() {
   }, [email, navigate]);
 
   useEffect(() => { inputRefs.current[0]?.focus(); }, []);
+
+  // Arrived here from a blocked login attempt — explain why, and send a fresh code immediately.
+  useEffect(() => {
+    if (!email || !autoResend) return;
+    showToast({ type: 'info', title: 'Email Not Verified', message: 'Please verify your email to sign in. We sent you a new code.' });
+    resendVerification(email).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (resendSecs <= 0) return;

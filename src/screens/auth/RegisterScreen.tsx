@@ -100,7 +100,6 @@ export default function RegisterScreen() {
       headline="Pakistan's Smartest Auction Platform"
       subtext="List items, bid in real-time, and discover fair market prices — all in one secure platform built for Pakistan."
       bullets={[
-        '256-bit SSL encryption on all transactions',
         'Admin-reviewed listings before going live',
         'Real-time bidding with live countdowns',
       ]}
@@ -243,7 +242,7 @@ export default function RegisterScreen() {
 
         <p className="text-center text-sm text-muted">
           Already have an account?{' '}
-          <Link to="/login" className="font-bold text-primary hover:underline">Sign in to BidVault</Link>
+          <Link to="/login" className="font-bold text-primary hover:underline">Sign in</Link>
         </p>
       </form>
     </AuthLayout>

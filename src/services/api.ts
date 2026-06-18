@@ -3,10 +3,12 @@ const STORAGE_KEY = 'bidvault_auth_v1';
 
 export class ApiError extends Error {
   readonly status: number;
-  constructor(status: number, message: string) {
+  readonly code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -91,10 +93,10 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
     resp = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   }
 
-  const body = await resp.json() as { success: boolean; data?: T; error?: string };
+  const body = await resp.json() as { success: boolean; data?: T; error?: string; code?: string };
 
   if (!resp.ok || !body.success) {
-    throw new ApiError(resp.status, body.error ?? 'Request failed');
+    throw new ApiError(resp.status, body.error ?? 'Request failed', body.code);
   }
 
   return body.data as T;

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { User, RegisterData, LoginData } from '../types';
-import { api, getStoredAuth, setStoredAuth, clearStoredAuth } from '../services/api';
+import { api, ApiError, getStoredAuth, setStoredAuth, clearStoredAuth } from '../services/api';
 import { reconnectSocket } from '../services/socket';
 
 interface AuthContextType {
@@ -10,7 +10,7 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
   verifyEmail: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   resendVerification: (email: string) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
-  login: (data: LoginData, remember?: boolean) => Promise<{ success: boolean; error?: string; user?: User }>;
+  login: (data: LoginData, remember?: boolean) => Promise<{ success: boolean; error?: string; code?: string; user?: User }>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; resetCode?: string; error?: string }>;
   verifyResetOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
@@ -77,7 +77,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       reconnectSocket();
       return { success: true, user: result.user };
     } catch (err: unknown) {
-      return { success: false, error: err instanceof Error ? err.message : 'Login failed' };
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Login failed',
+        code: err instanceof ApiError ? err.code : undefined,
+      };
     }
   };
 
