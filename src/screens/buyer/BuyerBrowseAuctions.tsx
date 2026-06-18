@@ -11,6 +11,15 @@ import type { Auction } from '../../types';
 // Kept in sync with SellerCreateListingStep1.tsx CATEGORIES
 const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles'];
 
+const SORT_OPTIONS = [
+  { value: 'endingSoon', label: 'Ending Soon' },
+  { value: 'newlyListed', label: 'Newly Listed' },
+  { value: 'priceLow', label: 'Price: Low to High' },
+  { value: 'priceHigh', label: 'Price: High to Low' },
+  { value: 'mostBids', label: 'Most Bids' },
+] as const;
+type SortBy = typeof SORT_OPTIONS[number]['value'];
+
 const FilterCheckbox = ({ checked, onClick, label }: { checked: boolean; onClick: () => void; label: string }) => (
   <label className="flex items-center gap-2.5 cursor-pointer group">
     <span className="relative flex">
@@ -124,10 +133,19 @@ export default function BuyerBrowseAuctions() {
   const [search, setSearch]             = useState('');
   const [category, setCategory]         = useState('All');
   const [showEndingSoon, setShowEndingSoon] = useState(false);
+  const [minPrice, setMinPrice]         = useState('');
+  const [maxPrice, setMaxPrice]         = useState('');
+  const [sortBy, setSortBy]             = useState<SortBy>('endingSoon');
   const [sidebarOpen, setSidebarOpen]   = useState(false);
+
+  const clearAll = () => {
+    setCategory('All'); setShowEndingSoon(false); setSearch(''); setMinPrice(''); setMaxPrice('');
+  };
 
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
+  const min = minPrice.trim() === '' ? null : Number(minPrice);
+  const max = maxPrice.trim() === '' ? null : Number(maxPrice);
   const filtered = auctions.filter(a => {
     if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (category !== 'All' && a.category !== category) return false;  // BA-06: exact match (categories now in sync)
@@ -135,7 +153,20 @@ export default function BuyerBrowseAuctions() {
       const msLeft = new Date(a.endTime).getTime() - now;  // BA-01: live time, not mount snapshot
       if (msLeft <= 0 || msLeft > 3_600_000) return false;
     }
+    if (min !== null && a.currentBid < min) return false;
+    if (max !== null && a.currentBid > max) return false;
     return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case 'priceLow':    return a.currentBid - b.currentBid;
+      case 'priceHigh':   return b.currentBid - a.currentBid;
+      case 'mostBids':    return b.bidCount - a.bidCount;
+      case 'newlyListed': return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+      case 'endingSoon':
+      default:            return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
+    }
   });
 
   return (
@@ -149,7 +180,7 @@ export default function BuyerBrowseAuctions() {
             <h3 className="font-bold text-[13px] text-navy flex items-center gap-1.5">
               <SlidersHorizontal size={13} strokeWidth={2.5} /> Filters
             </h3>
-            <button onClick={() => { setCategory('All'); setShowEndingSoon(false); setSearch(''); }} className="text-[11px] text-primary font-bold hover:underline cursor-pointer">
+            <button onClick={clearAll} className="text-[11px] text-primary font-bold hover:underline cursor-pointer">
               Clear All
             </button>
           </div>
@@ -159,6 +190,28 @@ export default function BuyerBrowseAuctions() {
               {CATEGORIES.map(c => (
                 <FilterCheckbox key={c} checked={category === c} onClick={() => setCategory(c)} label={c} />
               ))}
+            </div>
+          </div>
+          <div className="mb-5">
+            <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Price Range (PKR)</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder="Min"
+                value={minPrice}
+                onChange={e => setMinPrice(e.target.value)}
+                className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              />
+              <span className="text-[11px] text-placeholder">–</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder="Max"
+                value={maxPrice}
+                onChange={e => setMaxPrice(e.target.value)}
+                className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              />
             </div>
           </div>
           <div>
@@ -192,7 +245,7 @@ export default function BuyerBrowseAuctions() {
             <div className="md:hidden bg-surface border border-border-light rounded-md p-4 mb-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-[13px] text-navy">Filters</h3>
-                <button onClick={() => { setCategory('All'); setShowEndingSoon(false); }} className="text-[11px] text-primary font-bold cursor-pointer">Clear All</button>
+                <button onClick={clearAll} className="text-[11px] text-primary font-bold cursor-pointer">Clear All</button>
               </div>
               <p className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Category</p>
               <div className="flex flex-wrap gap-2 mb-3">
@@ -206,24 +259,54 @@ export default function BuyerBrowseAuctions() {
                   </button>
                 ))}
               </div>
+              <p className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Price Range (PKR)</p>
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Min"
+                  value={minPrice}
+                  onChange={e => setMinPrice(e.target.value)}
+                  className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                />
+                <span className="text-[11px] text-placeholder">–</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Max"
+                  value={maxPrice}
+                  onChange={e => setMaxPrice(e.target.value)}
+                  className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                />
+              </div>
               <FilterCheckbox checked={showEndingSoon} onClick={() => setShowEndingSoon(p => !p)} label="Ending Soon" />
             </div>
           )}
 
-          {/* Desktop title + search */}
+          {/* Desktop title + search + sort */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
               <h1 className="font-extrabold text-[20px] sm:text-[22px] text-navy">Live Auctions</h1>
-              <p className="text-[12px] sm:text-[13px] text-muted">{filtered.length} auction{filtered.length !== 1 ? 's' : ''} found</p>
+              <p className="text-[12px] sm:text-[13px] text-muted">{sorted.length} auction{sorted.length !== 1 ? 's' : ''} found</p>
             </div>
-            <div className="relative hidden md:block">
-              <input
-                className="bg-surface border border-border-medium h-[40px] pl-[38px] pr-4 rounded-lg text-[13px] text-secondary w-[240px] outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow"
-                placeholder="Search auctions…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-              <Search size={16} className="absolute left-3 top-[12px] text-placeholder" />
+            <div className="flex items-center gap-2">
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as SortBy)}
+                aria-label="Sort auctions by"
+                className="bg-surface border border-border-medium h-[40px] px-3 rounded-lg text-[13px] text-secondary outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+              >
+                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              <div className="relative hidden md:block">
+                <input
+                  className="bg-surface border border-border-medium h-[40px] pl-[38px] pr-4 rounded-lg text-[13px] text-secondary w-[240px] outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow"
+                  placeholder="Search auctions…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+                <Search size={16} className="absolute left-3 top-[12px] text-placeholder" />
+              </div>
             </div>
           </div>
 
@@ -242,20 +325,20 @@ export default function BuyerBrowseAuctions() {
                 Refresh
               </Button>
             </div>
-          ) : filtered.length === 0 ? (
+          ) : sorted.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="bg-surface-raised rounded-full p-5">
                 <Search size={40} strokeWidth={1.3} className="text-placeholder" />
               </div>
               <p className="font-bold text-[16px] text-secondary">No auctions found</p>
               <p className="text-[13px] text-muted">Try adjusting your search or filters</p>
-              <Button variant="ghost" onClick={() => { setSearch(''); setCategory('All'); setShowEndingSoon(false); }} className="mt-1">
+              <Button variant="ghost" onClick={clearAll} className="mt-1">
                 Clear filters
               </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map(a => <AuctionCard key={a.auctionId} auction={a} />)}
+              {sorted.map(a => <AuctionCard key={a.auctionId} auction={a} />)}
             </div>
           )}
         </main>

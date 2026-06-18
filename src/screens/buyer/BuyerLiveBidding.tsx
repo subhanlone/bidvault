@@ -30,6 +30,12 @@ export default function BuyerLiveBidding() {
   const [pendingBidAmount, setPendingBidAmount] = useState<number | null>(null);
   const [isConfirming, setIsConfirming]         = useState(false);
   const [flashTimer, setFlashTimer]             = useState(false);
+  const [visibleBidCount, setVisibleBidCount]   = useState(8);
+  const [trackedAuctionId, setTrackedAuctionId] = useState(auctionId);
+  if (auctionId !== trackedAuctionId) {
+    setTrackedAuctionId(auctionId);
+    setVisibleBidCount(8);
+  }
 
   const wonRef         = useRef(false);
   const lastBidIdRef   = useRef<string | null>(null);
@@ -264,7 +270,7 @@ export default function BuyerLiveBidding() {
               <p className="text-[13px] text-muted text-center py-6">No bids yet. Be the first!</p>
             ) : (
               <div className="flex flex-col gap-1">
-                {auctionBids.slice(0, 8).map((b, i) => (
+                {auctionBids.slice(0, visibleBidCount).map((b, i) => (
                   <div key={b.bidId} className={`flex items-center justify-between py-3 ${i < auctionBids.length - 1 ? 'border-b border-surface-raised' : ''}`}>
                     <div className="flex items-center gap-3">
                       <div className="bg-surface-raised size-[32px] rounded-full flex items-center justify-center font-bold text-[12px] text-secondary shrink-0">
@@ -286,6 +292,14 @@ export default function BuyerLiveBidding() {
                   </div>
                 ))}
               </div>
+            )}
+            {auctionBids.length > visibleBidCount && (
+              <button
+                onClick={() => setVisibleBidCount(c => c + 8)}
+                className="w-full mt-3 text-[12px] font-bold text-primary hover:underline cursor-pointer text-center"
+              >
+                Show more ({auctionBids.length - visibleBidCount} remaining)
+              </button>
             )}
           </div>
         </div>
