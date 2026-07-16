@@ -53,7 +53,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
               onClick={e => { e.stopPropagation(); navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
               className="bg-primary font-bold text-[12px] text-white px-4 py-2 rounded-sm hover:bg-primary-dark transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             >
-              Bid Now →
+              Bid Now
             </button>
           )}
         </div>
@@ -117,7 +117,7 @@ export default function BuyerWatchlist() {
               Tap the heart icon on any live auction to save it here and track it easily.
             </p>
             <Link to="/buyer/browse" className="bg-primary font-bold text-[14px] text-white px-6 py-3 rounded-sm hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1">
-              Browse Auctions →
+              Browse Auctions 
             </Link>
           </div>
         ) : (
