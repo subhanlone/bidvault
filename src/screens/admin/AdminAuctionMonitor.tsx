@@ -1,17 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { getSocket } from '../../services/socket';
-import { Menu, Search } from 'lucide-react';
-import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import { Search } from 'lucide-react';
+import AdminLayout from '../../components/ui/AdminLayout';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
 export default function AdminAuctionMonitor() {
   const { auctionId } = useParams<{ auctionId: string }>();
   const { getAuction, bids, fetchBids, auctionsLoaded } = useAuction();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const auction = getAuction(auctionId ?? '');
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
@@ -35,38 +34,18 @@ export default function AdminAuctionMonitor() {
   );
 
   return (
-    <div className="flex min-h-screen bg-bg">
-      <div className="hidden md:block md:w-[200px] md:shrink-0">
-        <AdminSidebarContent active="Live Auctions" />
-      </div>
-
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
-          <AdminSidebarContent active="Live Auctions" onClose={() => setSidebarOpen(false)} />
-          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
+    <AdminLayout active="Live Auctions">
+      <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
+        <div>
+          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Auction Monitor</h1>
+          <p className="text-[12px] text-muted">Read-only live view</p>
         </div>
-      )}
+        <Link to="/admin/live-auctions" className="font-semibold text-[13px] text-primary hover:underline">
+          ← Back to Live Auctions
+        </Link>
+      </header>
 
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu size={18} className="text-tertiary" />
-            </button>
-            <div>
-              <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Auction Monitor</h1>
-              <p className="text-[12px] text-muted">Read-only live view</p>
-            </div>
-          </div>
-          <Link to="/admin/live-auctions" className="font-semibold text-[13px] text-primary hover:underline">
-            ← Back to Live Auctions
-          </Link>
-        </header>
-
-        <div className="flex-1 p-4 sm:p-6">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
           {!auctionsLoaded ? (
             <div className="max-w-[700px] flex flex-col gap-4">
               <div className="h-[220px] bg-surface border border-border-light rounded-md animate-pulse" />
@@ -137,7 +116,6 @@ export default function AdminAuctionMonitor() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

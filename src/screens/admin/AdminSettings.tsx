@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Menu, Save, AlertTriangle } from 'lucide-react';
+import { Save, AlertTriangle } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import AdminLayout from '../../components/ui/AdminLayout';
 import { Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
 
@@ -41,7 +41,6 @@ const EMPTY_FORM: FormState = {
 export default function AdminSettings() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -111,35 +110,19 @@ export default function AdminSettings() {
   );
 
   return (
-    <div className="flex min-h-screen bg-bg">
-      <div className="hidden md:block md:w-[200px] md:shrink-0">
-        <AdminSidebarContent active="Settings" />
-      </div>
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
-          <AdminSidebarContent active="Settings" onClose={() => setSidebarOpen(false)} />
-          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
+    <AdminLayout active="Settings">
+      <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
+        <div>
+          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Settings</h1>
+          <p className="text-[12px] text-muted">Manage platform configuration</p>
         </div>
-      )}
+        <Button variant="primary" onClick={handleSave} loading={isSaving} disabled={loading}>
+          <Save size={14} strokeWidth={2.5} />
+          <span className="hidden sm:inline">Save Changes</span>
+        </Button>
+      </header>
 
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
-          <div className="flex items-center gap-3">
-            <button className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={() => setSidebarOpen(true)}>
-              <Menu size={18} className="text-tertiary" />
-            </button>
-            <div>
-              <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Settings</h1>
-              <p className="text-[12px] text-muted">Manage platform configuration</p>
-            </div>
-          </div>
-          <Button variant="primary" onClick={handleSave} loading={isSaving} disabled={loading}>
-            <Save size={14} strokeWidth={2.5} />
-            <span className="hidden sm:inline">Save Changes</span>
-          </Button>
-        </header>
-
-        <div className="flex-1 p-4 sm:p-6 flex flex-col gap-5 max-w-[800px]">
+      <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col gap-5 max-w-[800px]">
 
           {/* Admin Profile */}
           <div className="bg-surface border border-border-light rounded-md overflow-hidden">
@@ -238,7 +221,6 @@ export default function AdminSettings() {
           )}
 
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

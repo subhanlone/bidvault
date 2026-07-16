@@ -1,9 +1,8 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
-import { Menu, Radio } from 'lucide-react';
-import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import { Radio } from 'lucide-react';
+import AdminLayout from '../../components/ui/AdminLayout';
 import type { Auction } from '../../types';
 
 function AuctionRow({ auction }: { auction: Auction }) {
@@ -71,7 +70,6 @@ function AuctionRow({ auction }: { auction: Auction }) {
 
 export default function AdminLiveAuctions() {
   const { auctions } = useAuction();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // AL-01: filter to ACTIVE only for table rendering
   // eslint-disable-next-line react-hooks/purity
@@ -85,39 +83,19 @@ export default function AdminLiveAuctions() {
   const highestBid   = active.reduce((m, a) => Math.max(m, a.currentBid), 0);
 
   return (
-    <div className="flex min-h-screen bg-bg">
-      <div className="hidden md:block md:w-[200px] md:shrink-0">
-        <AdminSidebarContent active="Live Auctions" />
-      </div>
-
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
-          <AdminSidebarContent active="Live Auctions" onClose={() => setSidebarOpen(false)} />
-          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
+    <AdminLayout active="Live Auctions">
+      <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
+        <div>
+          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Live Auctions</h1>
+          <p className="text-[12px] text-muted">Real-time view of all active auctions</p>
         </div>
-      )}
+        <span className="flex items-center gap-1 text-[12px] text-success-dark font-bold">
+          <span className="size-[8px] rounded-full bg-success-dark inline-block animate-pulse" />
+          Live
+        </span>
+      </header>
 
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu size={18} className="text-tertiary" />
-            </button>
-            <div>
-              <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Live Auctions</h1>
-              <p className="text-[12px] text-muted">Real-time view of all active auctions</p>
-            </div>
-          </div>
-          <span className="flex items-center gap-1 text-[12px] text-success-dark font-bold">
-            <span className="size-[8px] rounded-full bg-success-dark inline-block animate-pulse" />
-            Live
-          </span>
-        </header>
-
-        <div className="flex-1 p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
+      <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[
               { label: 'Total Active',    value: String(active.length),                    color: 'text-navy',         sub: 'Across all categories' },
@@ -159,7 +137,6 @@ export default function AdminLiveAuctions() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

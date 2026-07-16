@@ -1,8 +1,7 @@
-﻿import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, BarChart2, Radio, Settings, Menu, X, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, BarChart2, Radio, Settings, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
-import NotificationBell from './NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { usePendingListings } from '../../hooks/usePendingListings';
@@ -25,9 +24,12 @@ interface AdminSidebarContentProps {
   /** Label of the active item; if omitted, active state is inferred from current pathname. */
   active?: string;
   onClose?: () => void;
+  /** Icon-only rendering (desktop only — the mobile drawer is never collapsed). */
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function AdminSidebarContent({ active, onClose }: AdminSidebarContentProps) {
+export function AdminSidebarContent({ active, onClose, collapsed = false, onToggleCollapse }: AdminSidebarContentProps) {
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const { pendingListings, refreshListings } = usePendingListings();
@@ -43,25 +45,30 @@ export function AdminSidebarContent({ active, onClose }: AdminSidebarContentProp
   };
 
   return (
-    <aside className="bg-navy flex flex-col w-[220px] shrink-0 h-screen sticky top-0 overflow-y-auto">
-      <div className="h-14 flex items-center px-5 border-b border-white/10 gap-2">
-        <BidVaultLogo size="sm" to="/admin/dashboard" />
-        <div className="ml-auto flex items-center gap-1">
-          <NotificationBell iconClass="text-white/55 hover:text-white" align="left" />
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="text-white/50 hover:text-white cursor-pointer"
-              aria-label="Close navigation menu"
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
+    <aside className={`bg-navy flex flex-col shrink-0 h-screen sticky top-0 overflow-y-auto transition-[width] duration-200 ${collapsed ? 'w-[76px]' : 'w-[220px]'}`}>
+      <div className={`h-14 flex items-center border-b border-white/10 gap-2 ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
+        {collapsed ? (
+          <Link to="/admin/dashboard" aria-label="BidVault — Dashboard" className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
+              <path d="M5 17L12 5l7 12H5z" fill="white" />
+            </svg>
+          </Link>
+        ) : (
+          <BidVaultLogo size="sm" to="/admin/dashboard" />
+        )}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="ml-auto text-white/50 hover:text-white cursor-pointer"
+            aria-label="Close navigation menu"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
-      <div className="px-3 pt-4 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 px-3 mb-2">Main Menu</p>
+      <div className={`pt-4 flex-1 ${collapsed ? 'px-2' : 'px-3'}`}>
+        {!collapsed && <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 px-3 mb-2">Main Menu</p>}
         <nav className="flex flex-col gap-0.5">
           {navItems.map(({ label, to, icon: Icon }) => {
             const isActive = active != null
@@ -74,18 +81,23 @@ export function AdminSidebarContent({ active, onClose }: AdminSidebarContentProp
                 to={to}
                 onClick={() => onClose?.()}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 no-underline
+                title={collapsed ? `${label}${badge ? ` (${badge})` : ''}` : undefined}
+                className={`relative flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 no-underline
+                  ${collapsed ? 'justify-center px-0' : 'px-3'}
                   ${isActive
-                    ? 'bg-white/10 text-white border-l-[3px] border-primary pl-[9px]'
-                    : 'text-white/55 hover:text-white hover:bg-white/5 border-l-[3px] border-transparent'
+                    ? `bg-white/10 text-white ${collapsed ? '' : 'border-l-[3px] border-primary pl-[9px]'}`
+                    : `text-white/55 hover:text-white hover:bg-white/5 ${collapsed ? '' : 'border-l-[3px] border-transparent'}`
                   }`}
               >
                 <Icon size={16} strokeWidth={2} />
-                <span className="flex-1">{label}</span>
-                {badge && (
+                {!collapsed && <span className="flex-1">{label}</span>}
+                {!collapsed && badge && (
                   <span className={`font-bold text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-primary text-white' : 'bg-white/12 text-white/70'}`}>
                     {badge}
                   </span>
+                )}
+                {collapsed && badge && (
+                  <span className="absolute top-1.5 right-1.5 size-[6px] rounded-full bg-primary" aria-hidden="true" />
                 )}
               </Link>
             );
@@ -93,63 +105,37 @@ export function AdminSidebarContent({ active, onClose }: AdminSidebarContentProp
         </nav>
       </div>
 
-      <div className="px-4 py-4 border-t border-white/10 flex items-center gap-3">
+      {onToggleCollapse && (
+        <div className="hidden md:flex px-3 py-2 border-t border-white/10">
+          <button
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={`flex items-center gap-2 text-white/50 hover:text-white cursor-pointer text-[12px] font-semibold rounded-lg py-2 transition-colors ${collapsed ? 'justify-center w-full' : 'px-2'}`}
+          >
+            {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /> Collapse</>}
+          </button>
+        </div>
+      )}
+
+      <div className={`py-4 border-t border-white/10 flex items-center gap-3 ${collapsed ? 'px-2 justify-center' : 'px-4'}`}>
         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold shrink-0">
           {user?.name?.[0]?.toUpperCase() ?? 'A'}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
-          <p className="text-[10px] text-white/45">Admin</p>
-        </div>
+        {!collapsed && (
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white leading-tight truncate">{user?.name ?? 'Admin'}</p>
+            <p className="text-[10px] text-white/45">Admin</p>
+          </div>
+        )}
         <button
           onClick={logout}
-          className="text-[11px] text-white/50 hover:text-white shrink-0 cursor-pointer transition-colors"
+          aria-label="Logout"
+          title={collapsed ? 'Logout' : undefined}
+          className={`text-white/50 hover:text-white shrink-0 cursor-pointer transition-colors ${collapsed ? '' : 'text-[11px]'}`}
         >
-          Logout
+          {collapsed ? <LogOut size={16} /> : 'Logout'}
         </button>
       </div>
     </aside>
-  );
-}
-
-/**
- * Self-contained AdminSidebar: renders desktop sidebar plus a mobile drawer
- * with backdrop and hamburger trigger. The trigger button is rendered inline
- * by this component (md:hidden) and is fixed top-left so it floats above the
- * page header. Drawer uses z-40 and backdrop z-30; ToastContainer (z-50)
- * correctly stacks above both.
- */
-export default function AdminSidebar() {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      {/* Hamburger trigger (mobile only) */}
-      <button
-        className="md:hidden fixed top-3 left-3 z-30 p-2 rounded-sm bg-surface border border-border-light hover:bg-bg cursor-pointer"
-        onClick={() => setOpen(true)}
-        aria-label="Open navigation menu"
-        aria-expanded={open}
-      >
-        <Menu size={18} className="text-muted" />
-      </button>
-
-      {/* Desktop sidebar */}
-      <div className="hidden md:block md:w-[220px] md:shrink-0">
-        <AdminSidebarContent />
-      </div>
-
-      {/* Mobile drawer + backdrop */}
-      {open && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
-          <AdminSidebarContent onClose={() => setOpen(false)} />
-          <button
-            className="flex-1 bg-black/40 border-0 cursor-pointer z-30"
-            onClick={() => setOpen(false)}
-            aria-label="Close navigation menu"
-          />
-        </div>
-      )}
-    </>
   );
 }

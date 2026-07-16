@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
-import { Menu, ChevronLeft, ChevronRight, Package, MessageSquare } from 'lucide-react';
-import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import { ChevronLeft, ChevronRight, Package, MessageSquare } from 'lucide-react';
+import AdminLayout from '../../components/ui/AdminLayout';
 import { Button } from '../../components/ui';
 import Textarea from '../../components/ui/Textarea';
 import { getCategoryFields } from '../../config/categoryFields';
@@ -22,7 +22,6 @@ export default function AdminListingReview() {
   const [rejecting, setRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [navigating, setNavigating] = useState(false);
 
   const listing = pendingListings.find(l => l.listingId === listingId);
@@ -104,30 +103,10 @@ export default function AdminListingReview() {
   }
 
   return (
-    <div className="flex min-h-screen bg-bg">
+    <AdminLayout active="Listing Review">
 
-      <div className="hidden md:block md:w-[200px] md:shrink-0">
-        <AdminSidebarContent active="Listing Review" />
-      </div>
-
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
-          <AdminSidebarContent active="Listing Review" onClose={() => setSidebarOpen(false)} />
-          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
-        </div>
-      )}
-
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-
-        <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <button
-              className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open navigation menu"
-            >
-              <Menu size={18} className="text-tertiary" />
-            </button>
+      <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
             <div className="min-w-0">
               <div className="flex items-center gap-2 min-w-0">
                 <button onClick={() => navigate('/admin/listing-reviews')} className="text-[12px] text-muted hover:text-primary whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">Listing Review</button>
@@ -355,7 +334,6 @@ export default function AdminListingReview() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

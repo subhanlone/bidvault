@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Star, Menu, TrendingUp } from 'lucide-react';
-import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import { Star, TrendingUp } from 'lucide-react';
+import AdminLayout from '../../components/ui/AdminLayout';
 import { api } from '../../services/api';
 
 interface AnalyticsData {
@@ -36,7 +36,6 @@ function KpiSkeleton() {
 }
 
 export default function AdminAnalytics() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [period, setPeriod] = useState<Period>('12m');
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,42 +60,26 @@ export default function AdminAnalytics() {
   ] : [];
 
   return (
-    <div className="flex min-h-screen bg-bg">
-      <div className="hidden md:block md:w-[200px] md:shrink-0">
-        <AdminSidebarContent active="Analytics" />
-      </div>
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
-          <AdminSidebarContent active="Analytics" onClose={() => setSidebarOpen(false)} />
-          <button className="flex-1 bg-[rgba(0,0,0,0.4)] border-0" onClick={() => setSidebarOpen(false)} aria-label="Close navigation menu" />
+    <AdminLayout active="Analytics">
+      <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
+        <div>
+          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Analytics</h1>
+          <p className="text-[12px] text-muted">Platform performance and revenue insights</p>
         </div>
-      )}
-
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
-          <div className="flex items-center gap-3">
-            <button className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={() => setSidebarOpen(true)}>
-              <Menu size={18} className="text-tertiary" />
+        <div className="flex items-center gap-1 bg-bg border border-border-light rounded-sm p-1">
+          {(['3m', '6m', '12m'] as const).map(p => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`font-bold text-[11px] px-3 py-1.5 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${period === p ? 'bg-navy text-white' : 'text-muted hover:text-secondary'}`}
+            >
+              {p === '3m' ? '3 Months' : p === '6m' ? '6 Months' : '12 Months'}
             </button>
-            <div>
-              <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Analytics</h1>
-              <p className="text-[12px] text-muted">Platform performance and revenue insights</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 bg-bg border border-border-light rounded-sm p-1">
-            {(['3m', '6m', '12m'] as const).map(p => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`font-bold text-[11px] px-3 py-1.5 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${period === p ? 'bg-navy text-white' : 'text-muted hover:text-secondary'}`}
-              >
-                {p === '3m' ? '3 Months' : p === '6m' ? '6 Months' : '12 Months'}
-              </button>
-            ))}
-          </div>
-        </header>
+          ))}
+        </div>
+      </header>
 
-        <div className="flex-1 p-4 sm:p-6 flex flex-col gap-5">
+      <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col gap-5">
 
           {/* KPI cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
@@ -253,7 +236,6 @@ export default function AdminAnalytics() {
           </div>
 
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }
