@@ -7,6 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import { api } from '../../services/api';
 
 export default function BuyerProfile() {
   const { user, logout, changePassword } = useAuth();
@@ -14,28 +15,30 @@ export default function BuyerProfile() {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const NOTIF_KEY = 'bidvault_notif_prefs_v1';
-  const [notifBids, setNotifBids] = useState(() => {
-    try { const s = localStorage.getItem(NOTIF_KEY); return s ? (JSON.parse(s) as { bids?: boolean }).bids ?? true : true; } catch { return true; }
-  });
-  const [notifWins, setNotifWins] = useState(() => {
-    try { const s = localStorage.getItem(NOTIF_KEY); return s ? (JSON.parse(s) as { wins?: boolean }).wins ?? true : true; } catch { return true; }
-  });
-  const [notifNews, setNotifNews] = useState(() => {
-    try { const s = localStorage.getItem(NOTIF_KEY); return s ? (JSON.parse(s) as { news?: boolean }).news ?? false : false; } catch { return false; }
-  });
+  const [notifBids, setNotifBids] = useState(true);
+  const [notifWins, setNotifWins] = useState(true);
+  const [notifNews, setNotifNews] = useState(false);
   const [showPwForm, setShowPwForm] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState('');
+  const [currentPwError, setCurrentPwError] = useState('');
 
   useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
 
   useEffect(() => {
-    try { localStorage.setItem(NOTIF_KEY, JSON.stringify({ bids: notifBids, wins: notifWins, news: notifNews })); } catch { /* quota exceeded */ }
-  }, [notifBids, notifWins, notifNews]);
+    api.get<{ notifyOutbid: boolean; notifyWins: boolean; notifyNews: boolean }>('/auth/me/preferences')
+      .then(p => { setNotifBids(p.notifyOutbid); setNotifWins(p.notifyWins); setNotifNews(p.notifyNews); })
+      .catch(() => {});
+  }, []);
+
+  const savePref = (key: 'notifyOutbid' | 'notifyWins' | 'notifyNews', value: boolean) => {
+    api.patch('/auth/me/preferences', { [key]: value }).catch(() => {
+      showToast({ type: 'error', title: 'Not Saved', message: 'Could not update your notification preference.' });
+    });
+  };
 
   const myBids = Object.values(bids).flat().filter(b => b.buyerId === user?.userId);
   const totalBidAmount = Object.entries(bids).reduce((total, [, bidList]) => {
@@ -231,9 +234,9 @@ export default function BuyerProfile() {
                 </div>
                 <div className="p-5 flex flex-col gap-4">
                   {[
-                    { label: 'Outbid alerts', sub: 'When someone outbids you', value: notifBids, set: setNotifBids },
-                    { label: 'Win notifications', sub: 'When you win an auction', value: notifWins, set: setNotifWins },
-                    { label: 'Platform updates', sub: 'New features & news', value: notifNews, set: setNotifNews },
+                    { label: 'Outbid alerts', sub: 'When someone outbids you', value: notifBids, set: setNotifBids, key: 'notifyOutbid' as const },
+                    { label: 'Win notifications', sub: 'When you win an auction', value: notifWins, set: setNotifWins, key: 'notifyWins' as const },
+                    { label: 'Platform updates', sub: 'New features & news', value: notifNews, set: setNotifNews, key: 'notifyNews' as const },
                   ].map(n => (
                     <div key={n.label} className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-2">
@@ -244,7 +247,7 @@ export default function BuyerProfile() {
                         </div>
                       </div>
                       <button
-                        onClick={() => n.set(v => !v)}
+                        onClick={() => { const nv = !n.value; n.set(nv); savePref(n.key, nv); }}
                         aria-label={`Toggle ${n.label}`}
                         className={`shrink-0 w-[38px] h-[22px] rounded-full transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${n.value ? 'bg-success-dark' : 'bg-border-medium'}`}
                       >
@@ -275,8 +278,9 @@ export default function BuyerProfile() {
                         label="Current Password"
                         type="password"
                         value={currentPw}
-                        onChange={e => { setCurrentPw(e.target.value); setPwError(''); }}
+                        onChange={e => { setCurrentPw(e.target.value); setCurrentPwError(''); }}
                         placeholder="Your current password"
+                        error={currentPwError}
                       />
                       <Input
                         id="buyer-new-password"
@@ -302,7 +306,7 @@ export default function BuyerProfile() {
                           variant="outline"
                           size="sm"
                           className="flex-1 rounded-sm"
-                          onClick={() => { setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError(''); }}
+                          onClick={() => { setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError(''); setCurrentPwError(''); }}
                         >
                           Cancel
                         </Button>
@@ -311,12 +315,15 @@ export default function BuyerProfile() {
                           className="flex-1 rounded-sm"
                           loading={pwLoading}
                           onClick={async () => {
+                            setCurrentPwError('');
+                            setPwError('');
+                            if (!currentPw.trim()) { setCurrentPwError('Current password is required'); return; }
                             if (newPw.length < 8) { setPwError('Min. 8 characters'); return; }
                             setPwLoading(true);
                             const result = await changePassword(currentPw, newPw);
                             setPwLoading(false);
                             if (result.success) {
-                              setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError('');
+                              setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError(''); setCurrentPwError('');
                               showToast({ type: 'success', title: 'Password Changed', message: 'Your password has been updated.' });
                             } else {
                               setPwError(result.error || 'Failed to change password.');

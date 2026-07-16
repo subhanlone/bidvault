@@ -1,9 +1,10 @@
 export type UserRole = 'BUYER' | 'SELLER' | 'ADMIN';
 export type AuctionStatus = 'SCHEDULED' | 'ACTIVE' | 'CLOSED';
 export type ListingStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
-export type NotificationType = 'BID' | 'WIN' | 'LISTING' | 'SYSTEM';
-export type TransactionStatus = 'PENDING' | 'COMPLETED';
+export type NotificationType = 'BID_OUTBID' | 'AUCTION_WON' | 'LISTING_APPROVED' | 'LISTING_REJECTED' | 'NEW_REVIEW';
+export type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
 export type ItemCondition = 'NEW' | 'LIKE_NEW' | 'USED';
+export type CategoryAttributes = Record<string, string | number>;
 
 export interface User {
   userId: string;
@@ -26,7 +27,6 @@ export interface Listing {
   startPrice: number;
   reservePrice?: number;
   minIncrement: number;
-  startAt: string;
   durationDays: number;
   status: ListingStatus;
   rejectionReason?: string;
@@ -34,6 +34,7 @@ export interface Listing {
   emoji: string;
   imageUrl?: string;
   sellerEmail?: string;
+  attributes?: CategoryAttributes;
 }
 
 export interface Auction {
@@ -58,6 +59,7 @@ export interface Auction {
   status: AuctionStatus;
   imageUrl: string;
   images?: string[];
+  attributes?: CategoryAttributes;
 }
 
 export interface SellerReview {
@@ -66,6 +68,21 @@ export interface SellerReview {
   comment: string | null;
   buyerName: string;
   createdAt: string;
+}
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationPrefs {
+  notifyOutbid: boolean;
+  notifyWins: boolean;
+  notifyNews: boolean;
 }
 
 export interface Bid {
@@ -94,13 +111,12 @@ export interface ListingDraft {
   condition: ItemCondition | '';
   description: string;
   imageUrl: string;
-  startDate: string;
-  startTime: string;
   duration: number;
   startingPrice: number;
   minIncrement: number;
   hasReserve: boolean;
   reservePrice: number;
+  attributes: CategoryAttributes;
 }
 
 export interface Toast {
@@ -113,6 +129,7 @@ export interface Toast {
 export interface RegisterData {
   name: string;
   email: string;
+  cnic: string;
   password: string;
   role: UserRole;
 }
