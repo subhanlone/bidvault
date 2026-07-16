@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
-import { CheckCircle2, ClipboardList, X } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Menu, X } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
+import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
 
 export default function AdminListingReviews() {
@@ -49,12 +50,23 @@ export default function AdminListingReviews() {
 
   return (
     <AdminLayout active="Listing Review">
+      {({ openMobileMenu }) => (
+        <>
       <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
-        <div>
-          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Listing Review</h1>
-          <p className="text-[12px] text-muted">
-            {pendingCount > 0 ? `${pendingCount} listing${pendingCount !== 1 ? 's' : ''} awaiting review` : 'All listings reviewed'}
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            onClick={openMobileMenu}
+            aria-label="Open navigation menu"
+          >
+            <Menu size={18} className="text-tertiary" />
+          </button>
+          <div>
+            <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Listing Review</h1>
+            <p className="text-[12px] text-muted">
+              {pendingCount > 0 ? `${pendingCount} listing${pendingCount !== 1 ? 's' : ''} awaiting review` : 'All listings reviewed'}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {pendingCount > 0 && (
@@ -62,6 +74,7 @@ export default function AdminListingReviews() {
               {pendingCount} Pending
             </span>
           )}
+          <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
           <button
             type="button"
             disabled={pendingCount === 0}
@@ -191,6 +204,8 @@ export default function AdminListingReviews() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </AdminLayout>
   );

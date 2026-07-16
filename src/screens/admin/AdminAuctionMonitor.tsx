@@ -3,8 +3,9 @@ import { useParams, Link } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { getSocket } from '../../services/socket';
-import { Search } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
+import NotificationBell from '../../components/ui/NotificationBell';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
@@ -35,14 +36,28 @@ export default function AdminAuctionMonitor() {
 
   return (
     <AdminLayout active="Live Auctions">
+      {({ openMobileMenu }) => (
+        <>
       <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
-        <div>
-          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Auction Monitor</h1>
-          <p className="text-[12px] text-muted">Read-only live view</p>
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            onClick={openMobileMenu}
+            aria-label="Open navigation menu"
+          >
+            <Menu size={18} className="text-tertiary" />
+          </button>
+          <div>
+            <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Auction Monitor</h1>
+            <p className="text-[12px] text-muted">Read-only live view</p>
+          </div>
         </div>
-        <Link to="/admin/live-auctions" className="font-semibold text-[13px] text-primary hover:underline">
-          ← Back to Live Auctions
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/admin/live-auctions" className="hidden sm:inline font-semibold text-[13px] text-primary hover:underline">
+            ← Back to Live Auctions
+          </Link>
+          <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
+        </div>
       </header>
 
       <div className="flex-1 overflow-auto p-4 sm:p-6">
@@ -116,6 +131,8 @@ export default function AdminAuctionMonitor() {
             </div>
           )}
         </div>
+        </>
+      )}
     </AdminLayout>
   );
 }

@@ -1,21 +1,29 @@
 import { useState } from 'react';
-import { Menu } from 'lucide-react';
 import { AdminSidebarContent } from './AdminSidebar';
-import NotificationBell from './NotificationBell';
 
 const COLLAPSE_KEY = 'bidvault_admin_sidebar_collapsed';
+
+export interface AdminLayoutRenderProps {
+  /** Opens the mobile sidebar drawer — wire this to the screen's own inline hamburger button. */
+  openMobileMenu: () => void;
+}
 
 interface AdminLayoutProps {
   /** Label of the active sidebar item — see navItems in AdminSidebar.tsx. */
   active: string;
-  children: React.ReactNode;
+  /**
+   * Render-prop so each screen keeps its own header/hamburger/notification-bell
+   * placement instead of a separate shared strip — a shared strip read as an
+   * empty bar with one orphaned icon, especially on mobile.
+   */
+  children: (props: AdminLayoutRenderProps) => React.ReactNode;
 }
 
 /**
  * Shared chrome for every admin screen: sidebar (desktop, collapsible +
- * persisted; mobile, drawer) plus a slim top strip carrying the mobile menu
- * trigger and the notification bell. `children` renders as this screen's own
- * header + content inside the remaining flex column.
+ * persisted; mobile, drawer). Everything else — header, mobile menu trigger,
+ * notification bell — stays with each screen so it renders inline with that
+ * screen's own title/actions, not as a disconnected strip above them.
  */
 export default function AdminLayout({ active, children }: AdminLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -48,23 +56,9 @@ export default function AdminLayout({ active, children }: AdminLayoutProps) {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="h-12 shrink-0 flex items-center justify-between px-4 border-b border-border-light bg-surface">
-          <button
-            className="md:hidden -ml-2 p-2 rounded-sm hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open navigation menu"
-          >
-            <Menu size={18} className="text-tertiary" />
-          </button>
-          <div className="flex-1" />
-          <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
-        </div>
-
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {children}
-        </main>
-      </div>
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {children({ openMobileMenu: () => setMobileOpen(true) })}
+      </main>
     </div>
   );
 }

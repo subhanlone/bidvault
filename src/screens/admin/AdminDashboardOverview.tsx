@@ -5,8 +5,9 @@ import { useAuction } from '../../context/AuctionContext';
 import { api } from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { useToast } from '../../context/ToastContext';
-import { CheckCircle2, BarChart3, Gavel, Banknote, Clock, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Menu, BarChart3, Gavel, Banknote, Clock, ChevronRight } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
+import NotificationBell from '../../components/ui/NotificationBell';
 import StatCard from '../../components/ui/StatCard';
 
 interface PlatformStats {
@@ -89,14 +90,25 @@ export default function AdminDashboardOverview() {
 
   return (
     <AdminLayout active="Dashboard">
-
+      {({ openMobileMenu }) => (
+        <>
       {/* Top bar */}
       <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4 gap-3">
-        <div>
-          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Dashboard Overview</h1>
-          <p className="text-[12px] text-muted">{new Date().toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · BidVault Admin</p>
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            onClick={openMobileMenu}
+            aria-label="Open navigation menu"
+          >
+            <Menu size={18} className="text-tertiary" />
+          </button>
+          <div>
+            <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Dashboard Overview</h1>
+            <p className="text-[12px] text-muted">{new Date().toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · BidVault Admin</p>
+          </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
+          <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
           <button
             onClick={() => navigate('/admin/analytics')}
             className="hidden sm:flex border border-border-medium gap-2 items-center px-4 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -304,6 +316,8 @@ export default function AdminDashboardOverview() {
           </div>
 
       </div>
+        </>
+      )}
     </AdminLayout>
   );
 }

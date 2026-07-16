@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Save, AlertTriangle } from 'lucide-react';
+import { Menu, Save, AlertTriangle } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import AdminLayout from '../../components/ui/AdminLayout';
+import NotificationBell from '../../components/ui/NotificationBell';
 import { Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
 
@@ -111,15 +112,29 @@ export default function AdminSettings() {
 
   return (
     <AdminLayout active="Settings">
+      {({ openMobileMenu }) => (
+        <>
       <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
-        <div>
-          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Settings</h1>
-          <p className="text-[12px] text-muted">Manage platform configuration</p>
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            onClick={openMobileMenu}
+            aria-label="Open navigation menu"
+          >
+            <Menu size={18} className="text-tertiary" />
+          </button>
+          <div>
+            <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Settings</h1>
+            <p className="text-[12px] text-muted">Manage platform configuration</p>
+          </div>
         </div>
-        <Button variant="primary" onClick={handleSave} loading={isSaving} disabled={loading}>
-          <Save size={14} strokeWidth={2.5} />
-          <span className="hidden sm:inline">Save Changes</span>
-        </Button>
+        <div className="flex items-center gap-3">
+          <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
+          <Button variant="primary" onClick={handleSave} loading={isSaving} disabled={loading}>
+            <Save size={14} strokeWidth={2.5} />
+            <span className="hidden sm:inline">Save Changes</span>
+          </Button>
+        </div>
       </header>
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col gap-5 max-w-[800px]">
@@ -221,6 +236,8 @@ export default function AdminSettings() {
           )}
 
         </div>
+        </>
+      )}
     </AdminLayout>
   );
 }

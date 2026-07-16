@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Star, TrendingUp } from 'lucide-react';
+import { Star, Menu, TrendingUp } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
+import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
 
 interface AnalyticsData {
@@ -61,21 +62,35 @@ export default function AdminAnalytics() {
 
   return (
     <AdminLayout active="Analytics">
-      <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
-        <div>
-          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Analytics</h1>
-          <p className="text-[12px] text-muted">Platform performance and revenue insights</p>
+      {({ openMobileMenu }) => (
+        <>
+      <header className="bg-surface border-b border-border-light flex items-center justify-between flex-wrap gap-3 px-4 sm:px-6 py-4">
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            onClick={openMobileMenu}
+            aria-label="Open navigation menu"
+          >
+            <Menu size={18} className="text-tertiary" />
+          </button>
+          <div>
+            <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Analytics</h1>
+            <p className="text-[12px] text-muted">Platform performance and revenue insights</p>
+          </div>
         </div>
-        <div className="flex items-center gap-1 bg-bg border border-border-light rounded-sm p-1">
-          {(['3m', '6m', '12m'] as const).map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`font-bold text-[11px] px-3 py-1.5 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${period === p ? 'bg-navy text-white' : 'text-muted hover:text-secondary'}`}
-            >
-              {p === '3m' ? '3 Months' : p === '6m' ? '6 Months' : '12 Months'}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-bg border border-border-light rounded-sm p-1">
+            {(['3m', '6m', '12m'] as const).map(p => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`font-bold text-[11px] px-3 py-1.5 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${period === p ? 'bg-navy text-white' : 'text-muted hover:text-secondary'}`}
+              >
+                {p === '3m' ? '3 Months' : p === '6m' ? '6 Months' : '12 Months'}
+              </button>
+            ))}
+          </div>
+          <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
         </div>
       </header>
 
@@ -236,6 +251,8 @@ export default function AdminAnalytics() {
           </div>
 
         </div>
+        </>
+      )}
     </AdminLayout>
   );
 }

@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
-import { Radio } from 'lucide-react';
+import { Menu, Radio } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
+import NotificationBell from '../../components/ui/NotificationBell';
 import type { Auction } from '../../types';
 
 function AuctionRow({ auction }: { auction: Auction }) {
@@ -84,15 +85,29 @@ export default function AdminLiveAuctions() {
 
   return (
     <AdminLayout active="Live Auctions">
+      {({ openMobileMenu }) => (
+        <>
       <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-4">
-        <div>
-          <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Live Auctions</h1>
-          <p className="text-[12px] text-muted">Real-time view of all active auctions</p>
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            onClick={openMobileMenu}
+            aria-label="Open navigation menu"
+          >
+            <Menu size={18} className="text-tertiary" />
+          </button>
+          <div>
+            <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Live Auctions</h1>
+            <p className="text-[12px] text-muted">Real-time view of all active auctions</p>
+          </div>
         </div>
-        <span className="flex items-center gap-1 text-[12px] text-success-dark font-bold">
-          <span className="size-[8px] rounded-full bg-success-dark inline-block animate-pulse" />
-          Live
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:flex items-center gap-1 text-[12px] text-success-dark font-bold">
+            <span className="size-[8px] rounded-full bg-success-dark inline-block animate-pulse" />
+            Live
+          </span>
+          <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
+        </div>
       </header>
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
@@ -137,6 +152,8 @@ export default function AdminLiveAuctions() {
             </div>
           </div>
         </div>
+        </>
+      )}
     </AdminLayout>
   );
 }

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
-import { ChevronLeft, ChevronRight, Package, MessageSquare } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Menu, Package, MessageSquare } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
+import NotificationBell from '../../components/ui/NotificationBell';
 import { Button } from '../../components/ui';
 import Textarea from '../../components/ui/Textarea';
 import { getCategoryFields } from '../../config/categoryFields';
@@ -104,9 +105,18 @@ export default function AdminListingReview() {
 
   return (
     <AdminLayout active="Listing Review">
+      {({ openMobileMenu }) => (
+        <>
 
       <header className="bg-surface border-b border-border-light flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 gap-3">
         <div className="flex items-center gap-3 min-w-0">
+            <button
+              className="md:hidden p-2 rounded-sm border border-border-light hover:bg-bg shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              onClick={openMobileMenu}
+              aria-label="Open navigation menu"
+            >
+              <Menu size={18} className="text-tertiary" />
+            </button>
             <div className="min-w-0">
               <div className="flex items-center gap-2 min-w-0">
                 <button onClick={() => navigate('/admin/listing-reviews')} className="text-[12px] text-muted hover:text-primary whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">Listing Review</button>
@@ -121,6 +131,7 @@ export default function AdminListingReview() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
             <button
               onClick={() => prevListing && navigate(`/admin/listing-review/${prevListing.listingId}`)}
               disabled={!prevListing}
@@ -334,6 +345,8 @@ export default function AdminListingReview() {
             </div>
           </div>
         </div>
+        </>
+      )}
     </AdminLayout>
   );
 }
