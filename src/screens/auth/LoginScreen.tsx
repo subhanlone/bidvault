@@ -12,6 +12,9 @@ function formatPKR(n: number): string {
   return `PKR ${n}`;
 }
 
+// Requires a real TLD-shaped domain — rejects leading/trailing/consecutive dots and hyphens.
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
 export default function LoginScreen() {
   const navigate = useNavigate();
   const { user, login } = useAuth();
@@ -57,7 +60,7 @@ export default function LoginScreen() {
     if (!email.trim()) {
       setEmailError('Email is required');
       invalid++;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
+    } else if (!EMAIL_REGEX.test(email.trim())) {
       setEmailError('Enter a valid email address');
       invalid++;
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { User, Mail, Lock, Eye, EyeOff, ShoppingBag, Tag } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, ShoppingBag, Tag, CreditCard } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import type { UserRole } from '../../types';
@@ -24,6 +24,24 @@ function pwScore(pw: string): 0 | 1 | 2 | 3 {
   return (s >= 3 ? 3 : s >= 2 ? 2 : 1) as 1 | 2 | 3;
 }
 
+// Letters (incl. accented), spaces, hyphens, and apostrophes only — no digits or other symbols.
+const NAME_REGEX = /^[\p{L}\s'-]+$/u;
+// Requires a real TLD-shaped domain — rejects leading/trailing/consecutive dots and hyphens.
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+// Pakistani CNIC: 5 digits - 7 digits - 1 digit
+const CNIC_REGEX = /^\d{5}-\d{7}-\d{1}$/;
+
+function formatCnic(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 13);
+  const part1 = digits.slice(0, 5);
+  const part2 = digits.slice(5, 12);
+  const part3 = digits.slice(12, 13);
+  let out = part1;
+  if (part2) out += `-${part2}`;
+  if (part3) out += `-${part3}`;
+  return out;
+}
+
 export default function RegisterScreen() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -35,6 +53,7 @@ export default function RegisterScreen() {
   );
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
+  const [cnic, setCnic]         = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
   const [agree, setAgree]       = useState(false);
@@ -72,9 +91,15 @@ export default function RegisterScreen() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!name.trim()) e.name = 'Full name is required';
+    const trimmedName = name.trim();
+    if (!trimmedName) e.name = 'Full name is required';
+    else if (trimmedName.length < 2) e.name = 'Name must be at least 2 characters';
+    else if (trimmedName.length > 100) e.name = 'Name must be under 100 characters';
+    else if (!NAME_REGEX.test(trimmedName)) e.name = 'Name can only contain letters, spaces, hyphens, and apostrophes';
     if (!email.trim()) e.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Enter a valid email';
+    else if (!EMAIL_REGEX.test(email.trim())) e.email = 'Enter a valid email address';
+    if (!cnic) e.cnic = 'CNIC is required';
+    else if (!CNIC_REGEX.test(cnic)) e.cnic = 'CNIC must be in the format 12345-1234567-1';
     if (password.length < 8) e.password = 'Password must be at least 8 characters';
     if (!agree) e.agree = 'You must agree to the terms';
     return e;
@@ -85,7 +110,7 @@ export default function RegisterScreen() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setLoading(true);
-    const result = await register({ name, email, password, role });
+    const result = await register({ name: name.trim(), email: email.trim(), cnic, password, role });
     setLoading(false);
     if (result.success) {
       showToast({ type: 'success', title: 'Account Created!', message: 'Check your email for a verification code.' });
@@ -178,6 +203,19 @@ export default function RegisterScreen() {
             autoComplete="email"
           />
         </div>
+
+        {/* CNIC */}
+        <Input
+          label="CNIC"
+          placeholder="12345-1234567-1"
+          value={cnic}
+          onChange={e => { setCnic(formatCnic(e.target.value)); clearError('cnic'); }}
+          leftIcon={<CreditCard size={16} />}
+          error={errors.cnic}
+          inputMode="numeric"
+          maxLength={15}
+          autoComplete="off"
+        />
 
         {/* Password + strength bar */}
         <div>
