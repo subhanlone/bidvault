@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { AuctionProvider } from './context/AuctionContext';
 import { ListingProvider } from './context/ListingContext';
 import { ToastProvider } from './context/ToastContext';
@@ -9,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 const LandingPage = lazy(() => import('./screens/LandingPage'));
 const NotFound = lazy(() => import('./screens/NotFound'));
+const MaintenancePage = lazy(() => import('./screens/MaintenancePage'));
 const PrivacyPolicy = lazy(() => import('./screens/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./screens/TermsOfService'));
 const RegisterScreen = lazy(() => import('./screens/auth/RegisterScreen'));
@@ -44,6 +46,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <NotificationProvider>
         <AuctionProvider>
           <ListingProvider>
             <ToastProvider>
@@ -61,6 +64,7 @@ export default function App() {
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/maintenance" element={<MaintenancePage />} />
 
                   {/* Public auth routes */}
                   <Route path="/register" element={<RegisterScreen />} />
@@ -181,6 +185,7 @@ export default function App() {
             </ToastProvider>
           </ListingProvider>
         </AuctionProvider>
+        </NotificationProvider>
       </AuthProvider>
     </BrowserRouter>
   );

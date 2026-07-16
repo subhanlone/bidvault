@@ -2,6 +2,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
+import NotificationBell from './NotificationBell';
 
 interface NavLink {
   label: string;
@@ -17,7 +18,6 @@ interface SellerNavbarProps {
 const defaultLinks: NavLink[] = [
   { label: 'Dashboard', to: '/seller/dashboard' },
   { label: 'My Listings', to: '/seller/listings' },
-  { label: 'Create Listing', to: '/seller/create-listing' },
 ];
 
 export default function SellerNavbar({ links = defaultLinks, userName = 'Seller', onLogout }: SellerNavbarProps) {
@@ -52,6 +52,7 @@ export default function SellerNavbar({ links = defaultLinks, userName = 'Seller'
         })}
       </ul>
       <div className="hidden md:flex items-center gap-3 ml-auto">
+        <NotificationBell />
         <div className="w-8 h-8 rounded-full bg-navy-mid flex items-center justify-center text-white text-sm font-semibold">
           {userName.charAt(0).toUpperCase()}
         </div>

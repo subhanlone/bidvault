@@ -4,6 +4,7 @@ import { usePendingListings } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
 import { CheckCircle2, ClipboardList, Menu, X } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
+import { api } from '../../services/api';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
@@ -12,8 +13,21 @@ export default function AdminListingReviews() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [reviewTimeoutHours, setReviewTimeoutHours] = useState<number | null>(null);
 
   useEffect(() => { refreshListings(); }, [refreshListings]);
+
+  useEffect(() => {
+    api.get<{ reviewTimeoutHours: number }>('/settings')
+      .then(s => setReviewTimeoutHours(s.reviewTimeoutHours))
+      .catch(() => {});
+  }, []);
+
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const isOverdue = (submittedAt: string) =>
+    reviewTimeoutHours != null &&
+    now - new Date(submittedAt).getTime() > reviewTimeoutHours * 3_600_000;
 
   const pendingCount = pendingListings.length;
 
@@ -118,7 +132,10 @@ export default function AdminListingReviews() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-[13px] text-secondary truncate">{l.title}</p>
-                          <p className="text-[10px] text-placeholder">{new Date(l.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                          <p className="text-[10px] text-placeholder">
+                            {new Date(l.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {isOverdue(l.submittedAt) && <span className="ml-2 text-destructive font-bold">· Overdue</span>}
+                          </p>
                         </div>
                       </div>
                       <p className="text-[12px] text-tertiary truncate">{l.sellerName}</p>

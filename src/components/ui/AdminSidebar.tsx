@@ -2,7 +2,9 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, BarChart2, Radio, Settings, Menu, X, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
+import NotificationBell from './NotificationBell';
 import { useAuth } from '../../context/AuthContext';
+import { useAuction } from '../../context/AuctionContext';
 import { usePendingListings } from '../../hooks/usePendingListings';
 
 interface SidebarItem {
@@ -29,12 +31,14 @@ export function AdminSidebarContent({ active, onClose }: AdminSidebarContentProp
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const { pendingListings, refreshListings } = usePendingListings();
+  const { auctions } = useAuction();
   useEffect(() => { void refreshListings(); }, [refreshListings]);
   const pendingCount = pendingListings.length;
+  const activeCount = auctions.length; // AuctionContext holds only ACTIVE auctions
 
   const badgeFor = (label: string): string | undefined => {
-    if (label === 'Listing Review') return String(pendingCount);
-    if (label === 'Live Auctions') return '6';
+    if (label === 'Listing Review') return pendingCount > 0 ? String(pendingCount) : undefined;
+    if (label === 'Live Auctions') return activeCount > 0 ? String(activeCount) : undefined;
     return undefined;
   };
 
@@ -42,15 +46,18 @@ export function AdminSidebarContent({ active, onClose }: AdminSidebarContentProp
     <aside className="bg-navy flex flex-col w-[220px] shrink-0 h-screen sticky top-0 overflow-y-auto">
       <div className="h-14 flex items-center px-5 border-b border-white/10 gap-2">
         <BidVaultLogo size="sm" to="/admin/dashboard" />
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="ml-auto text-white/50 hover:text-white cursor-pointer"
-            aria-label="Close navigation menu"
-          >
-            <X size={18} />
-          </button>
-        )}
+        <div className="ml-auto flex items-center gap-1">
+          <NotificationBell iconClass="text-white/55 hover:text-white" align="left" />
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-white/50 hover:text-white cursor-pointer"
+              aria-label="Close navigation menu"
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="px-3 pt-4 flex-1">

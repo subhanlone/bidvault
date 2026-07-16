@@ -2,6 +2,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
+import NotificationBell from './NotificationBell';
 
 interface NavLink {
   label: string;
@@ -54,6 +55,7 @@ export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', 
         })}
       </ul>
       <div className="hidden md:flex items-center gap-3 ml-auto">
+        <NotificationBell />
         <Link to="/buyer/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           {avatarUrl ? (
             <img src={avatarUrl} alt={userName} className="w-8 h-8 rounded-full object-cover" />

@@ -5,7 +5,7 @@ import { useAuction } from '../../context/AuctionContext';
 import { api } from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { useToast } from '../../context/ToastContext';
-import { CheckCircle2, Menu, Bell, BarChart3, Gavel, Banknote, Clock, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Menu, BarChart3, Gavel, Banknote, Clock, ChevronRight } from 'lucide-react';
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import StatCard from '../../components/ui/StatCard';
 
@@ -127,14 +127,6 @@ export default function AdminDashboardOverview() {
               className="hidden sm:flex border border-border-medium gap-2 items-center px-4 py-2 rounded-sm text-[13px] text-tertiary hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <BarChart3 size={14} strokeWidth={2} /> Analytics
-            </button>
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="relative cursor-pointer p-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <Bell size={20} strokeWidth={1.8} className="text-muted" />
-              <span className="absolute top-0 right-0 bg-primary rounded-full size-[8px]" />
             </button>
           </div>
         </header>

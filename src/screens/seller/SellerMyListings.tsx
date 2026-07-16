@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button } from '../../components/ui';
@@ -63,7 +63,7 @@ function EmptyTab({ tab, onCreateListing }: { tab: Tab; onCreateListing: () => v
       <p className="text-[13px] text-muted mb-5 max-w-xs">{m.sub}</p>
       {m.showCreate && (
         <Button variant="primary" onClick={onCreateListing}>
-          <Plus size={14} strokeWidth={2.5} /> Create Listing
+         Create Listing
         </Button>
       )}
     </div>
@@ -111,7 +111,6 @@ export default function SellerMyListings() {
             </p>
           </div>
           <Button variant="primary" size="sm" onClick={() => navigate('/seller/create-listing/step-1')}>
-            <Plus size={15} strokeWidth={2.5} />
             <span className="hidden sm:inline">Create New Listing</span>
             <span className="sm:hidden">New</span>
           </Button>

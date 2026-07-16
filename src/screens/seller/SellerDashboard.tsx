@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, Banknote, Gavel, PackageCheck, Clock, XCircle, Star } from 'lucide-react';
+import { Package, Banknote, Gavel, PackageCheck, Clock, XCircle, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
@@ -88,7 +88,6 @@ export default function SellerDashboard() {
             <p className="text-sm text-muted mt-0.5">Manage your listings and track auction performance</p>
           </div>
           <Button variant="primary" size="sm" onClick={() => navigate('/seller/create-listing/step-1')}>
-            <Plus size={15} strokeWidth={2.5} />
             <span className="hidden sm:inline">Create New Listing</span>
             <span className="sm:hidden">New</span>
           </Button>
