@@ -9,6 +9,9 @@ function fmtTime(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
+// Must match backend OTP_EXPIRY_MS in auth.routes.ts
+const OTP_EXPIRY_SECONDS = 60;
+
 export default function EmailVerificationScreen() {
   const navigate  = useNavigate();
   const location  = useLocation();
@@ -22,8 +25,9 @@ export default function EmailVerificationScreen() {
   const [otp, setOtp]             = useState(['', '', '', '', '', '']);
   const [loading, setLoading]     = useState(false);
   const [resendSecs, setResendSecs] = useState(60);
-  const [codeExpiry, setCodeExpiry] = useState(600);
+  const [codeExpiry, setCodeExpiry] = useState(OTP_EXPIRY_SECONDS);
   const [otpError, setOtpError]   = useState('');
+  const [resending, setResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // EV-01: guard — no email means user navigated directly, not from registration
@@ -100,11 +104,16 @@ export default function EmailVerificationScreen() {
   };
 
   const handleResend = async () => {
-    if (resendSecs > 0) return;
-    setResendSecs(60);
-    setCodeExpiry(600);
+    if (resendSecs > 0 || resending) return;
+    setResending(true);
     const result = await resendVerification(email);
+    setResending(false);
     if (result.success) {
+      setResendSecs(60);
+      setCodeExpiry(OTP_EXPIRY_SECONDS);
+      setOtp(['', '', '', '', '', '']);
+      setOtpError('');
+      inputRefs.current[0]?.focus();
       showToast({ type: 'info', title: 'Code Resent', message: `A new code was sent to ${email}` });
     } else {
       showToast({ type: 'error', title: 'Failed', message: result.error || 'Could not resend code.' });
@@ -116,7 +125,7 @@ export default function EmailVerificationScreen() {
       headline="One last step to activate your account"
       subtext="We sent a 6-digit verification code to your email address. Enter it to confirm your identity and start using BidVault."
       bullets={[
-        'Code valid for 10 minutes only',
+        'Code valid for 60 seconds only',
         'Check spam folder if not found',
         'Your account is 100% secure',
       ]}
@@ -195,7 +204,7 @@ export default function EmailVerificationScreen() {
         <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3">
           <Info size={15} className="text-info-text flex-shrink-0 mt-0.5" />
           <p className="text-[12px] text-info-text leading-relaxed">
-            Check your <span className="font-bold">spam or junk folder</span> if you don't see the email. Code is valid for <span className="font-bold">10 minutes</span>.
+            Check your <span className="font-bold">spam or junk folder</span> if you don't see the email. Code is valid for <span className="font-bold">60 seconds</span>.
           </p>
         </div>
 
@@ -211,10 +220,10 @@ export default function EmailVerificationScreen() {
           <button
             type="button"
             onClick={handleResend}
-            disabled={resendSecs > 0}
-            className={`text-sm font-bold cursor-pointer transition-colors ${resendSecs > 0 ? 'text-placeholder cursor-not-allowed' : 'text-primary hover:underline'}`}
+            disabled={resendSecs > 0 || resending}
+            className={`text-sm font-bold cursor-pointer transition-colors ${resendSecs > 0 || resending ? 'text-placeholder cursor-not-allowed' : 'text-primary hover:underline'}`}
           >
-            {resendSecs > 0 ? `Resend (${fmtTime(resendSecs)})` : 'Resend Code'}
+            {resendSecs > 0 ? `Resend (${fmtTime(resendSecs)})` : resending ? 'Sending…' : 'Resend Code'}
           </button>
         </div>
       </form>

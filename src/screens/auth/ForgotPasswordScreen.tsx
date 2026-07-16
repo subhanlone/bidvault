@@ -76,6 +76,7 @@ export default function ForgotPasswordScreen() {
   const [otpError, setOtpError] = useState('');
   const [newPwError, setNewPwError] = useState('');
   const [confirmPwError, setConfirmPwError] = useState('');
+  const [resending, setResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const pwStrength = (() => {
@@ -201,7 +202,7 @@ export default function ForgotPasswordScreen() {
       headline="Don't worry — we've got you covered"
       subtext="Reset your password in 3 simple steps. Enter your email, verify the code, and set a new secure password."
       bullets={[
-        'Reset code valid for 10 minutes',
+        'Reset code valid for 60 seconds',
         'Sent to your registered email only',
         'New password encrypted with bcrypt',
       ]}
@@ -296,7 +297,7 @@ export default function ForgotPasswordScreen() {
 
             <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3">
               <Info size={15} className="text-info-text flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-info-text leading-relaxed">Code is valid for <span className="font-bold">10 minutes</span>. Check your spam folder if not found.</p>
+              <p className="text-[12px] text-info-text leading-relaxed">Code is valid for <span className="font-bold">60 seconds</span>. Check your spam folder if not found.</p>
             </div>
 
             <Button type="submit" variant="primary" fullWidth size="lg" loading={loading} disabled={otp.join('').length < 6}>
@@ -308,20 +309,26 @@ export default function ForgotPasswordScreen() {
               <span className="text-sm text-muted">Didn't get the code?</span>
               <button
                 type="button"
-                disabled={resendSecs > 0}
+                disabled={resendSecs > 0 || resending}
                 onClick={async () => {
-                  setResendSecs(60);
+                  if (resendSecs > 0 || resending) return;
+                  setResending(true);
                   const res = await forgotPassword(email);
+                  setResending(false);
                   if (res.success) {
+                    setResendSecs(60);
                     setResetCode(res.resetCode);
+                    setOtp(['', '', '', '', '', '']);
+                    setOtpError('');
+                    inputRefs.current[0]?.focus();
                     showToast({ type: 'info', title: 'Code Resent', message: `New code sent to ${email}` });
                   } else {
                     showToast({ type: 'error', title: 'Failed', message: res.error || 'Could not resend code.' });
                   }
                 }}
-                className={`text-sm font-bold cursor-pointer ${resendSecs > 0 ? 'text-placeholder cursor-not-allowed' : 'text-primary hover:underline'}`}
+                className={`text-sm font-bold cursor-pointer ${resendSecs > 0 || resending ? 'text-placeholder cursor-not-allowed' : 'text-primary hover:underline'}`}
               >
-                {resendSecs > 0 ? `Resend (${fmtTime(resendSecs)})` : 'Resend email'}
+                {resendSecs > 0 ? `Resend (${fmtTime(resendSecs)})` : resending ? 'Sending…' : 'Resend email'}
               </button>
             </div>
           </form>
