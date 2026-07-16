@@ -14,6 +14,7 @@ import Input from '../../components/ui/Input';
 import { getSocket } from '../../services/socket';
 import { api } from '../../services/api';
 import type { SellerReview } from '../../types';
+import { getCategoryFields } from '../../config/categoryFields';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
@@ -153,7 +154,12 @@ export default function BuyerLiveBidding() {
   const isHighest        = myBids.length > 0 && myBids[0].amount === auction.currentBid;
   const isOutbid         = myBids.length > 0 && !isHighest;
   const quickAmounts     = [minNext, minNext + auction.minIncrement, minNext + auction.minIncrement * 2];
-  const showCustomBidError = customBidTouched && customBid.trim() !== '' && Number(customBid) < minNext;
+  const customBidNum       = Number(customBid);
+  const customBidIsInteger = customBid.trim() !== '' && Number.isInteger(customBidNum);
+  const showCustomBidError = customBidTouched && customBid.trim() !== '' && (!customBidIsInteger || customBidNum < minNext);
+  const customBidErrorMessage = customBid.trim() !== '' && !customBidIsInteger
+    ? 'Bid amount must be a whole number'
+    : `Minimum bid is PKR ${minNext.toLocaleString()}`;
 
   const handleBid = (amount: number) => {
     if (amount < minNext) {
@@ -274,6 +280,22 @@ export default function BuyerLiveBidding() {
             </div>
             <h2 className="font-extrabold text-[18px] sm:text-[20px] text-navy mb-3">{auction.title}</h2>
             <p className="text-[13px] text-muted leading-[20px]">{auction.description}</p>
+
+            {auction.attributes && Object.keys(auction.attributes).length > 0 && (
+              <div className="mt-3 pt-3 border-t border-border-light grid grid-cols-2 gap-3">
+                {getCategoryFields(auction.category).map(field => {
+                  const value = auction.attributes?.[field.key];
+                  if (value === undefined || value === '') return null;
+                  return (
+                    <div key={field.key}>
+                      <p className="text-[10px] text-placeholder font-bold uppercase tracking-wide">{field.label}</p>
+                      <p className="text-[13px] font-semibold text-secondary mt-0.5">{String(value)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border-light">
               <div className="bg-navy size-[36px] rounded-full flex items-center justify-center text-white font-bold text-[14px] shrink-0">
                 {auction.sellerName[0]}
@@ -440,8 +462,8 @@ export default function BuyerLiveBidding() {
               className="flex flex-col gap-2"
               onSubmit={e => {
                 e.preventDefault();
-                if (Number(customBid) < minNext) { setCustomBidTouched(true); return; }
-                handleBid(Number(customBid));
+                if (!customBidIsInteger || customBidNum < minNext) { setCustomBidTouched(true); return; }
+                handleBid(customBidNum);
               }}
             >
               <label htmlFor="custom-bid-amount" className="font-bold text-[11px] text-muted uppercase tracking-[0.3px]">Custom amount (PKR)</label>
@@ -456,7 +478,7 @@ export default function BuyerLiveBidding() {
                     value={customBid}
                     onChange={e => { setCustomBid(e.target.value); if (!customBidTouched && e.target.value.trim() !== '') setCustomBidTouched(true); }}
                     onBlur={() => setCustomBidTouched(true)}
-                    error={showCustomBidError ? `Minimum bid is PKR ${minNext.toLocaleString()}` : undefined}
+                    error={showCustomBidError ? customBidErrorMessage : undefined}
                   />
                 </div>
                 <button

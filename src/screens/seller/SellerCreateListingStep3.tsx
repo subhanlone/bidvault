@@ -8,6 +8,7 @@ import { api, ApiError } from '../../services/api';
 import { Button } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
+import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
 
 export default function SellerCreateListingStep3() {
   const navigate = useNavigate();
@@ -20,27 +21,41 @@ export default function SellerCreateListingStep3() {
 
   const handleSubmit = async () => {
     if (!user) return;
-    if (!draft.startDate || !draft.startTime) {
-      showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and set a start date and time.' });
+
+    const title = draft.title.trim();
+    const description = draft.description.trim();
+
+    if (title.length < 3) {
+      showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and enter a valid item title (at least 3 characters).' });
+      return;
+    }
+    if (description.length < 10) {
+      showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and enter a more detailed description (at least 10 characters).' });
       return;
     }
     if (draft.startingPrice <= 0) {
       showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and set a valid starting price.' });
       return;
     }
+    const attrErrors = validateCategoryFields(draft.category, draft.attributes);
+    if (Object.keys(attrErrors).length > 0) {
+      showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and fill in the required category details.' });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const data = await api.post<{ listingId: string }>('/listings', {
-        title: draft.title,
+        title,
         category: draft.category,
         condition: draft.condition,
-        description: draft.description,
-        startAt: new Date(`${draft.startDate}T${draft.startTime}:00`).toISOString(),
+        description,
         durationDays: draft.duration,
         startPrice: draft.startingPrice,
         minIncrement: draft.minIncrement,
         reservePrice: draft.hasReserve ? draft.reservePrice : undefined,
         imageUrl: draft.imageUrl || undefined,
+        attributes: draft.attributes,
       });
       setSubmittedListingId(data.listingId);
       showToast({ type: 'success', title: 'Listing Submitted!', message: 'Your listing is under admin review.' });
@@ -114,7 +129,7 @@ export default function SellerCreateListingStep3() {
               {[
                 { label: 'STARTING PRICE', value: fmtPKR(draft.startingPrice), red: true },
                 { label: 'MIN INCREMENT',  value: fmtPKR(draft.minIncrement)  },
-                { label: 'START DATE',     value: draft.startDate ? new Date(draft.startDate + 'T00:00:00').toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }) : '—' },
+                { label: 'STARTS',         value: 'On admin approval'         },
                 { label: 'DURATION',       value: `${draft.duration} Days`    },
                 ...(draft.hasReserve ? [{ label: 'RESERVE PRICE', value: fmtPKR(draft.reservePrice), red: false }] : []),
               ].map(d => (
@@ -125,19 +140,41 @@ export default function SellerCreateListingStep3() {
               ))}
             </div>
           </div>
+
+          {/* Category-specific details */}
+          {draft.category && getCategoryFields(draft.category).length > 0 && (
+            <div className="bg-surface border border-border-light rounded-md overflow-hidden sm:col-span-2">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
+                <h3 className="text-sm font-bold text-navy">Category Details</h3>
+                <button onClick={() => navigate('/seller/create-listing/step-1')} className="text-xs font-bold text-primary hover:underline cursor-pointer">Edit</button>
+              </div>
+              <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {getCategoryFields(draft.category).map(field => {
+                  const value = draft.attributes[field.key];
+                  const display = value === undefined || value === '' ? '—' : String(value);
+                  return (
+                    <div key={field.key} className="bg-bg rounded-lg px-3 py-3">
+                      <p className="text-[10px] text-placeholder font-bold tracking-wide uppercase">{field.label}</p>
+                      <p className="text-sm font-semibold text-secondary mt-0.5 truncate">{display}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3 mt-5">
           <Info size={15} className="text-info flex-shrink-0 mt-0.5" />
           <p className="text-xs text-info leading-relaxed">
-            After submission, admin will review your listing within <span className="font-bold">24–48 hours</span>. You'll be notified by email once it's approved.
+            After submission, admin will review your listing within <span className="font-bold">24–48 hours</span>. Once approved, your auction goes live immediately and you'll be notified by email.
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 sm:justify-between mt-5">
           <Button variant="outline" onClick={() => navigate('/seller/create-listing/step-2')}>← Back</Button>
           <Button variant="primary" fullWidth loading={isSubmitting} onClick={handleSubmit} className="sm:w-auto">
-            Submit Listing for Review →
+            Submit
           </Button>
         </div>
       </main>

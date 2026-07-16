@@ -142,10 +142,17 @@ export default function BuyerBrowseAuctions() {
     setCategory('All'); setShowEndingSoon(false); setSearch(''); setMinPrice(''); setMaxPrice('');
   };
 
+  const handlePriceChange = (setter: (v: string) => void) => (value: string) => {
+    if (value.trim() === '') { setter(''); return; }
+    const num = Math.max(0, Math.floor(Number(value) || 0));
+    setter(String(num));
+  };
+
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
   const min = minPrice.trim() === '' ? null : Number(minPrice);
   const max = maxPrice.trim() === '' ? null : Number(maxPrice);
+  const priceRangeInvalid = min !== null && max !== null && min > max;
   const filtered = auctions.filter(a => {
     if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (category !== 'All' && a.category !== category) return false;  // BA-06: exact match (categories now in sync)
@@ -153,8 +160,10 @@ export default function BuyerBrowseAuctions() {
       const msLeft = new Date(a.endTime).getTime() - now;  // BA-01: live time, not mount snapshot
       if (msLeft <= 0 || msLeft > 3_600_000) return false;
     }
-    if (min !== null && a.currentBid < min) return false;
-    if (max !== null && a.currentBid > max) return false;
+    if (!priceRangeInvalid) {
+      if (min !== null && a.currentBid < min) return false;
+      if (max !== null && a.currentBid > max) return false;
+    }
     return true;
   });
 
@@ -198,21 +207,28 @@ export default function BuyerBrowseAuctions() {
               <input
                 type="number"
                 inputMode="numeric"
+                min={0}
+                step={1}
                 placeholder="Min"
                 value={minPrice}
-                onChange={e => setMinPrice(e.target.value)}
+                onChange={e => handlePriceChange(setMinPrice)(e.target.value)}
                 className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
               <span className="text-[11px] text-placeholder">–</span>
               <input
                 type="number"
                 inputMode="numeric"
+                min={0}
+                step={1}
                 placeholder="Max"
                 value={maxPrice}
-                onChange={e => setMaxPrice(e.target.value)}
+                onChange={e => handlePriceChange(setMaxPrice)(e.target.value)}
                 className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
+            {priceRangeInvalid && (
+              <p className="text-[10px] text-error mt-1.5">Min price is greater than max — showing all prices.</p>
+            )}
           </div>
           <div>
             <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Status</p>
@@ -260,25 +276,32 @@ export default function BuyerBrowseAuctions() {
                 ))}
               </div>
               <p className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Price Range (PKR)</p>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-1">
                 <input
                   type="number"
                   inputMode="numeric"
+                  min={0}
+                  step={1}
                   placeholder="Min"
                   value={minPrice}
-                  onChange={e => setMinPrice(e.target.value)}
+                  onChange={e => handlePriceChange(setMinPrice)(e.target.value)}
                   className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 />
                 <span className="text-[11px] text-placeholder">–</span>
                 <input
                   type="number"
                   inputMode="numeric"
+                  min={0}
+                  step={1}
                   placeholder="Max"
                   value={maxPrice}
-                  onChange={e => setMaxPrice(e.target.value)}
+                  onChange={e => handlePriceChange(setMaxPrice)(e.target.value)}
                   className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 />
               </div>
+              {priceRangeInvalid && (
+                <p className="text-[10px] text-error mb-2">Min price is greater than max — showing all prices.</p>
+              )}
               <FilterCheckbox checked={showEndingSoon} onClick={() => setShowEndingSoon(p => !p)} label="Ending Soon" />
             </div>
           )}

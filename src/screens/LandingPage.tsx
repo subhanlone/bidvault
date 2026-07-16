@@ -112,11 +112,18 @@ export default function LandingPage() {
   const [featured, setFeatured] = useState<Auction[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [liveStats, setLiveStats] = useState<{ userCount: number; activeAuctionCount: number; transactionTotal: number } | null>(null);
+  const [supportEmail, setSupportEmail] = useState('support@bidvault.tech');
 
   useEffect(() => {
     api.get<Auction[]>('/auctions?status=ACTIVE').then(data => {
       setFeatured(data.slice(0, 3));
     }).catch(() => {}).finally(() => setFeaturedLoading(false));
+  }, []);
+
+  useEffect(() => {
+    api.get<{ maintenanceMode: boolean; supportEmail: string }>('/settings/public')
+      .then(s => { if (s.supportEmail) setSupportEmail(s.supportEmail); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -584,8 +591,7 @@ export default function LandingPage() {
               <div className="flex flex-col gap-2.5">
                 <Link to="/privacy" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Privacy Policy</Link>
                 <Link to="/terms" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Terms of Service</Link>
-                <Link to="/terms" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Refund Policy</Link>
-                <a href="mailto:support@bidvault.pk" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Contact Us</a>
+                <a href={`mailto:${supportEmail}`} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Contact Us</a>
               </div>
             </div>
           </div>

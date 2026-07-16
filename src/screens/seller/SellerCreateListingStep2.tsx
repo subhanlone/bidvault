@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Calendar, Package, Smartphone, Car } from 'lucide-react';
+import { Clock, Package, Smartphone, Car } from 'lucide-react';
 import { useListing } from '../../context/ListingContext';
 import { useToast } from '../../context/ToastContext';
 import { Button, Input } from '../../components/ui';
@@ -8,48 +8,46 @@ import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
 
 const DURATIONS = [3, 5, 7, 14];
+const MAX_PRICE = 100_000_000;
 
 export default function SellerCreateListingStep2() {
   const navigate = useNavigate();
   const { draft, updateDraft } = useListing();
   const { showToast } = useToast();
-  const [startDateError, setStartDateError] = useState('');
-  const [startTimeError, setStartTimeError] = useState('');
   const [startingPriceError, setStartingPriceError] = useState('');
   const [minIncrementError, setMinIncrementError] = useState('');
   const [reservePriceError, setReservePriceError] = useState('');
 
   const fmtPrice = (n: number) => n > 0 ? `PKR ${n.toLocaleString()}` : '';
-  const endDate = (() => {
-    if (!draft.startDate) return '—';
-    const d = new Date(draft.startDate);
-    d.setDate(d.getDate() + draft.duration);
-    return d.toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' });
-  })();
 
   const handleNext = () => {
-    setStartDateError('');
-    setStartTimeError('');
     setStartingPriceError('');
     setMinIncrementError('');
     setReservePriceError('');
 
     let invalidCount = 0;
-    if (!draft.startDate)   { setStartDateError('Start date is required'); invalidCount += 1; }
-    if (!draft.startTime)   { setStartTimeError('Start time is required'); invalidCount += 1; }
-    if (draft.startDate && draft.startTime) {
-      const startDateTime = new Date(`${draft.startDate}T${draft.startTime}:00`);
-      if (startDateTime <= new Date()) {
-        setStartDateError('Start date and time must be in the future');
+
+    if (draft.startingPrice <= 0) { setStartingPriceError('Starting price is required'); invalidCount += 1; }
+    else if (!Number.isInteger(draft.startingPrice)) { setStartingPriceError('Starting price must be a whole number'); invalidCount += 1; }
+    else if (draft.startingPrice > MAX_PRICE) { setStartingPriceError(`Starting price must be under PKR ${MAX_PRICE.toLocaleString()}`); invalidCount += 1; }
+
+    if (draft.minIncrement <= 0) { setMinIncrementError('Minimum increment is required'); invalidCount += 1; }
+    else if (!Number.isInteger(draft.minIncrement)) { setMinIncrementError('Minimum increment must be a whole number'); invalidCount += 1; }
+    else if (draft.minIncrement > MAX_PRICE) { setMinIncrementError(`Minimum increment must be under PKR ${MAX_PRICE.toLocaleString()}`); invalidCount += 1; }
+
+    if (draft.hasReserve) {
+      if (draft.reservePrice <= draft.startingPrice) {
+        setReservePriceError('Reserve price must be higher than starting price');
+        invalidCount += 1;
+      } else if (!Number.isInteger(draft.reservePrice)) {
+        setReservePriceError('Reserve price must be a whole number');
+        invalidCount += 1;
+      } else if (draft.reservePrice > MAX_PRICE) {
+        setReservePriceError(`Reserve price must be under PKR ${MAX_PRICE.toLocaleString()}`);
         invalidCount += 1;
       }
     }
-    if (draft.startingPrice <= 0) { setStartingPriceError('Starting price is required'); invalidCount += 1; }
-    if (draft.minIncrement <= 0) { setMinIncrementError('Minimum increment is required'); invalidCount += 1; }
-    if (draft.hasReserve && draft.reservePrice <= draft.startingPrice) {
-      setReservePriceError('Reserve price must be higher than starting price');
-      invalidCount += 1;
-    }
+
     if (invalidCount > 1) {
       showToast({ type: 'error', title: 'Missing Fields', message: 'Please fill in the highlighted fields.' });
     }
@@ -91,30 +89,11 @@ export default function SellerCreateListingStep2() {
               </div>
 
               <div className="flex flex-col gap-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Auction start date"
-                    type="date"
-                    min={new Date().toISOString().split('T')[0]}
-                    value={draft.startDate}
-                    onChange={e => {
-                      updateDraft({ startDate: e.target.value });
-                      setStartDateError('');
-                    }}
-                    leftIcon={<Calendar size={15} aria-hidden="true" />}
-                    error={startDateError}
-                  />
-                  <Input
-                    label="Start time"
-                    type="time"
-                    value={draft.startTime}
-                    onChange={e => {
-                      updateDraft({ startTime: e.target.value });
-                      setStartTimeError('');
-                    }}
-                    leftIcon={<Clock size={15} aria-hidden="true" />}
-                    error={startTimeError}
-                  />
+                <div className="flex items-start gap-2 bg-info-surface border border-info-border-strong rounded-lg px-3 py-2.5">
+                  <Clock size={14} className="text-info flex-shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-info leading-relaxed">
+                    Your auction goes live automatically the moment admin approves this listing — no need to pick a start time.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -143,13 +122,16 @@ export default function SellerCreateListingStep2() {
                     label="Starting price (PKR)"
                     type="number"
                     inputMode="numeric"
-                    placeholder="e.g. 85000"
+                    min={1}
+                    max={MAX_PRICE}
+                    step={1}
                     value={draft.startingPrice || ''}
                     onChange={e => {
                       updateDraft({ startingPrice: Number(e.target.value) });
                       setStartingPriceError('');
                     }}
                     error={startingPriceError}
+                    required
                   />
                 </div>
 
@@ -158,13 +140,16 @@ export default function SellerCreateListingStep2() {
                     label="Minimum bid increment (PKR)"
                     type="number"
                     inputMode="numeric"
-                    placeholder="e.g. 1000"
+                    min={1}
+                    max={MAX_PRICE}
+                    step={1}
                     value={draft.minIncrement || ''}
                     onChange={e => {
                       updateDraft({ minIncrement: Number(e.target.value) });
                       setMinIncrementError('');
                     }}
                     error={minIncrementError}
+                    required
                   />
                   <p className="text-[11px] text-muted mt-1">The minimum amount each bid must be raised by</p>
                 </div>
@@ -196,7 +181,9 @@ export default function SellerCreateListingStep2() {
                       type="number"
                       inputMode="numeric"
                       aria-label="Reserve price in PKR"
-                      placeholder="e.g. 95000"
+                      min={1}
+                      max={MAX_PRICE}
+                      step={1}
                       value={draft.reservePrice || ''}
                       onChange={e => {
                         updateDraft({ reservePrice: Number(e.target.value) });
@@ -226,8 +213,7 @@ export default function SellerCreateListingStep2() {
                 {[
                   { label: 'Starting bid', value: fmtPrice(draft.startingPrice) || '—', bold: true },
                   { label: 'Duration',     value: `${draft.duration} Days` },
-                  { label: 'Starts',       value: draft.startDate ? `${draft.startDate} · ${draft.startTime || '?'}` : '—' },
-                  { label: 'Ends',         value: endDate },
+                  { label: 'Starts',       value: 'On admin approval' },
                   ...(draft.hasReserve ? [{ label: 'Reserve', value: fmtPrice(draft.reservePrice) || '—', bold: false }] : []),
                 ].map(d => (
                   <div key={d.label} className="flex justify-between">
@@ -241,7 +227,7 @@ export default function SellerCreateListingStep2() {
 
           <div className="flex justify-between mt-5">
             <Button variant="outline" onClick={() => navigate('/seller/create-listing/step-1')}>← Back</Button>
-            <Button type="submit" variant="primary">Next: Review →</Button>
+            <Button type="submit" variant="primary">Next </Button>
           </div>
         </form>
       </main>

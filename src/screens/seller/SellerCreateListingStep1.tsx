@@ -8,6 +8,7 @@ import { api } from '../../services/api';
 import { SellerNavbar, Button, Input, Textarea } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import type { ItemCondition } from '../../types';
+import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
 
 interface UploadSignature {
   signature: string;
@@ -51,6 +52,7 @@ export default function SellerCreateListingStep1() {
   const [categoryError, setCategoryError] = useState('');
   const [conditionError, setConditionError] = useState('');
   const [descriptionError, setDescriptionError] = useState('');
+  const [attributeErrors, setAttributeErrors] = useState<Record<string, string>>({});
   const [uploadState, setUploadState] = useState<UploadState>(draft.imageUrl ? 'done' : 'idle');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -106,10 +108,23 @@ export default function SellerCreateListingStep1() {
     setDescriptionError('');
 
     let invalidCount = 0;
-    if (!draft.title.trim())       { setTitleError('Item title is required'); invalidCount += 1; }
-    if (!draft.category)           { setCategoryError('Category is required'); invalidCount += 1; }
-    if (!draft.condition)          { setConditionError('Condition is required'); invalidCount += 1; }
-    if (!draft.description.trim()) { setDescriptionError('Description is required'); invalidCount += 1; }
+
+    const title = draft.title.trim();
+    if (!title) { setTitleError('Item title is required'); invalidCount += 1; }
+    else if (title.length < 3) { setTitleError('Title must be at least 3 characters'); invalidCount += 1; }
+    else if (title.length > 150) { setTitleError('Title must be under 150 characters'); invalidCount += 1; }
+
+    if (!draft.category) { setCategoryError('Category is required'); invalidCount += 1; }
+    if (!draft.condition) { setConditionError('Condition is required'); invalidCount += 1; }
+
+    const description = draft.description.trim();
+    if (!description) { setDescriptionError('Description is required'); invalidCount += 1; }
+    else if (description.length < 10) { setDescriptionError('Description must be at least 10 characters'); invalidCount += 1; }
+    else if (description.length > 5000) { setDescriptionError('Description must be under 5000 characters'); invalidCount += 1; }
+
+    const attrErrors = draft.category ? validateCategoryFields(draft.category, draft.attributes) : {};
+    setAttributeErrors(attrErrors);
+    invalidCount += Object.keys(attrErrors).length;
 
     if (invalidCount > 1) {
       showToast({ type: 'error', title: 'Missing Fields', message: 'Please fill in the highlighted fields.' });
@@ -153,13 +168,15 @@ export default function SellerCreateListingStep1() {
             <div className="flex flex-col gap-4">
               <Input
                 label="Item title"
-                placeholder="e.g. Samsung Galaxy S24 Ultra — 256GB"
+                placeholder="Enter a clear, descriptive title for your item"
+                maxLength={150}
                 value={draft.title}
                 onChange={e => {
                   updateDraft({ title: e.target.value });
                   setTitleError('');
                 }}
                 error={titleError}
+                required
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -171,8 +188,9 @@ export default function SellerCreateListingStep1() {
                       className={`bg-surface border h-10 px-3 pr-9 rounded-lg text-sm text-secondary w-full outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow appearance-none cursor-pointer ${categoryError ? 'border-error' : 'border-border'}`}
                       value={draft.category}
                       onChange={e => {
-                        updateDraft({ category: e.target.value });
+                        updateDraft({ category: e.target.value, attributes: {} });
                         setCategoryError('');
+                        setAttributeErrors({});
                       }}
                     >
                       <option value="">Select category</option>
@@ -212,6 +230,7 @@ export default function SellerCreateListingStep1() {
               <Textarea
                 label="Item description"
                 placeholder="Describe your item in detail — condition, specs, accessories included, etc."
+                maxLength={5000}
                 value={draft.description}
                 onChange={e => {
                   updateDraft({ description: e.target.value });
@@ -219,7 +238,89 @@ export default function SellerCreateListingStep1() {
                 }}
                 error={descriptionError}
                 rows={5}
+                required
               />
+
+              {draft.category && getCategoryFields(draft.category).length > 0 && (
+                <div className="flex flex-col gap-4 pt-3 border-t border-border-light">
+                  <p className="text-xs font-bold text-secondary">Category Details</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {getCategoryFields(draft.category).map(field => {
+                      const rawValue = draft.attributes[field.key];
+                      const error = attributeErrors[field.key];
+                      const setValue = (v: string | number) => {
+                        updateDraft({ attributes: { ...draft.attributes, [field.key]: v } });
+                        if (error) {
+                          setAttributeErrors(prev => {
+                            const next = { ...prev };
+                            delete next[field.key];
+                            return next;
+                          });
+                        }
+                      };
+
+                      if (field.type === 'select') {
+                        return (
+                          <div key={field.key} className="flex flex-col gap-1.5">
+                            <label htmlFor={`attr-${field.key}`} className="text-xs font-bold text-secondary">
+                              {field.label} {field.required && <span className="text-primary">*</span>}
+                            </label>
+                            <div className="relative">
+                              <select
+                                id={`attr-${field.key}`}
+                                className={`bg-surface border h-10 px-3 pr-9 rounded-lg text-sm text-secondary w-full outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow appearance-none cursor-pointer ${error ? 'border-error' : 'border-border'}`}
+                                value={rawValue === undefined ? '' : String(rawValue)}
+                                onChange={e => setValue(e.target.value)}
+                              >
+                                <option value="">Select {field.label.toLowerCase()}</option>
+                                {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                              </select>
+                              <ChevronDown size={16} aria-hidden="true" className="absolute right-3 top-1/2 -translate-y-1/2 text-placeholder" />
+                            </div>
+                            {error && <p className="text-[12px] text-primary" role="alert">{error}</p>}
+                          </div>
+                        );
+                      }
+
+                      if (field.type === 'textarea') {
+                        return (
+                          <div key={field.key} className="sm:col-span-2">
+                            <Textarea
+                              label={field.label}
+                              required={field.required}
+                              value={rawValue === undefined ? '' : String(rawValue)}
+                              maxLength={field.max}
+                              onChange={e => setValue(e.target.value)}
+                              error={error}
+                              rows={3}
+                            />
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <Input
+                          key={field.key}
+                          label={field.label}
+                          required={field.required}
+                          type={field.type === 'number' ? 'number' : 'text'}
+                          min={field.min}
+                          max={field.max}
+                          maxLength={field.type === 'text' ? field.max : undefined}
+                          placeholder={field.placeholder}
+                          value={rawValue === undefined ? '' : String(rawValue)}
+                          onChange={e => setValue(
+                            field.type === 'number'
+                              ? (e.target.value === '' ? '' : Number(e.target.value))
+                              : e.target.value,
+                          )}
+                          error={error}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -310,7 +411,7 @@ export default function SellerCreateListingStep1() {
             <Button variant="outline" fullWidth>Cancel</Button>
           </Link>
           <Button variant="primary" onClick={handleNext}>
-            Next: Auction Setup →
+            Next
           </Button>
         </div>
       </main>

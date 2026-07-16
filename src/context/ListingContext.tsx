@@ -9,13 +9,12 @@ const DEFAULT_DRAFT: ListingDraft = {
   condition: '',
   description: '',
   imageUrl: '',
-  startDate: '',
-  startTime: '',
   duration: 7,
   startingPrice: 0,
   minIncrement: 1_000,
   hasReserve: false,
   reservePrice: 0,
+  attributes: {},
 };
 
 interface ListingContextType {

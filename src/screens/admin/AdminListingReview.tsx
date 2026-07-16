@@ -6,6 +6,7 @@ import { Menu, ChevronLeft, ChevronRight, Package, MessageSquare } from 'lucide-
 import { AdminSidebarContent } from '../../components/ui/AdminSidebar';
 import { Button } from '../../components/ui';
 import Textarea from '../../components/ui/Textarea';
+import { getCategoryFields } from '../../config/categoryFields';
 
 const NOTES_KEY = (id: string) => `admin_review_notes_${id}`;
 
@@ -67,13 +68,14 @@ export default function AdminListingReview() {
 
   const handleReject = async () => {
     if (!listing) return;
-    if (!rejectReason.trim()) {
-      showToast({ type: 'error', title: 'Reason Required', message: 'Please provide a rejection reason.' });
+    const reason = rejectReason.trim();
+    if (reason.length < 3) {
+      showToast({ type: 'error', title: 'Reason Required', message: 'Please provide a rejection reason (at least 3 characters).' });
       return;
     }
     setLoading(true);
     try {
-      await rejectListing(listing.listingId, rejectReason);
+      await rejectListing(listing.listingId, reason);
       setLoading(false);
       setNavigating(true);
       showToast({ type: 'info', title: 'Listing Rejected', message: `"${listing.title}" has been rejected.` });
@@ -189,6 +191,23 @@ export default function AdminListingReview() {
                     <p className="text-[10px] text-placeholder font-bold tracking-[0.5px] uppercase">DESCRIPTION</p>
                     <p className="text-[12px] text-tertiary leading-[18px] mt-[2px]">{listing.description || 'No description provided.'}</p>
                   </div>
+                  {listing.attributes && Object.keys(listing.attributes).length > 0 && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] text-placeholder font-bold tracking-[0.5px] uppercase mb-2">Category Details</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {getCategoryFields(listing.category).map(field => {
+                          const value = listing.attributes?.[field.key];
+                          if (value === undefined || value === '') return null;
+                          return (
+                            <div key={field.key}>
+                              <p className="text-[10px] text-placeholder font-bold tracking-[0.5px] uppercase">{field.label}</p>
+                              <p className="font-semibold text-[13px] text-secondary mt-[2px]">{String(value)}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -266,6 +285,7 @@ export default function AdminListingReview() {
                     value={rejectReason}
                     onChange={e => setRejectReason(e.target.value)}
                     rows={3}
+                    maxLength={500}
                     className="mb-3 text-[12px]"
                   />
                   <div className="flex gap-3">
@@ -302,6 +322,7 @@ export default function AdminListingReview() {
                 value={notes}
                 onChange={handleNotesChange}
                 rows={3}
+                maxLength={2000}
                 className="text-[12px]"
               />
             </div>
