@@ -227,20 +227,6 @@ export default function SellerCreateListingStep1() {
                 </div>
               </div>
 
-              <Textarea
-                label="Item description"
-                placeholder="Describe your item in detail — condition, specs, accessories included, etc."
-                maxLength={5000}
-                value={draft.description}
-                onChange={e => {
-                  updateDraft({ description: e.target.value });
-                  setDescriptionError('');
-                }}
-                error={descriptionError}
-                rows={5}
-                required
-              />
-
               {draft.category && getCategoryFields(draft.category).length > 0 && (
                 <div className="flex flex-col gap-4 pt-3 border-t border-border-light">
                   <p className="text-xs font-bold text-secondary">Category Details</p>
@@ -321,6 +307,20 @@ export default function SellerCreateListingStep1() {
                   </div>
                 </div>
               )}
+
+              <Textarea
+                label="Item description"
+                placeholder="Describe your item in detail — condition, specs, accessories included, etc."
+                maxLength={5000}
+                value={draft.description}
+                onChange={e => {
+                  updateDraft({ description: e.target.value });
+                  setDescriptionError('');
+                }}
+                error={descriptionError}
+                rows={5}
+                required
+              />
             </div>
           </div>
 
