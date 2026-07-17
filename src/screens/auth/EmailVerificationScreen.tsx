@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Mail, RefreshCw, ArrowRight, Info } from 'lucide-react';
+import { Mail, RefreshCw, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button } from '../../components/ui';
@@ -210,7 +210,6 @@ export default function EmailVerificationScreen() {
 
         <Button type="submit" variant="primary" fullWidth size="lg" loading={loading} disabled={otp.join('').length < 6}>
           Verify &amp; Activate Account
-          <ArrowRight size={17} />
         </Button>
 
         {/* Resend */}
