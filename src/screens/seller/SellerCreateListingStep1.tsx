@@ -16,6 +16,7 @@ interface UploadSignature {
   apiKey: string;
   cloudName: string;
   folder: string;
+  format: string;
 }
 
 const CATEGORIES = [
@@ -80,6 +81,7 @@ export default function SellerCreateListingStep1() {
       formData.append('timestamp', String(sig.timestamp));
       formData.append('api_key', sig.apiKey);
       formData.append('folder', sig.folder);
+      formData.append('format', sig.format);
 
       const resp = await fetch(
         `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
 import { useTimer } from '../hooks/useTimer';
 import type { Auction } from '../types';
-import { Button } from '../components/ui';
+import { Button, AuctionThumbnail } from '../components/ui';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -41,11 +41,11 @@ function FeaturedCard({ auction }: { auction: Auction }) {
   return (
     <div className="bg-surface border border-border-light rounded-lg overflow-hidden hover:shadow-[0_8px_32px_rgba(11,31,58,0.12)] hover:-translate-y-1 transition-all duration-200 flex flex-col">
       <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-navy">
-        <img
+        <AuctionThumbnail
           src={auction.imageUrl}
           alt={auction.title}
           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          iconSize={28}
         />
         <span className={`absolute top-3 right-3 font-bold text-[11px] px-2 py-1 rounded-sm flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-[rgba(11,31,58,0.7)] text-white'}`}>
           <Clock size={10} strokeWidth={2.5} /> {timer.display}
@@ -71,7 +71,7 @@ function FeaturedCard({ auction }: { auction: Auction }) {
             onClick={handleBidNow}
             className="text-[13px]"
           >
-            Bid Now →
+            Bid Now
           </Button>
         </div>
       </div>

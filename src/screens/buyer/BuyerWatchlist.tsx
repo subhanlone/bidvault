@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Clock, Heart } from 'lucide-react';
-import { BuyerNavbar } from '../../components/ui';
+import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import type { Auction } from '../../types';
 
 function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => void }) {
@@ -17,12 +17,11 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
         className="h-[160px] relative overflow-hidden bg-navy cursor-pointer"
         onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
       >
-        <img
+        <AuctionThumbnail
           src={auction.imageUrl}
           alt={auction.title}
-          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          iconSize={28}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.3)] to-transparent" />
         <button

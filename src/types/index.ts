@@ -57,7 +57,7 @@ export interface Auction {
   startTime: string;
   endTime: string;
   status: AuctionStatus;
-  imageUrl: string;
+  imageUrl?: string;
   images?: string[];
   attributes?: CategoryAttributes;
 }

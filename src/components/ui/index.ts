@@ -13,6 +13,7 @@ export { default as BuyerNavbar } from './BuyerNavbar';
 export { default as AdminLayout } from './AdminLayout';
 export { default as AuthLayout } from './AuthLayout';
 export { default as AuctionCard } from './AuctionCard';
+export { default as AuctionThumbnail } from './AuctionThumbnail';
 export { default as RatingModal } from './RatingModal';
 export { default as BidRow } from './BidRow';
 export { Toast, ToastContainer } from './Toast';

@@ -8,7 +8,7 @@ import {
   Search, Check, Zap, Star, Heart,
   Timer, Flame, AlertTriangle, X, ChevronRight,
 } from 'lucide-react';
-import { BuyerNavbar } from '../../components/ui';
+import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { getSocket } from '../../services/socket';
@@ -139,7 +139,7 @@ export default function BuyerLiveBidding() {
               {auction.status === 'CLOSED' ? 'This auction has ended' : 'This auction has not started yet'}
             </p>
             <p className="text-[13px] text-muted mb-4">Current bid: PKR {auction.currentBid.toLocaleString()}</p>
-            <Link to="/buyer/browse" className="font-bold text-primary hover:underline">← Browse Active Auctions</Link>
+            <Link to="/buyer/browse" className="font-bold text-primary hover:underline"> Browse Active Auctions</Link>
           </div>
         </div>
       </div>
@@ -244,12 +244,7 @@ export default function BuyerLiveBidding() {
           {/* Item image */}
           <div className="bg-surface border border-border-light rounded-md overflow-hidden">
             <div className="h-[220px] sm:h-[280px] md:h-[300px] relative overflow-hidden bg-navy">
-              <img
-                src={auction.imageUrl}
-                alt={auction.title}
-                className="w-full h-full object-cover"
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
+              <AuctionThumbnail src={auction.imageUrl} alt={auction.title} iconSize={32} />
               <div className="absolute inset-0 bg-gradient-to-t from-[rgba(11,31,58,0.3)] to-transparent" />
               <button
                 onClick={() => toggleWatchlist(auction.auctionId)}
@@ -524,7 +519,7 @@ export default function BuyerLiveBidding() {
 
               <div className="bg-bg rounded-md p-3 sm:p-4 mb-4 flex items-center gap-3">
                 <div className="bg-navy size-[48px] rounded-sm overflow-hidden shrink-0">
-                  <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
+                  <AuctionThumbnail src={auction.imageUrl} alt={auction.title} iconSize={18} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-[12px] text-navy truncate">{auction.title}</p>

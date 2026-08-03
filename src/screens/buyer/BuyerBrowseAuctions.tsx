@@ -4,7 +4,7 @@ import { Search, SlidersHorizontal, Heart, ChevronRight, Check } from 'lucide-re
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
-import { BuyerNavbar } from '../../components/ui';
+import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
 
@@ -73,12 +73,11 @@ function AuctionCard({ auction }: { auction: Auction }) {
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
     >
       <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-navy">
-        <img
+        <AuctionThumbnail
           src={auction.imageUrl}
           alt={auction.title}
-          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          iconSize={28}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(11,31,58,0.35)] to-transparent" />
         <span className={`absolute bottom-3 left-3 font-bold text-[11px] px-2 py-1 rounded-md flex items-center gap-2 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-surface/15 backdrop-blur-sm text-white'}`}>
@@ -119,7 +118,7 @@ function AuctionCard({ auction }: { auction: Auction }) {
             size="sm"
             onClick={e => { e.stopPropagation(); navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
           >
-            Bid Now <ChevronRight size={11} />
+            Bid Now
           </Button>
         </div>
       </div>

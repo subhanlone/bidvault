@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Check, Zap, Trophy, X, Hammer } from 'lucide-react';
-import { BuyerNavbar } from '../../components/ui';
+import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
 
@@ -63,7 +63,7 @@ function BidCard({ entry }: { entry: BidEntry }) {
     <div className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-md transition-shadow">
       <div className="flex items-stretch">
         <div className="bg-navy w-[80px] sm:w-[110px] shrink-0 overflow-hidden">
-          <img src={auction.imageUrl} alt={auction.title} loading="lazy" className="w-full h-full object-cover" />
+          <AuctionThumbnail src={auction.imageUrl} alt={auction.title} />
         </div>
 
         <div className="flex-1 p-3 sm:p-4 min-w-0">
