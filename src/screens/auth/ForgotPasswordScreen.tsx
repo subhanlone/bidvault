@@ -1,6 +1,6 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Eye, EyeOff, Info, RefreshCw, Shield, MailOpen, ArrowLeft, Check } from 'lucide-react';
+import { Lock, Eye, EyeOff, Info, RefreshCw, MailOpen, ArrowLeft, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button, Input } from '../../components/ui';
@@ -392,7 +392,6 @@ export default function ForgotPasswordScreen() {
             </div>
 
             <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>
-              <Shield size={17} />
               Reset My Password
             </Button>
           </form>
