@@ -19,8 +19,12 @@ export default function EmailVerificationScreen() {
 
   const state = location.state as { email?: string; verificationCode?: string; codeExpiresAt?: string; autoResend?: boolean } | null;
   const email: string = state?.email ?? '';
-  const verificationCode: string | undefined = state?.verificationCode;
   const autoResend: boolean = state?.autoResend ?? false;
+  // Held in state, not read straight from location.state. Navigation state is captured once, so
+  // after a resend the hint kept showing the original code while the server had issued a new one
+  // — following it produced "Invalid or expired verification code". Dev-only, but it actively
+  // misled during local testing and demos.
+  const [verificationCode, setVerificationCode] = useState<string | undefined>(state?.verificationCode);
   const [otp, setOtp]             = useState(['', '', '', '', '', '']);
   const [loading, setLoading]     = useState(false);
   const [resendSecs, setResendSecs] = useState(RESEND_COOLDOWN_SECONDS);
@@ -42,7 +46,7 @@ export default function EmailVerificationScreen() {
     if (!email || !autoResend) return;
     showToast({ type: 'info', title: 'Email Not Verified', message: 'Please verify your email to sign in. We sent you a new code.' });
     resendVerification(email)
-      .then(r => { if (r.success) setExpiresAt(deadlineFrom(r.codeExpiresAt)); })
+      .then(r => { if (r.success) { setExpiresAt(deadlineFrom(r.codeExpiresAt)); setVerificationCode(r.verificationCode); } })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -117,6 +121,7 @@ export default function EmailVerificationScreen() {
     if (result.success) {
       setResendSecs(RESEND_COOLDOWN_SECONDS);
       setExpiresAt(deadlineFrom(result.codeExpiresAt));
+      setVerificationCode(result.verificationCode);
       setOtp(['', '', '', '', '', '']);
       setOtpError('');
       inputRefs.current[0]?.focus();
