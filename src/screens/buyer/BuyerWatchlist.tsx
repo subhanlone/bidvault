@@ -5,6 +5,7 @@ import { useTimer } from '../../hooks/useTimer';
 import { Clock, Heart } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import type { Auction } from '../../types';
+import { count, pkr } from '../../utils/format';
 
 function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => void }) {
   const navigate = useNavigate();
@@ -44,8 +45,8 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
         <div className="flex items-end justify-between mt-auto">
           <div>
             <p className="text-[11px] text-muted">Current Bid</p>
-            <p className="font-extrabold text-[18px] text-primary leading-none">PKR {auction.currentBid.toLocaleString()}</p>
-            <p className="text-[11px] text-placeholder mt-0.5">{auction.bidCount} bids</p>
+            <p className="font-extrabold text-[18px] text-primary leading-none">{pkr(auction.currentBid)}</p>
+            <p className="text-[11px] text-placeholder mt-0.5">{count(auction.bidCount, 'bid')}</p>
           </div>
           {!isEnded && (
             <button

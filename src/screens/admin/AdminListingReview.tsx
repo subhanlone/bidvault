@@ -8,6 +8,7 @@ import NotificationBell from '../../components/ui/NotificationBell';
 import { Button } from '../../components/ui';
 import Textarea from '../../components/ui/Textarea';
 import { getCategoryFields } from '../../config/categoryFields';
+import { conditionLabel, dateMedium, dateShort, pkr, pkrCompact } from '../../utils/format';
 
 const NOTES_KEY = (id: string) => `admin_review_notes_${id}`;
 
@@ -86,8 +87,6 @@ export default function AdminListingReview() {
     }
   };
 
-  const conditionLabel: Record<string, string> = { NEW: 'New', LIKE_NEW: 'Like New', USED: 'Used' };
-
   if (!listing) {
     // suppress "not found" flash during the 800ms navigate delay after approve/reject
     if (navigating) return null;
@@ -125,7 +124,7 @@ export default function AdminListingReview() {
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <span className="bg-warning-badge-bg border border-warning-border font-bold text-[11px] text-warning px-2 py-[2px] rounded-full">Pending Review</span>
-                <span className="hidden sm:inline text-[11px] text-muted">#{listing.listingId} · Submitted {new Date(listing.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}</span>
+                <span className="hidden sm:inline text-[11px] text-muted">#{listing.listingCode} · Submitted {dateShort(listing.submittedAt)}</span>
                 <span className="text-[11px] text-placeholder">{currentIndex + 1} of {pendingListings.length}</span>
               </div>
             </div>
@@ -169,8 +168,8 @@ export default function AdminListingReview() {
                   {[
                     { label: 'TITLE',       value: listing.title },
                     { label: 'CATEGORY',    value: listing.category },
-                    { label: 'CONDITION',   value: conditionLabel[listing.condition] ?? listing.condition },
-                    { label: 'STARTING PRICE', value: `PKR ${listing.startPrice.toLocaleString()}` },
+                    { label: 'CONDITION',   value: conditionLabel(listing.condition) },
+                    { label: 'STARTING PRICE', value: pkr(listing.startPrice) },
                   ].map(d => (
                     <div key={d.label}>
                       <p className="text-[10px] text-placeholder font-bold tracking-[0.5px] uppercase">{d.label}</p>
@@ -216,9 +215,9 @@ export default function AdminListingReview() {
                 </div>
                 <div className="flex flex-col gap-2">
                   {[
-                    { label: 'Listing ID', value: listing.listingId },
+                    { label: 'Listing ID', value: listing.listingCode },
                     { label: 'Status',     value: listing.status },
-                    { label: 'Submitted',  value: new Date(listing.submittedAt).toLocaleDateString('en-PK') },
+                    { label: 'Submitted',  value: dateMedium(listing.submittedAt) },
                   ].map(d => (
                     <div key={d.label} className="flex justify-between">
                       <span className="text-[12px] text-muted">{d.label}</span>
@@ -232,7 +231,7 @@ export default function AdminListingReview() {
               <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
                 <h3 className="font-bold text-[14px] text-navy mb-3">Price Summary</h3>
                 <div className="flex items-end gap-2 mb-3">
-                  <span className="font-extrabold text-[24px] sm:text-[28px] text-navy">PKR {listing.startPrice.toLocaleString()}</span>
+                  <span className="font-extrabold text-[24px] sm:text-[28px] text-navy">{pkr(listing.startPrice)}</span>
                   <span className="text-[12px] text-placeholder mb-1">starting price</span>
                 </div>
                 <div className="bg-bg border border-border-light rounded-sm px-3 py-2">
@@ -241,7 +240,7 @@ export default function AdminListingReview() {
                 {listing.reservePrice && (
                   <div className="mt-3 bg-bg border border-border-light rounded-sm px-3 py-2">
                     <p className="text-[10px] text-placeholder font-bold uppercase tracking-wide">Reserve Price</p>
-                    <p className="font-bold text-[13px] text-secondary mt-0.5">PKR {listing.reservePrice.toLocaleString()}</p>
+                    <p className="font-bold text-[13px] text-secondary mt-0.5">{pkr(listing.reservePrice)}</p>
                   </div>
                 )}
               </div>
@@ -337,7 +336,7 @@ export default function AdminListingReview() {
                         }
                       </div>
                       <p className="font-medium text-[11px] text-secondary flex-1 truncate">{l.title}</p>
-                      <span className="font-bold text-[12px] text-navy shrink-0">{(l.startPrice / 1000).toFixed(0)}K</span>
+                      <span className="font-bold text-[12px] text-navy shrink-0">{pkrCompact(l.startPrice)}</span>
                     </button>
                   ))}
                 </div>

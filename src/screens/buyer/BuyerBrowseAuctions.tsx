@@ -7,6 +7,7 @@ import { useTimer } from '../../hooks/useTimer';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
+import { conditionLabel, count, pkr } from '../../utils/format';
 
 // Kept in sync with SellerCreateListingStep1.tsx CATEGORIES
 const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles'];
@@ -105,14 +106,14 @@ function AuctionCard({ auction }: { auction: Auction }) {
       <div className="p-4">
         <div className="flex items-center gap-1.5 mb-2">
           <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
-          <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{auction.condition}</span>
+          <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{conditionLabel(auction.condition)}</span>
         </div>
         <h3 className="font-bold text-[13px] text-navy leading-[19px] mb-3 line-clamp-2">{auction.title}</h3>
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] text-muted mb-[2px]">Current bid</p>
-            <p className="font-extrabold text-[17px] text-primary leading-none">PKR {auction.currentBid.toLocaleString()}</p>
-            <p className="text-[10px] text-placeholder mt-1">{auction.bidCount} bids</p>
+            <p className="font-extrabold text-[17px] text-primary leading-none">{pkr(auction.currentBid)}</p>
+            <p className="text-[10px] text-placeholder mt-1">{count(auction.bidCount, 'bid')}</p>
           </div>
           {/* An auction stays in the ACTIVE list until the worker closes it, which can lag
               endTime by up to the 5-minute reconcile interval. During that window the card

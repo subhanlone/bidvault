@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import { Button, Input } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
+import { pkr } from '../../utils/format';
 
 const DURATIONS = [3, 5, 7, 14];
 const MAX_PRICE = 100_000_000;
@@ -18,7 +19,7 @@ export default function SellerCreateListingStep2() {
   const [minIncrementError, setMinIncrementError] = useState('');
   const [reservePriceError, setReservePriceError] = useState('');
 
-  const fmtPrice = (n: number) => n > 0 ? `PKR ${n.toLocaleString()}` : '';
+  const fmtPrice = (n: number) => n > 0 ? pkr(n) : '';
 
   const handleNext = () => {
     setStartingPriceError('');

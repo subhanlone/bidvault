@@ -7,6 +7,7 @@ import { Check, Zap, Trophy, X, Hammer, Ban } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
+import { pkr } from '../../utils/format';
 
 interface BidEntry {
   auction: Auction;
@@ -84,11 +85,11 @@ function BidCard({ entry }: { entry: BidEntry }) {
           <div className="flex flex-wrap gap-x-4 sm:gap-x-5 gap-y-1 mb-3">
             <div>
               <p className="text-2xs sm:text-xs text-placeholder font-bold uppercase">My Highest Bid</p>
-              <p className="font-extrabold text-[14px] sm:text-[16px] text-primary">PKR {myHighestBid.toLocaleString()}</p>
+              <p className="font-extrabold text-[14px] sm:text-[16px] text-primary">{pkr(myHighestBid)}</p>
             </div>
             <div>
               <p className="text-2xs sm:text-xs text-placeholder font-bold uppercase">Current Bid</p>
-              <p className="font-bold text-[14px] sm:text-[16px] text-secondary">PKR {auction.currentBid.toLocaleString()}</p>
+              <p className="font-bold text-[14px] sm:text-[16px] text-secondary">{pkr(auction.currentBid)}</p>
             </div>
             <div>
               <p className="text-2xs sm:text-xs text-placeholder font-bold uppercase">Time Left</p>

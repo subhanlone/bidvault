@@ -3,6 +3,7 @@ import { Users } from 'lucide-react';
 import Badge from './Badge';
 import Button from './Button';
 import Countdown from './Countdown';
+import { count, pkr } from '../../utils/format';
 
 interface AuctionCardProps {
   id: string;
@@ -18,7 +19,7 @@ interface AuctionCardProps {
 }
 
 function formatPrice(n: number) {
-  return `PKR ${n.toLocaleString()}`;
+  return pkr(n);
 }
 
 function getTimeLeft(endsAt: Date) {
@@ -59,7 +60,7 @@ export default function AuctionCard({ id, title, imageUrl, currentPrice, bidCoun
           </div>
           <div className="flex items-center gap-1 text-muted text-xs">
             <Users size={12} />
-            {bidCount} bids
+            {count(bidCount, 'bid')}
             {watchers != null && <span className="ml-1">· {watchers} watching</span>}
           </div>
         </div>

@@ -9,15 +9,16 @@ import { Button } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
 import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
+import { conditionLabel, pkr } from '../../utils/format';
 
 export default function SellerCreateListingStep3() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { draft, setSubmittedListingId } = useListing();
+  const { draft, setSubmittedListingCode } = useListing();
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fmtPKR = (n: number) => n > 0 ? `PKR ${n.toLocaleString()}` : '—';
+  const fmtPKR = (n: number) => n > 0 ? pkr(n) : '—';
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -45,7 +46,7 @@ export default function SellerCreateListingStep3() {
 
     setIsSubmitting(true);
     try {
-      const data = await api.post<{ listingId: string }>('/listings', {
+      const data = await api.post<{ listingId: string; listingCode: string }>('/listings', {
         title,
         category: draft.category,
         condition: draft.condition,
@@ -57,7 +58,7 @@ export default function SellerCreateListingStep3() {
         imageUrl: draft.imageUrl || undefined,
         attributes: draft.attributes,
       });
-      setSubmittedListingId(data.listingId);
+      setSubmittedListingCode(data.listingCode);
       showToast({ type: 'success', title: 'Listing Submitted!', message: 'Your listing is under admin review.' });
       navigate('/seller/listing-submitted');
     } catch (err) {
@@ -67,7 +68,7 @@ export default function SellerCreateListingStep3() {
     }
   };
 
-  const conditionLabel = draft.condition === 'NEW' ? 'New' : draft.condition === 'LIKE_NEW' ? 'Like New' : draft.condition === 'USED' ? 'Used' : '—';
+  const conditionText = conditionLabel(draft.condition);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -106,8 +107,8 @@ export default function SellerCreateListingStep3() {
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: 'TITLE',     value: draft.title || '—' },
-                  { label: 'CATEGORY',  value: draft.category?.split('&')[0].trim() || '—' },
-                  { label: 'CONDITION', value: conditionLabel },
+                  { label: 'CATEGORY',  value: draft.category || '—' },
+                  { label: 'CONDITION', value: conditionText },
                   { label: 'IMAGE',     value: draft.imageUrl ? 'Image uploaded' : 'No image' },
                 ].map(d => (
                   <div key={d.label} className="bg-bg rounded-lg px-3 py-3">

@@ -15,6 +15,7 @@ import { getSocket } from '../../services/socket';
 import { api } from '../../services/api';
 import type { SellerReview } from '../../types';
 import { getCategoryFields } from '../../config/categoryFields';
+import { conditionLabel, count, dateMedium, pkr, timeShort } from '../../utils/format';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
@@ -144,7 +145,7 @@ export default function BuyerLiveBidding() {
             <p className="font-bold text-[18px] text-secondary mb-2">
               {auction.status === 'CLOSED' ? 'This auction has ended' : 'This auction has not started yet'}
             </p>
-            <p className="text-[13px] text-muted mb-4">Current bid: PKR {auction.currentBid.toLocaleString()}</p>
+            <p className="text-[13px] text-muted mb-4">Current bid: {pkr(auction.currentBid)}</p>
             <Link to="/buyer/browse" className="font-bold text-primary hover:underline"> Browse Active Auctions</Link>
           </div>
         </div>
@@ -277,7 +278,7 @@ export default function BuyerLiveBidding() {
           <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-2">
               <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
-              <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.condition}</span>
+              <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{conditionLabel(auction.condition)}</span>
             </div>
             <h2 className="font-extrabold text-[18px] sm:text-[20px] text-navy mb-3">{auction.title}</h2>
             <p className="text-[13px] text-muted leading-[20px]">{auction.description}</p>
@@ -306,7 +307,7 @@ export default function BuyerLiveBidding() {
                 <div className="flex items-center gap-1 flex-wrap">
                   <Star size={12} fill="currentColor" className="text-gold" />
                   <span className="text-[11px] text-muted">
-                    {auction.sellerRating ? `${auction.sellerRating} rating` : 'No ratings yet'} · {auction.sellerSales ? `${auction.sellerSales} sales` : 'No sales yet'}
+                    {auction.sellerRating ? `${auction.sellerRating}★` : 'No ratings yet'} · {auction.sellerSales ? count(auction.sellerSales, 'sale') : 'No sales yet'}
                   </span>
                   <button
                     type="button"
@@ -342,7 +343,7 @@ export default function BuyerLiveBidding() {
                             />
                           ))}
                           <span className="text-[10px] text-placeholder ml-1">
-                            {new Date(r.createdAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {dateMedium(r.createdAt)}
                           </span>
                         </div>
                         {r.comment && <p className="text-secondary">{r.comment}</p>}
@@ -369,11 +370,11 @@ export default function BuyerLiveBidding() {
                       </div>
                       <div>
                         <p className="font-bold text-[12px] text-secondary">{b.buyerName === user?.name ? `${b.buyerName} (You)` : b.buyerName}</p>
-                        <p className="text-[10px] text-placeholder">{new Date(b.timestamp).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="text-[10px] text-placeholder">{timeShort(b.timestamp)}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-[13px] text-secondary">PKR {b.amount.toLocaleString()}</p>
+                      <p className="font-bold text-[13px] text-secondary">{pkr(b.amount)}</p>
                       {i === 0 && (
                         <span className="bg-success-bg border border-success-border text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-full">
                           Highest
@@ -420,10 +421,10 @@ export default function BuyerLiveBidding() {
             <p className="text-[12px] text-muted mb-1">Current Bid</p>
             <p className="font-extrabold text-[28px] text-primary leading-none mb-1">
               <span key={auction.currentBid} className="animate-price-bump inline-block">
-                PKR {auction.currentBid.toLocaleString()}
+                {pkr(auction.currentBid)}
               </span>
             </p>
-            <p className="text-[11px] text-muted">{auction.bidCount} bids · Min next: PKR {minNext.toLocaleString()}</p>
+            <p className="text-[11px] text-muted">{count(auction.bidCount, 'bid')} · Min next: {pkr(minNext)}</p>
             {/* Whether the reserve is met, never the amount — the figure itself stays private to
                 the seller. Telling bidders the floor exists and has not been reached encourages
                 them upward; telling them where it sits would just cap the bidding there. */}
@@ -470,7 +471,7 @@ export default function BuyerLiveBidding() {
                   onClick={() => handleBid(amt)}
                   className={`w-full py-3 rounded-sm font-bold text-[14px] border-2 transition-colors active:scale-[0.97] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${i === 0 ? 'bg-primary border-primary text-white hover:bg-primary-dark shadow-primary' : 'border-border-light text-secondary hover:border-primary hover:text-primary hover:bg-primary-surface'}`}
                 >
-                  PKR {amt.toLocaleString()}
+                  {pkr(amt)}
                   {i === 0 && <span className="ml-2 text-[10px] opacity-75">Min bid</span>}
                 </button>
               ))}
@@ -546,15 +547,15 @@ export default function BuyerLiveBidding() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-[12px] text-navy truncate">{auction.title}</p>
-                  <p className="text-[11px] text-muted">{auction.category} · {auction.condition}</p>
+                  <p className="text-[11px] text-muted">{auction.category} · {conditionLabel(auction.condition)}</p>
                 </div>
               </div>
 
               <div className="flex flex-col gap-3 mb-5">
                 {[
-                  { label: 'Your bid amount',    value: `PKR ${pendingBidAmount.toLocaleString()}`,       highlight: true  },
-                  { label: 'Current highest bid', value: `PKR ${auction.currentBid.toLocaleString()}`,   highlight: false },
-                  { label: 'Min increment',       value: `PKR ${auction.minIncrement.toLocaleString()}`, highlight: false },
+                  { label: 'Your bid amount',    value: pkr(pendingBidAmount),       highlight: true  },
+                  { label: 'Current highest bid', value: pkr(auction.currentBid),   highlight: false },
+                  { label: 'Min increment',       value: pkr(auction.minIncrement), highlight: false },
                   { label: 'Bidding as',          value: user?.name ?? '—',                              highlight: false },
                 ].map(d => (
                   <div key={d.label} className="flex items-center justify-between">

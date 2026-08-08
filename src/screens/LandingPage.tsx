@@ -6,6 +6,7 @@ import type { Auction } from '../types';
 import { Button, AuctionThumbnail } from '../components/ui';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { conditionLabel, count, pkr } from '../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function scrollToSection(id: string) {
@@ -21,7 +22,7 @@ function formatCount(n: number): string {
 function formatCurrency(n: number): string {
   if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M+`;
   if (n >= 1_000) return `PKR ${Math.floor(n / 1_000)}K+`;
-  return `PKR ${n.toLocaleString()}`;
+  return pkr(n);
 }
 
 // ─── Featured auction card with live timer ───────────────────────────────────
@@ -55,15 +56,15 @@ function FeaturedCard({ auction }: { auction: Auction }) {
         <div className="flex items-center gap-2 mb-2">
           <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
           <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">
-            {auction.condition === 'LIKE_NEW' ? 'Like New' : auction.condition === 'NEW' ? 'New' : 'Used'}
+            {conditionLabel(auction.condition)}
           </span>
         </div>
         <h3 className="font-bold text-[14px] text-navy mb-3 leading-[20px] line-clamp-2">{auction.title}</h3>
         <div className="flex items-end justify-between mt-auto">
           <div>
             <p className="text-[11px] text-muted mb-[2px]">Current Bid</p>
-            <p className="font-extrabold text-[20px] text-primary leading-none">PKR {auction.currentBid.toLocaleString()}</p>
-            <p className="text-[11px] text-placeholder mt-1">{auction.bidCount} bids</p>
+            <p className="font-extrabold text-[20px] text-primary leading-none">{pkr(auction.currentBid)}</p>
+            <p className="text-[11px] text-placeholder mt-1">{count(auction.bidCount, 'bid')}</p>
           </div>
           <Button
             variant="primary"

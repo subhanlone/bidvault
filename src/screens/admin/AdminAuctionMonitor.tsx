@@ -6,6 +6,7 @@ import { getSocket } from '../../services/socket';
 import { Menu, Search } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
+import { conditionLabel, count, pkr, timeShort } from '../../utils/format';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
@@ -84,7 +85,7 @@ export default function AdminAuctionMonitor() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-bold text-[16px] text-navy truncate">{auction.title}</h2>
-                  <p className="text-[12px] text-muted">{auction.category} · {auction.condition} · Seller: {auction.sellerName}</p>
+                  <p className="text-[12px] text-muted">{auction.category} · {conditionLabel(auction.condition)} · Seller: {auction.sellerName}</p>
                   <p className="text-[11px] text-placeholder mt-0.5">Status: {auction.status}</p>
                 </div>
               </div>
@@ -97,8 +98,8 @@ export default function AdminAuctionMonitor() {
                 </div>
                 <div className="bg-surface border border-border-light rounded-md p-5">
                   <p className="text-[12px] text-muted mb-1">Current Bid</p>
-                  <p className="font-extrabold text-[24px] text-primary leading-none mb-1">PKR {auction.currentBid.toLocaleString()}</p>
-                  <p className="text-[11px] text-muted">{auction.bidCount} bids</p>
+                  <p className="font-extrabold text-[24px] text-primary leading-none mb-1">{pkr(auction.currentBid)}</p>
+                  <p className="text-[11px] text-muted">{count(auction.bidCount, 'bid')}</p>
                 </div>
               </div>
 
@@ -113,10 +114,10 @@ export default function AdminAuctionMonitor() {
                       <div key={b.bidId} className={`flex items-center justify-between py-3 ${i < auctionBids.length - 1 ? 'border-b border-surface-raised' : ''}`}>
                         <div>
                           <p className="font-bold text-[12px] text-secondary">{b.buyerName}</p>
-                          <p className="text-[10px] text-placeholder">{new Date(b.timestamp).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' })}</p>
+                          <p className="text-[10px] text-placeholder">{timeShort(b.timestamp)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-[13px] text-secondary">PKR {b.amount.toLocaleString()}</p>
+                          <p className="font-bold text-[13px] text-secondary">{pkr(b.amount)}</p>
                           {i === 0 && (
                             <span className="bg-success-bg border border-success-border text-success-dark text-[10px] font-bold px-2 py-[1px] rounded-full">
                               Highest

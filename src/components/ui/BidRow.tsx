@@ -1,3 +1,5 @@
+import { pkr } from '../../utils/format';
+
 interface BidRowProps {
   userName: string;
   amount: number;
@@ -7,7 +9,7 @@ interface BidRowProps {
 }
 
 function formatPrice(n: number) {
-  return `PKR ${n.toLocaleString()}`;
+  return pkr(n);
 }
 
 export default function BidRow({ userName, amount, timeAgo, isHighest, isYou }: BidRowProps) {

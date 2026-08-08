@@ -4,17 +4,18 @@ import { useAuth } from '../../context/AuthContext';
 import { useListing } from '../../context/ListingContext';
 import { Button } from '../../components/ui';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
+import { dateMedium, timeShort } from '../../utils/format';
 
 export default function SellerListingSubmitted() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { submittedListingId, clearDraft } = useListing();
+  const { submittedListingCode, clearDraft } = useListing();
 
   const now = new Date();
   const submittedAt =
-    now.toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' }) +
+    dateMedium(now) +
     ' · ' +
-    now.toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' });
+    timeShort(now);
 
   const handleCreateAnother = () => {
     clearDraft();
@@ -45,9 +46,9 @@ export default function SellerListingSubmitted() {
           <span className="font-bold text-secondary">{user?.email ?? 'your email'}</span> once it's approved.
         </p>
 
-        {submittedListingId && (
+        {submittedListingCode && (
           <div className="border border-border text-sm font-semibold text-secondary px-5 py-2 rounded-lg mb-10">
-            Listing ID: <span className="font-bold text-primary">{submittedListingId}</span>
+            Listing ID: <span className="font-bold text-primary">{submittedListingCode}</span>
           </div>
         )}
 

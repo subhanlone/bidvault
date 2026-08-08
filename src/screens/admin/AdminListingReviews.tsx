@@ -6,6 +6,7 @@ import { CheckCircle2, ClipboardList, Menu, X } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
+import { dateMedium, pkrCompact } from '../../utils/format';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
@@ -126,14 +127,14 @@ export default function AdminListingReviews() {
                         <div className="min-w-0">
                           <p className="font-semibold text-[13px] text-secondary truncate">{l.title}</p>
                           <p className="text-[10px] text-placeholder">
-                            {new Date(l.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {dateMedium(l.submittedAt)}
                             {isOverdue(l.submittedAt) && <span className="ml-2 text-destructive font-bold">· Overdue</span>}
                           </p>
                         </div>
                       </div>
                       <p className="text-[12px] text-tertiary truncate">{l.sellerName}</p>
-                      <p className="text-[12px] text-tertiary">{l.category.split('&')[0].trim()}</p>
-                      <p className="font-bold text-[13px] text-navy">PKR {(l.startPrice / 1000).toFixed(0)}K</p>
+                      <p className="text-[12px] text-tertiary">{l.category}</p>
+                      <p className="font-bold text-[13px] text-navy">{pkrCompact(l.startPrice)}</p>
                       <button
                         onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
                         className="bg-primary font-bold text-[11px] text-white px-3 py-[6px] rounded-sm hover:bg-primary-dark transition-colors w-fit cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
@@ -155,7 +156,7 @@ export default function AdminListingReviews() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[13px] text-secondary truncate">{l.title}</p>
-                        <p className="text-[11px] text-placeholder">{l.sellerName} · PKR {(l.startPrice / 1000).toFixed(0)}K</p>
+                        <p className="text-[11px] text-placeholder">{l.sellerName} · {pkrCompact(l.startPrice)}</p>
                       </div>
                       <span className="text-[11px] font-bold text-primary shrink-0">Review →</span>
                     </div>

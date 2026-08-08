@@ -5,12 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
-
-function formatPKR(n: number): string {
-  if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `PKR ${Math.floor(n / 1_000)}K`;
-  return `PKR ${n}`;
-}
+import { pkrCompact } from '../../utils/format';
 
 // Requires a real TLD-shaped domain — rejects leading/trailing/consecutive dots and hyphens.
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -48,7 +43,7 @@ export default function LoginScreen() {
     api.get<{ activeAuctionCount: number; transactionTotal: number; completedSalesCount: number }>('/stats')
       .then(d => setPanelStats([
         { value: String(d.activeAuctionCount),      label: 'Live Now'    },
-        { value: formatPKR(d.transactionTotal),     label: 'Total Sales' },
+        { value: pkrCompact(d.transactionTotal),     label: 'Total Sales' },
         { value: String(d.completedSalesCount),     label: 'Items Sold'  },
       ]))
       .catch(() => {});

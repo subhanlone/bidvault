@@ -21,8 +21,8 @@ interface ListingContextType {
   draft: ListingDraft;
   updateDraft: (partial: Partial<ListingDraft>) => void;
   clearDraft: () => void;
-  submittedListingId: string | null;
-  setSubmittedListingId: (id: string | null) => void;
+  submittedListingCode: string | null;
+  setSubmittedListingCode: (code: string | null) => void;
 }
 
 const ListingContext = createContext<ListingContextType | null>(null);
@@ -37,7 +37,7 @@ export function ListingProvider({ children }: { children: React.ReactNode }) {
       return { ...DEFAULT_DRAFT };
     }
   });
-  const [submittedListingId, setSubmittedListingId] = useState<string | null>(null);
+  const [submittedListingCode, setSubmittedListingCode] = useState<string | null>(null);
 
   const updateDraft = (partial: Partial<ListingDraft>) => {
     setDraft(prev => {
@@ -50,11 +50,11 @@ export function ListingProvider({ children }: { children: React.ReactNode }) {
   const clearDraft = () => {
     try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
     setDraft({ ...DEFAULT_DRAFT });
-    setSubmittedListingId(null);
+    setSubmittedListingCode(null);
   };
 
   return (
-    <ListingContext.Provider value={{ draft, updateDraft, clearDraft, submittedListingId, setSubmittedListingId }}>
+    <ListingContext.Provider value={{ draft, updateDraft, clearDraft, submittedListingCode, setSubmittedListingCode }}>
       {children}
     </ListingContext.Provider>
   );

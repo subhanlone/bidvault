@@ -8,6 +8,7 @@ import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { api } from '../../services/api';
+import { dateTimeShort, monthYear, pkr, pkrCompact } from '../../utils/format';
 
 export default function BuyerProfile() {
   const { user, logout, changePassword } = useAuth();
@@ -54,14 +55,14 @@ export default function BuyerProfile() {
   const watchlistCount = watchlist.length;
 
   const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString('en-PK', { year: 'numeric', month: 'long' })
+    ? monthYear(user.createdAt)
     : '—';
 
   const stats = [
     { label: 'Total Bids', value: myBids.length, icon: <Gavel size={18} strokeWidth={1.8} className="text-primary" />, bg: 'bg-primary-surface' },
     { label: 'Auctions Won', value: auctionsWon, icon: <Trophy size={18} strokeWidth={1.8} className="text-gold" />, bg: 'bg-warning-surface' },
     { label: 'Watchlist Items', value: watchlistCount, icon: <Heart size={18} strokeWidth={1.8} className="text-success-dark" />, bg: 'bg-success-bg' },
-    { label: 'Total Bid Value', value: `PKR ${(totalBidAmount / 1000).toFixed(0)}K`, icon: <TrendingUp size={18} strokeWidth={1.8} className="text-navy" />, bg: 'bg-info-card-bg' },
+    { label: 'Total Bid Value', value: pkrCompact(totalBidAmount), icon: <TrendingUp size={18} strokeWidth={1.8} className="text-navy" />, bg: 'bg-info-card-bg' },
   ];
 
   const quickLinks = [
@@ -144,7 +145,10 @@ export default function BuyerProfile() {
                     { label: 'Full Name', value: user?.name ?? '—' },
                     { label: 'Email Address', value: user?.email ?? '—' },
                     { label: 'Account Type', value: 'Buyer' },
-                    { label: 'User ID', value: user?.userId ?? '—' },
+                    // A "User ID" row showing the raw 25-char CUID was removed: it means nothing
+                    // to a buyer, is never needed for support (the email identifies the account),
+                    // and advertises the internal id scheme for no benefit. "Member since" is
+                    // already shown in the header above, so nothing replaces it here.
                   ].map(row => (
                     <div key={row.label} className="flex items-start justify-between gap-4">
                       <span className="text-[12px] text-muted font-medium shrink-0 w-[130px]">{row.label}</span>
@@ -191,10 +195,10 @@ export default function BuyerProfile() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-[12px] text-secondary truncate">{auction?.title ?? 'Auction Item'}</p>
-                            <p className="text-[11px] text-placeholder">{new Date(bid.timestamp).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-[11px] text-placeholder">{dateTimeShort(bid.timestamp)}</p>
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="font-bold text-[13px] text-primary">PKR {bid.amount.toLocaleString()}</p>
+                            <p className="font-bold text-[13px] text-primary">{pkr(bid.amount)}</p>
                             <p className="text-[10px] text-placeholder">{bid.isWin ? 'Won' : 'Bid placed'}</p>
                           </div>
                         </button>

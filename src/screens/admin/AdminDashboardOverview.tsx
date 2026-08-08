@@ -9,6 +9,7 @@ import { CheckCircle2, Menu, BarChart3, Gavel, Banknote, Clock, ChevronRight } f
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import StatCard from '../../components/ui/StatCard';
+import { dateLong, dateShort, pkr, pkrCompact } from '../../utils/format';
 
 interface PlatformStats {
   userCount: number;
@@ -98,12 +99,6 @@ export default function AdminDashboardOverview() {
     ? [...topCategories, { label: `Other (${breakdown.length - 4})`, pct: otherPct, color: 'var(--color-muted)' }]
     : topCategories;
 
-  const fmtRevenue = (n: number) => {
-    if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000)     return `PKR ${(n / 1_000).toFixed(0)}K`;
-    return `PKR ${n.toLocaleString()}`;
-  };
-
   return (
     <AdminLayout active="Dashboard">
       {({ openMobileMenu }) => (
@@ -120,7 +115,7 @@ export default function AdminDashboardOverview() {
           </button>
           <div>
             <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Dashboard Overview</h1>
-            <p className="text-[12px] text-muted">{new Date().toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · BidVault Admin</p>
+            <p className="text-[12px] text-muted">{dateLong(new Date())} · BidVault Admin</p>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -144,7 +139,7 @@ export default function AdminDashboardOverview() {
               <>
                 <StatCard label="Active Auctions"  value={platformStats?.activeAuctionCount ?? '—'}           icon={<Gavel size={18} />}    iconColor="info"    padding="sm" />
                 <StatCard label="Total Bids"        value={(analytics?.totalBids ?? 0).toLocaleString()}       icon={<BarChart3 size={18} />} iconColor="success" padding="sm" />
-                <StatCard label="Platform Revenue"  value={fmtRevenue(platformStats?.transactionTotal ?? 0)}   icon={<Banknote size={18} />}  iconColor="success" padding="sm" />
+                <StatCard label="Platform Revenue"  value={pkrCompact(platformStats?.transactionTotal ?? 0)}   icon={<Banknote size={18} />}  iconColor="success" padding="sm" />
                 <StatCard label="Pending Listings"  value={String(pendingCount)} trendLabel="Awaiting review"  icon={<Clock size={18} />}     iconColor="warning" padding="sm" />
               </>
             )}
@@ -232,7 +227,7 @@ export default function AdminDashboardOverview() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[11px] text-secondary truncate">{a.title}</p>
-                        <p className="font-bold text-[12px] text-navy">PKR {a.currentBid.toLocaleString()}</p>
+                        <p className="font-bold text-[12px] text-navy">{pkr(a.currentBid)}</p>
                       </div>
                       {i === 0 && <span className="bg-primary font-bold text-[9px] text-white px-2 py-[2px] rounded-full">Highest</span>}
                     </div>
@@ -276,12 +271,12 @@ export default function AdminDashboardOverview() {
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-[12px] text-secondary truncate">{l.title}</p>
-                            <p className="text-[10px] text-placeholder">{new Date(l.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}</p>
+                            <p className="text-[10px] text-placeholder">{dateShort(l.submittedAt)}</p>
                           </div>
                         </div>
                         <p className="text-[12px] text-tertiary truncate">{l.sellerName}</p>
                         <p className="text-[12px] text-tertiary">{l.category}</p>
-                        <p className="font-bold text-[12px] text-navy">{(l.startPrice / 1000).toFixed(0)}K</p>
+                        <p className="font-bold text-[12px] text-navy">{pkrCompact(l.startPrice)}</p>
                         <button
                           onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}
                           className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
@@ -298,7 +293,7 @@ export default function AdminDashboardOverview() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[12px] text-secondary truncate">{l.title}</p>
-                          <p className="text-[10px] text-placeholder">{l.sellerName} · PKR {(l.startPrice / 1000).toFixed(0)}K</p>
+                          <p className="text-[10px] text-placeholder">{l.sellerName} · {pkrCompact(l.startPrice)}</p>
                         </div>
                         <button
                           onClick={() => navigate(`/admin/listing-review/${l.listingId}`)}

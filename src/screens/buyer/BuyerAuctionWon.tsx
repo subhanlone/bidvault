@@ -3,6 +3,7 @@ import { Sparkles, Trophy, Frown, Package, Ban } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
+import { pkr } from '../../utils/format';
 
 interface WonState {
   auctionId: string;
@@ -63,7 +64,7 @@ export default function BuyerAuctionWon() {
               <h2 className="font-bold text-[15px] sm:text-[16px] text-navy mb-4">{title}</h2>
               <div className="flex flex-col gap-3">
                 {[
-                  { label: 'Winning bid', value: `PKR ${finalBid.toLocaleString()}`, highlight: true },
+                  { label: 'Winning bid', value: pkr(finalBid), highlight: true },
                   { label: 'Status', value: 'Auction Closed' },
                   { label: 'Next step', value: 'Complete payment in My Wins' },
                 ].map(d => (
@@ -113,7 +114,7 @@ export default function BuyerAuctionWon() {
               seller had set a reserve price that bidding didn't reach — so the item wasn't sold.
             </p>
             <p className="font-bold text-[16px] sm:text-[18px] text-warning mb-2">
-              Your highest bid: PKR {finalBid.toLocaleString()}
+              Your highest bid: {pkr(finalBid)}
             </p>
             <p className="text-[13px] text-muted text-center max-w-[380px] mb-8">
               <span className="font-bold text-secondary">No payment is due</span> and nothing has been charged.
@@ -137,7 +138,7 @@ export default function BuyerAuctionWon() {
               The auction for <span className="font-bold text-secondary">{title}</span> has ended. You didn't win this time.
             </p>
             <p className="font-bold text-[16px] sm:text-[18px] text-warning mb-8">
-              Final price: PKR {finalBid.toLocaleString()}
+              Final price: {pkr(finalBid)}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Button

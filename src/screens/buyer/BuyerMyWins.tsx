@@ -6,6 +6,7 @@ import { BuyerNavbar, RatingModal } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { api } from '../../services/api';
+import { dateMedium, pkr } from '../../utils/format';
 
 interface WinTransaction {
   transactionId: string;
@@ -127,12 +128,12 @@ export default function BuyerMyWins() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-[14px] text-navy truncate mb-1">{tx.auctionTitle}</h3>
                       <p className="text-[12px] text-muted">Seller: {tx.sellerName}</p>
-                      <p className="text-[11px] text-placeholder mb-3">{new Date(tx.createdAt).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                      <p className="text-[11px] text-placeholder mb-3">{dateMedium(tx.createdAt)}</p>
 
                       <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div>
                           <p className="text-[11px] text-muted">Winning Bid</p>
-                          <p className="font-extrabold text-[16px] text-primary">PKR {tx.finalAmount.toLocaleString()}</p>
+                          <p className="font-extrabold text-[16px] text-primary">{pkr(tx.finalAmount)}</p>
                         </div>
 
                         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-semibold ${cfg.bg} ${cfg.color}`}>

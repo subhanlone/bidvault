@@ -3,6 +3,7 @@ import { Star, Menu, TrendingUp } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
+import { pkrCompact, count } from '../../utils/format';
 
 interface AnalyticsData {
   totalRevenue:         number;
@@ -19,13 +20,6 @@ type Period = '3m' | '6m' | '12m';
 const CHART_COLORS = [
   'bg-primary', 'bg-navy', 'bg-gold', 'bg-success-dark', 'bg-[#3b82f6]', 'bg-[#adb5bd]',
 ];
-
-function fmtRevenue(n: number): string {
-  if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `PKR ${(n / 1_000).toFixed(0)}K`;
-  if (n === 0)        return 'PKR 0';
-  return `PKR ${n.toLocaleString()}`;
-}
 
 function KpiSkeleton() {
   return (
@@ -54,9 +48,9 @@ export default function AdminAnalytics() {
   const bidsMax    = Math.max(1, ...periodData.map(d => d.bids));
 
   const kpis = analyticsData ? [
-    { label: 'Total Revenue',       value: fmtRevenue(analyticsData.totalRevenue),                       sub: 'All completed transactions' },
+    { label: 'Total Revenue',       value: pkrCompact(analyticsData.totalRevenue),                       sub: 'All completed transactions' },
     { label: 'Total Bids',          value: analyticsData.totalBids.toLocaleString(),                     sub: 'Across all auctions' },
-    { label: 'Avg Bid Value',       value: analyticsData.avgBidValue > 0 ? fmtRevenue(analyticsData.avgBidValue) : '—', sub: 'Per bid placed' },
+    { label: 'Avg Bid Value',       value: analyticsData.avgBidValue > 0 ? pkrCompact(analyticsData.avgBidValue) : '—', sub: 'Per bid placed' },
     { label: 'Seller Conversion',   value: `${analyticsData.sellerConversionRate}%`,                      sub: 'Listings approved' },
   ] : [];
 
@@ -127,7 +121,7 @@ export default function AdminAnalytics() {
                 <p className="text-[12px] text-muted">Gross Merchandise Value (GMV)</p>
               </div>
               <span className="font-extrabold text-[16px] sm:text-[20px] text-navy">
-                {fmtRevenue(periodData.reduce((s, d) => s + d.value, 0))}
+                {pkrCompact(periodData.reduce((s, d) => s + d.value, 0))}
               </span>
             </div>
             {periodData.length > 0 ? (
@@ -139,7 +133,7 @@ export default function AdminAnalytics() {
                       style={{ height: `${Math.max(4, (d.value / periodMax) * 100)}%` }}
                     >
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-navy text-white text-[10px] font-bold px-2 py-1 rounded-xs whitespace-nowrap z-10">
-                        {fmtRevenue(d.value)}
+                        {pkrCompact(d.value)}
                       </div>
                     </div>
                     <span className="text-[9px] sm:text-[10px] text-placeholder font-medium">{d.month}</span>
@@ -165,7 +159,7 @@ export default function AdminAnalytics() {
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
                           <div className={`size-[8px] rounded-full ${CHART_COLORS[i] ?? 'bg-muted'}`} />
-                          <span className="font-semibold text-[12px] text-secondary">{c.name.split('&')[0].trim()}</span>
+                          <span className="font-semibold text-[12px] text-secondary">{c.name}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-[11px] text-placeholder">{c.count.toLocaleString()} listings</span>
@@ -198,12 +192,12 @@ export default function AdminAnalytics() {
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[12px] text-secondary truncate">{s.sellerName}</p>
                         <p className="text-[10px] text-placeholder flex items-center gap-1">
-                          {s.sales} sale{s.sales !== 1 ? 's' : ''}
+                          {count(s.sales, 'sale')}
                           <Star size={9} strokeWidth={2} className="inline text-gold fill-gold" />
                         </p>
                       </div>
                       <p className="font-bold text-[12px] text-primary shrink-0">
-                        {fmtRevenue(s.revenue)}
+                        {pkrCompact(s.revenue)}
                       </p>
                     </div>
                   ))}
@@ -224,7 +218,7 @@ export default function AdminAnalytics() {
                 <p className="text-[12px] text-muted">Number of bids placed per month</p>
               </div>
               <span className="font-extrabold text-[16px] sm:text-[20px] text-navy">
-                {periodData.reduce((s, d) => s + d.bids, 0).toLocaleString()} bids
+                {count(periodData.reduce((s, d) => s + d.bids, 0), 'bid')}
               </span>
             </div>
             {periodData.length > 0 ? (
@@ -236,7 +230,7 @@ export default function AdminAnalytics() {
                       style={{ height: `${Math.max(4, (d.bids / bidsMax) * 100)}%` }}
                     >
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-navy text-white text-[10px] font-bold px-2 py-1 rounded-xs whitespace-nowrap z-10">
-                        {d.bids} bids
+                        {count(d.bids, 'bid')}
                       </div>
                     </div>
                     <span className="text-[9px] sm:text-[10px] text-placeholder font-medium">{d.month}</span>

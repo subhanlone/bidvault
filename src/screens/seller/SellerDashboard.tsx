@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
 import type { Listing, SellerReview } from '../../types';
+import { conditionLabel, dateShort, pkr } from '../../utils/format';
 
 function StatCardSkeleton() {
   return (
@@ -105,7 +106,7 @@ export default function SellerDashboard() {
             Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
           ) : (
             <>
-              <StatCard label="Revenue"            value={`PKR ${sellerStats.totalRevenue.toLocaleString()}`} icon={<Banknote size={18} />}     iconColor="success" padding="sm" />
+              <StatCard label="Revenue"            value={pkr(sellerStats.totalRevenue)} icon={<Banknote size={18} />}     iconColor="success" padding="sm" />
               <StatCard label="Approved Listings" value={approved}                                               icon={<Gavel size={18} />}        iconColor="info"    padding="sm" />
               <StatCard label="Items Sold"         value={sellerStats.itemsSold}                                 icon={<PackageCheck size={18} />}  iconColor="success" padding="sm" />
               <StatCard label="Pending Review"     value={pending}                                               icon={<Clock size={18} />}         iconColor="warning" padding="sm" />
@@ -141,7 +142,7 @@ export default function SellerDashboard() {
                       />
                     ))}
                     <span className="text-[11px] text-placeholder ml-1">
-                      {new Date(r.createdAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}
+                      {dateShort(r.createdAt)}
                     </span>
                   </div>
                   {r.comment && <p className="text-[13px] text-secondary">{r.comment}</p>}
@@ -189,13 +190,13 @@ export default function SellerDashboard() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-secondary truncate">{l.title}</p>
-                          <p className="text-[11px] text-placeholder">{l.condition}</p>
+                          <p className="text-[11px] text-placeholder">{conditionLabel(l.condition)}</p>
                         </div>
                         <p className="text-xs text-tertiary">{l.category}</p>
-                        <p className="text-sm font-bold text-navy">PKR {l.startPrice.toLocaleString()}</p>
+                        <p className="text-sm font-bold text-navy">{pkr(l.startPrice)}</p>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>
                         <p className="text-[11px] text-placeholder">
-                          {new Date(l.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric' })}
+                          {dateShort(l.submittedAt)}
                         </p>
                       </div>
                       <div className="sm:hidden flex items-center gap-3 px-4 py-3 hover:bg-bg transition-colors">
@@ -207,7 +208,7 @@ export default function SellerDashboard() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-secondary truncate">{l.title}</p>
-                          <p className="text-[11px] text-placeholder">{l.category} · PKR {l.startPrice.toLocaleString()}</p>
+                          <p className="text-[11px] text-placeholder">{l.category} · {pkr(l.startPrice)}</p>
                         </div>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>
                       </div>

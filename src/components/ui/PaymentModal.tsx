@@ -4,6 +4,7 @@ import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStri
 import { X, CreditCard, Lock } from 'lucide-react';
 import { api } from '../../services/api';
 import Button from './Button';
+import { pkr } from '../../utils/format';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
 
@@ -64,7 +65,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
 
       <div className="flex justify-between items-center bg-surface border border-border-light rounded-md px-4 py-3">
         <span className="text-[13px] text-muted">Total Amount</span>
-        <span className="font-extrabold text-[18px] text-success">PKR {finalAmount.toLocaleString()}</span>
+        <span className="font-extrabold text-[18px] text-success">{pkr(finalAmount)}</span>
       </div>
 
       <div className="flex flex-col gap-4">

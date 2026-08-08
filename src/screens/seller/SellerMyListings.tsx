@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button } from '../../components/ui';
 import type { Listing, ListingStatus } from '../../types';
+import { conditionLabel, dateMedium, pkr } from '../../utils/format';
 
 const STATUS_CONFIG: Record<ListingStatus, { label: string; variant: 'warning' | 'success' | 'error' | 'tag' }> = {
   PENDING:  { label: 'Pending Review',  variant: 'warning' },
@@ -185,13 +186,13 @@ export default function SellerMyListings() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[13px] font-semibold text-secondary truncate">{l.title}</p>
-                          <p className="text-[11px] text-placeholder capitalize">{l.condition.replace('_', ' ').toLowerCase()}</p>
+                          <p className="text-[11px] text-placeholder">{conditionLabel(l.condition)}</p>
                         </div>
-                        <p className="text-[12px] text-tertiary truncate">{l.category.split('&')[0].trim()}</p>
-                        <p className="text-[13px] font-bold text-navy">PKR {l.startPrice.toLocaleString()}</p>
+                        <p className="text-[12px] text-tertiary truncate">{l.category}</p>
+                        <p className="text-[13px] font-bold text-navy">{pkr(l.startPrice)}</p>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>
                         <p className="text-[11px] text-placeholder">
-                          {new Date(l.submittedAt).toLocaleDateString('en-PK', { month: 'short', day: 'numeric', year: '2-digit' })}
+                          {dateMedium(l.submittedAt)}
                         </p>
                       </div>
 
@@ -206,7 +207,7 @@ export default function SellerMyListings() {
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-semibold text-secondary truncate">{l.title}</p>
                           <p className="text-[11px] text-placeholder">
-                            {l.category.split('&')[0].trim()} · PKR {l.startPrice.toLocaleString()}
+                            {l.category} · {pkr(l.startPrice)}
                           </p>
                         </div>
                         <Badge variant={cfg.variant}>{cfg.label}</Badge>

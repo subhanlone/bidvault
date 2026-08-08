@@ -5,6 +5,7 @@ import { Menu, Radio } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import type { Auction } from '../../types';
+import { conditionLabel, count, pkr, pkrCompact } from '../../utils/format';
 
 function AuctionRow({ auction }: { auction: Auction }) {
   const timer = useTimer(auction.endTime);
@@ -23,10 +24,10 @@ function AuctionRow({ auction }: { auction: Auction }) {
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-[13px] text-secondary truncate">{auction.title}</p>
-          <span className="text-[10px] text-placeholder">{auction.category} · {auction.condition}</span>
+          <span className="text-[10px] text-placeholder">{auction.category} · {conditionLabel(auction.condition)}</span>
         </div>
         <p className="text-[12px] text-tertiary truncate">{auction.sellerName}</p>
-        <p className="font-bold text-[13px] text-primary">PKR {auction.currentBid.toLocaleString()}</p>
+        <p className="font-bold text-[13px] text-primary">{pkr(auction.currentBid)}</p>
         <p className={`font-bold text-[13px] ${urgent ? 'text-primary' : timer.isExpired ? 'text-muted' : 'text-secondary'}`}>
           {timer.isExpired ? 'Ended' : timer.display}
         </p>
@@ -50,13 +51,13 @@ function AuctionRow({ auction }: { auction: Auction }) {
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-[13px] text-secondary truncate">{auction.title}</p>
           <div className="flex items-center gap-2 mt-[2px]">
-            <span className="font-bold text-[12px] text-primary">PKR {auction.currentBid.toLocaleString()}</span>
+            <span className="font-bold text-[12px] text-primary">{pkr(auction.currentBid)}</span>
             <span className="text-[10px] text-placeholder">·</span>
             <span className={`text-[11px] font-semibold ${urgent ? 'text-primary' : timer.isExpired ? 'text-muted' : 'text-tertiary'}`}>
               {timer.isExpired ? 'Ended' : timer.display}
             </span>
           </div>
-          <p className="text-[10px] text-placeholder mt-[2px]">{auction.sellerName} · {auction.bidCount} bids</p>
+          <p className="text-[10px] text-placeholder mt-[2px]">{auction.sellerName} · {count(auction.bidCount, 'bid')}</p>
         </div>
         <button
           onClick={() => navigate(`/admin/monitor/${auction.auctionId}`)}
@@ -116,7 +117,7 @@ export default function AdminLiveAuctions() {
               { label: 'Total Active',    value: String(active.length),                    color: 'text-navy',         sub: 'Across all categories' },
               { label: 'Ending in <1hr', value: String(endingSoon.length),                 color: 'text-destructive',  sub: 'Needs attention' },
               { label: 'Total Bids',      value: totalBids.toLocaleString(),               color: 'text-success-dark', sub: 'Active auctions' },
-              { label: 'Highest Bid',     value: `PKR ${(highestBid / 1000).toFixed(0)}K`, color: 'text-primary',      sub: 'Single item' },
+              { label: 'Highest Bid',     value: pkrCompact(highestBid), color: 'text-primary',      sub: 'Single item' },
             ].map(s => (
               <div key={s.label} className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
                 <p className="font-medium text-[11px] sm:text-[12px] text-muted mb-1 sm:mb-2">{s.label}</p>
