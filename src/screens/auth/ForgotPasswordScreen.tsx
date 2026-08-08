@@ -4,6 +4,7 @@ import { Lock, Eye, EyeOff, Info, RefreshCw, MailOpen, ArrowLeft, Check } from '
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button, Input } from '../../components/ui';
+import { OTP_WINDOW_SECONDS, RESEND_COOLDOWN_SECONDS } from '../../config/otp';
 
 type Step = 1 | 2 | 3;
 
@@ -50,6 +51,7 @@ function fmtTime(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
+
 const PW_CONFIG = [
   { width: '0%',   label: '',       labelClass: 'text-muted',  barClass: 'bg-border' },
   { width: '30%',  label: 'Weak',   labelClass: 'text-error',  barClass: 'bg-error' },
@@ -93,7 +95,7 @@ export default function ForgotPasswordScreen() {
   useEffect(() => {
     if (step !== 2) return;
     const timeoutId = setTimeout(() => {
-      setResendSecs(60);
+      setResendSecs(RESEND_COOLDOWN_SECONDS);
       inputRefs.current[0]?.focus();
     }, 0);
     return () => clearTimeout(timeoutId);
@@ -202,7 +204,7 @@ export default function ForgotPasswordScreen() {
       headline="Don't worry — we've got you covered"
       subtext="Reset your password in 3 simple steps. Enter your email, verify the code, and set a new secure password."
       bullets={[
-        'Reset code valid for 60 seconds',
+        `Reset code valid for ${OTP_WINDOW_SECONDS} seconds`,
         'Sent to your registered email only',
         'New password encrypted with bcrypt',
       ]}
@@ -297,7 +299,7 @@ export default function ForgotPasswordScreen() {
 
             <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3">
               <Info size={15} className="text-info-text flex-shrink-0 mt-0.5" />
-              <p className="text-[12px] text-info-text leading-relaxed">Code is valid for <span className="font-bold">60 seconds</span>. Check your spam folder if not found.</p>
+              <p className="text-[12px] text-info-text leading-relaxed">Code is valid for <span className="font-bold">{OTP_WINDOW_SECONDS} seconds</span>. Check your spam folder if not found.</p>
             </div>
 
             <Button type="submit" variant="primary" fullWidth size="lg" loading={loading} disabled={otp.join('').length < 6}>
@@ -316,7 +318,7 @@ export default function ForgotPasswordScreen() {
                   const res = await forgotPassword(email);
                   setResending(false);
                   if (res.success) {
-                    setResendSecs(60);
+                    setResendSecs(RESEND_COOLDOWN_SECONDS);
                     setResetCode(res.resetCode);
                     setOtp(['', '', '', '', '', '']);
                     setOtpError('');

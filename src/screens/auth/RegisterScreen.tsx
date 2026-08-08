@@ -114,7 +114,7 @@ export default function RegisterScreen() {
     setLoading(false);
     if (result.success) {
       showToast({ type: 'success', title: 'Account Created!', message: 'Check your email for a verification code.' });
-      navigate('/email-verification', { state: { email, verificationCode: result.verificationCode } });
+      navigate('/email-verification', { state: { email, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt } });
     } else {
       showToast({ type: 'error', title: 'Registration Failed', message: result.error || 'Something went wrong.' });
     }
@@ -130,7 +130,9 @@ export default function RegisterScreen() {
       ]}
       stats={panelStats}
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      {/* noValidate: the browser's native bubble fires before onSubmit, which suppresses
+          validate() and hides errors on every field except the first invalid one. */}
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
         {/* Mobile logo */}
         <div className="lg:hidden mb-2">
           <Link to="/" className="flex items-center gap-2">

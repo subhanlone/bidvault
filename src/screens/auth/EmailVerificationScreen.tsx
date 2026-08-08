@@ -4,13 +4,12 @@ import { Mail, RefreshCw, Info } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button } from '../../components/ui';
+import { OTP_WINDOW_SECONDS, RESEND_COOLDOWN_SECONDS, deadlineFrom, secsUntil } from '../../config/otp';
 
 function fmtTime(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
-// Must match backend OTP_EXPIRY_MS in auth.routes.ts
-const OTP_EXPIRY_SECONDS = 60;
 
 export default function EmailVerificationScreen() {
   const navigate  = useNavigate();
@@ -18,14 +17,15 @@ export default function EmailVerificationScreen() {
   const { verifyEmail, resendVerification } = useAuth();
   const { showToast }   = useToast();
 
-  const state = location.state as { email?: string; verificationCode?: string; autoResend?: boolean } | null;
+  const state = location.state as { email?: string; verificationCode?: string; codeExpiresAt?: string; autoResend?: boolean } | null;
   const email: string = state?.email ?? '';
   const verificationCode: string | undefined = state?.verificationCode;
   const autoResend: boolean = state?.autoResend ?? false;
   const [otp, setOtp]             = useState(['', '', '', '', '', '']);
   const [loading, setLoading]     = useState(false);
-  const [resendSecs, setResendSecs] = useState(60);
-  const [codeExpiry, setCodeExpiry] = useState(OTP_EXPIRY_SECONDS);
+  const [resendSecs, setResendSecs] = useState(RESEND_COOLDOWN_SECONDS);
+  const [expiresAt, setExpiresAt] = useState(() => deadlineFrom(state?.codeExpiresAt));
+  const [, setTick]               = useState(0);
   const [otpError, setOtpError]   = useState('');
   const [resending, setResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -41,7 +41,9 @@ export default function EmailVerificationScreen() {
   useEffect(() => {
     if (!email || !autoResend) return;
     showToast({ type: 'info', title: 'Email Not Verified', message: 'Please verify your email to sign in. We sent you a new code.' });
-    resendVerification(email).catch(() => {});
+    resendVerification(email)
+      .then(r => { if (r.success) setExpiresAt(deadlineFrom(r.codeExpiresAt)); })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -51,9 +53,13 @@ export default function EmailVerificationScreen() {
     return () => clearInterval(t);
   }, [resendSecs]);
 
+  // Derived from the real clock rather than accumulated ticks, so a backgrounded tab resyncs
+  // instead of drifting further from the server's deadline.
+  const codeExpiry = secsUntil(expiresAt);
+
   useEffect(() => {
     if (codeExpiry <= 0) return;
-    const t = setInterval(() => setCodeExpiry(s => s - 1), 1000);
+    const t = setInterval(() => setTick(n => n + 1), 1000);
     return () => clearInterval(t);
   }, [codeExpiry]);
 
@@ -109,8 +115,8 @@ export default function EmailVerificationScreen() {
     const result = await resendVerification(email);
     setResending(false);
     if (result.success) {
-      setResendSecs(60);
-      setCodeExpiry(OTP_EXPIRY_SECONDS);
+      setResendSecs(RESEND_COOLDOWN_SECONDS);
+      setExpiresAt(deadlineFrom(result.codeExpiresAt));
       setOtp(['', '', '', '', '', '']);
       setOtpError('');
       inputRefs.current[0]?.focus();
@@ -125,7 +131,7 @@ export default function EmailVerificationScreen() {
       headline="One last step to activate your account"
       subtext="We sent a 6-digit verification code to your email address. Enter it to confirm your identity and start using BidVault."
       bullets={[
-        'Code valid for 60 seconds only',
+        `Code valid for ${OTP_WINDOW_SECONDS} seconds only`,
         'Check spam folder if not found',
         'Your account is 100% secure',
       ]}
@@ -204,7 +210,7 @@ export default function EmailVerificationScreen() {
         <div className="flex gap-2.5 items-start bg-info-surface border border-info-border-strong rounded-lg px-4 py-3">
           <Info size={15} className="text-info-text flex-shrink-0 mt-0.5" />
           <p className="text-[12px] text-info-text leading-relaxed">
-            Check your <span className="font-bold">spam or junk folder</span> if you don't see the email. Code is valid for <span className="font-bold">60 seconds</span>.
+            Check your <span className="font-bold">spam or junk folder</span> if you don't see the email. Code is valid for <span className="font-bold">{OTP_WINDOW_SECONDS} seconds</span>.
           </p>
         </div>
 

@@ -65,6 +65,14 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+// Route prefixes that require a session. Everything else — landing, legal pages, auth screens —
+// is readable anonymously, so an expired session there must not bounce the visitor to /login.
+const PROTECTED_PREFIXES = ['/admin', '/seller', '/buyer'];
+
+function isProtectedRoute(pathname: string): boolean {
+  return PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
 async function request<T>(path: string, options: RequestInit): Promise<T> {
   const stored = getStoredAuth();
 
@@ -85,7 +93,11 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
 
     if (!newToken) {
       clearStoredAuth();
-      window.location.href = '/login';
+      // Only bounce off routes that actually need a session. On a public page, dropping the
+      // stored auth is enough — AuthContext falls back to anonymous and the page re-renders.
+      if (isProtectedRoute(window.location.pathname)) {
+        window.location.href = '/login';
+      }
       throw new ApiError(401, 'Session expired. Please sign in again.');
     }
 
@@ -96,7 +108,14 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   const body = await resp.json() as { success: boolean; data?: T; error?: string; code?: string };
 
   // Platform maintenance: non-admin requests are blocked server-side — send the user to the maintenance page.
-  if (resp.status === 503 && body.code === 'MAINTENANCE' && !window.location.pathname.startsWith('/maintenance')) {
+  // /login is excluded: the backend deliberately exempts /auth/login and /auth/refresh so an admin can
+  // always sign in and switch maintenance back off. Redirecting away from /login would defeat that.
+  if (
+    resp.status === 503 &&
+    body.code === 'MAINTENANCE' &&
+    !window.location.pathname.startsWith('/maintenance') &&
+    !window.location.pathname.startsWith('/login')
+  ) {
     window.location.href = '/maintenance';
   }
 

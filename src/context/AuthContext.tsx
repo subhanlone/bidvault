@@ -7,12 +7,12 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  register: (data: RegisterData) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; verificationCode?: string; codeExpiresAt?: string; error?: string }>;
   verifyEmail: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
-  resendVerification: (email: string) => Promise<{ success: boolean; verificationCode?: string; error?: string }>;
+  resendVerification: (email: string) => Promise<{ success: boolean; verificationCode?: string; codeExpiresAt?: string; error?: string }>;
   login: (data: LoginData, remember?: boolean) => Promise<{ success: boolean; error?: string; code?: string; user?: User }>;
   logout: () => void;
-  forgotPassword: (email: string) => Promise<{ success: boolean; resetCode?: string; error?: string }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; resetCode?: string; codeExpiresAt?: string; error?: string }>;
   verifyResetOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string, otp: string, password: string) => Promise<{ success: boolean; error?: string }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -45,8 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (data: RegisterData) => {
     try {
-      const result = await api.post<{ user: User; verificationCode?: string }>('/auth/register', data);
-      return { success: true, verificationCode: result.verificationCode };
+      const result = await api.post<{ user: User; verificationCode?: string; codeExpiresAt?: string }>('/auth/register', data);
+      return { success: true, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Registration failed' };
     }
@@ -63,8 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resendVerification = async (email: string) => {
     try {
-      const result = await api.post<{ message: string; verificationCode?: string }>('/auth/resend-verification', { email });
-      return { success: true, verificationCode: result.verificationCode };
+      const result = await api.post<{ message: string; verificationCode?: string; codeExpiresAt?: string }>('/auth/resend-verification', { email });
+      return { success: true, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to resend code' };
     }
@@ -95,8 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const forgotPassword = async (email: string) => {
     try {
-      const result = await api.post<{ message: string; resetCode?: string }>('/auth/forgot-password', { email });
-      return { success: true, resetCode: result.resetCode };
+      const result = await api.post<{ message: string; resetCode?: string; codeExpiresAt?: string }>('/auth/forgot-password', { email });
+      return { success: true, resetCode: result.resetCode, codeExpiresAt: result.codeExpiresAt };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to send reset code' };
     }
