@@ -97,7 +97,9 @@ function AuctionCard({ auction }: { auction: Auction }) {
         </span>
         <button
           onClick={e => { e.stopPropagation(); toggleWatchlist(auction.auctionId); }}
-          aria-label={watched ? 'Remove from watchlist' : 'Add to watchlist'}
+          // Named after its auction: all three cards previously exposed the identical name, so a
+          // screen reader announced "Add to watchlist" three times with nothing to tell them apart.
+          aria-label={`${watched ? 'Remove' : 'Add'} ${auction.title} ${watched ? 'from' : 'to'} watchlist`}
           aria-pressed={watched}
           className={`absolute top-3 right-3 rounded-full w-[30px] h-[30px] flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${watched ? 'bg-primary text-white' : 'bg-surface/80 text-muted hover:text-primary'}`}
         >
@@ -122,6 +124,7 @@ function AuctionCard({ auction }: { auction: Auction }) {
           <Button
             size="sm"
             variant={timer.isExpired ? 'outline' : 'primary'}
+            aria-label={`${timer.isExpired ? 'View result for' : 'Bid on'} ${auction.title}`}
             onClick={e => { e.stopPropagation(); navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
           >
             {timer.isExpired ? 'View Result' : 'Bid Now'}
@@ -189,12 +192,12 @@ export default function BuyerBrowseAuctions() {
 
       <div className="flex">
         {/* Desktop sidebar */}
-        <aside className="hidden md:block bg-surface border-r border-border-light w-[220px] shrink-0 sticky top-14 self-start max-h-[calc(100vh-56px)] overflow-y-auto p-5">
+        <aside aria-label="Auction filters" className="hidden md:block bg-surface border-r border-border-light w-[220px] shrink-0 sticky top-14 self-start max-h-[calc(100vh-56px)] overflow-y-auto p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-[13px] text-navy flex items-center gap-1.5">
+            <h2 className="font-bold text-[13px] text-navy flex items-center gap-1.5">
               <SlidersHorizontal size={13} strokeWidth={2.5} /> Filters
-            </h3>
-            <button onClick={clearAll} className="text-[11px] text-primary font-bold hover:underline cursor-pointer">
+            </h2>
+            <button onClick={clearAll} className="text-[11px] text-primary font-bold hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
               Clear All
             </button>
           </div>
@@ -214,7 +217,7 @@ export default function BuyerBrowseAuctions() {
                 inputMode="numeric"
                 min={0}
                 step={1}
-                placeholder="Min"
+                aria-label="Minimum price in PKR" placeholder="Min"
                 value={minPrice}
                 onChange={e => handlePriceChange(setMinPrice)(e.target.value)}
                 className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -225,7 +228,7 @@ export default function BuyerBrowseAuctions() {
                 inputMode="numeric"
                 min={0}
                 step={1}
-                placeholder="Max"
+                aria-label="Maximum price in PKR" placeholder="Max"
                 value={maxPrice}
                 onChange={e => handlePriceChange(setMaxPrice)(e.target.value)}
                 className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -247,7 +250,7 @@ export default function BuyerBrowseAuctions() {
             <div className="relative flex-1">
               <input
                 className="bg-surface border border-border-medium h-[42px] pl-[38px] pr-4 rounded-lg text-[13px] w-full outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow"
-                placeholder="Search auctions…"
+                aria-label="Search auctions by title" placeholder="Search auctions…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
               />
@@ -265,8 +268,8 @@ export default function BuyerBrowseAuctions() {
           {sidebarOpen && (
             <div className="md:hidden bg-surface border border-border-light rounded-md p-4 mb-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-[13px] text-navy">Filters</h3>
-                <button onClick={clearAll} className="text-[11px] text-primary font-bold cursor-pointer">Clear All</button>
+                <h2 className="font-bold text-[13px] text-navy">Filters</h2>
+                <button onClick={clearAll} className="text-[11px] text-primary font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">Clear All</button>
               </div>
               <p className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Category</p>
               <div className="flex flex-wrap gap-2 mb-3">
@@ -287,7 +290,7 @@ export default function BuyerBrowseAuctions() {
                   inputMode="numeric"
                   min={0}
                   step={1}
-                  placeholder="Min"
+                  aria-label="Minimum price in PKR" placeholder="Min"
                   value={minPrice}
                   onChange={e => handlePriceChange(setMinPrice)(e.target.value)}
                   className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -298,7 +301,7 @@ export default function BuyerBrowseAuctions() {
                   inputMode="numeric"
                   min={0}
                   step={1}
-                  placeholder="Max"
+                  aria-label="Maximum price in PKR" placeholder="Max"
                   value={maxPrice}
                   onChange={e => handlePriceChange(setMaxPrice)(e.target.value)}
                   className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -329,7 +332,7 @@ export default function BuyerBrowseAuctions() {
               <div className="relative hidden md:block">
                 <input
                   className="bg-surface border border-border-medium h-[40px] pl-[38px] pr-4 rounded-lg text-[13px] text-secondary w-[240px] outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow"
-                  placeholder="Search auctions…"
+                  aria-label="Search auctions by title" placeholder="Search auctions…"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />

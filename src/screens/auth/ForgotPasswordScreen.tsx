@@ -352,7 +352,7 @@ export default function ForgotPasswordScreen() {
               onChange={e => { setNewPw(e.target.value); setNewPwError(''); if (confirmPw) setConfirmPwError(e.target.value !== confirmPw ? 'Passwords do not match' : ''); }}
               leftIcon={<Lock size={16} />}
               rightIcon={
-                <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide' : 'Show'} className="cursor-pointer text-placeholder hover:text-body">
+                <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide password' : 'Show password'} className="cursor-pointer text-placeholder hover:text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               }
@@ -380,7 +380,7 @@ export default function ForgotPasswordScreen() {
               onChange={e => { setConfirmPw(e.target.value); setConfirmPwError(e.target.value && newPw && e.target.value !== newPw ? 'Passwords do not match' : ''); }}
               leftIcon={<Lock size={16} />}
               rightIcon={
-                <button type="button" onClick={() => setShowConfirm(p => !p)} aria-label={showConfirm ? 'Hide' : 'Show'} className="cursor-pointer text-placeholder hover:text-body">
+                <button type="button" onClick={() => setShowConfirm(p => !p)} aria-label={showConfirm ? 'Hide confirmed password' : 'Show confirmed password'} className="cursor-pointer text-placeholder hover:text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
                   {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               }

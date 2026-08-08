@@ -25,7 +25,7 @@ export default function MaintenancePage() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center px-4">
+    <main className="min-h-screen bg-bg flex items-center justify-center px-4">
       <div className="text-center max-w-[420px]">
         <div className="bg-primary-surface size-16 rounded-2xl flex items-center justify-center mx-auto mb-5">
           <Wrench size={28} className="text-primary" />
@@ -39,6 +39,6 @@ export default function MaintenancePage() {
           Contact support
         </a>
       </div>
-    </div>
+    </main>
   );
 }

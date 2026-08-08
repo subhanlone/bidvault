@@ -51,7 +51,7 @@ export default function PrivacyPolicy() {
             </span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link to="/login" className="font-semibold text-[13px] text-[rgba(255,255,255,0.65)] hover:text-white">Log In</Link>
+            <Link to="/login" className="font-semibold text-[13px] text-[rgba(255,255,255,0.65)] hover:text-white">Sign in</Link>
             <Link to="/register" className="bg-primary font-bold text-[12px] text-white px-4 py-2 rounded-sm hover:bg-primary-dark">Get Started</Link>
           </div>
         </div>

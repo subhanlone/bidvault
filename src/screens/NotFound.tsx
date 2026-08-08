@@ -1,6 +1,6 @@
 ﻿import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Gavel } from 'lucide-react';
+import { BidVaultLogo } from '../components/ui';
 
 export default function NotFound() {
   const navigate = useNavigate();
@@ -28,13 +28,10 @@ export default function NotFound() {
 
       <div className="relative z-10 text-center max-w-[560px] mx-auto">
         {/* Brand */}
+        {/* Was a hand-rolled copy of the logo using text-primary on navy (2.92:1). Using the
+            shared component means it picks up the accessible tint like every other navbar. */}
         <Link to="/" className="inline-flex items-center gap-2 mb-12 opacity-70 hover:opacity-100 transition-opacity">
-          <div className="bg-primary flex items-center justify-center rounded-sm size-[32px]">
-            <Gavel size={16} strokeWidth={2} className="text-white" />
-          </div>
-          <span className="font-extrabold text-[20px] text-white tracking-[-0.3px]">
-            Bid<span className="text-primary">Vault</span>
-          </span>
+          <BidVaultLogo size="md" to="" />
         </Link>
 
         {/* 404 */}
@@ -51,9 +48,9 @@ export default function NotFound() {
           </p>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <p className="font-extrabold text-[22px] sm:text-[28px] text-white tracking-[-0.5px] leading-tight">
+              <h1 className="font-extrabold text-[22px] sm:text-[28px] text-white tracking-[-0.5px] leading-tight">
                 Lost the Auction?
-              </p>
+              </h1>
               <p className="font-bold text-[13px] sm:text-[14px] text-[rgba(255,255,255,0.45)] mt-1">
                 This page doesn't exist.
               </p>

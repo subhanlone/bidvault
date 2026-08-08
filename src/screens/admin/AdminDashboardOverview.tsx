@@ -53,12 +53,15 @@ export default function AdminDashboardOverview() {
   const [loading, setLoading] = useState(true);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  // Both fetches used to swallow failures, so a broken request rendered as "Total Bids 0" —
+  // indistinguishable from a genuinely empty platform, on the screen an admin trusts most.
+  const [statsFailed, setStatsFailed] = useState(false);
 
   useEffect(() => {
     Promise.allSettled([
       refreshListings(),
-      api.get<PlatformStats>('/stats').then(d => setPlatformStats(d)).catch(() => {}),
-      api.get<Analytics>('/admin/analytics').then(d => setAnalytics(d)).catch(() => {}),
+      api.get<PlatformStats>('/stats').then(d => setPlatformStats(d)).catch(() => setStatsFailed(true)),
+      api.get<Analytics>('/admin/analytics').then(d => setAnalytics(d)).catch(() => setStatsFailed(true)),
     ]).finally(() => setLoading(false));
   }, [refreshListings]);
 
@@ -136,6 +139,15 @@ export default function AdminDashboardOverview() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {loading ? (
               <><LoadingStatus label="Loading dashboard statistics" />{Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}</>
+            ) : statsFailed ? (
+              /* Rendering 0 and dashes on a failed request is indistinguishable from a genuinely
+                 empty platform. Say which it is rather than let the admin guess. */
+              <div role="alert" className="col-span-2 md:col-span-4 bg-error-bg border border-error-border rounded-md px-4 py-3">
+                <p className="font-bold text-[13px] text-error">Platform statistics could not be loaded</p>
+                <p className="text-[12px] text-error mt-0.5">
+                  The figures below may be incomplete. Refresh to try again.
+                </p>
+              </div>
             ) : (
               <>
                 <StatCard label="Active Auctions"  value={platformStats?.activeAuctionCount ?? '—'}           icon={<Gavel size={18} />}    iconColor="info"    padding="sm" />

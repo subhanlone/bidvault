@@ -67,7 +67,7 @@ export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', 
           <span className="text-sm text-white/80 font-medium hidden sm:block">{userName}</span>
         </Link>
         {onLogout && (
-          <button onClick={onLogout} className="text-sm text-white/60 hover:text-white transition-colors cursor-pointer ml-1">Logout</button>
+          <button onClick={onLogout} className="text-sm text-white/60 hover:text-white transition-colors cursor-pointer ml-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-navy rounded-sm">Sign out</button>
         )}
       </div>
       <button

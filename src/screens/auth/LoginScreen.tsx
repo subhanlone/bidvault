@@ -132,7 +132,7 @@ export default function LoginScreen() {
           onChange={e => { setPassword(e.target.value); setPasswordError(''); }}
           leftIcon={<Lock size={16} />}
           rightIcon={
-            <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide password' : 'Show password'} className="cursor-pointer text-placeholder hover:text-body">
+            <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide password' : 'Show password'} className="cursor-pointer text-placeholder hover:text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
               {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           }

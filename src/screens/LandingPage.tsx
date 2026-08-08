@@ -113,13 +113,17 @@ export default function LandingPage() {
   const [activeTab, setActiveTab] = useState<'buyers' | 'sellers'>('buyers');
   const [featured, setFeatured] = useState<Auction[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
+  // Swallowing the error left `featured` empty, which renders as "No Live Auctions Right Now" —
+  // stating there are none when we simply failed to ask. Distinguish the two.
+  const [featuredFailed, setFeaturedFailed] = useState(false);
   const [liveStats, setLiveStats] = useState<{ userCount: number; activeAuctionCount: number; transactionTotal: number; listingCount: number; completedSalesCount: number } | null>(null);
   const [supportEmail, setSupportEmail] = useState('support@bidvault.tech');
 
   useEffect(() => {
     api.get<Auction[]>('/auctions?status=ACTIVE').then(data => {
       setFeatured(data.slice(0, 3));
-    }).catch(() => {}).finally(() => setFeaturedLoading(false));
+      setFeaturedFailed(false);
+    }).catch(() => setFeaturedFailed(true)).finally(() => setFeaturedLoading(false));
   }, []);
 
   useEffect(() => {
@@ -138,7 +142,7 @@ export default function LandingPage() {
   // the section below, so the headings and the empty state can never contradict each other —
   // which is exactly what happened when those labels were hardcoded. While still loading we
   // assume nothing, so the page never briefly asserts liveness it can't back up.
-  const hasLiveAuctions = !featuredLoading && featured.length > 0;
+  const hasLiveAuctions = !featuredLoading && !featuredFailed && featured.length > 0;
 
   const stats = [
     {
@@ -435,9 +439,15 @@ export default function LandingPage() {
                 <div className="bg-surface-raised rounded-full size-16 flex items-center justify-center mb-4">
                   <Gavel size={28} strokeWidth={1.5} className="text-muted" />
                 </div>
-                <h3 className="font-bold text-[16px] text-navy mb-1">No Live Auctions Right Now</h3>
+                {/* "None right now" and "we couldn't check" are different claims and were
+                    previously rendered identically, because the fetch error was swallowed. */}
+                <h3 className="font-bold text-[16px] text-navy mb-1">
+                  {featuredFailed ? "Couldn't load auctions" : 'No Live Auctions Right Now'}
+                </h3>
                 <p className="text-[13px] text-muted max-w-[280px]">
-                  Check back soon — new auctions go live every day.
+                  {featuredFailed
+                    ? 'Something went wrong on our side. Please refresh to try again.'
+                    : 'Check back soon — new auctions go live every day.'}
                 </p>
                 <button
                   type="button"
@@ -605,7 +615,6 @@ export default function LandingPage() {
                 <button type="button" onClick={() => scrollToSection('featured')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Browse Auctions</button>
                 <button type="button" onClick={() => navigate('/register?role=SELLER')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Sell an Item</button>
                 <button type="button" onClick={() => scrollToSection('how-it-works')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">How It Works</button>
-                <button type="button" onClick={() => scrollToSection('how-it-works')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Pricing</button>
               </div>
             </div>
 
@@ -613,7 +622,7 @@ export default function LandingPage() {
             <div>
               <p className="font-bold text-[12px] text-[rgba(255,255,255,0.5)] uppercase tracking-[1px] mb-4">Account</p>
               <div className="flex flex-col gap-2.5">
-                <Link to="/login" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Log In</Link>
+                <Link to="/login" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Sign in</Link>
                 <Link to="/register" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Register</Link>
                 <Link to="/forgot-password" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Forgot Password</Link>
                 <Link to="/seller/dashboard" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Seller Dashboard</Link>
