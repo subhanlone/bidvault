@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
-import { Check, Zap, Trophy, X, Hammer, Ban, Clock } from 'lucide-react';
+import { Check, Zap, Trophy, X, Hammer, Ban } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
@@ -49,16 +49,13 @@ function BidCard({ entry }: { entry: BidEntry }) {
   const { auction, myHighestBid, isWinning } = entry;
 
   // Being the top bidder is not the same as having won: an auction that closes below the seller's
-  // reserve is unsold, and no transaction exists to pay for. `isEnded` also comes from the timer
-  // rather than the stored status, so there is a window after endTime where the worker has not
-  // closed the auction yet and the outcome genuinely is not known — say so instead of guessing.
-  const awaitingOutcome = auction.reservePrice != null && auction.reserveMet == null;
-
+  // reserve is unsold, and no transaction exists to pay for. reserveMet is a live comparison while
+  // the auction is open, so the verdict is already correct in the window between endTime passing
+  // and the worker recording it — bidding has stopped, so the top bid is final.
   const status =
-    auction.reserveMet === false ? 'reserve'
-    : !isEnded                   ? (isWinning ? 'winning' : 'outbid')
+    !isEnded                     ? (isWinning ? 'winning' : 'outbid')
     : !isWinning                 ? 'lost'
-    : awaitingOutcome            ? 'pending'
+    : auction.reserveMet === false ? 'reserve'
     : 'won';
 
   const statusConfig = {
@@ -66,7 +63,6 @@ function BidCard({ entry }: { entry: BidEntry }) {
     outbid:  { icon: <Zap size={10} strokeWidth={2.5} />, label: 'Outbid', bg: 'bg-warning-bg', border: 'border-warning-border', text: 'text-warning' },
     won:     { icon: <Trophy size={10} strokeWidth={2.5} />, label: 'Won', bg: 'bg-success-bg', border: 'border-[rgba(26,122,74,0.3)]', text: 'text-success-dark' },
     lost:    { icon: <X size={10} strokeWidth={2.5} />, label: 'Ended', bg: 'bg-bg', border: 'border-border-light', text: 'text-muted' },
-    pending: { icon: <Clock size={10} strokeWidth={2.5} />, label: 'Finalising', bg: 'bg-bg', border: 'border-border-light', text: 'text-muted' },
     reserve: { icon: <Ban size={10} strokeWidth={2.5} />, label: 'Reserve not met', bg: 'bg-warning-bg', border: 'border-warning-border', text: 'text-warning' },
   }[status];
 
@@ -116,9 +112,6 @@ function BidCard({ entry }: { entry: BidEntry }) {
           )}
           {isEnded && status === 'won' && (
             <span className="font-bold text-[11px] sm:text-[12px] text-success-dark">Complete payment in My Wins</span>
-          )}
-          {status === 'pending' && (
-            <span className="font-bold text-[11px] sm:text-[12px] text-muted">Confirming the result…</span>
           )}
           {status === 'reserve' && (
             <span className="font-bold text-[11px] sm:text-[12px] text-warning">

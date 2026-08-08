@@ -52,8 +52,12 @@ export interface Auction {
   startPrice: number;
   currentBid: number;
   minIncrement: number;
-  reservePrice?: number;
-  /** null until closed, and stays null when no reserve was set. false = closed below reserve, unsold. */
+  /**
+   * The seller's reserve *amount* is never sent to buyers — only this verdict.
+   * null = no reserve set · false = not reached · true = reached.
+   * While the auction is open this is a live comparison; once closed it is the worker's
+   * recorded outcome. Sellers and admins get the amount via the role-gated listing DTO.
+   */
   reserveMet?: boolean | null;
   bidCount: number;
   startTime: string;

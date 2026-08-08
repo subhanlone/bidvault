@@ -6,7 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import { useTimer } from '../../hooks/useTimer';
 import {
   Search, Check, Zap, Star, Heart,
-  Timer, Flame, AlertTriangle, X, ChevronRight,
+  Timer, Flame, AlertTriangle, X, ChevronRight, Ban,
 } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
@@ -73,8 +73,7 @@ export default function BuyerLiveBidding() {
   useEffect(() => {
     if (!timer.isExpired || wonRef.current || !auction) return;
     wonRef.current = true;
-    const reserveNotMet =
-      auction.reservePrice != null && auction.currentBid < auction.reservePrice;
+    const reserveNotMet = auction.reserveMet === false;
     const isTopBidder = auctionBids[0]?.buyerId === user?.userId;
     navigate('/buyer/auction-won', {
       state: {
@@ -425,6 +424,23 @@ export default function BuyerLiveBidding() {
               </span>
             </p>
             <p className="text-[11px] text-muted">{auction.bidCount} bids · Min next: PKR {minNext.toLocaleString()}</p>
+            {/* Whether the reserve is met, never the amount — the figure itself stays private to
+                the seller. Telling bidders the floor exists and has not been reached encourages
+                them upward; telling them where it sits would just cap the bidding there. */}
+            {auction.reserveMet === false && (
+              <div className="mt-3 bg-warning-bg border border-warning-border px-3 py-2 rounded-sm flex items-center gap-2">
+                <Ban size={13} strokeWidth={2.5} className="text-warning shrink-0" />
+                <p className="font-bold text-[12px] text-warning">
+                  Reserve not met — the seller has set a minimum this hasn't reached yet
+                </p>
+              </div>
+            )}
+            {auction.reserveMet === true && (
+              <div className="mt-3 bg-success-bg border border-success-border px-3 py-2 rounded-sm flex items-center gap-2">
+                <Check size={13} strokeWidth={2.5} className="text-success-dark shrink-0" />
+                <p className="font-bold text-[12px] text-success-dark">Reserve met — this item will sell</p>
+              </div>
+            )}
             {isHighest && (
               <div className="mt-3 bg-success-bg border border-success-border px-3 py-2 rounded-sm flex items-center gap-2">
                 <Check size={13} strokeWidth={2.5} className="text-success-dark shrink-0" />
