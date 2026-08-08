@@ -1,5 +1,5 @@
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { Sparkles, Trophy, Frown, Package } from 'lucide-react';
+import { Sparkles, Trophy, Frown, Package, Ban } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
@@ -11,6 +11,8 @@ interface WonState {
   imageUrl?: string;
   finalBid: number;
   won: boolean;
+  /** Set when this user bid highest but the seller's reserve was not reached, so nothing sold. */
+  reserveNotMet?: boolean;
 }
 
 export default function BuyerAuctionWon() {
@@ -24,6 +26,7 @@ export default function BuyerAuctionWon() {
   }
 
   const won = state.won ?? true;
+  const reserveNotMet = state.reserveNotMet ?? false;
   const title = state.title ?? 'Auction Item';
   const imageUrl = state.imageUrl;
   const finalBid = state.finalBid ?? 0;
@@ -95,6 +98,33 @@ export default function BuyerAuctionWon() {
                   Browse More
                 </Button>
               </div>
+            </div>
+          </>
+        ) : reserveNotMet ? (
+          <>
+            {/* Highest bidder, but under the seller's floor. Saying "you didn't win" would be
+                misleading — they did bid highest; the item simply was not sold to anyone. */}
+            <div className="flex justify-center mb-6">
+              <Ban size={60} strokeWidth={1.2} className="text-warning" />
+            </div>
+            <h1 className="font-extrabold text-[24px] sm:text-[28px] text-navy mb-2">Reserve Not Met</h1>
+            <p className="text-[13px] sm:text-[14px] text-muted text-center max-w-[420px] mb-4">
+              You were the highest bidder on <span className="font-bold text-secondary">{title}</span>, but the
+              seller had set a reserve price that bidding didn't reach — so the item wasn't sold.
+            </p>
+            <p className="font-bold text-[16px] sm:text-[18px] text-warning mb-2">
+              Your highest bid: PKR {finalBid.toLocaleString()}
+            </p>
+            <p className="text-[13px] text-muted text-center max-w-[380px] mb-8">
+              <span className="font-bold text-secondary">No payment is due</span> and nothing has been charged.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button variant="outline" className="rounded-sm" onClick={() => navigate('/buyer/my-bids')}>
+                View My Bids
+              </Button>
+              <Button className="rounded-sm" onClick={() => navigate('/buyer/browse')}>
+                Find Another Auction
+              </Button>
             </div>
           </>
         ) : (

@@ -1,7 +1,7 @@
 export type UserRole = 'BUYER' | 'SELLER' | 'ADMIN';
 export type AuctionStatus = 'SCHEDULED' | 'ACTIVE' | 'CLOSED';
 export type ListingStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
-export type NotificationType = 'BID_OUTBID' | 'AUCTION_WON' | 'LISTING_APPROVED' | 'LISTING_REJECTED' | 'NEW_REVIEW';
+export type NotificationType = 'BID_OUTBID' | 'AUCTION_WON' | 'RESERVE_NOT_MET' | 'LISTING_APPROVED' | 'LISTING_REJECTED' | 'NEW_REVIEW';
 export type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
 export type ItemCondition = 'NEW' | 'LIKE_NEW' | 'USED';
 export type CategoryAttributes = Record<string, string | number>;
@@ -53,6 +53,8 @@ export interface Auction {
   currentBid: number;
   minIncrement: number;
   reservePrice?: number;
+  /** null until closed, and stays null when no reserve was set. false = closed below reserve, unsold. */
+  reserveMet?: boolean | null;
   bidCount: number;
   startTime: string;
   endTime: string;

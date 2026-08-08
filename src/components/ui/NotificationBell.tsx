@@ -11,6 +11,10 @@ function targetFor(n: AppNotification): string | null {
       return '/buyer/my-bids';
     case 'AUCTION_WON':
       return '/buyer/my-wins';
+    // Goes to both parties. My Bids is right for the bidder; the seller has no
+    // equivalent outcome screen, so the notification text has to carry it for them.
+    case 'RESERVE_NOT_MET':
+      return '/buyer/my-bids';
     case 'LISTING_APPROVED':
     case 'LISTING_REJECTED':
       return '/seller/listings';

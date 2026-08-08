@@ -66,10 +66,16 @@ export default function BuyerLiveBidding() {
   const auctionBids = useMemo(() => auction ? (bids[auction.auctionId] ?? []) : [], [auction, bids]);
   const latestBidId = auctionBids[0]?.bidId;
 
-  // Navigate to auction-won when timer expires
+  // Navigate to auction-won when timer expires.
+  // Being the top bidder is not enough to have won: if the seller set a reserve and bidding
+  // finished below it, the auction is unsold. Bidding has stopped by this point, so currentBid
+  // is final and this is a settled fact, not a guess — the worker will reach the same verdict.
   useEffect(() => {
     if (!timer.isExpired || wonRef.current || !auction) return;
     wonRef.current = true;
+    const reserveNotMet =
+      auction.reservePrice != null && auction.currentBid < auction.reservePrice;
+    const isTopBidder = auctionBids[0]?.buyerId === user?.userId;
     navigate('/buyer/auction-won', {
       state: {
         auctionId: auction.auctionId,
@@ -77,7 +83,8 @@ export default function BuyerLiveBidding() {
         emoji: auction.emoji,
         imageUrl: auction.imageUrl,
         finalBid: auction.currentBid,
-        won: auctionBids[0]?.buyerId === user?.userId,
+        won: isTopBidder && !reserveNotMet,
+        reserveNotMet: reserveNotMet && isTopBidder,
       },
     });
   }, [timer.isExpired, auction, auctionBids, user, navigate]);
