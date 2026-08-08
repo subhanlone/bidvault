@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
 import type { Listing, SellerReview } from '../../types';
 import { conditionLabel, dateShort, pkr } from '../../utils/format';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 
 function StatCardSkeleton() {
   return (
@@ -103,7 +104,7 @@ export default function SellerDashboard() {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {loading ? (
-            Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+            <><LoadingStatus label="Loading dashboard statistics" />{Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}</>
           ) : (
             <>
               <StatCard label="Revenue"            value={pkr(sellerStats.totalRevenue)} icon={<Banknote size={18} />}     iconColor="success" padding="sm" />
@@ -160,6 +161,7 @@ export default function SellerDashboard() {
 
           {loading ? (
             <div className="divide-y divide-bg">
+              <LoadingStatus label="Loading your listings" />
               {Array.from({ length: 4 }).map((_, i) => <ListingRowSkeleton key={i} />)}
             </div>
           ) : total === 0 ? (

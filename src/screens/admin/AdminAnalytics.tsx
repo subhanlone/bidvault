@@ -4,6 +4,7 @@ import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
 import { pkrCompact, count } from '../../utils/format';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 
 interface AnalyticsData {
   totalRevenue:         number;
@@ -93,7 +94,7 @@ export default function AdminAnalytics() {
           {/* KPI cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {loading
-              ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
+              ? <><LoadingStatus label="Loading analytics" />{Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)}</>
               : kpis.length > 0
               ? kpis.map(k => (
                   <div key={k.label} className="bg-surface border border-border-light rounded-md p-4 sm:p-5">

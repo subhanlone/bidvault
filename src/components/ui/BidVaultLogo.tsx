@@ -11,6 +11,10 @@ const iconSizes = { sm: 'w-6 h-6', md: 'w-7 h-7', lg: 'w-8 h-8' };
 
 export default function BidVaultLogo({ size = 'md', to = '/', color = 'light' }: LogoProps) {
   const bidTextColor = color === 'dark' ? 'text-navy' : 'text-white';
+  // On a dark navy bar the brand red only reaches 2.92:1 — below AA for the wordmark, and this
+  // logo sits in every navbar. The existing lighter tint of the same hue reaches 6.01:1, so the
+  // brand reads the same while the text is actually legible.
+  const vaultTextColor = color === 'dark' ? 'text-primary' : 'text-primary-tint';
   const content = (
     <div className="flex items-center gap-2">
       <div className={`${iconSizes[size]} bg-primary rounded-lg flex items-center justify-center`}>
@@ -19,7 +23,7 @@ export default function BidVaultLogo({ size = 'md', to = '/', color = 'light' }:
         </svg>
       </div>
       <span className={`font-bold ${sizes[size]} ${bidTextColor}`}>
-        Bid<span className="text-primary">Vault</span>
+        Bid<span className={vaultTextColor}>Vault</span>
       </span>
     </div>
   );

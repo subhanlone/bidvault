@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button } from '../../components/ui';
 import type { Listing, ListingStatus } from '../../types';
 import { conditionLabel, dateMedium, pkr } from '../../utils/format';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 
 const STATUS_CONFIG: Record<ListingStatus, { label: string; variant: 'warning' | 'success' | 'error' | 'tag' }> = {
   PENDING:  { label: 'Pending Review',  variant: 'warning' },
@@ -153,6 +154,7 @@ export default function SellerMyListings() {
         <div className="bg-surface border border-border-light rounded-md overflow-hidden">
           {loading ? (
             <div className="divide-y divide-bg">
+              <LoadingStatus label="Loading your listings" />
               {Array.from({ length: 5 }).map((_, i) => <RowSkeleton key={i} />)}
             </div>
           ) : visible.length === 0 ? (

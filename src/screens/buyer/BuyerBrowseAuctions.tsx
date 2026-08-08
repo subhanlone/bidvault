@@ -8,6 +8,7 @@ import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
 import { conditionLabel, count, pkr } from '../../utils/format';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 
 // Kept in sync with SellerCreateListingStep1.tsx CATEGORIES
 const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles'];
@@ -339,6 +340,7 @@ export default function BuyerBrowseAuctions() {
 
           {!auctionsLoaded ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <LoadingStatus label="Loading auctions" />
               {Array.from({ length: 6 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
             </div>
           ) : auctionsError ? (

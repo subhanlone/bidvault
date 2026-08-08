@@ -33,8 +33,14 @@
   --color-text-body:      #374151;
   --color-text-secondary: #343a40;
   --color-text-tertiary:  #495057;
-  --color-muted:          #6c757d;
-  --color-placeholder:    #9ca3af;
+  /* Both darkened to clear WCAG AA (4.5:1) as body text. Measured before the change:
+     muted was 4.22 on --color-surface-raised and 4.45 on --color-bg; placeholder was 2.54 on
+     white. Despite its name, --color-placeholder is used 115 times for real content — small
+     labels, timestamps, empty-state icons — and only twice as an actual input placeholder, so
+     it has to meet contrast. Entered text (#374151) is still 2.25x darker than the new value,
+     so an empty field is unmistakably empty. */
+  --color-muted:          #656d76;  /* 4.72 on surface-raised, 4.98 on bg, 5.25 on white */
+  --color-placeholder:    #6e7684;  /* 4.58 on white */
 
   /* Semantic — success */
   --color-success:        #16a34a;

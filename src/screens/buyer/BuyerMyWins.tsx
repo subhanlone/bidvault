@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { api } from '../../services/api';
 import { dateMedium, pkr } from '../../utils/format';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 
 interface WinTransaction {
   transactionId: string;
@@ -93,6 +94,7 @@ export default function BuyerMyWins() {
 
         {loading ? (
           <div className="flex flex-col gap-4">
+            <LoadingStatus label="Loading your wins" />
             {Array.from({ length: 3 }).map((_, i) => <WinCardSkeleton key={i} />)}
           </div>
         ) : error ? (

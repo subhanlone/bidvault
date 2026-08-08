@@ -8,6 +8,7 @@ import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types';
 import { pkr } from '../../utils/format';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 
 interface BidEntry {
   auction: Auction;
@@ -186,6 +187,7 @@ export default function BuyerMyBids() {
 
         {loading ? (
           <div className="flex flex-col gap-3">
+            <LoadingStatus label="Loading your bids" />
             {Array.from({ length: 4 }).map((_, i) => <BidCardSkeleton key={i} />)}
           </div>
         ) : myBidEntries.length === 0 ? (

@@ -7,6 +7,7 @@ import { Button, AuctionThumbnail } from '../components/ui';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { conditionLabel, count, pkr } from '../utils/format';
+import LoadingStatus from '../components/ui/LoadingStatus';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function scrollToSection(id: string) {
@@ -420,6 +421,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {featuredLoading ? (
               <>
+                <LoadingStatus label="Loading featured auctions" />
                 <SkeletonCard />
                 <SkeletonCard />
                 <SkeletonCard />

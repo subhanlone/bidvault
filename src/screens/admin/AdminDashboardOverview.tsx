@@ -10,6 +10,7 @@ import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import StatCard from '../../components/ui/StatCard';
 import { dateLong, dateShort, pkr, pkrCompact } from '../../utils/format';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 
 interface PlatformStats {
   userCount: number;
@@ -134,7 +135,7 @@ export default function AdminDashboardOverview() {
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {loading ? (
-              Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+              <><LoadingStatus label="Loading dashboard statistics" />{Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}</>
             ) : (
               <>
                 <StatCard label="Active Auctions"  value={platformStats?.activeAuctionCount ?? '—'}           icon={<Gavel size={18} />}    iconColor="info"    padding="sm" />
