@@ -111,7 +111,7 @@ export default function LandingPage() {
   const [activeTab, setActiveTab] = useState<'buyers' | 'sellers'>('buyers');
   const [featured, setFeatured] = useState<Auction[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
-  const [liveStats, setLiveStats] = useState<{ userCount: number; activeAuctionCount: number; transactionTotal: number } | null>(null);
+  const [liveStats, setLiveStats] = useState<{ userCount: number; activeAuctionCount: number; transactionTotal: number; listingCount: number; completedSalesCount: number } | null>(null);
   const [supportEmail, setSupportEmail] = useState('support@bidvault.tech');
 
   useEffect(() => {
@@ -127,10 +127,16 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    api.get<{ userCount: number; activeAuctionCount: number; transactionTotal: number }>('/stats')
+    api.get<{ userCount: number; activeAuctionCount: number; transactionTotal: number; listingCount: number; completedSalesCount: number }>('/stats')
       .then(data => setLiveStats(data))
       .catch(() => {});
   }, []);
+
+  // Drives every "it's live!" claim on the page. Keyed off the same `featured` list that renders
+  // the section below, so the headings and the empty state can never contradict each other —
+  // which is exactly what happened when those labels were hardcoded. While still loading we
+  // assume nothing, so the page never briefly asserts liveness it can't back up.
+  const hasLiveAuctions = !featuredLoading && featured.length > 0;
 
   const stats = [
     {
@@ -149,8 +155,11 @@ export default function LandingPage() {
       icon: <Banknote size={28} strokeWidth={1.6} className="text-success-dark" />,
     },
     {
-      value: '4.9 / 5',
-      label: 'Buyer Satisfaction',
+      // Was a hardcoded "4.9 / 5 Buyer Satisfaction". Nothing computed it, and the seller
+      // ratings actually in the database include 1-star — so the claim was not merely
+      // unsourced, it was contradicted by our own data. Every tile here is now a real count.
+      value: liveStats ? `${formatCount(liveStats.listingCount)}` : '—',
+      label: 'Items Listed',
       icon: <Star size={28} strokeWidth={1.6} className="text-gold" fill="currentColor" />,
     },
   ];
@@ -302,9 +311,22 @@ export default function LandingPage() {
         <div className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28">
           <div className="max-w-[720px] mx-auto text-center lg:text-left lg:mx-0">
 
+            {/* Gated on there actually being live auctions. This badge was hardcoded, so a
+                visitor could read "Live Auctions Running Now" directly above a stat tile
+                reading "0 Active Auctions" and an empty state saying there were none. */}
             <div className="inline-flex items-center gap-2 bg-[rgba(208,2,27,0.15)] border border-[rgba(208,2,27,0.3)] rounded-full px-4 py-1.5 mb-6">
-              <span className="size-[6px] rounded-full bg-primary inline-block animate-pulse" aria-hidden="true" />
-              <span className="font-bold text-[12px] text-primary-tint">Live Auctions Running Now</span>
+              {hasLiveAuctions ? (
+                <>
+                  <span className="size-[6px] rounded-full bg-primary inline-block animate-pulse" aria-hidden="true" />
+                  <span className="font-bold text-[12px] text-primary-tint">
+                    {liveStats?.activeAuctionCount
+                      ? `${liveStats.activeAuctionCount} ${liveStats.activeAuctionCount === 1 ? 'Auction' : 'Auctions'} Running Now`
+                      : 'Live Auctions Running Now'}
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold text-[12px] text-primary-tint">Bid on Verified Listings</span>
+              )}
             </div>
 
             <h1 className="font-extrabold text-[36px] sm:text-[48px] lg:text-[60px] text-white leading-[1.1] tracking-[-1.5px] mb-5">
@@ -356,7 +378,9 @@ export default function LandingPage() {
                 `}
               >
                 <div className="flex justify-center mb-3">{s.icon}</div>
-                <p className={`font-extrabold text-[22px] sm:text-[28px] text-navy leading-none tracking-[-0.5px] ${!liveStats && s.label !== 'Buyer Satisfaction' ? 'animate-pulse' : ''}`}>
+                {/* Every tile is live data now, so none is exempt from the loading pulse.
+                    The old exemption existed only because one value was hardcoded. */}
+                <p className={`font-extrabold text-[22px] sm:text-[28px] text-navy leading-none tracking-[-0.5px] ${!liveStats ? 'animate-pulse' : ''}`}>
                   {s.value}
                 </p>
                 <p className="text-[12px] sm:text-[13px] text-muted mt-1.5 font-medium">{s.label}</p>
@@ -371,9 +395,17 @@ export default function LandingPage() {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
             <div>
-              <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">Live Right Now</p>
+              {/* Both the eyebrow and the subtitle were hardcoded to claim live bidding, and
+                  wrapped the (correct) "No Live Auctions Right Now" empty state below. */}
+              <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">
+                {hasLiveAuctions ? 'Live Right Now' : 'Featured'}
+              </p>
               <h2 className="font-extrabold text-[26px] sm:text-[32px] text-navy leading-tight">Featured Auctions</h2>
-              <p className="text-[14px] text-muted mt-1">Verified items, live bidding, real countdowns</p>
+              <p className="text-[14px] text-muted mt-1">
+                {hasLiveAuctions
+                  ? 'Verified items, live bidding, real countdowns'
+                  : 'Every listing is admin-reviewed before it goes live'}
+              </p>
             </div>
             <button
               type="button"

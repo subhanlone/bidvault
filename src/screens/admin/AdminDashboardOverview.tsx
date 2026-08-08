@@ -14,6 +14,17 @@ interface PlatformStats {
   userCount: number;
   activeAuctionCount: number;
   transactionTotal: number;
+  listingCount: number;
+  completedSalesCount: number;
+}
+
+/**
+ * Lifetime figures. The auction context only ever holds ACTIVE auctions, so anything derived
+ * from it is scoped to what is live right now — which is wrong for a KPI labelled "Total".
+ */
+interface Analytics {
+  totalBids: number;
+  categoryBreakdown: { name: string; count: number; pct: number }[];
 }
 
 function StatCardSkeleton() {
@@ -39,11 +50,13 @@ export default function AdminDashboardOverview() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
   useEffect(() => {
     Promise.allSettled([
       refreshListings(),
       api.get<PlatformStats>('/stats').then(d => setPlatformStats(d)).catch(() => {}),
+      api.get<Analytics>('/admin/analytics').then(d => setAnalytics(d)).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, [refreshListings]);
 
@@ -60,7 +73,6 @@ export default function AdminDashboardOverview() {
 
   const pendingCount = pendingListings.length;
   const active = auctions.filter(a => a.status === 'ACTIVE');
-  const totalBids = auctions.reduce((s, a) => s + a.bidCount, 0);
 
   // Top auctions by current bid for "Top Auctions" panel
   const topAuctions = [...auctions].sort((a, b) => b.currentBid - a.currentBid).slice(0, 5);
@@ -68,19 +80,23 @@ export default function AdminDashboardOverview() {
   // Bar chart: bid counts per active auction (up to 28 bars)
   const chartBars = active.slice(0, 28).map(a => a.bidCount);
   const chartMax = Math.max(1, ...chartBars);
+  // Active auctions that have had no bids yet produce [0,0,0,…] — a non-empty array of
+  // zero-height bars, which renders as a blank white box rather than an empty state.
+  const hasBidActivity = chartBars.some(c => c > 0);
 
-  // Category breakdown from auctions context
-  const categoryMap: Record<string, number> = {};
-  auctions.forEach(a => { categoryMap[a.category] = (categoryMap[a.category] ?? 0) + 1; });
-  const totalAuctions = auctions.length;
-  const categoryStats = Object.entries(categoryMap)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 4)
-    .map(([label, count], i) => ({
-      label: label.split('&')[0].trim(),
-      pct: totalAuctions > 0 ? Math.round((count / totalAuctions) * 100) : 0,
-      color: CATEGORY_COLORS[i] ?? 'var(--color-muted)',
-    }));
+  // Category breakdown comes from /admin/analytics, which counts every listing ever. Deriving
+  // it from the auction context would only describe what happens to be live right now.
+  // Top 4 plus an aggregated "Other" so the bars still sum to the whole.
+  const breakdown = analytics?.categoryBreakdown ?? [];
+  const topCategories = breakdown.slice(0, 4).map((c, i) => ({
+    label: c.name,
+    pct: c.pct,
+    color: CATEGORY_COLORS[i] ?? 'var(--color-muted)',
+  }));
+  const otherPct = breakdown.slice(4).reduce((s, c) => s + c.pct, 0);
+  const categoryStats = otherPct > 0
+    ? [...topCategories, { label: `Other (${breakdown.length - 4})`, pct: otherPct, color: 'var(--color-muted)' }]
+    : topCategories;
 
   const fmtRevenue = (n: number) => {
     if (n >= 1_000_000) return `PKR ${(n / 1_000_000).toFixed(1)}M`;
@@ -127,7 +143,7 @@ export default function AdminDashboardOverview() {
             ) : (
               <>
                 <StatCard label="Active Auctions"  value={platformStats?.activeAuctionCount ?? '—'}           icon={<Gavel size={18} />}    iconColor="info"    padding="sm" />
-                <StatCard label="Total Bids"        value={totalBids.toLocaleString()}                         icon={<BarChart3 size={18} />} iconColor="success" padding="sm" />
+                <StatCard label="Total Bids"        value={(analytics?.totalBids ?? 0).toLocaleString()}       icon={<BarChart3 size={18} />} iconColor="success" padding="sm" />
                 <StatCard label="Platform Revenue"  value={fmtRevenue(platformStats?.transactionTotal ?? 0)}   icon={<Banknote size={18} />}  iconColor="success" padding="sm" />
                 <StatCard label="Pending Listings"  value={String(pendingCount)} trendLabel="Awaiting review"  icon={<Clock size={18} />}     iconColor="warning" padding="sm" />
               </>
@@ -146,19 +162,29 @@ export default function AdminDashboardOverview() {
                   <span className="text-[11px] text-muted">Live</span>
                 </div>
               </div>
-              <div className="flex items-end gap-[3px] h-[100px]">
-                {chartBars.length > 0 ? chartBars.map((count, i) => (
+              {/* items-stretch, not items-end. With items-end the bar wrappers shrink to their
+                  content height — zero — and the bars' percentage heights then resolve against a
+                  zero-height parent, so every bar rendered at 0px and the chart was permanently
+                  blank whatever the bid counts. Each wrapper anchors its own bar with justify-end. */}
+              <div className="flex items-stretch gap-[3px] h-[100px]">
+                {chartBars.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-[11px] text-placeholder">No active auctions</p>
+                  </div>
+                ) : !hasBidActivity ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className="text-[11px] text-placeholder">
+                      No bids yet on {chartBars.length === 1 ? 'the live auction' : `the ${chartBars.length} live auctions`}
+                    </p>
+                  </div>
+                ) : chartBars.map((count, i) => (
                   <div key={i} className="flex-1 flex flex-col justify-end">
                     <div
                       className="rounded-t-xs bg-primary"
                       style={{ height: `${Math.max(4, (count / chartMax) * 100)}%` }}
                     />
                   </div>
-                )) : (
-                  <div className="flex-1 flex items-center justify-center">
-                    <p className="text-[11px] text-placeholder">No active auctions</p>
-                  </div>
-                )}
+                ))}
               </div>
               <p className="text-[10px] text-placeholder mt-2">Each bar = 1 active auction · height = bid count</p>
             </div>
@@ -170,7 +196,10 @@ export default function AdminDashboardOverview() {
                 <div className="flex flex-col gap-3">
                   {categoryStats.map(c => (
                     <div key={c.label} className="flex items-center gap-3">
-                      <span className="font-medium text-[12px] text-tertiary w-[72px] sm:w-[80px] truncate">{c.label}</span>
+                      {/* Full category name, CSS-truncated to fit. Previously cut at the "&" in
+                          JS, so "Sports & Fitness" read as "Sports" and disagreed with every
+                          other screen — including the seller's own category picker. */}
+                      <span title={c.label} className="font-medium text-[12px] text-tertiary w-[72px] sm:w-[80px] truncate">{c.label}</span>
                       <div className="flex-1 bg-bg rounded-full h-[6px]">
                         <div className="h-full rounded-full" style={{ width: `${c.pct}%`, background: c.color }} />
                       </div>

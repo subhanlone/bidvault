@@ -59,10 +59,12 @@ export default function RegisterScreen() {
   const [agree, setAgree]       = useState(false);
   const [loading, setLoading]   = useState(false);
   const [errors, setErrors]     = useState<Record<string, string>>({});
+  // "Satisfaction 99%" was hardcoded with nothing behind it. "Active Users" was total user
+  // rows — the same number the landing page correctly calls "Registered Users".
   const [panelStats, setPanelStats] = useState([
-    { value: '—', label: 'Active Users' },
+    { value: '—', label: 'Registered Users' },
     { value: '—', label: 'Active Auctions' },
-    { value: '99%', label: 'Satisfaction' },
+    { value: '—', label: 'Items Listed' },
   ]);
 
   // RG-02: redirect already-logged-in users to their role dashboard
@@ -75,11 +77,11 @@ export default function RegisterScreen() {
 
   // RG-03: replace hardcoded stats with live API data
   useEffect(() => {
-    api.get<{ userCount: number; activeAuctionCount: number }>('/stats')
+    api.get<{ userCount: number; activeAuctionCount: number; listingCount: number }>('/stats')
       .then(d => setPanelStats([
-        { value: d.userCount >= 1000 ? `${Math.floor(d.userCount / 1000)}K+` : String(d.userCount), label: 'Active Users' },
+        { value: d.userCount >= 1000 ? `${Math.floor(d.userCount / 1000)}K+` : String(d.userCount), label: 'Registered Users' },
         { value: String(d.activeAuctionCount), label: 'Active Auctions' },
-        { value: '99%', label: 'Satisfaction' },
+        { value: String(d.listingCount),       label: 'Items Listed' },
       ]))
       .catch(() => {});
   }, []);

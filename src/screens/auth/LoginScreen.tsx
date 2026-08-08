@@ -27,10 +27,12 @@ export default function LoginScreen() {
   const [loading, setLoading]     = useState(false);
   const [emailError, setEmailError]       = useState('');
   const [passwordError, setPasswordError] = useState('');
+  // "Uptime 99.9%" was hardcoded and nothing in the stack measures uptime; "Bid Volume" was
+  // labelling the completed-sales total, which is not bid volume. All three are real now.
   const [panelStats, setPanelStats] = useState([
-    { value: '—',     label: 'Live Now'   },
-    { value: '—',     label: 'Bid Volume' },
-    { value: '99.9%', label: 'Uptime'     },
+    { value: '—', label: 'Live Now'   },
+    { value: '—', label: 'Total Sales' },
+    { value: '—', label: 'Items Sold' },
   ]);
 
   // LG-02: redirect already-logged-in users to their role dashboard
@@ -43,11 +45,11 @@ export default function LoginScreen() {
 
   // LG-04: replace hardcoded stats with live API data
   useEffect(() => {
-    api.get<{ activeAuctionCount: number; transactionTotal: number }>('/stats')
+    api.get<{ activeAuctionCount: number; transactionTotal: number; completedSalesCount: number }>('/stats')
       .then(d => setPanelStats([
-        { value: String(d.activeAuctionCount),  label: 'Live Now'   },
-        { value: formatPKR(d.transactionTotal), label: 'Bid Volume' },
-        { value: '99.9%',                       label: 'Uptime'     },
+        { value: String(d.activeAuctionCount),      label: 'Live Now'    },
+        { value: formatPKR(d.transactionTotal),     label: 'Total Sales' },
+        { value: String(d.completedSalesCount),     label: 'Items Sold'  },
       ]))
       .catch(() => {});
   }, []);

@@ -114,11 +114,15 @@ function AuctionCard({ auction }: { auction: Auction }) {
             <p className="font-extrabold text-[17px] text-primary leading-none">PKR {auction.currentBid.toLocaleString()}</p>
             <p className="text-[10px] text-placeholder mt-1">{auction.bidCount} bids</p>
           </div>
+          {/* An auction stays in the ACTIVE list until the worker closes it, which can lag
+              endTime by up to the 5-minute reconcile interval. During that window the card
+              showed a "Closed" badge and a live "Bid Now" button at the same time. */}
           <Button
             size="sm"
+            variant={timer.isExpired ? 'outline' : 'primary'}
             onClick={e => { e.stopPropagation(); navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
           >
-            Bid Now
+            {timer.isExpired ? 'View Result' : 'Bid Now'}
           </Button>
         </div>
       </div>
