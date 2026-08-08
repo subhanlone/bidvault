@@ -7,12 +7,14 @@ import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
 import { dateMedium, pkrCompact } from '../../utils/format';
+import { useDialog } from '../../hooks/useDialog';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
   const { pendingListings, refreshListings, approveAll } = usePendingListings();
   const { showToast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const confirmDialogRef = useDialog<HTMLDivElement>(confirmOpen, () => setConfirmOpen(false));
   const [approving, setApproving] = useState(false);
   const [reviewTimeoutHours, setReviewTimeoutHours] = useState<number | null>(null);
 
@@ -169,7 +171,7 @@ export default function AdminListingReviews() {
 
       {confirmOpen && (
         <div className="fixed inset-0 bg-[rgba(11,31,58,0.45)] flex items-center justify-center p-4 z-50">
-          <div role="dialog" aria-modal="true" aria-labelledby="approve-all-title" className="bg-surface rounded-lg shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[420px] overflow-hidden">
+          <div ref={confirmDialogRef} role="dialog" aria-modal="true" aria-labelledby="approve-all-title" tabIndex={-1} className="bg-surface rounded-lg shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[420px] overflow-hidden focus:outline-none">
             <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-0 flex items-center justify-between">
               <div className="bg-warning-badge-bg flex items-center justify-center rounded-full size-[44px]">
                 <ClipboardList size={20} strokeWidth={2} className="text-warning" aria-hidden="true" />

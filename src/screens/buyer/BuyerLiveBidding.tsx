@@ -16,6 +16,7 @@ import { api } from '../../services/api';
 import type { SellerReview } from '../../types';
 import { getCategoryFields } from '../../config/categoryFields';
 import { conditionLabel, count, dateMedium, pkr, timeShort } from '../../utils/format';
+import { useDialog } from '../../hooks/useDialog';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
@@ -45,6 +46,8 @@ export default function BuyerLiveBidding() {
     setReviewsOpen(false);
     setReviewsData(null);
   }
+
+  const confirmDialogRef = useDialog<HTMLDivElement>(pendingBidAmount !== null, () => setPendingBidAmount(null));
 
   const wonRef         = useRef(false);
   const lastBidIdRef   = useRef<string | null>(null);
@@ -517,10 +520,12 @@ export default function BuyerLiveBidding() {
       {pendingBidAmount !== null && (
         <div className="fixed inset-0 bg-[rgba(11,31,58,0.45)] flex items-center justify-center p-4 z-50">
           <div
+            ref={confirmDialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-bid-title"
-            className="bg-surface rounded-lg shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[400px] overflow-hidden"
+            tabIndex={-1}
+            className="bg-surface rounded-lg shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[400px] overflow-hidden focus:outline-none"
           >
             <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-0">
               <div className="bg-primary-surface flex items-center justify-center rounded-full size-[44px]">

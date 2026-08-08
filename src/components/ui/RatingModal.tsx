@@ -3,6 +3,7 @@ import { X, Star } from 'lucide-react';
 import { api } from '../../services/api';
 import Button from './Button';
 import Textarea from './Textarea';
+import { useDialog } from '../../hooks/useDialog';
 
 interface Props {
   transactionId: string;
@@ -38,12 +39,21 @@ export default function RatingModal({ transactionId, sellerName, auctionTitle, o
   }
 
   const displayStars = hoverStars || stars;
+  const dialogRef = useDialog<HTMLDivElement>(true, onClose);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
-      <div className="bg-surface rounded-xl shadow-xl w-full max-w-[440px] p-6" onClick={e => e.stopPropagation()}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rating-modal-title"
+        tabIndex={-1}
+        className="bg-surface rounded-xl shadow-xl w-full max-w-[440px] p-6 focus:outline-none"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-bold text-[16px] text-navy">Rate {sellerName}</h2>
+          <h2 id="rating-modal-title" className="font-bold text-[16px] text-navy">Rate {sellerName}</h2>
           <button
             onClick={onClose}
             aria-label="Close rating modal"
