@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Package, Smartphone, Car } from 'lucide-react';
 import { useListing } from '../../context/ListingContext';
@@ -6,10 +6,19 @@ import { useToast } from '../../context/ToastContext';
 import { Button, Input } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
+import { api } from '../../services/api';
 import { pkr } from '../../utils/format';
 
 const DURATIONS = [3, 5, 7, 14];
 const MAX_PRICE = 100_000_000;
+// The server accepts durationDays 1–30. The presets only ever offered four of those, with no way
+// to enter anything else, so a seller could not run a 1-day or a 30-day auction at all.
+const MIN_DURATION = 1;
+const MAX_DURATION = 30;
+
+/** Platform limits enforced by POST /listings. Defaults match the seeded PlatformSetting row and
+ *  are only used if /settings/public is unreachable — the server stays the real authority. */
+const FALLBACK_LIMITS = { minListingPrice: 1_000, maxBidIncrement: 500_000 };
 
 export default function SellerCreateListingStep2() {
   const navigate = useNavigate();
@@ -18,23 +27,58 @@ export default function SellerCreateListingStep2() {
   const [startingPriceError, setStartingPriceError] = useState('');
   const [minIncrementError, setMinIncrementError] = useState('');
   const [reservePriceError, setReservePriceError] = useState('');
+  const [durationError, setDurationError] = useState('');
+  const [limits, setLimits] = useState(FALLBACK_LIMITS);
+  const [customDuration, setCustomDuration] = useState(!DURATIONS.includes(draft.duration));
+
+  // These limits are enforced server-side at submit. Fetching them here is what lets the form
+  // fail at the offending field instead of via a toast two steps later.
+  useEffect(() => {
+    api.get<{ minListingPrice: number; maxBidIncrement: number }>('/settings/public')
+      .then(s => setLimits({
+        minListingPrice: s.minListingPrice ?? FALLBACK_LIMITS.minListingPrice,
+        maxBidIncrement: s.maxBidIncrement ?? FALLBACK_LIMITS.maxBidIncrement,
+      }))
+      .catch(() => {});
+  }, []);
 
   const fmtPrice = (n: number) => n > 0 ? pkr(n) : '';
+
+  // What someone would actually have to bid first. Surfacing it makes a lopsided increment
+  // obvious while the seller is still looking at the field.
+  const firstBid = draft.startingPrice > 0 && draft.minIncrement > 0
+    ? draft.startingPrice + draft.minIncrement
+    : null;
 
   const handleNext = () => {
     setStartingPriceError('');
     setMinIncrementError('');
     setReservePriceError('');
+    setDurationError('');
 
     let invalidCount = 0;
 
     if (draft.startingPrice <= 0) { setStartingPriceError('Starting price is required'); invalidCount += 1; }
     else if (!Number.isInteger(draft.startingPrice)) { setStartingPriceError('Starting price must be a whole number'); invalidCount += 1; }
+    // Same rule POST /listings applies — checked here so it surfaces on the field itself.
+    else if (draft.startingPrice < limits.minListingPrice) { setStartingPriceError(`Starting price must be at least ${pkr(limits.minListingPrice)}`); invalidCount += 1; }
     else if (draft.startingPrice > MAX_PRICE) { setStartingPriceError(`Starting price must be under PKR ${MAX_PRICE.toLocaleString()}`); invalidCount += 1; }
 
     if (draft.minIncrement <= 0) { setMinIncrementError('Minimum increment is required'); invalidCount += 1; }
     else if (!Number.isInteger(draft.minIncrement)) { setMinIncrementError('Minimum increment must be a whole number'); invalidCount += 1; }
+    else if (draft.minIncrement > limits.maxBidIncrement) { setMinIncrementError(`Minimum increment cannot exceed ${pkr(limits.maxBidIncrement)}`); invalidCount += 1; }
+    // An increment larger than the asking price means the first legal bid more than doubles it,
+    // which is almost never intended — PKR 500 start with a PKR 1,000 increment was accepted.
+    else if (draft.startingPrice > 0 && draft.minIncrement > draft.startingPrice) {
+      setMinIncrementError(`Increment can't exceed the ${pkr(draft.startingPrice)} starting price — the first bid would be ${pkr(draft.startingPrice + draft.minIncrement)}`);
+      invalidCount += 1;
+    }
     else if (draft.minIncrement > MAX_PRICE) { setMinIncrementError(`Minimum increment must be under PKR ${MAX_PRICE.toLocaleString()}`); invalidCount += 1; }
+
+    if (!Number.isInteger(draft.duration) || draft.duration < MIN_DURATION || draft.duration > MAX_DURATION) {
+      setDurationError(`Duration must be a whole number of days between ${MIN_DURATION} and ${MAX_DURATION}`);
+      invalidCount += 1;
+    }
 
     if (draft.hasReserve) {
       if (draft.reservePrice <= draft.startingPrice) {
@@ -105,11 +149,11 @@ export default function SellerCreateListingStep2() {
                         <button
                           key={d}
                           type="button"
-                          aria-pressed={draft.duration === d}
+                          aria-pressed={!customDuration && draft.duration === d}
                           aria-label={`${d} days`}
-                          onClick={() => updateDraft({ duration: d })}
+                          onClick={() => { setCustomDuration(false); setDurationError(''); updateDraft({ duration: d }); }}
                           className={`flex-1 h-10 rounded-lg font-semibold text-xs border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
-                            draft.duration === d
+                            !customDuration && draft.duration === d
                               ? 'bg-primary text-white border-primary'
                               : 'bg-surface border-border text-body hover:border-primary'
                           }`}
@@ -117,7 +161,39 @@ export default function SellerCreateListingStep2() {
                           {d}d
                         </button>
                       ))}
+                      {/* The four presets covered only part of the 1–30 days the server accepts,
+                          so short and long auctions were simply unreachable from the UI. */}
+                      <button
+                        type="button"
+                        aria-pressed={customDuration}
+                        aria-label="Custom duration in days"
+                        onClick={() => { setCustomDuration(true); setDurationError(''); }}
+                        className={`flex-1 h-10 rounded-lg font-semibold text-xs border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                          customDuration
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-surface border-border text-body hover:border-primary'
+                        }`}
+                      >
+                        Custom
+                      </button>
                     </div>
+                    {customDuration && (
+                      <Input
+                        aria-label="Auction duration in days"
+                        type="number"
+                        inputMode="numeric"
+                        min={MIN_DURATION}
+                        max={MAX_DURATION}
+                        step={1}
+                        placeholder={`${MIN_DURATION}–${MAX_DURATION} days`}
+                        value={draft.duration || ''}
+                        onChange={e => { updateDraft({ duration: Number(e.target.value) }); setDurationError(''); }}
+                        error={durationError}
+                      />
+                    )}
+                    {!customDuration && durationError && (
+                      <p role="alert" className="text-[12px] text-error">{durationError}</p>
+                    )}
                   </div>
                   <Input
                     label="Starting price (PKR)"
@@ -131,6 +207,7 @@ export default function SellerCreateListingStep2() {
                       updateDraft({ startingPrice: Number(e.target.value) });
                       setStartingPriceError('');
                     }}
+                    hint={`Platform minimum ${pkr(limits.minListingPrice)}`}
                     error={startingPriceError}
                     required
                   />
@@ -152,7 +229,12 @@ export default function SellerCreateListingStep2() {
                     error={minIncrementError}
                     required
                   />
-                  <p className="text-[11px] text-muted mt-1">The minimum amount each bid must be raised by</p>
+                  <p className="text-[11px] text-muted mt-1">
+                    The minimum amount each bid must be raised by
+                    {firstBid !== null && !minIncrementError && (
+                      <> — first bid would be <span className="font-bold text-secondary">{pkr(firstBid)}</span></>
+                    )}
+                  </p>
                 </div>
 
                 {/* Reserve toggle */}

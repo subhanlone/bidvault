@@ -330,7 +330,13 @@ export default function BuyerProfile() {
                               setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError(''); setCurrentPwError('');
                               showToast({ type: 'success', title: 'Password Changed', message: 'Your password has been updated.' });
                             } else {
-                              setPwError(result.error || 'Failed to change password.');
+                              // Route the failure to the field actually at fault. Everything used
+                              // to land on pwError, which is bound to New Password — so a wrong
+                              // current password put the red border and the message on the one
+                              // field that was fine, leaving the offending input unstyled.
+                              const message = result.error || 'Failed to change password.';
+                              if (/current password/i.test(message)) setCurrentPwError(message);
+                              else setPwError(message);
                             }
                           }}
                         >
