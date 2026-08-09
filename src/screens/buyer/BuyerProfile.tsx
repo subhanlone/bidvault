@@ -27,7 +27,20 @@ export default function BuyerProfile() {
   const [pwError, setPwError] = useState('');
   const [currentPwError, setCurrentPwError] = useState('');
 
+  // NEW-11: an auction is "won" only when the worker created an AuctionTransaction for you,
+  // which it does only once the reserve is met. This screen used to derive wins itself, as
+  // "closed auctions where my highest bid equals currentBid", which counts an under-reserve
+  // auction as a win — the same auction My Bids correctly labels "nothing to pay". Read the
+  // authoritative list instead, the one My Wins renders from.
+  const [winCount, setWinCount] = useState<number | null>(null);
+
   useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
+
+  useEffect(() => {
+    api.get<unknown[]>('/payments/my-wins')
+      .then(wins => setWinCount(wins.length))
+      .catch(() => setWinCount(null));
+  }, []);
 
   useEffect(() => {
     api.get<{ notifyOutbid: boolean; notifyWins: boolean; notifyNews: boolean }>('/auth/me/preferences')
@@ -46,12 +59,6 @@ export default function BuyerProfile() {
     const myHighest = Math.max(0, ...bidList.filter(b => b.buyerId === user?.userId).map(b => b.amount));
     return total + myHighest;
   }, 0);
-  const auctionsWon = Object.entries(bids).filter(([auctionId, bidList]) => {
-    const auction = auctions.find(a => a.auctionId === auctionId);
-    if (!auction || auction.status !== 'CLOSED') return false;
-    const myHighest = Math.max(0, ...bidList.filter(b => b.buyerId === user?.userId).map(b => b.amount));
-    return myHighest > 0 && myHighest === auction.currentBid;
-  }).length;
   const watchlistCount = watchlist.length;
 
   const memberSince = user?.createdAt
@@ -60,7 +67,9 @@ export default function BuyerProfile() {
 
   const stats = [
     { label: 'Total Bids', value: myBids.length, icon: <Gavel size={18} strokeWidth={1.8} className="text-primary" />, bg: 'bg-primary-surface' },
-    { label: 'Auctions Won', value: auctionsWon, icon: <Trophy size={18} strokeWidth={1.8} className="text-gold" />, bg: 'bg-warning-surface' },
+    // '—' while loading or if the request failed: rendering 0 would assert "you have won
+    // nothing", which is a different claim from "not known yet".
+    { label: 'Auctions Won', value: winCount ?? '—', icon: <Trophy size={18} strokeWidth={1.8} className="text-gold" />, bg: 'bg-warning-surface' },
     { label: 'Watchlist Items', value: watchlistCount, icon: <Heart size={18} strokeWidth={1.8} className="text-success-dark" />, bg: 'bg-success-bg' },
     { label: 'Total Bid Value', value: pkrCompact(totalBidAmount), icon: <TrendingUp size={18} strokeWidth={1.8} className="text-navy" />, bg: 'bg-info-card-bg' },
   ];

@@ -364,14 +364,6 @@ export type WatchToggle = {
   watched: boolean;
 };
 
-export type WatchlistEntry = {
-  auctionId: string;
-  title: string;
-  currentBid: number;
-  status: AuctionStatus;
-  endTime: string;
-};
-
 export type WebhookAck = {
   received: true;
 };

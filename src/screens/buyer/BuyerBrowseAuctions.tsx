@@ -162,6 +162,11 @@ export default function BuyerBrowseAuctions() {
   const max = maxPrice.trim() === '' ? null : Number(maxPrice);
   const priceRangeInvalid = min !== null && max !== null && min > max;
   const filtered = auctions.filter(a => {
+    // This screen is "Live Auctions". The context list is seeded from ?status=ACTIVE, but
+    // fetchMyBids merges in the closed auctions a buyer has bid on, so visiting My Bids and
+    // then coming here used to surface them under the live heading. Filter on the status the
+    // server reported rather than trusting how the list was populated.
+    if (a.status !== 'ACTIVE') return false;
     if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (category !== 'All' && a.category !== category) return false;  // BA-06: exact match (categories now in sync)
     if (showEndingSoon) {

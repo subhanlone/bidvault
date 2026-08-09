@@ -64,11 +64,14 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
 
 export default function BuyerWatchlist() {
   const { user, logout } = useAuth();
-  const { auctions, watchlist, toggleWatchlist } = useAuction();
+  const { watchlistAuctions, toggleWatchlist } = useAuction();
 
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
-  const watched = auctions.filter(a => watchlist.includes(a.auctionId));
+  // NEW-12: read the rows /watchlist returned. This used to intersect the watched ids with
+  // `auctions`, which only ever holds ACTIVE auctions — so a watched auction disappeared the
+  // moment it closed, and "Clear Ended" could never appear.
+  const watched = watchlistAuctions;
   const endedWatched = watched.filter(a => new Date(a.endTime).getTime() <= now);
   const activeCount = watched.length - endedWatched.length;
 

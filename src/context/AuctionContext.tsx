@@ -10,6 +10,8 @@ interface AuctionContextType {
   auctionsError: boolean;
   bids: Record<string, Bid[]>;
   watchlist: string[];
+  /** Full rows for watched auctions, closed ones included. `auctions` holds only live ones. */
+  watchlistAuctions: Auction[];
   getAuction: (id: string) => Auction | undefined;
   placeBid: (auctionId: string, amount: number) => Promise<{ success: boolean; error?: string }>;
   fetchBids: (auctionId: string) => Promise<void>;
@@ -27,7 +29,52 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
   const [auctionsError, setAuctionsError] = useState(false);
   const [bids, setBids] = useState<Record<string, Bid[]>>({});
   const [watchlist, setWatchlist] = useState<string[]>([]);
+  // Full auction rows for the watched ids, including closed ones. Separate from `auctions`,
+  // which is the live list — see the fetch below.
+  const [watchlistAuctions, setWatchlistAuctions] = useState<Auction[]>([]);
   const socketSetupRef = useRef(false);
+
+  // NEW-13: every bid id this client has already folded into state.
+  //
+  // Your own bid arrives twice — once as the POST response, once as the socket broadcast —
+  // and both used to apply it. The socket handler deduped the bid *list* by id but still
+  // incremented bidCount, and placeBid did both again with no guard at all, so a single bid
+  // read as "2 bids" and, when the broadcast beat the HTTP response, entered the list twice
+  // (six React duplicate-key errors per bid).
+  //
+  // A ref rather than deriving from `bids`: it updates synchronously, so two applications in
+  // the same tick cannot both pass the check. Reading state here would let them race.
+  const appliedBidIds = useRef<Set<string>>(new Set());
+
+  /** Fold a bid into state exactly once, whichever path delivered it first. */
+  const applyBid = useCallback((auctionId: string, bid: Bid) => {
+    if (appliedBidIds.current.has(bid.bidId)) return;
+    appliedBidIds.current.add(bid.bidId);
+
+    setBids(prev => ({ ...prev, [auctionId]: [bid, ...(prev[auctionId] ?? [])] }));
+    setAuctions(prev =>
+      prev.map(a =>
+        a.auctionId === auctionId
+          ? {
+              ...a,
+              // max(), not assignment: a broadcast that arrives out of order must never
+              // walk the price backwards.
+              currentBid: Math.max(a.currentBid, bid.amount),
+              bidCount: a.bidCount + 1,
+            }
+          : a,
+      ),
+    );
+  }, []);
+
+  /**
+   * Register bids loaded in bulk so a later broadcast for one of them is recognised as a
+   * duplicate. Without this, reopening an auction and then receiving a repeat broadcast for
+   * an already-listed bid would inflate bidCount again.
+   */
+  const rememberBidIds = useCallback((list: Bid[]) => {
+    for (const b of list) appliedBidIds.current.add(b.bidId);
+  }, []);
 
   // Fetch only ACTIVE auctions on mount (BA-09)
   useEffect(() => {
@@ -46,8 +93,16 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
       Promise.resolve().then(() => setWatchlist([]));
       return;
     }
-    api.get<Array<{ auctionId: string }>>('/watchlist').then(data => {
-      setWatchlist(data.map(item => item.auctionId));
+    // NEW-12: /watchlist now returns full auctions, kept in their own list rather than
+    // merged into `auctions`. BuyerWatchlist used to render by intersecting the watched ids
+    // with `auctions`, which holds ACTIVE auctions only — so a watched auction vanished from
+    // the page the moment it closed while the profile kept counting it.
+    //
+    // Deliberately NOT merged into `auctions`: that array means "live auctions" to every
+    // other screen, and folding closed ones in puts them on Browse under "Live Auctions".
+    api.get<Auction[]>('/watchlist').then(data => {
+      setWatchlist(data.map(a => a.auctionId));
+      setWatchlistAuctions(data);
     }).catch(() => {});
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -63,24 +118,14 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
       bid: { bidId: string; amount: number; buyerId: string; buyerName: string; timestamp: string };
     }) {
       const { auctionId, bid } = payload;
-      const newBid: Bid = {
+      applyBid(auctionId, {
         bidId: bid.bidId,
         auctionId,
         buyerId: bid.buyerId,
         buyerName: bid.buyerName,
         amount: bid.amount,
         timestamp: bid.timestamp,
-      };
-      setBids(prev => {
-        const existing = prev[auctionId] ?? [];
-        if (existing.some(b => b.bidId === newBid.bidId)) return prev;
-        return { ...prev, [auctionId]: [newBid, ...existing] };
       });
-      setAuctions(prev =>
-        prev.map(a =>
-          a.auctionId === auctionId ? { ...a, currentBid: bid.amount, bidCount: a.bidCount + 1 } : a,
-        ),
-      );
     }
 
     socket.on('bid:placed', onBidPlaced);
@@ -89,7 +134,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
       socket.off('bid:placed', onBidPlaced);
       socketSetupRef.current = false;
     };
-  }, []);
+  }, [applyBid]);
 
   const getAuction = useCallback(
     (id: string) => auctions.find(a => a.auctionId === id),
@@ -99,11 +144,12 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
   const fetchBids = useCallback(async (auctionId: string) => {
     try {
       const data = await api.get<Bid[]>(`/auctions/${auctionId}/bids`);
+      rememberBidIds(data);
       setBids(prev => ({ ...prev, [auctionId]: data }));
     } catch {
       // Non-critical — bids can load empty
     }
-  }, []);
+  }, [rememberBidIds]);
 
   const fetchMyBids = useCallback(async () => {
     if (!user || user.role !== 'BUYER') return;
@@ -118,6 +164,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
           newAuctions.push(auction);
         }
       }
+      for (const list of Object.values(bidsByAuction)) rememberBidIds(list);
       setBids(prev => ({ ...prev, ...bidsByAuction }));
       setAuctions(prev => {
         const merged = [...prev];
@@ -127,19 +174,15 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
         return merged;
       });
     } catch { /* non-critical */ }
-  }, [user]);
+  }, [user, rememberBidIds]);
 
   const placeBid = async (auctionId: string, amount: number) => {
     try {
       const bid = await api.post<Bid>(`/auctions/${auctionId}/bids`, { amount });
-      setBids(prev => ({ ...prev, [auctionId]: [bid, ...(prev[auctionId] ?? [])] }));
-      setAuctions(prev =>
-        prev.map(a =>
-          a.auctionId === auctionId
-            ? { ...a, currentBid: amount, bidCount: a.bidCount + 1 }
-            : a,
-        ),
-      );
+      // Goes through the same gate as the socket broadcast: whichever arrives first applies
+      // the bid, the other is a no-op. Not skipped entirely, because the broadcast is not
+      // guaranteed — if the socket is down this is the only path that updates the UI.
+      applyBid(auctionId, bid);
       return { success: true };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Could not place bid' };
@@ -150,10 +193,21 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     const isCurrentlyWatched = watchlist.includes(auctionId);
+    // Captured before the optimistic removal so a failed delete can put the row back.
+    const removed = watchlistAuctions.find(a => a.auctionId === auctionId);
+    const added = auctions.find(a => a.auctionId === auctionId);
 
-    // Optimistic update
+    // Optimistic update — ids and rows move together, or the watchlist page and the counts
+    // that read from them drift apart.
     setWatchlist(prev =>
       isCurrentlyWatched ? prev.filter(id => id !== auctionId) : [...prev, auctionId],
+    );
+    setWatchlistAuctions(prev =>
+      isCurrentlyWatched
+        ? prev.filter(a => a.auctionId !== auctionId)
+        : added && !prev.some(a => a.auctionId === auctionId)
+          ? [added, ...prev]
+          : prev,
     );
 
     try {
@@ -167,14 +221,21 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
       setWatchlist(prev =>
         isCurrentlyWatched ? [...prev, auctionId] : prev.filter(id => id !== auctionId),
       );
+      setWatchlistAuctions(prev =>
+        isCurrentlyWatched
+          ? removed && !prev.some(a => a.auctionId === auctionId)
+            ? [removed, ...prev]
+            : prev
+          : prev.filter(a => a.auctionId !== auctionId),
+      );
     }
-  }, [user, watchlist]);
+  }, [user, watchlist, watchlistAuctions, auctions]);
 
   const isWatched = useCallback((auctionId: string) => watchlist.includes(auctionId), [watchlist]);
 
   return (
     <AuctionContext.Provider value={{
-      auctions, auctionsLoaded, auctionsError, bids, watchlist,
+      auctions, auctionsLoaded, auctionsError, bids, watchlist, watchlistAuctions,
       getAuction, placeBid, fetchBids, fetchMyBids,
       toggleWatchlist, isWatched,
     }}>

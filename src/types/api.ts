@@ -16,7 +16,6 @@ export type {
   User,
   Bid,
   BidWithAuction,
-  WatchlistEntry,
   NotificationPrefs,
   Review,
   SellerReviews,
