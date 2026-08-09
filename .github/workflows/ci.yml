@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch makes the in-flight run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Matches @types/node in devDependencies.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      # `build` is `tsc -b && vite build`, so this is the typecheck too.
+      # No VITE_* vars are set: the bundle would point at nothing, but this
+      # job only asks whether the code compiles, and Vercel supplies the real
+      # values on the deploy that actually ships.
+      - run: npm run build
+
+      # Playwright (test:e2e / test:visual) is deliberately not run here.
+      # Those specs need a live backend, a seeded database and real
+      # credentials; wiring that up is its own piece of work.
