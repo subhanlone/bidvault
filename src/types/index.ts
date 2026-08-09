@@ -33,7 +33,7 @@ export interface Listing {
   submittedAt: string;
   emoji: string;
   imageUrl?: string;
-  sellerEmail?: string;
+  sellerEmail: string;
   attributes?: CategoryAttributes;
 }
 
@@ -58,13 +58,16 @@ export interface Auction {
    * While the auction is open this is a live comparison; once closed it is the worker's
    * recorded outcome. Sellers and admins get the amount via the role-gated listing DTO.
    */
-  reserveMet?: boolean | null;
+  reserveMet: boolean | null;
   bidCount: number;
   startTime: string;
   endTime: string;
   status: AuctionStatus;
-  imageUrl?: string;
-  images?: string[];
+  // Always sent. `toAuctionDto` maps a missing image to '' and an empty gallery to [],
+  // so these are never absent — marking them optional made screens guard a case the
+  // server cannot produce. Consumers test truthiness, which handles '' correctly.
+  imageUrl: string;
+  images: string[];
   attributes?: CategoryAttributes;
 }
 
