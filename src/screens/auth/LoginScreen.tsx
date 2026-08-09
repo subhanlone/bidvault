@@ -6,9 +6,10 @@ import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
 import { pkrCompact } from '../../utils/format';
+// Signing in only identifies an existing account, so this is the permissive rule —
+// a stricter check here could refuse an address the user actually registered with.
+import { isLookupEmail, EMAIL_INVALID_MESSAGE } from '../../utils/validation';
 
-// Requires a real TLD-shaped domain — rejects leading/trailing/consecutive dots and hyphens.
-const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 export default function LoginScreen() {
   const navigate = useNavigate();
@@ -57,8 +58,8 @@ export default function LoginScreen() {
     if (!email.trim()) {
       setEmailError('Email is required');
       invalid++;
-    } else if (!EMAIL_REGEX.test(email.trim())) {
-      setEmailError('Enter a valid email address');
+    } else if (!isLookupEmail(email)) {
+      setEmailError(EMAIL_INVALID_MESSAGE);
       invalid++;
     }
     if (!password) {

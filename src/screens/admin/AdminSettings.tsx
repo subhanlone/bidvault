@@ -6,6 +6,8 @@ import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
+// Support email is stored, so it uses the same strict rule the server enforces on PUT /settings.
+import { isStrictEmail } from '../../utils/validation';
 
 const PLATFORM_NAME = 'BidVault';
 const MAX_LISTING_PRICE = 100_000_000;
@@ -78,7 +80,7 @@ export default function AdminSettings() {
       showToast({ type: 'error', title: 'Invalid Values', message: 'Numeric fields must be whole positive numbers within sensible limits.' });
       return;
     }
-    if (!/\S+@\S+\.\S+/.test(form.supportEmail)) {
+    if (!isStrictEmail(form.supportEmail)) {
       showToast({ type: 'error', title: 'Invalid Email', message: 'Enter a valid support email.' });
       return;
     }

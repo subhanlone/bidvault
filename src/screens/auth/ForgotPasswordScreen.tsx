@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { OTP_WINDOW_SECONDS, RESEND_COOLDOWN_SECONDS } from '../../config/otp';
+// Password reset looks an existing account up, so it uses the permissive rule.
+import { isLookupEmail, EMAIL_INVALID_MESSAGE } from '../../utils/validation';
 
 type Step = 1 | 2 | 3;
 
@@ -136,8 +138,8 @@ export default function ForgotPasswordScreen() {
       setEmailError('Email is required');
       return;
     }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setEmailError('Enter a valid email address');
+    if (!isLookupEmail(email)) {
+      setEmailError(EMAIL_INVALID_MESSAGE);
       return;
     }
     setLoading(true);

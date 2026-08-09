@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import type { UserRole } from '../../types';
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
+import { isStrictEmail, EMAIL_INVALID_MESSAGE } from '../../utils/validation';
 
 const PW_CONFIG = [
   { width: '0%',   label: '',       labelClass: 'text-muted',   barClass: 'bg-border' },
@@ -26,8 +27,6 @@ function pwScore(pw: string): 0 | 1 | 2 | 3 {
 
 // Letters (incl. accented), spaces, hyphens, and apostrophes only — no digits or other symbols.
 const NAME_REGEX = /^[\p{L}\s'-]+$/u;
-// Requires a real TLD-shaped domain — rejects leading/trailing/consecutive dots and hyphens.
-const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 // Pakistani CNIC: 5 digits - 7 digits - 1 digit
 const CNIC_REGEX = /^\d{5}-\d{7}-\d{1}$/;
 
@@ -99,7 +98,9 @@ export default function RegisterScreen() {
     else if (trimmedName.length > 100) e.name = 'Name must be under 100 characters';
     else if (!NAME_REGEX.test(trimmedName)) e.name = 'Name can only contain letters, spaces, hyphens, and apostrophes';
     if (!email.trim()) e.email = 'Email is required';
-    else if (!EMAIL_REGEX.test(email.trim())) e.email = 'Enter a valid email address';
+    // Strict: this is the address that gets stored. Must match the server exactly, or the
+    // form accepts something register then refuses.
+    else if (!isStrictEmail(email)) e.email = EMAIL_INVALID_MESSAGE;
     if (!cnic) e.cnic = 'CNIC is required';
     else if (!CNIC_REGEX.test(cnic)) e.cnic = 'CNIC must be in the format 12345-1234567-1';
     if (password.length < 8) e.password = 'Password must be at least 8 characters';
