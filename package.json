@@ -7,18 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "api:types": "openapi-typescript ../backend/openapi.json -o src/types/openapi.d.ts",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:visual": "playwright test visual",
     "test:visual:update": "playwright test visual --update-snapshots"
-  },
-  "//overrides": "openapi-typescript@7.13.0 declares peer typescript ^5.x, a range that now excludes every current release (6.x stable, 7.x latest). Verified by running the generator under our TypeScript 6.0.3: it produces correct output. The override points its peer at our own typescript so npm ci resolves without flags. Re-check when openapi-typescript widens the range.",
-  "overrides": {
-    "openapi-typescript": {
-      "typescript": "$typescript"
-    }
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.4.0",
@@ -42,7 +35,6 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
