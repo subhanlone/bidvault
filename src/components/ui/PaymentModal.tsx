@@ -36,10 +36,18 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
     setError(null);
 
     try {
-      const { clientSecret } = await api.post<{ clientSecret: string }>(
+      const { clientSecret } = await api.post(
         '/payments/create-intent',
         { transactionId },
       );
+
+      // Nullable in the contract because Stripe types client_secret as nullable and the
+      // route passes it straight through. confirmCardPayment needs a string, so a null here
+      // would fail inside Stripe.js with a message that means nothing to the buyer.
+      if (!clientSecret) {
+        setError('Could not start the payment. Please try again.');
+        return;
+      }
 
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: { card: elements.getElement(CardNumberElement)! },

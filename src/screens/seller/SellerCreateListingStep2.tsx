@@ -34,7 +34,7 @@ export default function SellerCreateListingStep2() {
   // These limits are enforced server-side at submit. Fetching them here is what lets the form
   // fail at the offending field instead of via a toast two steps later.
   useEffect(() => {
-    api.get<{ minListingPrice: number; maxBidIncrement: number }>('/settings/public')
+    api.get('/settings/public')
       .then(s => setLimits({
         minListingPrice: s.minListingPrice ?? FALLBACK_LIMITS.minListingPrice,
         maxBidIncrement: s.maxBidIncrement ?? FALLBACK_LIMITS.maxBidIncrement,

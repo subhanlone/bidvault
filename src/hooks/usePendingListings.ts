@@ -13,7 +13,7 @@ export function usePendingListings() {
 
   const refreshListings = useCallback(async () => {
     try {
-      const data = await api.get<Listing[]>('/listings/pending');
+      const data = await api.get('/listings/pending');
       setPendingListings(data);
     } catch {
       setPendingListings([]);
@@ -21,7 +21,7 @@ export function usePendingListings() {
   }, []);
 
   const approveListing = async (listingId: string): Promise<{ warning?: string }> => {
-    const result = await api.post<{ warning?: string }>(`/listings/${listingId}/approve`);
+    const result = await api.post(`/listings/${listingId}/approve`);
     setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
     return result ?? {};
   };
@@ -32,7 +32,7 @@ export function usePendingListings() {
   };
 
   const approveAll = async (): Promise<BulkApproveResult> => {
-    const result = await api.post<BulkApproveResult>('/listings/approve-all');
+    const result = await api.post('/listings/approve-all');
     await refreshListings();
     return result;
   };

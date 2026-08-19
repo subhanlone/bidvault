@@ -41,7 +41,7 @@ export default function LoginScreen() {
 
   // LG-04: replace hardcoded stats with live API data
   useEffect(() => {
-    api.get<{ activeAuctionCount: number; transactionTotal: number; completedSalesCount: number }>('/stats')
+    api.get('/stats')
       .then(d => setPanelStats([
         { value: String(d.activeAuctionCount),      label: 'Live Now'    },
         { value: pkrCompact(d.transactionTotal),     label: 'Total Sales' },

@@ -76,7 +76,7 @@ export default function RegisterScreen() {
 
   // RG-03: replace hardcoded stats with live API data
   useEffect(() => {
-    api.get<{ userCount: number; activeAuctionCount: number; listingCount: number }>('/stats')
+    api.get('/stats')
       .then(d => setPanelStats([
         { value: d.userCount >= 1000 ? `${Math.floor(d.userCount / 1000)}K+` : String(d.userCount), label: 'Registered Users' },
         { value: String(d.activeAuctionCount), label: 'Active Auctions' },

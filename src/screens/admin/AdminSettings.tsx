@@ -14,15 +14,6 @@ const MAX_LISTING_PRICE = 100_000_000;
 const MAX_BID_INCREMENT = 10_000_000;
 const MAX_REVIEW_TIMEOUT_HOURS = 720;
 
-interface PlatformSettings {
-  emailNotifsEnabled: boolean;
-  maintenanceMode: boolean;
-  maxBidIncrement: number;
-  minListingPrice: number;
-  reviewTimeoutHours: number;
-  supportEmail: string;
-}
-
 interface FormState {
   emailNotifsEnabled: boolean;
   maintenanceMode: boolean;
@@ -49,7 +40,7 @@ export default function AdminSettings() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
   useEffect(() => {
-    api.get<PlatformSettings>('/settings')
+    api.get('/settings')
       .then((s) =>
         setForm({
           emailNotifsEnabled: s.emailNotifsEnabled,

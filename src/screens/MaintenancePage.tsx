@@ -11,7 +11,7 @@ export default function MaintenancePage() {
     let active = true;
     const check = async () => {
       try {
-        const s = await api.get<{ maintenanceMode: boolean; supportEmail: string }>('/settings/public');
+        const s = await api.get('/settings/public');
         if (!active) return;
         if (s.supportEmail) setSupportEmail(s.supportEmail);
         if (!s.maintenanceMode) navigate('/', { replace: true });

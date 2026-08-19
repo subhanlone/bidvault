@@ -380,3 +380,68 @@ export type WonTransaction = {
   createdAt: string;
   reviewed: boolean;
 };
+
+/** What each documented GET returns, unwrapped from the response envelope. */
+export interface GetEndpoints {
+  "/admin/analytics": Analytics;
+  "/auctions": Auction[];
+  "/auctions/mine/bids": BidWithAuction[];
+  "/auctions/{auctionId}": Auction;
+  "/auctions/{auctionId}/bids": Bid[];
+  "/auth/me": {
+    user: User;
+  };
+  "/auth/me/preferences": NotificationPrefs;
+  "/health": Health;
+  "/listings/mine": Listing[];
+  "/listings/pending": Listing[];
+  "/notifications": Notification[];
+  "/payments/my-wins": WonTransaction[];
+  "/payments/seller-stats": SellerStats;
+  "/reviews/seller/{sellerId}": SellerReviews;
+  "/settings": PlatformSettings;
+  "/settings/public": PublicSettings;
+  "/stats": PlatformStats;
+  "/watchlist": Auction[];
+}
+
+/** What each documented POST returns, unwrapped from the response envelope. */
+export interface PostEndpoints {
+  "/auctions/{auctionId}/bids": Bid;
+  "/auth/change-password": Message;
+  "/auth/forgot-password": OtpIssued;
+  "/auth/login": Session;
+  "/auth/logout": Message;
+  "/auth/refresh": RefreshedTokens;
+  "/auth/register": Registration;
+  "/auth/resend-verification": OtpIssued;
+  "/auth/reset-password": Message;
+  "/auth/verify-email": Message;
+  "/auth/verify-reset-otp": Message;
+  "/listings": Listing;
+  "/listings/approve-all": BulkApproval;
+  "/listings/upload-signature": UploadSignature;
+  "/listings/{listingId}/approve": Approval;
+  "/listings/{listingId}/reject": Rejection;
+  "/notifications/read-all": Message;
+  "/notifications/{notificationId}/read": NotificationRead;
+  "/payments/create-intent": PaymentIntent;
+  "/payments/webhook": WebhookAck;
+  "/reviews": Review;
+  "/watchlist/{auctionId}": WatchToggle;
+}
+
+/** What each documented PUT returns, unwrapped from the response envelope. */
+export interface PutEndpoints {
+  "/settings": PlatformSettings;
+}
+
+/** What each documented PATCH returns, unwrapped from the response envelope. */
+export interface PatchEndpoints {
+  "/auth/me/preferences": NotificationPrefs;
+}
+
+/** What each documented DELETE returns, unwrapped from the response envelope. */
+export interface DeleteEndpoints {
+  "/watchlist/{auctionId}": WatchToggle;
+}

@@ -60,8 +60,8 @@ export default function AdminDashboardOverview() {
   useEffect(() => {
     Promise.allSettled([
       refreshListings(),
-      api.get<PlatformStats>('/stats').then(d => setPlatformStats(d)).catch(() => setStatsFailed(true)),
-      api.get<Analytics>('/admin/analytics').then(d => setAnalytics(d)).catch(() => setStatsFailed(true)),
+      api.get('/stats').then(d => setPlatformStats(d)).catch(() => setStatsFailed(true)),
+      api.get('/admin/analytics').then(d => setAnalytics(d)).catch(() => setStatsFailed(true)),
     ]).finally(() => setLoading(false));
   }, [refreshListings]);
 

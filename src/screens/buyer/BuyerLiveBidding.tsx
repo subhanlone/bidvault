@@ -201,7 +201,7 @@ export default function BuyerLiveBidding() {
     if (reviewsData) return;
     setReviewsLoading(true);
     try {
-      const data = await api.get<{ sellerId: string; average: number | null; count: number; reviews: SellerReview[] }>(
+      const data = await api.get(
         `/reviews/seller/${auction.sellerId}`,
       );
       setReviewsData(data);

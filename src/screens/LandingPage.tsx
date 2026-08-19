@@ -120,20 +120,20 @@ export default function LandingPage() {
   const [supportEmail, setSupportEmail] = useState('support@bidvault.tech');
 
   useEffect(() => {
-    api.get<Auction[]>('/auctions?status=ACTIVE').then(data => {
+    api.get('/auctions?status=ACTIVE').then(data => {
       setFeatured(data.slice(0, 3));
       setFeaturedFailed(false);
     }).catch(() => setFeaturedFailed(true)).finally(() => setFeaturedLoading(false));
   }, []);
 
   useEffect(() => {
-    api.get<{ maintenanceMode: boolean; supportEmail: string }>('/settings/public')
+    api.get('/settings/public')
       .then(s => { if (s.supportEmail) setSupportEmail(s.supportEmail); })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
-    api.get<{ userCount: number; activeAuctionCount: number; transactionTotal: number; listingCount: number; completedSalesCount: number }>('/stats')
+    api.get('/stats')
       .then(data => setLiveStats(data))
       .catch(() => {});
   }, []);

@@ -10,15 +10,6 @@ import StepProgress from '../../components/ui/StepProgress';
 import type { ItemCondition } from '../../types';
 import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
 
-interface UploadSignature {
-  signature: string;
-  timestamp: number;
-  apiKey: string;
-  cloudName: string;
-  folder: string;
-  format: string;
-}
-
 const CATEGORIES = [
   'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion',
   'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles',
@@ -73,7 +64,7 @@ export default function SellerCreateListingStep1() {
 
     setUploadState('uploading');
     try {
-      const sig = await api.post<UploadSignature>('/listings/upload-signature');
+      const sig = await api.post('/listings/upload-signature');
 
       const formData = new FormData();
       formData.append('file', file);

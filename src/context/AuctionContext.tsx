@@ -81,7 +81,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch only ACTIVE auctions on mount (BA-09)
   useEffect(() => {
-    api.get<Auction[]>('/auctions?status=ACTIVE').then(data => {
+    api.get('/auctions?status=ACTIVE').then(data => {
       setAuctions(data);
       setAuctionsLoaded(true);
     }).catch(() => {
@@ -103,7 +103,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
     //
     // Deliberately NOT merged into `auctions`: that array means "live auctions" to every
     // other screen, and folding closed ones in puts them on Browse under "Live Auctions".
-    api.get<Auction[]>('/watchlist').then(data => {
+    api.get('/watchlist').then(data => {
       setWatchlist(data.map(a => a.auctionId));
       setWatchlistAuctions(data);
     }).catch(() => {});
@@ -151,7 +151,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
 
   const fetchBids = useCallback(async (auctionId: string) => {
     try {
-      const data = await api.get<Bid[]>(`/auctions/${auctionId}/bids`);
+      const data = await api.get(`/auctions/${auctionId}/bids`);
       rememberBidIds(data);
       setBids(prev => ({ ...prev, [auctionId]: data }));
     } catch {
@@ -162,7 +162,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
   const fetchMyBids = useCallback(async () => {
     if (!user || user.role !== 'BUYER') return;
     try {
-      const data = await api.get<Array<Bid & { auction: Auction }>>('/auctions/mine/bids');
+      const data = await api.get('/auctions/mine/bids');
       const bidsByAuction: Record<string, Bid[]> = {};
       const newAuctions: Auction[] = [];
       for (const { auction, ...bid } of data) {
@@ -186,7 +186,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
 
   const placeBid = async (auctionId: string, amount: number) => {
     try {
-      const bid = await api.post<Bid>(`/auctions/${auctionId}/bids`, { amount });
+      const bid = await api.post(`/auctions/${auctionId}/bids`, { amount });
       // Goes through the same gate as the socket broadcast: whichever arrives first applies
       // the bid, the other is a no-op. Not skipped entirely, because the broadcast is not
       // guaranteed — if the socket is down this is the only path that updates the UI.

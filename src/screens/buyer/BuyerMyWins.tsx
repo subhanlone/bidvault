@@ -60,7 +60,7 @@ export default function BuyerMyWins() {
   const [ratingTx, setRatingTx] = useState<WinTransaction | null>(null);
 
   useEffect(() => {
-    api.get<WinTransaction[]>('/payments/my-wins')
+    api.get('/payments/my-wins')
       .then(setTransactions)
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : 'Failed to load wins.';
@@ -72,7 +72,7 @@ export default function BuyerMyWins() {
   function handlePaymentSuccess() {
     const txId = selectedTx?.transactionId;
     setSelectedTx(null);
-    api.get<WinTransaction[]>('/payments/my-wins')
+    api.get('/payments/my-wins')
       .then(setTransactions)
       .catch(() => {
         if (!txId) return;

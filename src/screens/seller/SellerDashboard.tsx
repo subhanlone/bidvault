@@ -62,9 +62,9 @@ export default function SellerDashboard() {
   useEffect(() => {
     if (!user) return;
     Promise.allSettled([
-      api.get<Listing[]>('/listings/mine'),
-      api.get<{ totalRevenue: number; itemsSold: number }>('/payments/seller-stats'),
-      api.get<{ sellerId: string; average: number | null; count: number; reviews: SellerReview[] }>(`/reviews/seller/${user.userId}`),
+      api.get('/listings/mine'),
+      api.get('/payments/seller-stats'),
+      api.get(`/reviews/seller/${user.userId}`),
     ]).then(([listingsResult, statsResult, reviewsResult]) => {
       if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
       if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);

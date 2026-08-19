@@ -82,7 +82,7 @@ export default function SellerMyListings() {
 
   useEffect(() => {
     if (!user) return;
-    api.get<Listing[]>('/listings/mine')
+    api.get('/listings/mine')
       .then(data => setListings(data))
       .catch(() => setError('Could not load listings. Please try again.'))
       .finally(() => setLoading(false));

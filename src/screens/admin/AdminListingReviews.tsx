@@ -21,7 +21,7 @@ export default function AdminListingReviews() {
   useEffect(() => { refreshListings(); }, [refreshListings]);
 
   useEffect(() => {
-    api.get<{ reviewTimeoutHours: number }>('/settings')
+    api.get('/settings')
       .then(s => setReviewTimeoutHours(s.reviewTimeoutHours))
       .catch(() => {});
   }, []);

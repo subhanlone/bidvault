@@ -20,7 +20,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const refresh = useCallback(async () => {
     try {
-      const data = await api.get<AppNotification[]>('/notifications');
+      const data = await api.get('/notifications');
       setNotifications(data);
     } catch {
       // non-critical — leave existing list in place
@@ -35,7 +35,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       return;
     }
     let active = true;
-    api.get<AppNotification[]>('/notifications')
+    api.get('/notifications')
       .then(data => { if (active) setNotifications(data); })
       .catch(() => { /* non-critical */ });
     const interval = setInterval(() => { void refresh(); }, POLL_MS);

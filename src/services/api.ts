@@ -1,3 +1,11 @@
+import type {
+  GetEndpoints,
+  PostEndpoints,
+  PutEndpoints,
+  PatchEndpoints,
+  DeleteEndpoints,
+} from '../types/openapi';
+
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 const STORAGE_KEY = 'bidvault_auth_v1';
 
@@ -126,10 +134,68 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   return body.data as T;
 }
 
+// ── Typed endpoints ──────────────────────────────────────────────────────────────────
+//
+// The URL now decides the response type. Before this, every call passed its own type
+// argument — `api.get<Auction[]>('/watchlist')` — which is an assertion, not a check: the
+// server was returning a five-field subset and TypeScript had no opinion, because the
+// assertion *was* the contract. These maps come from openapi.json, so the URL is checked
+// against the routes that exist and the response type is read from the same spec the
+// server validates with.
+//
+// Known limitation: a path parameter is matched as `${string}`, which also matches a
+// slash. So an over-deep URL under a real prefix (`/auctions/a/b/c`) satisfies the
+// parameter type, then resolves to `never` and errors wherever the result is used, rather
+// than at the call. Typos in a static path, and every undocumented path, are caught here.
+
+/** Drop a query string: '/auctions?status=ACTIVE' -> '/auctions'. */
+type Base<U extends string> = U extends `${infer B}?${string}` ? B : U;
+
+/** '/a/b/c' -> ['', 'a', 'b', 'c'] */
+type Segments<S extends string> = S extends `${infer H}/${infer R}` ? [H, ...Segments<R>] : [S];
+
+/** A '{param}' segment matches exactly one segment; every other segment must match literally. */
+type SegmentsMatch<U extends readonly string[], P extends readonly string[]> =
+  U extends readonly [infer UH extends string, ...infer UR extends readonly string[]]
+    ? P extends readonly [infer PH extends string, ...infer PR extends readonly string[]]
+      ? PH extends `{${string}}`
+        ? SegmentsMatch<UR, PR>
+        : UH extends PH ? SegmentsMatch<UR, PR> : false
+      : false
+    : P extends readonly [] ? true : false;
+
+/**
+ * The response type documented for `U`.
+ *
+ * Exact keys are tried first, so '/auctions/mine/bids' resolves to its own entry and never
+ * falls through to '/auctions/{auctionId}/bids'. Segment counts must agree, so
+ * `/auctions/${id}` cannot also match '/auctions/{auctionId}/bids'.
+ */
+type ResponseOf<U extends string, M> =
+  Base<U> extends keyof M
+    ? M[Base<U>]
+    : { [K in keyof M]: SegmentsMatch<Segments<Base<U>>, Segments<K & string>> extends true ? M[K] : never }[keyof M];
+
+/** '/a/{id}/b' -> `/a/${string}/b`, so a template-literal argument keeps its shape. */
+type Pattern<K extends string> =
+  K extends `${infer A}{${string}}${infer B}` ? `${A}${string}${Pattern<B>}` : K;
+
+/** Every URL this method documents, with or without a query string. */
+type Url<M> = Pattern<keyof M & string> | `${Pattern<keyof M & string>}?${string}`;
+
 export const api = {
-  get:   <T>(path: string)                  => request<T>(path, { method: 'GET' }),
-  post:  <T>(path: string, body?: unknown)  => request<T>(path, { method: 'POST',  body: body !== undefined ? JSON.stringify(body) : undefined }),
-  put:   <T>(path: string, body?: unknown)  => request<T>(path, { method: 'PUT',   body: body !== undefined ? JSON.stringify(body) : undefined }),
-  patch: <T>(path: string, body?: unknown)  => request<T>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }),
-  del:   <T>(path: string)                  => request<T>(path, { method: 'DELETE' }),
+  get:   <P extends Url<GetEndpoints>>(path: P) =>
+    request<ResponseOf<P, GetEndpoints>>(path, { method: 'GET' }),
+
+  post:  <P extends Url<PostEndpoints>>(path: P, body?: unknown) =>
+    request<ResponseOf<P, PostEndpoints>>(path, { method: 'POST',  body: body !== undefined ? JSON.stringify(body) : undefined }),
+
+  put:   <P extends Url<PutEndpoints>>(path: P, body?: unknown) =>
+    request<ResponseOf<P, PutEndpoints>>(path, { method: 'PUT',   body: body !== undefined ? JSON.stringify(body) : undefined }),
+
+  patch: <P extends Url<PatchEndpoints>>(path: P, body?: unknown) =>
+    request<ResponseOf<P, PatchEndpoints>>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }),
+
+  del:   <P extends Url<DeleteEndpoints>>(path: P) =>
+    request<ResponseOf<P, DeleteEndpoints>>(path, { method: 'DELETE' }),
 };

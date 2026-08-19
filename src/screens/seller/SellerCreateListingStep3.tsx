@@ -46,7 +46,7 @@ export default function SellerCreateListingStep3() {
 
     setIsSubmitting(true);
     try {
-      const data = await api.post<{ listingId: string; listingCode: string }>('/listings', {
+      const data = await api.post('/listings', {
         title,
         category: draft.category,
         condition: draft.condition,

@@ -42,7 +42,7 @@ export default function BuyerProfile() {
   useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
 
   useEffect(() => {
-    api.get<WonTransaction[]>('/payments/my-wins')
+    api.get('/payments/my-wins')
       .then(setWins)
       .catch(() => setWins(null));
   }, []);
@@ -53,7 +53,7 @@ export default function BuyerProfile() {
   const winningBidKeys = new Set((wins ?? []).map(w => `${w.auctionId}:${w.finalAmount}`));
 
   useEffect(() => {
-    api.get<{ notifyOutbid: boolean; notifyWins: boolean; notifyNews: boolean }>('/auth/me/preferences')
+    api.get('/auth/me/preferences')
       .then(p => { setNotifBids(p.notifyOutbid); setNotifWins(p.notifyWins); setNotifNews(p.notifyNews); })
       .catch(() => {});
   }, []);

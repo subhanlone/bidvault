@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (data: RegisterData) => {
     try {
-      const result = await api.post<{ user: User; verificationCode?: string; codeExpiresAt?: string }>('/auth/register', data);
+      const result = await api.post('/auth/register', data);
       return { success: true, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Registration failed' };
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resendVerification = async (email: string) => {
     try {
-      const result = await api.post<{ message: string; verificationCode?: string; codeExpiresAt?: string }>('/auth/resend-verification', { email });
+      const result = await api.post('/auth/resend-verification', { email });
       return { success: true, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to resend code' };
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (data: LoginData, remember = true) => {
     try {
-      const result = await api.post<{ user: User; accessToken: string; refreshToken: string }>('/auth/login', data);
+      const result = await api.post('/auth/login', data);
       persist(result.user, result.accessToken, result.refreshToken, remember);
       reconnectSocket();
       return { success: true, user: result.user };
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const forgotPassword = async (email: string) => {
     try {
-      const result = await api.post<{ message: string; resetCode?: string; codeExpiresAt?: string }>('/auth/forgot-password', { email });
+      const result = await api.post('/auth/forgot-password', { email });
       return { success: true, resetCode: result.resetCode, codeExpiresAt: result.codeExpiresAt };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to send reset code' };
