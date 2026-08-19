@@ -52,19 +52,22 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
     appliedBidIds.current.add(bid.bidId);
 
     setBids(prev => ({ ...prev, [auctionId]: [bid, ...(prev[auctionId] ?? [])] }));
-    setAuctions(prev =>
-      prev.map(a =>
-        a.auctionId === auctionId
-          ? {
-              ...a,
-              // max(), not assignment: a broadcast that arrives out of order must never
-              // walk the price backwards.
-              currentBid: Math.max(a.currentBid, bid.amount),
-              bidCount: a.bidCount + 1,
-            }
-          : a,
-      ),
-    );
+
+    // max(), not assignment: a broadcast that arrives out of order must never walk the
+    // price backwards.
+    const fold = (a: Auction): Auction =>
+      a.auctionId === auctionId
+        ? { ...a, currentBid: Math.max(a.currentBid, bid.amount), bidCount: a.bidCount + 1 }
+        : a;
+
+    setAuctions(prev => prev.map(fold));
+    // `watchlistAuctions` holds its own rows rather than pointing into `auctions`, so it has
+    // to be folded separately. Bid on a watched auction from its live page and, without
+    // this, the watchlist would still show the price from when it was fetched while Browse
+    // showed the new one — the same auction, two numbers, in one session.
+    // (Sitting on the watchlist page it still will not tick: the server emits bid:placed to
+    // the `auction:<id>` room, which only the live-bidding and monitor screens join.)
+    setWatchlistAuctions(prev => prev.map(fold));
   }, []);
 
   /**
@@ -136,9 +139,14 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
     };
   }, [applyBid]);
 
+  // Falls back to the watchlist rows because `auctions` is seeded from ?status=ACTIVE: a
+  // watched auction that has closed exists only in `watchlistAuctions`, and the watchlist
+  // cards link straight into live bidding, which resolves through here. Without the
+  // fallback that click lands on "Auction not found".
   const getAuction = useCallback(
-    (id: string) => auctions.find(a => a.auctionId === id),
-    [auctions],
+    (id: string) =>
+      auctions.find(a => a.auctionId === id) ?? watchlistAuctions.find(a => a.auctionId === id),
+    [auctions, watchlistAuctions],
   );
 
   const fetchBids = useCallback(async (auctionId: string) => {

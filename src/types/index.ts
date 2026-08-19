@@ -101,17 +101,6 @@ export interface Bid {
   buyerName: string;
   amount: number;
   timestamp: string;
-  isWin?: boolean;
-}
-
-export interface Transaction {
-  transactionId: string;
-  auctionId: string;
-  winnerId: string;
-  sellerId: string;
-  finalAmount: number;
-  status: TransactionStatus;
-  createdAt: string;
 }
 
 export interface ListingDraft {
@@ -146,10 +135,4 @@ export interface RegisterData {
 export interface LoginData {
   email: string;
   password: string;
-}
-
-export interface ApiResponse<T = null> {
-  success: boolean;
-  data?: T;
-  error?: string;
 }

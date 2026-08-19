@@ -8,6 +8,7 @@ import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { api } from '../../services/api';
+import type { WonTransaction } from '../../types/api';
 import { dateTimeShort, monthYear, pkr, pkrCompact } from '../../utils/format';
 
 export default function BuyerProfile() {
@@ -32,15 +33,24 @@ export default function BuyerProfile() {
   // "closed auctions where my highest bid equals currentBid", which counts an under-reserve
   // auction as a win — the same auction My Bids correctly labels "nothing to pay". Read the
   // authoritative list instead, the one My Wins renders from.
-  const [winCount, setWinCount] = useState<number | null>(null);
+  // Kept as the won auctions themselves, not just a count: the bid list below labels a bid
+  // "Won", and the only truthful source for that is this same list. `null` means the request
+  // has not resolved (or failed), which is why the tile shows an em dash rather than 0.
+  const [wins, setWins] = useState<WonTransaction[] | null>(null);
+  const winCount = wins?.length ?? null;
 
   useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
 
   useEffect(() => {
-    api.get<unknown[]>('/payments/my-wins')
-      .then(wins => setWinCount(wins.length))
-      .catch(() => setWinCount(null));
+    api.get<WonTransaction[]>('/payments/my-wins')
+      .then(setWins)
+      .catch(() => setWins(null));
   }, []);
+
+  // A bid is the winning bid when its auction was won and its amount is the price the
+  // transaction settled at. Matching on auction alone would label every earlier bid on that
+  // auction "Won" as well.
+  const winningBidKeys = new Set((wins ?? []).map(w => `${w.auctionId}:${w.finalAmount}`));
 
   useEffect(() => {
     api.get<{ notifyOutbid: boolean; notifyWins: boolean; notifyNews: boolean }>('/auth/me/preferences')
@@ -208,7 +218,7 @@ export default function BuyerProfile() {
                           </div>
                           <div className="text-right shrink-0">
                             <p className="font-bold text-[13px] text-primary">{pkr(bid.amount)}</p>
-                            <p className="text-[10px] text-placeholder">{bid.isWin ? 'Won' : 'Bid placed'}</p>
+                            <p className="text-[10px] text-placeholder">{winningBidKeys.has(`${bid.auctionId}:${bid.amount}`) ? 'Won' : 'Bid placed'}</p>
                           </div>
                         </button>
                       );
