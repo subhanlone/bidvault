@@ -124,15 +124,6 @@ export interface Toast {
   message: string;
 }
 
-export interface RegisterData {
-  name: string;
-  email: string;
-  cnic: string;
-  password: string;
-  role: UserRole;
-}
-
-export interface LoginData {
-  email: string;
-  password: string;
-}
+// RegisterData and LoginData lived here. They were wire shapes that nothing compared
+// against the contract, and RegisterData.role admitted ADMIN which the API rejects.
+// AuthContext now imports RegisterRequest and LoginRequest from types/api instead.

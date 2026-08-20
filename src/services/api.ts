@@ -4,6 +4,9 @@ import type {
   PutEndpoints,
   PatchEndpoints,
   DeleteEndpoints,
+  PostRequests,
+  PutRequests,
+  PatchRequests,
 } from '../types/openapi';
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
@@ -183,18 +186,38 @@ type Pattern<K extends string> =
 /** Every URL this method documents, with or without a query string. */
 type Url<M> = Pattern<keyof M & string> | `${Pattern<keyof M & string>}?${string}`;
 
+/**
+ * The body documented for `U` — the same lookup as `ResponseOf`, against the request maps
+ * instead of the response ones. Resolves to `never` for the seven mutating routes the
+ * contract gives no body (approve, approve-all, read, read-all, watchlist add,
+ * upload-signature, the Stripe webhook).
+ */
+type BodyOf<U extends string, M> = ResponseOf<U, M>;
+
+/**
+ * `[body]` when the contract documents one, `[]` when it does not.
+ *
+ * A rest parameter rather than `body?:` so the two cases are distinguishable: a route with
+ * a documented body cannot be called without one, and a route without cannot be handed a
+ * stray object. `body?: unknown` — what this was — accepted both mistakes silently, which
+ * is the same shape of hole the URL argument had before the response maps landed.
+ */
+type BodyArgs<U extends string, M> = [BodyOf<U, M>] extends [never]
+  ? []
+  : [body: BodyOf<U, M>];
+
 export const api = {
   get:   <P extends Url<GetEndpoints>>(path: P) =>
     request<ResponseOf<P, GetEndpoints>>(path, { method: 'GET' }),
 
-  post:  <P extends Url<PostEndpoints>>(path: P, body?: unknown) =>
-    request<ResponseOf<P, PostEndpoints>>(path, { method: 'POST',  body: body !== undefined ? JSON.stringify(body) : undefined }),
+  post:  <P extends Url<PostEndpoints>>(path: P, ...body: BodyArgs<P, PostRequests>) =>
+    request<ResponseOf<P, PostEndpoints>>(path, { method: 'POST',  body: body.length ? JSON.stringify(body[0]) : undefined }),
 
-  put:   <P extends Url<PutEndpoints>>(path: P, body?: unknown) =>
-    request<ResponseOf<P, PutEndpoints>>(path, { method: 'PUT',   body: body !== undefined ? JSON.stringify(body) : undefined }),
+  put:   <P extends Url<PutEndpoints>>(path: P, ...body: BodyArgs<P, PutRequests>) =>
+    request<ResponseOf<P, PutEndpoints>>(path, { method: 'PUT',   body: body.length ? JSON.stringify(body[0]) : undefined }),
 
-  patch: <P extends Url<PatchEndpoints>>(path: P, body?: unknown) =>
-    request<ResponseOf<P, PatchEndpoints>>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }),
+  patch: <P extends Url<PatchEndpoints>>(path: P, ...body: BodyArgs<P, PatchRequests>) =>
+    request<ResponseOf<P, PatchEndpoints>>(path, { method: 'PATCH', body: body.length ? JSON.stringify(body[0]) : undefined }),
 
   del:   <P extends Url<DeleteEndpoints>>(path: P) =>
     request<ResponseOf<P, DeleteEndpoints>>(path, { method: 'DELETE' }),

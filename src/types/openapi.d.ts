@@ -101,6 +101,10 @@ export type ChangePasswordRequest = {
   newPassword: string;
 };
 
+export type CreateIntentRequest = {
+  transactionId: string;
+};
+
 export type CreateReviewRequest = {
   transactionId: string;
   stars: number;
@@ -444,4 +448,33 @@ export interface PatchEndpoints {
 /** What each documented DELETE returns, unwrapped from the response envelope. */
 export interface DeleteEndpoints {
   "/watchlist/{auctionId}": WatchToggle;
+}
+
+/** The body each documented POST expects. */
+export interface PostRequests {
+  "/auctions/{auctionId}/bids": PlaceBidRequest;
+  "/auth/change-password": ChangePasswordRequest;
+  "/auth/forgot-password": ForgotPasswordRequest;
+  "/auth/login": LoginRequest;
+  "/auth/logout": RefreshRequest;
+  "/auth/refresh": RefreshRequest;
+  "/auth/register": RegisterRequest;
+  "/auth/resend-verification": ResendVerificationRequest;
+  "/auth/reset-password": ResetPasswordRequest;
+  "/auth/verify-email": VerifyEmailRequest;
+  "/auth/verify-reset-otp": VerifyResetOtpRequest;
+  "/listings": SubmitListingRequest;
+  "/listings/{listingId}/reject": RejectListingRequest;
+  "/payments/create-intent": CreateIntentRequest;
+  "/reviews": CreateReviewRequest;
+}
+
+/** The body each documented PUT expects. */
+export interface PutRequests {
+  "/settings": UpdateSettingsRequest;
+}
+
+/** The body each documented PATCH expects. */
+export interface PatchRequests {
+  "/auth/me/preferences": NotificationPreferences;
 }

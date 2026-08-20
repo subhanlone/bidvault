@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { User, RegisterData, LoginData } from '../types';
+import type { User } from '../types';
+// Straight from the contract rather than the hand-written pair that used to live in
+// types/index.ts. Neither was covered by the equivalence guard, and the old RegisterData
+// typed `role` as UserRole — which includes ADMIN, a value POST /auth/register has never
+// accepted. Typing the request body turned that from latent into a build error.
+import type { RegisterRequest, LoginRequest } from '../types/api';
 import { api, ApiError, getStoredAuth, setStoredAuth, clearStoredAuth } from '../services/api';
 import { reconnectSocket } from '../services/socket';
 
@@ -7,10 +12,10 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  register: (data: RegisterData) => Promise<{ success: boolean; verificationCode?: string; codeExpiresAt?: string; error?: string }>;
+  register: (data: RegisterRequest) => Promise<{ success: boolean; verificationCode?: string; codeExpiresAt?: string; error?: string }>;
   verifyEmail: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   resendVerification: (email: string) => Promise<{ success: boolean; verificationCode?: string; codeExpiresAt?: string; error?: string }>;
-  login: (data: LoginData, remember?: boolean) => Promise<{ success: boolean; error?: string; code?: string; user?: User }>;
+  login: (data: LoginRequest, remember?: boolean) => Promise<{ success: boolean; error?: string; code?: string; user?: User }>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; resetCode?: string; codeExpiresAt?: string; error?: string }>;
   verifyResetOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
@@ -43,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(accessToken);
   };
 
-  const register = async (data: RegisterData) => {
+  const register = async (data: RegisterRequest) => {
     try {
       const result = await api.post('/auth/register', data);
       return { success: true, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt };
@@ -70,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (data: LoginData, remember = true) => {
+  const login = async (data: LoginRequest, remember = true) => {
     try {
       const result = await api.post('/auth/login', data);
       persist(result.user, result.accessToken, result.refreshToken, remember);

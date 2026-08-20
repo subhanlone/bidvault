@@ -3,7 +3,11 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, ShoppingBag, Tag, CreditCard } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import type { UserRole } from '../../types';
+// The role this form can submit, taken from the contract rather than the wider UserRole:
+// registration accepts BUYER and SELLER only, and the two buttons below produce nothing
+// else. The wider type let ADMIN through the type system all the way to the API.
+import type { RegisterRequest } from '../../types/api';
+type SignupRole = RegisterRequest['role'];
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
 import { isStrictEmail, EMAIL_INVALID_MESSAGE } from '../../utils/validation';
@@ -47,7 +51,7 @@ export default function RegisterScreen() {
   const { user, register } = useAuth();
   const { showToast } = useToast();
 
-  const [role, setRole] = useState<UserRole>(
+  const [role, setRole] = useState<SignupRole>(
     searchParams.get('role') === 'SELLER' ? 'SELLER' : 'BUYER',
   );
   const [name, setName]         = useState('');
@@ -159,8 +163,8 @@ export default function RegisterScreen() {
           <p className="text-[12px] font-bold text-secondary mb-2">I want to <span className="text-primary">*</span></p>
           <div className="grid grid-cols-2 gap-3">
             {([
-              { r: 'BUYER'  as UserRole, label: 'Buyer',  desc: 'Browse & bid on live auctions', Icon: ShoppingBag },
-              { r: 'SELLER' as UserRole, label: 'Seller', desc: 'List items & run your auctions', Icon: Tag        },
+              { r: 'BUYER'  as SignupRole, label: 'Buyer',  desc: 'Browse & bid on live auctions', Icon: ShoppingBag },
+              { r: 'SELLER' as SignupRole, label: 'Seller', desc: 'List items & run your auctions', Icon: Tag        },
             ]).map(({ r, label, desc, Icon }) => {
               const sel = role === r;
               return (
