@@ -189,7 +189,7 @@ export type OtpIssued = {
   message: string;
   resetCode?: string;
   verificationCode?: string;
-  codeExpiresAt: string;
+  codeExpiresAt?: string;
 };
 
 export type PaymentIntent = {
