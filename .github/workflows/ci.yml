@@ -11,18 +11,42 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    # Both repos are checked out side by side so the layout matches a developer's
+    # machine — see the "committed API types match the backend" step for why.
+    working-directory: frontend
+
 jobs:
   check:
     name: Lint and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          path: frontend
+
+      # src/types/openapi.d.ts is generated from the backend's contract. Bringing that repo
+      # in here is what lets CI prove the committed copy is the one that contract produces.
+      #
+      # A plain anonymous clone rather than actions/checkout: that action injects the job's
+      # GITHUB_TOKEN, which is scoped to *this* repository, and its own README says a PAT is
+      # required to check out a different one. Both repos are public, so cloning without
+      # credentials sidesteps the question and keeps this workflow secret-free.
+      #
+      # It runs before setup-node because the cache key below reads its lockfile.
+      - name: clone the backend alongside
+        working-directory: ${{ github.workspace }}
+        run: git clone --depth 1 --branch master https://github.com/subhanlone/bidvault-backend.git backend
 
       # Matches @types/node in devDependencies.
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
 
       - run: npm ci
 
@@ -33,6 +57,42 @@ jobs:
       # job only asks whether the code compiles, and Vercel supplies the real
       # values on the deploy that actually ships.
       - run: npm run build
+
+      # The mirror of the backend's own sync gate.
+      #
+      # The backend catches drift when a contract change is pushed there. Nothing caught it
+      # from this side: src/types/openapi.d.ts is stamped "Do not edit", but an edit here —
+      # or a stale copy committed alongside unrelated frontend work — would sit undetected
+      # until the next backend push happened to run its gate.
+      #
+      # The backend's emitter has no runtime dependencies, but it is TypeScript, so its repo
+      # is installed here purely to get a TS runner.
+      #
+      # --ignore-scripts is required, not an optimisation: @prisma/client's postinstall runs
+      # `prisma generate`, which reads the datasource and so needs DATABASE_URL to exist.
+      # This workflow has no reason to define one. Skipping it is safe because the emitter
+      # imports only node: builtins, and tsx transpiles without typechecking — verified by
+      # installing this lockfile with --ignore-scripts and running tsx against it.
+      - name: install the backend's toolchain
+        working-directory: backend
+        run: npm ci --ignore-scripts
+
+      # Regenerates into this checkout via the emitter's default sibling path, then fails on
+      # any difference from what is committed here.
+      #
+      # Ordering consequence, same as the backend's gate: if regenerated types land here
+      # before the contract change lands in the backend, this fails until the backend catches
+      # up. That window really is inconsistent, so failing is the correct report.
+      - name: committed API types match the backend
+        working-directory: backend
+        run: |
+          npm run api:types
+          cd "${GITHUB_WORKSPACE}/frontend"
+          git diff --exit-code -- src/types/openapi.d.ts || {
+            echo "::error::src/types/openapi.d.ts is not what the backend contract produces."
+            echo "::error::Regenerate in the backend with 'npm run api:contract && npm run api:types' and commit the result here."
+            exit 1
+          }
 
       # Playwright (test:e2e / test:visual) is deliberately not run here.
       # Those specs need a live backend, a seeded database and real
