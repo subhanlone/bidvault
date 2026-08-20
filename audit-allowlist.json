@@ -1,0 +1,4 @@
+{
+  "//": "Advisories accepted after analysis. scripts/audit-gate.mjs fails on anything not listed here, AND fails when a listed advisory no longer appears — so an entry cannot outlive its reason. Never add an entry to silence something reachable; fix that at the root.",
+  "accepted": []
+}

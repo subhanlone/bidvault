@@ -50,6 +50,11 @@ jobs:
 
       - run: npm ci
 
+      # Nothing audited the dependency tree until now. Fails on any advisory not recorded
+      # in audit-allowlist.json, and on any recorded entry that no longer matches one, so
+      # an accepted exception cannot outlive its reason. Identical script in both repos.
+      - run: npm run audit:gate
+
       - run: npm run lint
 
       # `build` is `tsc -b && vite build`, so this is the typecheck too.
