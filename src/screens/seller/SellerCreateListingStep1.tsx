@@ -7,7 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Button, Input, Textarea } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
-import type { ItemCondition } from '../../types';
+import type { ItemCondition } from '../../types/api';
 import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
 
 const CATEGORIES = [

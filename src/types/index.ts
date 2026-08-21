@@ -1,108 +1,26 @@
-export type UserRole = 'BUYER' | 'SELLER' | 'ADMIN';
-export type AuctionStatus = 'SCHEDULED' | 'ACTIVE' | 'CLOSED';
-export type ListingStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
-export type NotificationType = 'BID_OUTBID' | 'AUCTION_WON' | 'RESERVE_NOT_MET' | 'LISTING_APPROVED' | 'LISTING_REJECTED' | 'NEW_REVIEW';
-export type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
-export type ItemCondition = 'NEW' | 'LIKE_NEW' | 'USED';
-export type CategoryAttributes = Record<string, string | number>;
+/**
+ * Types that belong to this app rather than to the API.
+ *
+ * Everything the server sends or accepts lives in `./api`, generated from the backend's
+ * contract. This file used to hold hand-written copies of those shapes, maintained in
+ * parallel and compared to nothing — which is how `Auction.reserveMet`, `Auction.imageUrl`,
+ * `Auction.images` and `Listing.sellerEmail` all drifted to optional while the server always
+ * sent them, and how `Bid.isWin` survived for months as a field the API has never had.
+ *
+ * A compile-time guard was added to catch that, and it did its job; but the real fix was to
+ * stop having two copies. Both the copies and the guard are gone.
+ *
+ * What is left is the two shapes with no server counterpart. Do not add wire types here.
+ */
+import type { ItemCondition, CategoryAttributes } from './api';
 
-export interface User {
-  userId: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  isEmailVerified: boolean;
-  createdAt: string;
-}
-
-export interface Listing {
-  listingId: string;
-  listingCode: string;
-  sellerId: string;
-  sellerName: string;
-  title: string;
-  category: string;
-  condition: ItemCondition;
-  description: string;
-  startPrice: number;
-  reservePrice?: number;
-  minIncrement: number;
-  durationDays: number;
-  status: ListingStatus;
-  rejectionReason?: string;
-  submittedAt: string;
-  emoji: string;
-  imageUrl?: string;
-  sellerEmail: string;
-  attributes?: CategoryAttributes;
-}
-
-export interface Auction {
-  auctionId: string;
-  listingId: string;
-  title: string;
-  category: string;
-  condition: ItemCondition;
-  description: string;
-  emoji: string;
-  sellerId: string;
-  sellerName: string;
-  sellerRating: number | null;
-  sellerSales: number | null;
-  startPrice: number;
-  currentBid: number;
-  minIncrement: number;
-  /**
-   * The seller's reserve *amount* is never sent to buyers — only this verdict.
-   * null = no reserve set · false = not reached · true = reached.
-   * While the auction is open this is a live comparison; once closed it is the worker's
-   * recorded outcome. Sellers and admins get the amount via the role-gated listing DTO.
-   */
-  reserveMet: boolean | null;
-  bidCount: number;
-  startTime: string;
-  endTime: string;
-  status: AuctionStatus;
-  // Always sent. `toAuctionDto` maps a missing image to '' and an empty gallery to [],
-  // so these are never absent — marking them optional made screens guard a case the
-  // server cannot produce. Consumers test truthiness, which handles '' correctly.
-  imageUrl: string;
-  images: string[];
-  attributes?: CategoryAttributes;
-}
-
-export interface SellerReview {
-  reviewId: string;
-  stars: number;
-  comment: string | null;
-  buyerName: string;
-  createdAt: string;
-}
-
-export interface AppNotification {
-  id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
-export interface NotificationPrefs {
-  notifyOutbid: boolean;
-  notifyWins: boolean;
-  notifyNews: boolean;
-}
-
-export interface Bid {
-  bidId: string;
-  auctionId: string;
-  buyerId: string;
-  buyerName: string;
-  amount: number;
-  timestamp: string;
-}
-
+/**
+ * The in-progress listing held by ListingContext across the three creation steps.
+ *
+ * Not a wire type: the server never sees this shape. `condition` allows `''` because the
+ * form starts with nothing selected, which is precisely why SellerCreateListingStep3 has to
+ * narrow it before submitting.
+ */
 export interface ListingDraft {
   title: string;
   category: string;
@@ -117,13 +35,10 @@ export interface ListingDraft {
   attributes: CategoryAttributes;
 }
 
+/** A transient message from ToastContext. Purely client-side. */
 export interface Toast {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
   title: string;
   message: string;
 }
-
-// RegisterData and LoginData lived here. They were wire shapes that nothing compared
-// against the contract, and RegisterData.role admitted ADMIN which the API rejects.
-// AuthContext now imports RegisterRequest and LoginRequest from types/api instead.

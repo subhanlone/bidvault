@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { Listing } from '../types';
+import type { Listing } from '../types/api';
 import { api } from '../services/api';
 
 export interface BulkApproveResult {

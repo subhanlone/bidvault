@@ -45,3 +45,15 @@ export type {
 
 // Renamed: `Notification` is a DOM global, so the bare name would shadow it confusingly.
 export type { Notification as AppNotification } from './openapi';
+
+import type { SellerReviews } from './openapi';
+
+/**
+ * One entry from GET /reviews/seller/{sellerId}.
+ *
+ * The contract nests it inside SellerReviews and gives it no name of its own, but two
+ * screens hold a single review on its own. Derived here rather than re-derived at each
+ * use, and deliberately not `Review` — that is the POST /reviews response, which has four
+ * fields and no buyerName.
+ */
+export type SellerReview = SellerReviews['reviews'][number];

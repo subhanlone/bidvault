@@ -4,7 +4,7 @@ import { useTimer } from '../../hooks/useTimer';
 import { Menu, Radio } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
-import type { Auction } from '../../types';
+import type { Auction } from '../../types/api';
 import { conditionLabel, count, pkr, pkrCompact } from '../../utils/format';
 
 function AuctionRow({ auction }: { auction: Auction }) {

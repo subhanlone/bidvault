@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import type { Auction, Bid } from '../types';
+import type { Auction, Bid } from '../types/api';
 import { api, ApiError } from '../services/api';
 import { getSocket } from '../services/socket';
 import { useAuth } from './AuthContext';

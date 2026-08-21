@@ -13,7 +13,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { getSocket } from '../../services/socket';
 import { api } from '../../services/api';
-import type { SellerReview } from '../../types';
+import type { SellerReview } from '../../types/api';
 import { getCategoryFields } from '../../config/categoryFields';
 import { conditionLabel, count, dateMedium, pkr, timeShort } from '../../utils/format';
 import { useDialog } from '../../hooks/useDialog';

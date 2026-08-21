@@ -4,7 +4,7 @@ import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { Clock, Heart } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
-import type { Auction } from '../../types';
+import type { Auction } from '../../types/api';
 import { count, pkr } from '../../utils/format';
 
 function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => void }) {

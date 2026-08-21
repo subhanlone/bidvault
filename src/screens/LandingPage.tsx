@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
 import { useTimer } from '../hooks/useTimer';
-import type { Auction } from '../types';
+import type { Auction } from '../types/api';
 import { Button, AuctionThumbnail } from '../components/ui';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';

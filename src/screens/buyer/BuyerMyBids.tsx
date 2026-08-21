@@ -6,7 +6,7 @@ import { useTimer } from '../../hooks/useTimer';
 import { Check, Zap, Trophy, X, Hammer, Ban } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
-import type { Auction } from '../../types';
+import type { Auction } from '../../types/api';
 import { pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 

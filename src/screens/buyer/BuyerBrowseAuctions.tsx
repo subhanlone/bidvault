@@ -6,7 +6,7 @@ import { useAuction } from '../../context/AuctionContext';
 import { useTimer } from '../../hooks/useTimer';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
-import type { Auction } from '../../types';
+import type { Auction } from '../../types/api';
 import { conditionLabel, count, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 

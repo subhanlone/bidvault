@@ -4,7 +4,7 @@ import { Package, Banknote, Gavel, PackageCheck, Clock, XCircle, Star } from 'lu
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
-import type { Listing, SellerReview } from '../../types';
+import type { Listing, SellerReview } from '../../types/api';
 import { conditionLabel, dateShort, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 

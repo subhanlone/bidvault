@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { User } from '../types';
-// Straight from the contract rather than the hand-written pair that used to live in
-// types/index.ts. Neither was covered by the equivalence guard, and the old RegisterData
-// typed `role` as UserRole — which includes ADMIN, a value POST /auth/register has never
-// accepted. Typing the request body turned that from latent into a build error.
-import type { RegisterRequest, LoginRequest } from '../types/api';
+// All three come straight from the contract. RegisterRequest and LoginRequest replaced a
+// hand-written pair that used to sit in types/index.ts alongside copies of every other wire
+// shape — and unlike those, this pair was never even covered by the guard that compared them,
+// so nothing had ever checked it. The old RegisterData typed `role` as UserRole, which
+// includes ADMIN: a value POST /auth/register has never accepted.
+import type { User, RegisterRequest, LoginRequest } from '../types/api';
 import { api, ApiError, getStoredAuth, setStoredAuth, clearStoredAuth } from '../services/api';
 import { reconnectSocket } from '../services/socket';
 

@@ -9,7 +9,7 @@
  * Anything user-visible that needs a decision about *how* it reads belongs here.
  */
 
-import type { ItemCondition } from '../types';
+import type { ItemCondition } from '../types/api';
 
 /**
  * Pinned so output does not follow the viewer's browser locale. Currency was previously

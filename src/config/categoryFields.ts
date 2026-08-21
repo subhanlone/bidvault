@@ -1,4 +1,4 @@
-import type { CategoryAttributes } from '../types';
+import type { CategoryAttributes } from '../types/api';
 
 export interface CategoryFieldConfig {
   key: string;

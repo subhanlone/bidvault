@@ -4,7 +4,7 @@ import { Package, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button } from '../../components/ui';
-import type { Listing, ListingStatus } from '../../types';
+import type { Listing, ListingStatus } from '../../types/api';
 import { conditionLabel, dateMedium, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 
