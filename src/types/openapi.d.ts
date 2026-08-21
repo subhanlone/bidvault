@@ -124,6 +124,18 @@ export type ForgotPasswordRequest = {
 export type Health = {
   status: "ok";
   service: string;
+  version: string;
+  commit: string;
+  dependencies: {
+    database: {
+      state: "up" | "down";
+      latencyMs: number;
+    };
+    redis: {
+      state: "up" | "down";
+      latencyMs: number;
+    };
+  };
 };
 
 export type ItemCondition = "NEW" | "LIKE_NEW" | "USED";

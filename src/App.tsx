@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RealtimeBridge } from './queries/RealtimeBridge';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ListingProvider } from './context/ListingContext';
 import { ToastProvider } from './context/ToastContext';
 import ToastContainer from './components/ToastContainer';
@@ -57,149 +58,153 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
+  // ErrorBoundary sits outermost, above the router and every provider: a throw inside any
+  // of them would otherwise blank the page with nothing rendered to recover from.
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ListingProvider>
-            <ToastProvider>
-              <RealtimeBridge />
-              <ToastContainer />
-              {/* Layout convention: page content max-width is max-w-5xl (1024px) for most screens. */}
-              {/* BuyerLiveBidding uses max-w-[1100px] due to two-column layout. Do not change these per-screen. */}
-              <Suspense
-                fallback={
-                  <div className="min-h-screen bg-bg flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
-                  </div>
-                }
-              >
-                <Routes>
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/maintenance" element={<MaintenancePage />} />
+    <ErrorBoundary area="app">
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ListingProvider>
+              <ToastProvider>
+                <RealtimeBridge />
+                <ToastContainer />
+                {/* Layout convention: page content max-width is max-w-5xl (1024px) for most screens. */}
+                {/* BuyerLiveBidding uses max-w-[1100px] due to two-column layout. Do not change these per-screen. */}
+                <Suspense
+                  fallback={
+                    <div className="min-h-screen bg-bg flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full border-2 border-border border-t-primary animate-spin" />
+                    </div>
+                  }
+                >
+                  <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/maintenance" element={<MaintenancePage />} />
 
-                  {/* Public auth routes */}
-                  <Route path="/register" element={<RegisterScreen />} />
-                  <Route path="/email-verification" element={<EmailVerificationScreen />} />
-                  <Route path="/login" element={<LoginScreen />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+                    {/* Public auth routes */}
+                    <Route path="/register" element={<RegisterScreen />} />
+                    <Route path="/email-verification" element={<EmailVerificationScreen />} />
+                    <Route path="/login" element={<LoginScreen />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
 
-                  {/* Admin routes */}
-                  <Route path="/admin/dashboard" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminDashboardOverview />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/listing-review/:listingId" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminListingReview />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/live-auctions" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminLiveAuctions />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/monitor/:auctionId" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminAuctionMonitor />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/listing-reviews" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminListingReviews />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/analytics" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminAnalytics />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/settings" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
-                      <AdminSettings />
-                    </ProtectedRoute>
-                  } />
+                    {/* Admin routes */}
+                    <Route path="/admin/dashboard" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminDashboardOverview />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/listing-review/:listingId" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminListingReview />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/live-auctions" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminLiveAuctions />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/monitor/:auctionId" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminAuctionMonitor />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/listing-reviews" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminListingReviews />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/analytics" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminAnalytics />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/settings" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminSettings />
+                      </ProtectedRoute>
+                    } />
 
-                  {/* Seller routes */}
-                  <Route path="/seller/dashboard" element={
-                    <ProtectedRoute allowedRoles={['SELLER']}>
-                      <SellerDashboard />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/seller/listings" element={
-                    <ProtectedRoute allowedRoles={['SELLER']}>
-                      <SellerMyListings />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/seller/create-listing/step-1" element={
-                    <ProtectedRoute allowedRoles={['SELLER']}>
-                      <SellerCreateListingStep1 />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/seller/create-listing/step-2" element={
-                    <ProtectedRoute allowedRoles={['SELLER']}>
-                      <SellerCreateListingStep2 />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/seller/create-listing/step-3" element={
-                    <ProtectedRoute allowedRoles={['SELLER']}>
-                      <SellerCreateListingStep3 />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/seller/listing-submitted" element={
-                    <ProtectedRoute allowedRoles={['SELLER']}>
-                      <SellerListingSubmitted />
-                    </ProtectedRoute>
-                  } />
+                    {/* Seller routes */}
+                    <Route path="/seller/dashboard" element={
+                      <ProtectedRoute allowedRoles={['SELLER']}>
+                        <SellerDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/seller/listings" element={
+                      <ProtectedRoute allowedRoles={['SELLER']}>
+                        <SellerMyListings />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/seller/create-listing/step-1" element={
+                      <ProtectedRoute allowedRoles={['SELLER']}>
+                        <SellerCreateListingStep1 />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/seller/create-listing/step-2" element={
+                      <ProtectedRoute allowedRoles={['SELLER']}>
+                        <SellerCreateListingStep2 />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/seller/create-listing/step-3" element={
+                      <ProtectedRoute allowedRoles={['SELLER']}>
+                        <SellerCreateListingStep3 />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/seller/listing-submitted" element={
+                      <ProtectedRoute allowedRoles={['SELLER']}>
+                        <SellerListingSubmitted />
+                      </ProtectedRoute>
+                    } />
 
-                  {/* Buyer routes */}
-                  <Route path="/buyer/browse" element={
-                    <ProtectedRoute allowedRoles={['BUYER']}>
-                      <BuyerBrowseAuctions />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/buyer/my-bids" element={
-                    <ProtectedRoute allowedRoles={['BUYER']}>
-                      <BuyerMyBids />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/buyer/watchlist" element={
-                    <ProtectedRoute allowedRoles={['BUYER']}>
-                      <BuyerWatchlist />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/buyer/live-bidding/:auctionId" element={
-                    <ProtectedRoute allowedRoles={['BUYER', 'ADMIN']}>
-                      <BuyerLiveBidding />
-                    </ProtectedRoute>
-                  } />
+                    {/* Buyer routes */}
+                    <Route path="/buyer/browse" element={
+                      <ProtectedRoute allowedRoles={['BUYER']}>
+                        <BuyerBrowseAuctions />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/buyer/my-bids" element={
+                      <ProtectedRoute allowedRoles={['BUYER']}>
+                        <BuyerMyBids />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/buyer/watchlist" element={
+                      <ProtectedRoute allowedRoles={['BUYER']}>
+                        <BuyerWatchlist />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/buyer/live-bidding/:auctionId" element={
+                      <ProtectedRoute allowedRoles={['BUYER', 'ADMIN']}>
+                        <BuyerLiveBidding />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path="/buyer/auction-won" element={
-                    <ProtectedRoute allowedRoles={['BUYER']}>
-                      <BuyerAuctionWon />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/buyer/my-wins" element={
-                    <ProtectedRoute allowedRoles={['BUYER']}>
-                      <BuyerMyWins />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/buyer/profile" element={
-                    <ProtectedRoute allowedRoles={['BUYER']}>
-                      <BuyerProfile />
-                    </ProtectedRoute>
-                  } />
+                    <Route path="/buyer/auction-won" element={
+                      <ProtectedRoute allowedRoles={['BUYER']}>
+                        <BuyerAuctionWon />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/buyer/my-wins" element={
+                      <ProtectedRoute allowedRoles={['BUYER']}>
+                        <BuyerMyWins />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/buyer/profile" element={
+                      <ProtectedRoute allowedRoles={['BUYER']}>
+                        <BuyerProfile />
+                      </ProtectedRoute>
+                    } />
 
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </ToastProvider>
-          </ListingProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </ToastProvider>
+            </ListingProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
