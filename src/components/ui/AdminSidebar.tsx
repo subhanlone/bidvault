@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, BarChart2, Radio, Settings, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
 import { useAuth } from '../../context/AuthContext';
-import { useAuction } from '../../context/AuctionContext';
+import { useActiveAuctions } from '../../queries/auctions';
 import { usePendingListings } from '../../hooks/usePendingListings';
 
 interface SidebarItem {
@@ -33,10 +33,10 @@ export function AdminSidebarContent({ active, onClose, collapsed = false, onTogg
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const { pendingListings, refreshListings } = usePendingListings();
-  const { auctions } = useAuction();
+  const { data: auctions = [] } = useActiveAuctions();
   useEffect(() => { void refreshListings(); }, [refreshListings]);
   const pendingCount = pendingListings.length;
-  const activeCount = auctions.length; // AuctionContext holds only ACTIVE auctions
+  const activeCount = auctions.length; // the query is scoped to ?status=ACTIVE
 
   const badgeFor = (label: string): string | undefined => {
     if (label === 'Listing Review') return pendingCount > 0 ? String(pendingCount) : undefined;

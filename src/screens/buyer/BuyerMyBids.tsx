@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useAuction } from '../../context/AuctionContext';
+import { useMyBids } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { Check, Zap, Trophy, X, Hammer, Ban } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
@@ -128,27 +127,35 @@ function BidCard({ entry }: { entry: BidEntry }) {
 
 export default function BuyerMyBids() {
   const { user, logout } = useAuth();
-  const { auctions, bids, fetchMyBids } = useAuction();
+  const { data: myBidRows = [], isPending: loading } = useMyBids(user?.role === 'BUYER');
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchMyBids().finally(() => setLoading(false));
-  }, [fetchMyBids]);
 
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
-  const myBidEntries: BidEntry[] = Object.entries(bids)
-    .map(([auctionId, bidList]) => {
-      const myBids = bidList.filter(b => b.buyerId === user?.userId);
-      if (myBids.length === 0) return null;
-      const auction = auctions.find(a => a.auctionId === auctionId);
-      if (!auction) return null;
-      const myHighestBid = Math.max(...myBids.map(b => b.amount));
-      const isWinning = myHighestBid === auction.currentBid;
-      return { auction, myHighestBid, myBidCount: myBids.length, isWinning };
-    })
-    .filter((e): e is BidEntry => e !== null)
+
+  // GET /auctions/mine/bids returns each bid with its auction attached, and is already scoped
+  // to the signed-in buyer. Both of those used to be the caller's problem: this screen read a
+  // shared record holding every bid for every auction anyone had opened, filtered it by
+  // buyerId, and then looked the auction up in the ACTIVE list — silently dropping any bid on
+  // an auction that had since closed.
+  const myBidEntries: BidEntry[] = Object.values(
+    myBidRows.reduce<Record<string, BidEntry>>((acc, { auction, ...bid }) => {
+      const seen = acc[auction.auctionId];
+      if (seen) {
+        seen.myHighestBid = Math.max(seen.myHighestBid, bid.amount);
+        seen.myBidCount += 1;
+      } else {
+        acc[auction.auctionId] = {
+          auction,
+          myHighestBid: bid.amount,
+          myBidCount: 1,
+          isWinning: false,
+        };
+      }
+      return acc;
+    }, {}),
+  )
+    .map(e => ({ ...e, isWinning: e.myHighestBid === e.auction.currentBid }))
     .sort((a, b) => {
       const aEnded = new Date(a.auction.endTime).getTime() < now;
       const bEnded = new Date(b.auction.endTime).getTime() < now;

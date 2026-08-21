@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useAuction } from '../../context/AuctionContext';
+import { useAuctionDetail, useBids, usePlaceBid, useWatchlistToggle } from '../../queries/auctions';
 import { useToast } from '../../context/ToastContext';
 import { useTimer } from '../../hooks/useTimer';
 import {
@@ -24,10 +24,17 @@ export default function BuyerLiveBidding() {
   const { auctionId } = useParams<{ auctionId: string }>();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { getAuction, bids, fetchBids, placeBid, toggleWatchlist, isWatched, auctionsLoaded } = useAuction();
+  const { toggle: toggleWatchlist, isWatched } = useWatchlistToggle();
+  const placeBid = usePlaceBid();
   const { showToast } = useToast();
 
-  const auction = getAuction(auctionId ?? '');
+  // Fetched, not looked up. getAuction() searched the ACTIVE list and fell back to the
+  // watchlist rows, so a closed watched auction resolved to undefined on a cold load and
+  // this screen rendered "Auction not found" (NEW-17). GET /auctions/{id} answers for any
+  // status, and is the only endpoint that overlays the Redis bid cache.
+  const { data: auction, isPending } = useAuctionDetail(auctionId);
+  const { data: auctionBids = [] } = useBids(auctionId);
+  const auctionsLoaded = !isPending;
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
 
   const [customBid, setCustomBid]               = useState('');
@@ -56,7 +63,6 @@ export default function BuyerLiveBidding() {
   // Socket subscription — re-subscribes automatically on reconnect
   useEffect(() => {
     if (!auctionId) return;
-    void fetchBids(auctionId);
     const socket = getSocket();
     const subscribe = () => socket.emit('auction:subscribe', auctionId);
     subscribe();
@@ -65,9 +71,8 @@ export default function BuyerLiveBidding() {
       socket.off('connect', subscribe);
       socket.emit('auction:unsubscribe', auctionId);
     };
-  }, [auctionId, fetchBids]);
+  }, [auctionId]);
 
-  const auctionBids = useMemo(() => auction ? (bids[auction.auctionId] ?? []) : [], [auction, bids]);
   const latestBidId = auctionBids[0]?.bidId;
 
   // Navigate to auction-won when timer expires.
@@ -182,13 +187,14 @@ export default function BuyerLiveBidding() {
   const handleConfirmBid = async () => {
     if (pendingBidAmount === null || !auction || !user) return;
     setIsConfirming(true);
-    const res = await placeBid(auction.auctionId, pendingBidAmount);
-    setIsConfirming(false);
-    if (res.success) {
+    try {
+      await placeBid.mutateAsync({ auctionId: auction.auctionId, amount: pendingBidAmount });
       showToast({ type: 'success', title: 'Bid Placed!', message: `Your bid of PKR ${pendingBidAmount.toLocaleString()} was placed successfully.` });
       setPendingBidAmount(null);
-    } else {
-      showToast({ type: 'error', title: 'Bid Failed', message: res.error || 'Could not place bid.' });
+    } catch (err) {
+      showToast({ type: 'error', title: 'Bid Failed', message: err instanceof Error ? err.message : 'Could not place bid.' });
+    } finally {
+      setIsConfirming(false);
     }
   };
 

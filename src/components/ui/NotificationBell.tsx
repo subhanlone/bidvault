@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Check } from 'lucide-react';
-import { useNotifications } from '../../context/NotificationContext';
+import { useNotifications } from '../../queries/notifications';
 import type { AppNotification } from '../../types/api';
 
 // Best-effort landing page when a notification is clicked.

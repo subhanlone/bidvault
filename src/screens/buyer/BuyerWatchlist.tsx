@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useAuction } from '../../context/AuctionContext';
+import { useWatchlistToggle } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { Clock, Heart } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
@@ -64,7 +64,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
 
 export default function BuyerWatchlist() {
   const { user, logout } = useAuth();
-  const { watchlistAuctions, toggleWatchlist } = useAuction();
+  const { toggle, watched: watchlistAuctions } = useWatchlistToggle();
 
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
@@ -89,7 +89,7 @@ export default function BuyerWatchlist() {
             <div className="flex items-center gap-3">
               {endedWatched.length > 0 && (
                 <button
-                  onClick={() => endedWatched.forEach(a => toggleWatchlist(a.auctionId))}
+                  onClick={() => endedWatched.forEach(a => toggle(a.auctionId))}
                   className="text-[12px] font-bold text-error hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error rounded-sm"
                 >
                   Clear Ended ({endedWatched.length})
@@ -129,7 +129,7 @@ export default function BuyerWatchlist() {
               <WatchCard
                 key={auction.auctionId}
                 auction={auction}
-                onRemove={() => toggleWatchlist(auction.auctionId)}
+                onRemove={() => toggle(auction.auctionId)}
               />
             ))}
           </div>

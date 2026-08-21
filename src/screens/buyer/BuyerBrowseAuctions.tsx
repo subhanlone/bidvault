@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Heart, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAuction } from '../../context/AuctionContext';
+import { useActiveAuctions, useWatchlistToggle } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
@@ -61,7 +61,7 @@ function AuctionCardSkeleton() {
 function AuctionCard({ auction }: { auction: Auction }) {
   const navigate = useNavigate();
   const timer = useTimer(auction.endTime);
-  const { toggleWatchlist, isWatched } = useAuction();
+  const { toggle, isWatched } = useWatchlistToggle();
   const watched = isWatched(auction.auctionId);
   const isEndingSoon = timer.hours === 0 && timer.minutes < 60 && !timer.isExpired;
   const isFinalMinutes = timer.hours === 0 && timer.minutes < 5 && !timer.isExpired;
@@ -96,7 +96,7 @@ function AuctionCard({ auction }: { auction: Auction }) {
           ) : null}
         </span>
         <button
-          onClick={e => { e.stopPropagation(); toggleWatchlist(auction.auctionId); }}
+          onClick={e => { e.stopPropagation(); toggle(auction.auctionId); }}
           // Named after its auction: all three cards previously exposed the identical name, so a
           // screen reader announced "Add to watchlist" three times with nothing to tell them apart.
           aria-label={`${watched ? 'Remove' : 'Add'} ${auction.title} ${watched ? 'from' : 'to'} watchlist`}
@@ -137,7 +137,11 @@ function AuctionCard({ auction }: { auction: Auction }) {
 
 export default function BuyerBrowseAuctions() {
   const { user, logout } = useAuth();
-  const { auctions, auctionsLoaded, auctionsError } = useAuction();
+  const { data: auctions = [], isPending, isError: auctionsError } = useActiveAuctions();
+  // isPending rather than a success flag: BUG-16's lesson is that a screen must be able to
+  // tell "nothing to show" from "could not load", and never assert the first while the
+  // second is still possible.
+  const auctionsLoaded = !isPending;
   const [search, setSearch]             = useState('');
   const [category, setCategory]         = useState('All');
   const [showEndingSoon, setShowEndingSoon] = useState(false);

@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { NotificationProvider } from './context/NotificationContext';
-import { AuctionProvider } from './context/AuctionContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RealtimeBridge } from './queries/RealtimeBridge';
 import { ListingProvider } from './context/ListingContext';
 import { ToastProvider } from './context/ToastContext';
 import ToastContainer from './components/ToastContainer';
@@ -42,14 +42,28 @@ const BuyerMyWins = lazy(() => import('./screens/buyer/BuyerMyWins'));
 const BuyerProfile = lazy(() => import('./screens/buyer/BuyerProfile'));
 
 
+/**
+ * One client for the app's lifetime.
+ *
+ * staleTime 30s: auction data changes constantly, but not so fast that every remount should
+ * refetch — the socket bridge pushes the changes that matter. retry 1 rather than the default
+ * 3, because a failed read here is shown to the user immediately (BUG-16's lesson: a screen
+ * must be able to say "couldn't load", which it cannot do while still retrying).
+ */
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false },
+  },
+});
+
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <NotificationProvider>
-        <AuctionProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
           <ListingProvider>
             <ToastProvider>
+              <RealtimeBridge />
               <ToastContainer />
               {/* Layout convention: page content max-width is max-w-5xl (1024px) for most screens. */}
               {/* BuyerLiveBidding uses max-w-[1100px] due to two-column layout. Do not change these per-screen. */}
@@ -184,9 +198,8 @@ export default function App() {
               </Suspense>
             </ToastProvider>
           </ListingProvider>
-        </AuctionProvider>
-        </NotificationProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 }

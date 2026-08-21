@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingUp, Eye, EyeOff, Bell, BellOff, Search, Hammer } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAuction } from '../../context/AuctionContext';
+import { useMyBids, useWatchlist } from '../../queries/auctions';
 import { useToast } from '../../context/ToastContext';
 import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
@@ -13,7 +13,8 @@ import { dateTimeShort, monthYear, pkr, pkrCompact } from '../../utils/format';
 
 export default function BuyerProfile() {
   const { user, logout, changePassword } = useAuth();
-  const { auctions, bids, watchlist, fetchMyBids } = useAuction();
+  const { data: myBidRows = [] } = useMyBids();
+  const { data: watchlistRows = [] } = useWatchlist();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -39,7 +40,7 @@ export default function BuyerProfile() {
   const [wins, setWins] = useState<WonTransaction[] | null>(null);
   const winCount = wins?.length ?? null;
 
-  useEffect(() => { fetchMyBids(); }, [fetchMyBids]);
+
 
   useEffect(() => {
     api.get('/payments/my-wins')
@@ -64,12 +65,16 @@ export default function BuyerProfile() {
     });
   };
 
-  const myBids = Object.values(bids).flat().filter(b => b.buyerId === user?.userId);
-  const totalBidAmount = Object.entries(bids).reduce((total, [, bidList]) => {
-    const myHighest = Math.max(0, ...bidList.filter(b => b.buyerId === user?.userId).map(b => b.amount));
-    return total + myHighest;
-  }, 0);
-  const watchlistCount = watchlist.length;
+  // /auctions/mine/bids is already scoped to this buyer, so the buyerId filter these two
+  // lines used to carry is gone. It was needed because the old shared record held every bid
+  // on every auction the session had opened, mine and everyone else's.
+  const myBids = myBidRows;
+  const highestPerAuction = new Map<string, number>();
+  for (const bid of myBidRows) {
+    highestPerAuction.set(bid.auctionId, Math.max(highestPerAuction.get(bid.auctionId) ?? 0, bid.amount));
+  }
+  const totalBidAmount = [...highestPerAuction.values()].reduce((total, n) => total + n, 0);
+  const watchlistCount = watchlistRows.length;
 
   const memberSince = user?.createdAt
     ? monthYear(user.createdAt)
@@ -198,7 +203,9 @@ export default function BuyerProfile() {
                 ) : (
                   <div className="flex flex-col divide-y divide-bg">
                     {myBids.slice(0, 5).map(bid => {
-                      const auction = auctions.find(a => a.auctionId === bid.auctionId);
+                      // Attached to the row by /auctions/mine/bids, so there is nothing to look up
+                      // and nothing that can miss — the old lookup searched the ACTIVE list only.
+                      const auction = bid.auction;
                       return (
                         <button
                           key={bid.bidId}

@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useAuction } from '../../context/AuctionContext';
+import { useAuctionDetail, useBids } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { getSocket } from '../../services/socket';
 import { Menu, Search } from 'lucide-react';
@@ -12,14 +12,15 @@ const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
 export default function AdminAuctionMonitor() {
   const { auctionId } = useParams<{ auctionId: string }>();
-  const { getAuction, bids, fetchBids, auctionsLoaded } = useAuction();
-
-  const auction = getAuction(auctionId ?? '');
+  // Fetched directly rather than looked up in the ACTIVE list. That lookup is what made a
+  // closed auction unopenable (NEW-17); GET /auctions/{id} answers for any status.
+  const { data: auction, isPending: auctionsPending } = useAuctionDetail(auctionId);
+  const { data: auctionBids = [] } = useBids(auctionId);
+  const auctionsLoaded = !auctionsPending;
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
 
   useEffect(() => {
     if (!auctionId) return;
-    void fetchBids(auctionId);
     const socket = getSocket();
     const subscribe = () => socket.emit('auction:subscribe', auctionId);
     subscribe();
@@ -28,12 +29,7 @@ export default function AdminAuctionMonitor() {
       socket.off('connect', subscribe);
       socket.emit('auction:unsubscribe', auctionId);
     };
-  }, [auctionId, fetchBids]);
-
-  const auctionBids = useMemo(
-    () => (auction ? bids[auction.auctionId] ?? [] : []),
-    [auction, bids],
-  );
+  }, [auctionId]);
 
   return (
     <AdminLayout active="Live Auctions">
