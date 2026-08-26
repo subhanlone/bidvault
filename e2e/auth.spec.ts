@@ -14,7 +14,11 @@ test.describe('Auth — Login', () => {
 
   test('shows inline error on wrong credentials', async ({ page }) => {
     await page.goto('/login');
-    await page.getByPlaceholder('you@email.com').fill(BUYER_EMAIL);
+    // A throwaway address, deliberately not BUYER_EMAIL. This test exists to assert the
+    // inline error renders, which it does for any rejected login — it does not need to fail
+    // against a real account, and doing so would trip the rate limiting and lockout that
+    // BV-002 adds, locking out the very account the rest of the suite signs in with.
+    await page.getByPlaceholder('you@email.com').fill('no-such-account@bidvault.invalid');
     await page.getByPlaceholder('Your password').fill('WrongPassword999!');
     await page.getByRole('button', { name: /sign in|log in/i }).click();
     // Inline field error rendered by Input as role="alert", stays until user retypes
