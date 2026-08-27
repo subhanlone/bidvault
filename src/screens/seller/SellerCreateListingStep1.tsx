@@ -19,6 +19,11 @@ const CONDITIONS: { value: ItemCondition; label: string }[] = [
   { value: 'LIKE_NEW', label: 'Like New' },
   { value: 'USED',     label: 'Used'     },
 ];
+// A courtesy check, not a control: it saves the user a doomed upload and spares a token from
+// the signature route's hourly budget. Cloudinary's Upload API has no per-request size cap, so
+// nothing server-side enforces this and the backend deliberately does not publish it as policy.
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export function ListingStepperHeader() {
   const { user, logout } = useAuth();
@@ -53,12 +58,12 @@ export default function SellerCreateListingStep1() {
     if (!file) return;
     e.target.value = ''; // allow re-selecting the same file
 
-    if (!file.type.startsWith('image/')) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       showToast({ type: 'error', title: 'Invalid File', message: 'Please select an image file (JPG, PNG, WebP).' });
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      showToast({ type: 'error', title: 'File Too Large', message: 'Image must be under 10 MB.' });
+    if (file.size > MAX_IMAGE_BYTES) {
+      showToast({ type: 'error', title: 'File Too Large', message: 'Image must be 5 MB or smaller.' });
       return;
     }
 
@@ -73,6 +78,11 @@ export default function SellerCreateListingStep1() {
       formData.append('api_key', sig.apiKey);
       formData.append('folder', sig.folder);
       formData.append('format', sig.format);
+      formData.append('public_id', sig.publicId);
+      // Only what the backend signed, and nothing else. Cloudinary rebuilds the signature from
+      // the parameters it recognises, so an extra field here makes every upload 401 — sending
+      // `max_file_size`, which is not an Upload API parameter, did exactly that.
+      formData.append('allowed_formats', sig.allowedFormats);
 
       const resp = await fetch(
         `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,

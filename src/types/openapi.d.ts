@@ -98,6 +98,9 @@ export type CategoryAttributes = Record<string, string | number>;
 
 export type ChangePasswordRequest = {
   currentPassword: string;
+  /**
+   * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
+   */
   newPassword: string;
 };
 
@@ -253,6 +256,9 @@ export type RegisterRequest = {
   name: string;
   email: string;
   cnic: string;
+  /**
+   * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
+   */
   password: string;
   role: "BUYER" | "SELLER";
 };
@@ -280,6 +286,9 @@ export type ResendVerificationRequest = {
 export type ResetPasswordRequest = {
   email: string;
   otp: string;
+  /**
+   * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
+   */
   password: string;
 };
 
@@ -324,6 +333,9 @@ export type SubmitListingRequest = {
   minIncrement: number;
   durationDays: number;
   imageUrl?: string;
+  /**
+   * At most two emoji, measured as grapheme clusters.
+   */
   emoji?: string;
   attributes?: Record<string, unknown>;
 };
@@ -346,6 +358,8 @@ export type UploadSignature = {
   cloudName: string;
   folder: string;
   format: string;
+  publicId: string;
+  allowedFormats: string;
 };
 
 export type User = {
