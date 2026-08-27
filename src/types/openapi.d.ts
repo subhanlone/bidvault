@@ -393,6 +393,7 @@ export type WonTransaction = {
   sellerName: string;
   finalAmount: number;
   status: TransactionStatus;
+  lastPaymentError?: string;
   createdAt: string;
   reviewed: boolean;
 };
