@@ -23,6 +23,9 @@ const CONDITIONS: { value: ItemCondition; label: string }[] = [
 // the signature route's hourly budget. Cloudinary's Upload API has no per-request size cap, so
 // nothing server-side enforces this and the backend deliberately does not publish it as policy.
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+// Derived, not retyped: the hint under the dropzone read "Max 10 MB" while the check below
+// rejected anything over 5 MB, so a 7 MB photo was refused by a rule the screen never stated.
+const MAX_IMAGE_LABEL = `${MAX_IMAGE_BYTES / (1024 * 1024)} MB`;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export function ListingStepperHeader() {
@@ -63,7 +66,7 @@ export default function SellerCreateListingStep1() {
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      showToast({ type: 'error', title: 'File Too Large', message: 'Image must be 5 MB or smaller.' });
+      showToast({ type: 'error', title: 'File Too Large', message: `Image must be ${MAX_IMAGE_LABEL} or smaller.` });
       return;
     }
 
@@ -356,7 +359,7 @@ export default function SellerCreateListingStep1() {
               >
                 <Upload size={22} strokeWidth={1.5} className="text-placeholder" />
                 <p className="text-sm font-semibold text-secondary">Click to upload an image</p>
-                <p className="text-xs text-placeholder">JPG, PNG, WebP · Max 10 MB</p>
+                <p className="text-xs text-placeholder">JPG, PNG, WebP · Max {MAX_IMAGE_LABEL}</p>
               </button>
             )}
 
@@ -403,7 +406,7 @@ export default function SellerCreateListingStep1() {
               >
                 <Upload size={22} strokeWidth={1.5} className="text-error" />
                 <p className="text-sm font-semibold text-error">Upload failed — click to retry</p>
-                <p className="text-xs text-placeholder">JPG, PNG, WebP · Max 10 MB</p>
+                <p className="text-xs text-placeholder">JPG, PNG, WebP · Max {MAX_IMAGE_LABEL}</p>
               </button>
             )}
           </div>

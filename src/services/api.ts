@@ -12,15 +12,43 @@ import type {
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 const STORAGE_KEY = 'bidvault_auth_v1';
 
+/** Field -> messages, as produced by the backend's z.flattenError().fieldErrors. */
+export type ValidationDetails = Record<string, string[]>;
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code?: string;
-  constructor(status: number, message: string, code?: string) {
+  /** Present on 400s from validateBody; empty for every other failure. */
+  readonly details?: ValidationDetails;
+  constructor(status: number, message: string, code?: string, details?: ValidationDetails) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
+    this.details = details;
   }
+}
+
+/**
+ * The message a user should actually read.
+ *
+ * A validation failure answers with a constant top-level `error` -- "Validation error" -- and puts
+ * the part that says what to change in `details`. Reading only `error` therefore shows every
+ * validation failure as the same unactionable sentence: a rejected password, an over-long
+ * description and a third emoji are indistinguishable, and nothing on screen says which field is
+ * at fault. Preferring the field messages is what makes "Choose a less common password" reach the
+ * person who has to choose one.
+ *
+ * Joined rather than shown per-field because callers render a single string; the field name is
+ * left out because the message is displayed against the input that produced it.
+ */
+function readableError(error: string | undefined, details: ValidationDetails | undefined): string {
+  const fieldMessages = Object.values(details ?? {})
+    .flat()
+    .filter((message): message is string => typeof message === 'string' && message.length > 0);
+
+  if (fieldMessages.length > 0) return fieldMessages.join(' ');
+  return error ?? 'Request failed';
 }
 
 interface StoredAuth {
@@ -116,7 +144,13 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
     resp = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   }
 
-  const body = await resp.json() as { success: boolean; data?: T; error?: string; code?: string };
+  const body = await resp.json() as {
+    success: boolean;
+    data?: T;
+    error?: string;
+    code?: string;
+    details?: ValidationDetails;
+  };
 
   // Platform maintenance: non-admin requests are blocked server-side — send the user to the maintenance page.
   // /login is excluded: the backend deliberately exempts /auth/login and /auth/refresh so an admin can
@@ -131,7 +165,12 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   }
 
   if (!resp.ok || !body.success) {
-    throw new ApiError(resp.status, body.error ?? 'Request failed', body.code);
+    throw new ApiError(
+      resp.status,
+      readableError(body.error, body.details),
+      body.code,
+      body.details,
+    );
   }
 
   return body.data as T;
