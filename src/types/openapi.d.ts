@@ -22,6 +22,14 @@ export type AdminTransaction = {
   createdAt: string;
 };
 
+export type AdminUser = {
+  userId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+};
+
 export type Analytics = {
   totalRevenue: number;
   totalBids: number;
@@ -43,6 +51,10 @@ export type Analytics = {
     sales: number;
     revenue: number;
   }[];
+};
+
+export type AnonymizeUserRequest = {
+  reason: string;
 };
 
 export type Approval = {
@@ -126,6 +138,10 @@ export type CreateReviewRequest = {
   transactionId: string;
   stars: number;
   comment?: string;
+};
+
+export type DeleteAccountRequest = {
+  password: string;
 };
 
 export type ErrorResponse = {
@@ -441,6 +457,7 @@ export type WonTransaction = {
 export interface GetEndpoints {
   "/admin/analytics": Analytics;
   "/admin/transactions": AdminTransaction[];
+  "/admin/users": AdminUser[];
   "/auctions": Auction[];
   "/auctions/mine/bids": BidWithAuction[];
   "/auctions/{auctionId}": Auction;
@@ -468,8 +485,15 @@ export interface PostEndpoints {
     transactionId: string;
     status: "VOIDED";
   };
+  "/admin/users/{userId}/anonymize": {
+    userId: string;
+    status: "ANONYMIZED";
+  };
   "/auctions/{auctionId}/bids": Bid;
   "/auth/change-password": PasswordChanged;
+  "/auth/delete-account": {
+    message: string;
+  };
   "/auth/forgot-password": OtpIssued;
   "/auth/login": Session;
   "/auth/logout": Message;
@@ -510,8 +534,10 @@ export interface DeleteEndpoints {
 /** The body each documented POST expects. */
 export interface PostRequests {
   "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
+  "/admin/users/{userId}/anonymize": AnonymizeUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
   "/auth/change-password": ChangePasswordRequest;
+  "/auth/delete-account": DeleteAccountRequest;
   "/auth/forgot-password": ForgotPasswordRequest;
   "/auth/login": LoginRequest;
   "/auth/logout": RefreshRequest;

@@ -23,6 +23,80 @@ interface FormState {
   supportEmail: string;
 }
 
+interface AdminUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
+function AnonymizeUserModal({ target, onClose, onDone }: {
+  target: AdminUser;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleConfirm() {
+    if (reason.trim().length < 3) {
+      setError('Give a reason of at least 3 characters — it is kept in the audit log.');
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await api.post(`/admin/users/${target.userId}/anonymize`, { reason: reason.trim() });
+      onDone();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Could not delete this account.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="bg-surface rounded-xl shadow-xl w-full max-w-[440px] p-6"
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 className="font-bold text-[16px] text-navy mb-4">Delete this account?</h2>
+        <p className="text-[13px] text-muted mb-4">
+          <span className="font-semibold text-secondary">{target.name}</span> ({target.email}) — name
+          and email will be removed and every session revoked. Refused if they have an active
+          auction or a pending transaction.
+        </p>
+        <Input
+          label="Reason"
+          placeholder="e.g. Requested via privacy@bidvault.com ticket #42"
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+          maxLength={500}
+        />
+        {error && (
+          <p className="text-[13px] text-error bg-error-bg border border-error-border rounded-md px-3 py-2 mt-3">{error}</p>
+        )}
+        <div className="flex gap-3 mt-5">
+          <Button variant="outline" onClick={onClose} className="flex-1" disabled={submitting}>Cancel</Button>
+          <Button
+            variant="outline"
+            onClick={handleConfirm}
+            loading={submitting}
+            className="flex-1 border-error text-error hover:bg-error-bg"
+          >
+            Delete account
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const EMPTY_FORM: FormState = {
   emailNotifsEnabled: true,
   maintenanceMode: false,
@@ -47,6 +121,13 @@ export default function AdminSettings() {
   const [pwError, setPwError] = useState('');
   const [currentPwError, setCurrentPwError] = useState('');
 
+  // BV-018: search-by-email is the whole lookup -- there is no general user directory, and
+  // this is the one occasional, support-driven action that needs one.
+  const [userSearch, setUserSearch] = useState('');
+  const [userResults, setUserResults] = useState<AdminUser[] | null>(null);
+  const [userSearchLoading, setUserSearchLoading] = useState(false);
+  const [anonymizingUser, setAnonymizingUser] = useState<AdminUser | null>(null);
+
   useEffect(() => {
     api.get('/settings')
       .then((s) =>
@@ -65,6 +146,19 @@ export default function AdminSettings() {
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const searchUsers = async () => {
+    if (!userSearch.trim()) return;
+    setUserSearchLoading(true);
+    try {
+      const results = await api.get(`/admin/users?email=${encodeURIComponent(userSearch.trim())}`);
+      setUserResults(results);
+    } catch {
+      showToast({ type: 'error', title: 'Search Failed', message: 'Could not search for users.' });
+    } finally {
+      setUserSearchLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -250,6 +344,50 @@ export default function AdminSettings() {
             </div>
           </div>
 
+          {/* User account deletion (BV-018) — support-driven, by email search */}
+          <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+            <div className="px-5 py-4 border-b border-border-light">
+              <h2 className="font-bold text-[14px] text-navy">Delete a User Account</h2>
+              <p className="text-[11px] text-muted mt-0.5">For a request sent to privacy@bidvault.com — search by email, then delete.</p>
+            </div>
+            <div className="p-5">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="user@example.com"
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void searchUsers(); } }}
+                />
+                <Button onClick={searchUsers} loading={userSearchLoading} size="md">Search</Button>
+              </div>
+
+              {userResults !== null && (
+                <div className="mt-4 flex flex-col divide-y divide-bg border border-border-light rounded-sm overflow-hidden">
+                  {userResults.length === 0 ? (
+                    <p className="text-[12px] text-muted p-3">No matching accounts.</p>
+                  ) : (
+                    userResults.map(u => (
+                      <div key={u.userId} className="flex items-center justify-between gap-3 p-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[13px] text-secondary truncate">{u.name} <span className="font-normal text-muted">· {u.role}</span></p>
+                          <p className="text-[11px] text-placeholder truncate">{u.email}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-error text-error hover:bg-error-bg shrink-0"
+                          onClick={() => setAnonymizingUser(u)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
           {loading ? (
             <div className="bg-surface border border-border-light rounded-md p-5">
               <div className="h-4 w-40 bg-border-light rounded animate-pulse mb-4" />
@@ -328,6 +466,18 @@ export default function AdminSettings() {
           )}
 
         </div>
+
+        {anonymizingUser && (
+          <AnonymizeUserModal
+            target={anonymizingUser}
+            onClose={() => setAnonymizingUser(null)}
+            onDone={() => {
+              showToast({ type: 'success', title: 'Account Deleted', message: `${anonymizingUser.name}'s account has been deleted.` });
+              setAnonymizingUser(null);
+              setUserResults(prev => prev?.filter(u => u.userId !== anonymizingUser.userId) ?? null);
+            }}
+          />
+        )}
         </>
       )}
     </AdminLayout>

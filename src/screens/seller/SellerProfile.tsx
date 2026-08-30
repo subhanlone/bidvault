@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { SellerNavbar, Badge, Button, Input } from '../../components/ui';
+import { SellerNavbar, Badge, Button, Input, DeleteAccountModal } from '../../components/ui';
 import { api } from '../../services/api';
 import type { Listing } from '../../types/api';
 import { dateShort, monthYear, pkr } from '../../utils/format';
@@ -27,6 +27,7 @@ export default function SellerProfile() {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState('');
   const [currentPwError, setCurrentPwError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [sellerStats, setSellerStats] = useState({ totalRevenue: 0, itemsSold: 0 });
@@ -303,10 +304,39 @@ export default function SellerProfile() {
                   </div>
                 </div>
               </div>
+
+              {/* Danger zone */}
+              <div className="bg-surface border border-error-border rounded-md overflow-hidden">
+                <div className="px-5 py-4 border-b border-error-border">
+                  <h2 className="font-bold text-[14px] text-error">Danger Zone</h2>
+                </div>
+                <div className="p-5">
+                  <p className="text-[12px] text-muted mb-3">
+                    Deleting your account is permanent. End any active auctions and settle unpaid
+                    sales first — the request is refused while either is outstanding.
+                  </p>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="w-full border border-error text-error font-semibold text-[13px] py-2.5 rounded-sm hover:bg-error-bg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
+                  >
+                    Delete Account
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
+      {showDeleteModal && (
+        <DeleteAccountModal
+          onClose={() => setShowDeleteModal(false)}
+          onDeleted={() => {
+            showToast({ type: 'success', title: 'Account Deleted', message: 'Your account has been deleted.' });
+            navigate('/', { replace: true });
+          }}
+        />
+      )}
     </div>
   );
 }

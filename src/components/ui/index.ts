@@ -11,6 +11,7 @@ export { default as AdminLayout } from './AdminLayout';
 export { default as AuthLayout } from './AuthLayout';
 export { default as AuctionThumbnail } from './AuctionThumbnail';
 export { default as RatingModal } from './RatingModal';
+export { default as DeleteAccountModal } from './DeleteAccountModal';
 export { default as PaymentModal } from './PaymentModal';
 export { default as NotificationBell } from './NotificationBell';
 export { Toast, ToastContainer } from './Toast';
