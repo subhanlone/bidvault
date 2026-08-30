@@ -33,6 +33,7 @@ const SellerCreateListingStep1 = lazy(() => import('./screens/seller/SellerCreat
 const SellerCreateListingStep2 = lazy(() => import('./screens/seller/SellerCreateListingStep2'));
 const SellerCreateListingStep3 = lazy(() => import('./screens/seller/SellerCreateListingStep3'));
 const SellerListingSubmitted = lazy(() => import('./screens/seller/SellerListingSubmitted'));
+const SellerProfile = lazy(() => import('./screens/seller/SellerProfile'));
 
 const BuyerBrowseAuctions = lazy(() => import('./screens/buyer/BuyerBrowseAuctions'));
 const BuyerMyBids = lazy(() => import('./screens/buyer/BuyerMyBids'));
@@ -156,6 +157,11 @@ export default function App() {
                     <Route path="/seller/listing-submitted" element={
                       <ProtectedRoute allowedRoles={['SELLER']}>
                         <SellerListingSubmitted />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/seller/profile" element={
+                      <ProtectedRoute allowedRoles={['SELLER']}>
+                        <SellerProfile />
                       </ProtectedRoute>
                     } />
 

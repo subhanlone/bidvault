@@ -98,6 +98,9 @@ export type CategoryAttributes = Record<string, string | number>;
 
 export type ChangePasswordRequest = {
   currentPassword: string;
+  /**
+   * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
+   */
   newPassword: string;
 };
 
@@ -208,6 +211,12 @@ export type OtpIssued = {
   codeExpiresAt?: string;
 };
 
+export type PasswordChanged = {
+  message: string;
+  accessToken: string;
+  refreshToken: string;
+};
+
 export type PaymentIntent = {
   clientSecret: string | null;
 };
@@ -253,6 +262,9 @@ export type RegisterRequest = {
   name: string;
   email: string;
   cnic: string;
+  /**
+   * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
+   */
   password: string;
   role: "BUYER" | "SELLER";
 };
@@ -280,6 +292,9 @@ export type ResendVerificationRequest = {
 export type ResetPasswordRequest = {
   email: string;
   otp: string;
+  /**
+   * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
+   */
   password: string;
 };
 
@@ -324,6 +339,9 @@ export type SubmitListingRequest = {
   minIncrement: number;
   durationDays: number;
   imageUrl?: string;
+  /**
+   * At most two emoji, measured as grapheme clusters.
+   */
   emoji?: string;
   attributes?: Record<string, unknown>;
 };
@@ -346,6 +364,8 @@ export type UploadSignature = {
   cloudName: string;
   folder: string;
   format: string;
+  publicId: string;
+  allowedFormats: string;
 };
 
 export type User = {
@@ -425,7 +445,7 @@ export interface GetEndpoints {
 /** What each documented POST returns, unwrapped from the response envelope. */
 export interface PostEndpoints {
   "/auctions/{auctionId}/bids": Bid;
-  "/auth/change-password": Message;
+  "/auth/change-password": PasswordChanged;
   "/auth/forgot-password": OtpIssued;
   "/auth/login": Session;
   "/auth/logout": Message;
