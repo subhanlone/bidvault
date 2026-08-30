@@ -53,10 +53,12 @@ export default function SellerNavbar({ links = defaultLinks, userName = 'Seller'
       </ul>
       <div className="hidden md:flex items-center gap-3 ml-auto">
         <NotificationBell />
-        <div className="w-8 h-8 rounded-full bg-navy-mid flex items-center justify-center text-white text-sm font-semibold">
-          {userName.charAt(0).toUpperCase()}
-        </div>
-        <span className="text-sm text-white/80 font-medium hidden sm:block">{userName}</span>
+        <Link to="/seller/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <div className="w-8 h-8 rounded-full bg-navy-mid flex items-center justify-center text-white text-sm font-semibold">
+            {userName.charAt(0).toUpperCase()}
+          </div>
+          <span className="text-sm text-white/80 font-medium hidden sm:block">{userName}</span>
+        </Link>
         {onLogout && (
           <button onClick={onLogout} className="text-sm text-white/60 hover:text-white transition-colors cursor-pointer ml-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-navy rounded-sm">Sign out</button>
         )}
@@ -90,9 +92,9 @@ export default function SellerNavbar({ links = defaultLinks, userName = 'Seller'
               })}
             </ul>
             <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-sm text-white/70 truncate">{userName}</span>
-              </div>
+              <Link to="/seller/profile" onClick={() => setMobileOpen(false)} className="text-sm text-white/70 hover:text-white transition-colors truncate">
+                {userName}
+              </Link>
               {onLogout && (
                 <button onClick={onLogout} className="text-sm text-white/60 hover:text-white transition-colors">
                   Logout

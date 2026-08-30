@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Menu, Save, AlertTriangle } from 'lucide-react';
+import { Menu, Save, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
@@ -33,11 +33,19 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function AdminSettings() {
-  const { user } = useAuth();
+  const { user, logout, changePassword } = useAuth();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+
+  const [showPwForm, setShowPwForm] = useState(false);
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [currentPwError, setCurrentPwError] = useState('');
 
   useEffect(() => {
     api.get('/settings')
@@ -147,6 +155,97 @@ export default function AdminSettings() {
                 <span className="inline-flex items-center mt-1 bg-primary-surface border border-[rgba(208,2,27,0.2)] font-bold text-[10px] text-primary px-2 py-[2px] rounded-full">
                   Super Admin
                 </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Security */}
+          <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+            <div className="px-5 py-4 border-b border-border-light">
+              <h2 className="font-bold text-[14px] text-navy">Security</h2>
+            </div>
+            <div className="p-5">
+              {!showPwForm ? (
+                <button
+                  onClick={() => setShowPwForm(true)}
+                  className="w-full border border-border-medium font-semibold text-[13px] text-tertiary py-2.5 rounded-sm hover:bg-bg hover:border-primary hover:text-primary transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  Change Password
+                </button>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <Input
+                    id="admin-current-password"
+                    label="Current Password"
+                    type="password"
+                    value={currentPw}
+                    onChange={e => { setCurrentPw(e.target.value); setCurrentPwError(''); }}
+                    placeholder="Your current password"
+                    error={currentPwError}
+                  />
+                  <Input
+                    id="admin-new-password"
+                    label="New Password"
+                    type={showPw ? 'text' : 'password'}
+                    value={newPw}
+                    onChange={e => { setNewPw(e.target.value); setPwError(''); }}
+                    placeholder="Min. 8 characters"
+                    rightIcon={
+                      <button
+                        type="button"
+                        aria-label={showPw ? 'Hide password' : 'Show password'}
+                        onClick={() => setShowPw(v => !v)}
+                        className="text-muted hover:text-body transition-colors"
+                      >
+                        {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    }
+                    error={pwError}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 rounded-sm"
+                      onClick={() => { setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError(''); setCurrentPwError(''); }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1 rounded-sm"
+                      loading={pwLoading}
+                      onClick={async () => {
+                        setCurrentPwError('');
+                        setPwError('');
+                        if (!currentPw.trim()) { setCurrentPwError('Current password is required'); return; }
+                        if (newPw.length < 8) { setPwError('Min. 8 characters'); return; }
+                        setPwLoading(true);
+                        const result = await changePassword(currentPw, newPw);
+                        setPwLoading(false);
+                        if (result.success) {
+                          setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError(''); setCurrentPwError('');
+                          showToast({ type: 'success', title: 'Password Changed', message: 'Your password has been updated.' });
+                        } else {
+                          const message = result.error || 'Failed to change password.';
+                          if (/current password/i.test(message)) setCurrentPwError(message);
+                          else setPwError(message);
+                        }
+                      }}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 pt-4 border-t border-bg">
+                <button
+                  onClick={logout}
+                  className="w-full text-left font-semibold text-[12px] text-destructive hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+                >
+                  Sign out of this device →
+                </button>
               </div>
             </div>
           </div>
