@@ -277,7 +277,6 @@ export type RefreshedTokens = {
 export type RegisterRequest = {
   name: string;
   email: string;
-  cnic: string;
   /**
    * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
    */
