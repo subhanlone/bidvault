@@ -139,6 +139,7 @@ export type Health = {
       latencyMs: number;
     };
   };
+  contractViolations: number;
 };
 
 export type ItemCondition = "NEW" | "LIKE_NEW" | "USED";
