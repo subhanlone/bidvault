@@ -140,6 +140,7 @@ export type Health = {
     };
   };
   contractViolations: number;
+  workerHeartbeatAgeSeconds: number | null;
 };
 
 export type ItemCondition = "NEW" | "LIKE_NEW" | "USED";
