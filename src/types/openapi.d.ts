@@ -211,6 +211,12 @@ export type OtpIssued = {
   codeExpiresAt?: string;
 };
 
+export type PasswordChanged = {
+  message: string;
+  accessToken: string;
+  refreshToken: string;
+};
+
 export type PaymentIntent = {
   clientSecret: string | null;
 };
@@ -439,7 +445,7 @@ export interface GetEndpoints {
 /** What each documented POST returns, unwrapped from the response envelope. */
 export interface PostEndpoints {
   "/auctions/{auctionId}/bids": Bid;
-  "/auth/change-password": Message;
+  "/auth/change-password": PasswordChanged;
   "/auth/forgot-password": OtpIssued;
   "/auth/login": Session;
   "/auth/logout": Message;

@@ -127,7 +127,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
     try {
-      await api.post('/auth/change-password', { currentPassword, newPassword });
+      // Changing a password revokes every session the account has, this one included, so the
+      // server issues a replacement pair with the confirmation. Storing it is what keeps the
+      // user signed in: ignore it and the stored refresh token is already dead, and the next
+      // silent refresh -- minutes later, mid-task -- signs them out of the device they just
+      // used to change it. Their own successful action logs them out.
+      const session = await api.post('/auth/change-password', { currentPassword, newPassword });
+      if (user) persist(user, session.accessToken, session.refreshToken);
       return { success: true };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to change password' };
