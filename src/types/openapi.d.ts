@@ -8,6 +8,20 @@
  * see that file for why no third-party generator is used.
  */
 
+export type AdminTransaction = {
+  transactionId: string;
+  auctionId: string;
+  auctionTitle: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  sellerName: string;
+  finalAmount: number;
+  status: TransactionStatus;
+  lastPaymentError?: string;
+  createdAt: string;
+};
+
 export type Analytics = {
   totalRevenue: number;
   totalBids: number;
@@ -348,7 +362,7 @@ export type SubmitListingRequest = {
   attributes?: Record<string, unknown>;
 };
 
-export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED";
+export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "VOIDED";
 
 export type UpdateSettingsRequest = {
   emailNotifsEnabled?: boolean;
@@ -397,6 +411,10 @@ export type VerifyResetOtpRequest = {
   otp: string;
 };
 
+export type VoidTransactionRequest = {
+  reason: string;
+};
+
 export type WatchToggle = {
   auctionId: string;
   watched: boolean;
@@ -423,6 +441,7 @@ export type WonTransaction = {
 /** What each documented GET returns, unwrapped from the response envelope. */
 export interface GetEndpoints {
   "/admin/analytics": Analytics;
+  "/admin/transactions": AdminTransaction[];
   "/auctions": Auction[];
   "/auctions/mine/bids": BidWithAuction[];
   "/auctions/{auctionId}": Auction;
@@ -446,6 +465,10 @@ export interface GetEndpoints {
 
 /** What each documented POST returns, unwrapped from the response envelope. */
 export interface PostEndpoints {
+  "/admin/transactions/{transactionId}/void": {
+    transactionId: string;
+    status: "VOIDED";
+  };
   "/auctions/{auctionId}/bids": Bid;
   "/auth/change-password": PasswordChanged;
   "/auth/forgot-password": OtpIssued;
@@ -487,6 +510,7 @@ export interface DeleteEndpoints {
 
 /** The body each documented POST expects. */
 export interface PostRequests {
+  "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
   "/auth/change-password": ChangePasswordRequest;
   "/auth/forgot-password": ForgotPasswordRequest;
