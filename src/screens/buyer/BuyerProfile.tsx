@@ -4,7 +4,7 @@ import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingU
 import { useAuth } from '../../context/AuthContext';
 import { useMyBids, useWatchlist } from '../../queries/auctions';
 import { useToast } from '../../context/ToastContext';
-import { BuyerNavbar } from '../../components/ui';
+import { BuyerNavbar, DeleteAccountModal } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { api } from '../../services/api';
@@ -28,6 +28,7 @@ export default function BuyerProfile() {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState('');
   const [currentPwError, setCurrentPwError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // NEW-11: an auction is "won" only when the worker created an AuctionTransaction for you,
   // which it does only once the reserve is met. This screen used to derive wins itself, as
@@ -382,10 +383,38 @@ export default function BuyerProfile() {
                   </div>
                 </div>
               </div>
+
+              {/* Danger zone */}
+              <div className="bg-surface border border-error-border rounded-md overflow-hidden">
+                <div className="px-5 py-4 border-b border-error-border">
+                  <h2 className="font-bold text-[14px] text-error">Danger Zone</h2>
+                </div>
+                <div className="p-5">
+                  <p className="text-[12px] text-muted mb-3">
+                    Deleting your account is permanent. If you have an unpaid win, settle it first.
+                  </p>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="w-full border border-error text-error font-semibold text-[13px] py-2.5 rounded-sm hover:bg-error-bg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
+                  >
+                    Delete Account
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
+      {showDeleteModal && (
+        <DeleteAccountModal
+          onClose={() => setShowDeleteModal(false)}
+          onDeleted={() => {
+            showToast({ type: 'success', title: 'Account Deleted', message: 'Your account has been deleted.' });
+            navigate('/', { replace: true });
+          }}
+        />
+      )}
     </div>
   );
 }

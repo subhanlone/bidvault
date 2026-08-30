@@ -8,6 +8,28 @@
  * see that file for why no third-party generator is used.
  */
 
+export type AdminTransaction = {
+  transactionId: string;
+  auctionId: string;
+  auctionTitle: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  sellerName: string;
+  finalAmount: number;
+  status: TransactionStatus;
+  lastPaymentError?: string;
+  createdAt: string;
+};
+
+export type AdminUser = {
+  userId: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+};
+
 export type Analytics = {
   totalRevenue: number;
   totalBids: number;
@@ -29,6 +51,10 @@ export type Analytics = {
     sales: number;
     revenue: number;
   }[];
+};
+
+export type AnonymizeUserRequest = {
+  reason: string;
 };
 
 export type Approval = {
@@ -114,6 +140,10 @@ export type CreateReviewRequest = {
   comment?: string;
 };
 
+export type DeleteAccountRequest = {
+  password: string;
+};
+
 export type ErrorResponse = {
   success: false;
   error: string;
@@ -140,6 +170,7 @@ export type Health = {
     };
   };
   contractViolations: number;
+  workerHeartbeatAgeSeconds: number | null;
 };
 
 export type ItemCondition = "NEW" | "LIKE_NEW" | "USED";
@@ -262,7 +293,6 @@ export type RefreshedTokens = {
 export type RegisterRequest = {
   name: string;
   email: string;
-  cnic: string;
   /**
    * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
    */
@@ -347,7 +377,7 @@ export type SubmitListingRequest = {
   attributes?: Record<string, unknown>;
 };
 
-export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED";
+export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "VOIDED";
 
 export type UpdateSettingsRequest = {
   emailNotifsEnabled?: boolean;
@@ -396,6 +426,10 @@ export type VerifyResetOtpRequest = {
   otp: string;
 };
 
+export type VoidTransactionRequest = {
+  reason: string;
+};
+
 export type WatchToggle = {
   auctionId: string;
   watched: boolean;
@@ -422,6 +456,8 @@ export type WonTransaction = {
 /** What each documented GET returns, unwrapped from the response envelope. */
 export interface GetEndpoints {
   "/admin/analytics": Analytics;
+  "/admin/transactions": AdminTransaction[];
+  "/admin/users": AdminUser[];
   "/auctions": Auction[];
   "/auctions/mine/bids": BidWithAuction[];
   "/auctions/{auctionId}": Auction;
@@ -445,8 +481,19 @@ export interface GetEndpoints {
 
 /** What each documented POST returns, unwrapped from the response envelope. */
 export interface PostEndpoints {
+  "/admin/transactions/{transactionId}/void": {
+    transactionId: string;
+    status: "VOIDED";
+  };
+  "/admin/users/{userId}/anonymize": {
+    userId: string;
+    status: "ANONYMIZED";
+  };
   "/auctions/{auctionId}/bids": Bid;
   "/auth/change-password": PasswordChanged;
+  "/auth/delete-account": {
+    message: string;
+  };
   "/auth/forgot-password": OtpIssued;
   "/auth/login": Session;
   "/auth/logout": Message;
@@ -486,8 +533,11 @@ export interface DeleteEndpoints {
 
 /** The body each documented POST expects. */
 export interface PostRequests {
+  "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
+  "/admin/users/{userId}/anonymize": AnonymizeUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
   "/auth/change-password": ChangePasswordRequest;
+  "/auth/delete-account": DeleteAccountRequest;
   "/auth/forgot-password": ForgotPasswordRequest;
   "/auth/login": LoginRequest;
   "/auth/logout": RefreshRequest;

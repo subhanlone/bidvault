@@ -21,6 +21,7 @@ interface AuthContextType {
   verifyResetOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   resetPassword: (email: string, otp: string, password: string) => Promise<{ success: boolean; error?: string }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  deleteAccount: (password: string) => Promise<{ success: boolean; error?: string }>;
   updateUser: (u: User) => void;
 }
 
@@ -140,6 +141,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteAccount = async (password: string) => {
+    try {
+      // BV-018: the account is anonymised server-side, which already revokes every refresh
+      // token including this one -- persist(null, null) here just clears the local copy so
+      // the app reflects that immediately instead of waiting for the next failed refresh.
+      await api.post('/auth/delete-account', { password });
+      persist(null, null);
+      return { success: true };
+    } catch (err: unknown) {
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to delete account' };
+    }
+  };
+
   const updateUser = (u: User) => {
     const stored = getStoredAuth();
     if (stored?.refreshToken) persist(u, token, stored.refreshToken);
@@ -149,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user, token, isLoading,
       register, verifyEmail, resendVerification, login, logout,
-      forgotPassword, verifyResetOtp, resetPassword, changePassword, updateUser,
+      forgotPassword, verifyResetOtp, resetPassword, changePassword, deleteAccount, updateUser,
     }}>
       {children}
     </AuthContext.Provider>

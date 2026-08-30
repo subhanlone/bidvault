@@ -17,7 +17,11 @@ interface WinTransaction {
   auctionImageUrl: string;
   sellerName: string;
   finalAmount: number;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'VOIDED';
+  // Why the last payment attempt failed, if one did. The transaction stays PENDING rather
+  // than moving to FAILED so a decline is retryable — this is the explanation that goes with
+  // that PENDING state instead of a separate terminal one.
+  lastPaymentError?: string;
   createdAt: string;
   reviewed: boolean;
 }
@@ -26,6 +30,7 @@ const statusConfig = {
   PENDING:   { label: 'Payment Pending',  icon: Clock,        color: 'text-warning',  bg: 'bg-warning-bg border-warning-border' },
   COMPLETED: { label: 'Payment Complete', icon: CheckCircle,  color: 'text-success',  bg: 'bg-success-bg border-success-border' },
   FAILED:    { label: 'Payment Failed',   icon: XCircle,      color: 'text-error',    bg: 'bg-error-bg border-error-border' },
+  VOIDED:    { label: 'Cancelled',        icon: XCircle,      color: 'text-muted',    bg: 'bg-bg border-border-light' },
 };
 
 function WinCardSkeleton() {
@@ -145,12 +150,19 @@ export default function BuyerMyWins() {
                       </div>
 
                       {tx.status === 'PENDING' && (
-                        <Button
-                          className="mt-4 w-full text-[13px]"
-                          onClick={() => setSelectedTx(tx)}
-                        >
-                          Complete Payment
-                        </Button>
+                        <>
+                          {tx.lastPaymentError && (
+                            <p className="mt-3 text-[12px] text-error bg-error-bg border border-error-border rounded-md px-3 py-2">
+                              Last attempt failed: {tx.lastPaymentError}
+                            </p>
+                          )}
+                          <Button
+                            className="mt-4 w-full text-[13px]"
+                            onClick={() => setSelectedTx(tx)}
+                          >
+                            {tx.lastPaymentError ? 'Retry Payment' : 'Complete Payment'}
+                          </Button>
+                        </>
                       )}
 
                       {tx.status === 'FAILED' && (
@@ -161,6 +173,12 @@ export default function BuyerMyWins() {
                         >
                           Retry Payment
                         </Button>
+                      )}
+
+                      {tx.status === 'VOIDED' && (
+                        <p className="mt-4 text-[12px] text-muted text-center">
+                          This transaction was cancelled by BidVault. Contact support if you have questions.
+                        </p>
                       )}
 
                       {tx.status === 'COMPLETED' && !tx.reviewed && (
