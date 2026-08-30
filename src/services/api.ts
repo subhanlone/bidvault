@@ -144,13 +144,26 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
     resp = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   }
 
-  const body = await resp.json() as {
+  // 204 has no body by definition -- calling .json() on one throws, and nothing in this
+  // contract sends one today, but a proxy or a future endpoint could. Treat it as an empty
+  // success rather than reaching the parse below at all.
+  if (resp.status === 204) return undefined as T;
+
+  let body: {
     success: boolean;
     data?: T;
     error?: string;
     code?: string;
     details?: ValidationDetails;
   };
+  try {
+    body = await resp.json();
+  } catch {
+    // A gateway timeout, a proxy's HTML error page, a truncated connection -- anything that
+    // isn't the JSON this contract always sends threw a raw SyntaxError here before, which
+    // no caller catching ApiError ever saw and no user ever read a sensible message for.
+    throw new ApiError(resp.status, 'The server returned an unreadable response. Please try again.');
+  }
 
   // Platform maintenance: non-admin requests are blocked server-side — send the user to the maintenance page.
   // /login is excluded: the backend deliberately exempts /auth/login and /auth/refresh so an admin can
