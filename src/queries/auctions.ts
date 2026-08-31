@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient, type UseInfiniteQueryResult } from '@tanstack/react-query';
 import { api } from '../services/api';
-import type { Auction, Bid } from '../types/api';
+import type { Auction, Bid, PaginatedAuctions, PaginatedBidsWithAuction } from '../types/api';
 import { keys } from './keys';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,15 +12,65 @@ import { useAuth } from '../context/AuthContext';
  * own response type, so nothing here re-declares a shape. That is why no generator was
  * adopted: orval and kubb emit these, but they would emit 43 of them, cost 134 and 207
  * packages, and replace an emitter that already works.
+ *
+ * BV-029: the three list endpoints below (`/auctions`, `/watchlist`, `/auctions/mine/bids`)
+ * are cursor-paginated server-side now, so they are `useInfiniteQuery` here — `.data.pages`
+ * is an array of `{items, nextCursor}`, flattened by the small helper below wherever a screen
+ * wants "everything loaded so far" as one list.
  */
+
+/** `data.pages.flatMap(p => p.items)` — every screen that reads a paginated list wants this. */
+export function flattenPages<T>(data: InfiniteData<{ items: T[]; nextCursor: string | null }> | undefined): T[] {
+  return data?.pages.flatMap((p) => p.items) ?? [];
+}
+
+/**
+ * Walks an infinite query to completion and returns the flattened, complete list.
+ *
+ * For screens that show an exact figure derived from "every row" — a count, a sum, a
+ * highest-bid, a tab badge, prev/next through the full queue — rather than a list a person
+ * scrolls through. Cursor pagination deliberately returns no total, so the only honest way to
+ * report one is to have actually fetched every page; these lists are all scoped to one seller,
+ * one buyer, or the admin's own queue, so "every page" stays small.
+ *
+ * `BuyerBrowseAuctions` is the one screen in this app that does NOT use this — a public
+ * catalog has no aggregate that depends on having loaded all of it, so it stays genuinely
+ * incremental (`useInfiniteScrollTrigger`, fetch-on-scroll) instead.
+ */
+export function useDrainedPages<T>(
+  query: UseInfiniteQueryResult<InfiniteData<{ items: T[]; nextCursor: string | null }>>,
+): T[] {
+  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = query;
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  return flattenPages(data);
+}
 
 // ---- reads --------------------------------------------------------------------------------
 
-/** The live list. Every screen that says "auctions" means this one. */
-export function useActiveAuctions() {
-  return useQuery({
-    queryKey: keys.auctions.active,
-    queryFn: () => api.get('/auctions?status=ACTIVE'),
+/**
+ * The live list. Every screen that says "auctions" means this one.
+ *
+ * `category`/`search` are server-side filters (the backend already supports both) and are
+ * part of the query key on purpose — changing either starts a fresh paginated query rather
+ * than filtering pages already in the cache, so a match on page 4 is never missed just
+ * because pages 1-3 loaded first.
+ */
+export function useActiveAuctions(params?: { category?: string; search?: string }) {
+  const category = params?.category?.trim();
+  const search = params?.search?.trim();
+  return useInfiniteQuery({
+    queryKey: [...keys.auctions.active, { category, search }] as const,
+    queryFn: ({ pageParam }) => {
+      const qs = new URLSearchParams({ status: 'ACTIVE' });
+      if (category) qs.set('category', category);
+      if (search) qs.set('search', search);
+      if (pageParam) qs.set('cursor', pageParam);
+      return api.get(`/auctions?${qs.toString()}`);
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage: PaginatedAuctions) => lastPage.nextCursor ?? undefined,
   });
 }
 
@@ -29,8 +80,7 @@ export function useActiveAuctions() {
  * This is what retires NEW-17. `getAuction()` used to search the ACTIVE list and fall back to
  * the watchlist rows, so a closed watched auction — present in neither on a cold load —
  * resolved to undefined and the live-bidding screen rendered "Auction not found". Asking the
- * server removes the question: GET /auctions/{id} is authoritative whatever the status, and
- * it is the only endpoint that overlays the Redis bid cache.
+ * server removes the question: GET /auctions/{id} is authoritative whatever the status.
  */
 export function useAuctionDetail(auctionId: string | undefined) {
   return useQuery({
@@ -40,27 +90,40 @@ export function useAuctionDetail(auctionId: string | undefined) {
   });
 }
 
-/** Full auction rows for everything the signed-in buyer watches, closed ones included. */
+/** Every auction the signed-in buyer watches, closed ones included — paginated. */
 export function useWatchlist(enabled = true) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: keys.auctions.watchlist,
-    queryFn: () => api.get('/watchlist'),
+    queryFn: ({ pageParam }) =>
+      api.get(pageParam ? `/watchlist?cursor=${encodeURIComponent(pageParam)}` : '/watchlist'),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage: PaginatedAuctions) => lastPage.nextCursor ?? undefined,
     enabled,
   });
 }
 
+/**
+ * Bid history for one auction. Not one of BV-029's five infinite-scroll screens — this feeds
+ * BuyerLiveBidding's recent-bids panel, which only ever shows the newest handful — so this
+ * stays a single bounded page rather than `useInfiniteQuery`.
+ */
 export function useBids(auctionId: string | undefined) {
   return useQuery({
     queryKey: keys.bids.forAuction(auctionId ?? ''),
     queryFn: () => api.get(`/auctions/${auctionId}/bids`),
     enabled: Boolean(auctionId),
+    select: (data) => data.items,
   });
 }
 
+/** Every bid the signed-in buyer has ever placed, each with its auction — paginated. */
 export function useMyBids(enabled = true) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: keys.bids.mine,
-    queryFn: () => api.get('/auctions/mine/bids'),
+    queryFn: ({ pageParam }) =>
+      api.get(pageParam ? `/auctions/mine/bids?cursor=${encodeURIComponent(pageParam)}` : '/auctions/mine/bids'),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage: PaginatedBidsWithAuction) => lastPage.nextCursor ?? undefined,
     enabled,
   });
 }
@@ -83,18 +146,25 @@ export function useMyBids(enabled = true) {
  *
  * `Math.max` on the price, not assignment: a broadcast arriving out of order must never walk
  * it backwards.
+ *
+ * BV-029: `useActiveAuctions`/`useWatchlist` cache entries are now `InfiniteData` (a `.pages`
+ * array of `{items, nextCursor}`), not a plain array — folded page by page, item by item.
+ * `useAuctionDetail`'s single-object cache entry is unaffected and still folds directly.
  */
 export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid: Bid) {
   let alreadyKnown = false;
 
-  queryClient.setQueryData<Bid[]>(keys.bids.forAuction(auctionId), (old) => {
-    if (!old) return old; // nothing cached for this auction; the next fetch will include it
-    if (old.some((b) => b.bidId === bid.bidId)) {
-      alreadyKnown = true;
-      return old;
-    }
-    return [bid, ...old];
-  });
+  queryClient.setQueryData<{ items: Bid[]; nextCursor: string | null }>(
+    keys.bids.forAuction(auctionId),
+    (old) => {
+      if (!old) return old; // nothing cached for this auction; the next fetch will include it
+      if (old.items.some((b) => b.bidId === bid.bidId)) {
+        alreadyKnown = true;
+        return old;
+      }
+      return { ...old, items: [bid, ...old.items] };
+    },
+  );
 
   if (alreadyKnown) return;
 
@@ -104,11 +174,31 @@ export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid
       : a;
 
   // One call, every auction-shaped cache entry: the live list, this auction's detail, the
-  // watchlist. See queries/keys.ts for why they share a prefix.
-  queryClient.setQueriesData<Auction | Auction[]>({ queryKey: keys.auctions.all }, (old) => {
+  // watchlist, my-bids' embedded auctions. See queries/keys.ts for why they share a prefix.
+  queryClient.setQueriesData<
+    Auction | InfiniteData<{ items: unknown[]; nextCursor: string | null }>
+  >({ queryKey: keys.auctions.all }, (old) => {
     if (!old) return old;
-    return Array.isArray(old) ? old.map(fold) : fold(old);
+    if (!('pages' in old)) return fold(old);
+    return {
+      ...old,
+      pages: old.pages.map((page) => ({
+        ...page,
+        items: page.items.map((item) =>
+          // Both AuctionDto rows (active list, watchlist) and BidWithAuctionDto rows
+          // (my-bids, auction nested inside) pass through this same cache prefix — fold
+          // whichever shape the item actually is.
+          isAuction(item)
+            ? fold(item)
+            : { ...(item as { auction: Auction }), auction: fold((item as { auction: Auction }).auction) },
+        ),
+      })),
+    };
   });
+}
+
+function isAuction(item: unknown): item is Auction {
+  return typeof item === 'object' && item !== null && 'auctionId' in item && !('auction' in item);
 }
 
 // ---- writes -------------------------------------------------------------------------------
@@ -135,6 +225,11 @@ export function usePlaceBid() {
  * `onSettled` refetches so the server has the last word. That is TanStack's documented
  * optimistic pattern, and it replaces a hand-written version that had to remember the removed
  * row itself in order to restore it.
+ *
+ * BV-029: the watchlist cache is `InfiniteData` now — an add always goes on the front of the
+ * first page (a newly-watched auction is the most recent by definition, and the first page is
+ * always loaded once the hook has run), and a remove is filtered out of whichever page holds
+ * it.
  */
 export function useToggleWatchlist() {
   const queryClient = useQueryClient();
@@ -145,15 +240,24 @@ export function useToggleWatchlist() {
 
     onMutate: async ({ auctionId, watched, row }) => {
       await queryClient.cancelQueries({ queryKey: keys.auctions.watchlist });
-      const previous = queryClient.getQueryData<Auction[]>(keys.auctions.watchlist);
+      const previous = queryClient.getQueryData<InfiniteData<PaginatedAuctions>>(keys.auctions.watchlist);
 
-      queryClient.setQueryData<Auction[]>(keys.auctions.watchlist, (old = []) =>
-        watched
-          ? old.filter((a) => a.auctionId !== auctionId)
-          : row && !old.some((a) => a.auctionId === auctionId)
-            ? [row, ...old]
-            : old,
-      );
+      queryClient.setQueryData<InfiniteData<PaginatedAuctions>>(keys.auctions.watchlist, (old) => {
+        if (!old) return old;
+        if (watched) {
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              items: page.items.filter((a) => a.auctionId !== auctionId),
+            })),
+          };
+        }
+        const alreadyPresent = old.pages.some((page) => page.items.some((a) => a.auctionId === auctionId));
+        if (alreadyPresent || !row) return old;
+        const [first, ...rest] = old.pages;
+        return { ...old, pages: [{ ...first, items: [row, ...first.items] }, ...rest] };
+      });
 
       return { previous };
     },
@@ -178,14 +282,28 @@ export function useToggleWatchlist() {
  * Watched state is derived from the cached watchlist rather than a separate array of ids. The
  * old context kept both, and NEW-12 was exactly what happens when they disagree: the profile
  * counted an auction from the id list that the watchlist page could not render.
+ *
+ * BV-029: `isWatched` only knows about pages the watchlist query has actually loaded — for a
+ * buyer with more watched auctions than fit on one page, an auction on a page that has not
+ * been fetched yet reads as "not watched" until the Watchlist screen (or this hook) has
+ * scrolled far enough to load it. `useWatchlist` requests a generous page size for exactly
+ * this reason: the common case (most buyers watch a handful of auctions) never notices.
  */
 export function useWatchlistToggle() {
   const { user } = useAuth();
   const canWatch = user?.role === 'BUYER' || user?.role === 'ADMIN';
 
-  const { data: watched = [] } = useWatchlist(canWatch);
-  const { data: active = [] } = useActiveAuctions();
+  const watchlistQuery = useWatchlist(canWatch);
+  const { data: activePages } = useActiveAuctions();
   const mutation = useToggleWatchlist();
+
+  // Drained, not just the first page: `isWatched` and the Watchlist screen both need every
+  // watched auction, not whatever happened to fit on page one.
+  const watched = useDrainedPages(watchlistQuery);
+  // Not drained: `active` is only ever a fallback source for the optimistic "row" shown while
+  // adding a watch (see mutation.mutate below). Missing it just means that one card's optimistic
+  // add is skipped — onSettled's refetch fixes it moments later — not a correctness issue.
+  const active = flattenPages(activePages);
 
   const isWatched = (auctionId: string) => watched.some((a) => a.auctionId === auctionId);
 

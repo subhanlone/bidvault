@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingUp, Eye, EyeOff, Bell, BellOff, Search, Hammer } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useMyBids, useWatchlist } from '../../queries/auctions';
+import { useDrainedPages, useMyBids, useWatchlist } from '../../queries/auctions';
 import { useToast } from '../../context/ToastContext';
 import { BuyerNavbar, DeleteAccountModal } from '../../components/ui';
 import Button from '../../components/ui/Button';
@@ -13,8 +13,8 @@ import { dateTimeShort, monthYear, pkr, pkrCompact } from '../../utils/format';
 
 export default function BuyerProfile() {
   const { user, logout, changePassword } = useAuth();
-  const { data: myBidRows = [] } = useMyBids();
-  const { data: watchlistRows = [] } = useWatchlist();
+  const myBidRows = useDrainedPages(useMyBids());
+  const watchlistRows = useDrainedPages(useWatchlist());
   const { showToast } = useToast();
   const navigate = useNavigate();
 

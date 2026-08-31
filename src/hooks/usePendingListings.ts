@@ -8,13 +8,30 @@ export interface BulkApproveResult {
   failures: { listingId: string; error: string }[];
 }
 
+/**
+ * Every pending listing, not just the first page.
+ *
+ * The review queue does prev/next navigation and "X of Y" counts across the whole set, and the
+ * sidebar/dashboard badges need the true count — so `refreshListings` walks every cursor page
+ * (BV-029) internally and hands back the complete array, exactly like it did before pagination
+ * existed. Callers were never written to expect a partial list, and a pending queue is small
+ * enough that draining it up front costs nothing worth trading that away for.
+ */
 export function usePendingListings() {
   const [pendingListings, setPendingListings] = useState<Listing[]>([]);
 
   const refreshListings = useCallback(async () => {
     try {
-      const data = await api.get('/listings/pending');
-      setPendingListings(data);
+      const all: Listing[] = [];
+      let cursor: string | null = null;
+      do {
+        const page: { items: Listing[]; nextCursor: string | null } = await api.get(
+          cursor ? `/listings/pending?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/pending?limit=100',
+        );
+        all.push(...page.items);
+        cursor = page.nextCursor;
+      } while (cursor);
+      setPendingListings(all);
     } catch {
       setPendingListings([]);
     }

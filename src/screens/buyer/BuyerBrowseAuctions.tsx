@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Heart, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useActiveAuctions, useWatchlistToggle } from '../../queries/auctions';
+import { flattenPages, useActiveAuctions, useWatchlistToggle } from '../../queries/auctions';
+import { useInfiniteScrollTrigger } from '../../hooks/useInfiniteScrollTrigger';
 import { useTimer } from '../../hooks/useTimer';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
@@ -137,11 +138,6 @@ function AuctionCard({ auction }: { auction: Auction }) {
 
 export default function BuyerBrowseAuctions() {
   const { user, logout } = useAuth();
-  const { data: auctions = [], isPending, isError: auctionsError } = useActiveAuctions();
-  // isPending rather than a success flag: BUG-16's lesson is that a screen must be able to
-  // tell "nothing to show" from "could not load", and never assert the first while the
-  // second is still possible.
-  const auctionsLoaded = !isPending;
   const [search, setSearch]             = useState('');
   const [category, setCategory]         = useState('All');
   const [showEndingSoon, setShowEndingSoon] = useState(false);
@@ -149,6 +145,33 @@ export default function BuyerBrowseAuctions() {
   const [maxPrice, setMaxPrice]         = useState('');
   const [sortBy, setSortBy]             = useState<SortBy>('endingSoon');
   const [sidebarOpen, setSidebarOpen]   = useState(false);
+
+  // Debounced: category/search are server-side filters now (BV-029), each a fresh paginated
+  // query rather than a re-filter of pages already in the cache — so a match on a page not yet
+  // loaded is never missed. Debouncing search keeps that from firing on every keystroke, which
+  // a purely client-side filter never had to worry about.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const {
+    data, isPending, isError: auctionsError, hasNextPage, isFetchingNextPage, fetchNextPage,
+  } = useActiveAuctions({ category: category === 'All' ? undefined : category, search: debouncedSearch });
+  const auctions = flattenPages(data);
+  // isPending rather than a success flag: BUG-16's lesson is that a screen must be able to
+  // tell "nothing to show" from "could not load", and never assert the first while the
+  // second is still possible.
+  const auctionsLoaded = !isPending;
+
+  // Price range, "ending soon", and sort all still run client-side, over whatever pages have
+  // loaded so far — the backend has no query param for any of them, and adding one is out of
+  // scope for a pagination change. The sentinel below is what keeps "so far" growing.
+  const sentinelRef = useInfiniteScrollTrigger(
+    () => { void fetchNextPage(); },
+    hasNextPage === true && !isFetchingNextPage,
+  );
 
   const clearAll = () => {
     setCategory('All'); setShowEndingSoon(false); setSearch(''); setMinPrice(''); setMaxPrice('');
@@ -170,9 +193,8 @@ export default function BuyerBrowseAuctions() {
     // fetchMyBids merges in the closed auctions a buyer has bid on, so visiting My Bids and
     // then coming here used to surface them under the live heading. Filter on the status the
     // server reported rather than trusting how the list was populated.
+    // search/category are applied server-side (see useActiveAuctions above) — not repeated here.
     if (a.status !== 'ACTIVE') return false;
-    if (search && !a.title.toLowerCase().includes(search.toLowerCase())) return false;
-    if (category !== 'All' && a.category !== category) return false;  // BA-06: exact match (categories now in sync)
     if (showEndingSoon) {
       const msLeft = new Date(a.endTime).getTime() - now;  // BA-01: live time, not mount snapshot
       if (msLeft <= 0 || msLeft > 3_600_000) return false;
@@ -327,7 +349,9 @@ export default function BuyerBrowseAuctions() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
               <h1 className="font-extrabold text-[20px] sm:text-[22px] text-navy">Live Auctions</h1>
-              <p className="text-[12px] sm:text-[13px] text-muted">{sorted.length} auction{sorted.length !== 1 ? 's' : ''} found</p>
+              <p className="text-[12px] sm:text-[13px] text-muted">
+                {sorted.length} auction{sorted.length !== 1 ? 's' : ''} {hasNextPage ? 'loaded — scroll for more' : 'found'}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <select
@@ -378,9 +402,21 @@ export default function BuyerBrowseAuctions() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sorted.map(a => <AuctionCard key={a.auctionId} auction={a} />)}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sorted.map(a => <AuctionCard key={a.auctionId} auction={a} />)}
+              </div>
+              {hasNextPage && (
+                <div ref={sentinelRef} className="flex items-center justify-center py-8">
+                  <LoadingStatus label="Loading more auctions" />
+                  <div className="grid grid-cols-3 gap-1.5" aria-hidden="true">
+                    {[0, 1, 2].map(i => (
+                      <span key={i} className="size-[6px] rounded-full bg-primary/40 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>
