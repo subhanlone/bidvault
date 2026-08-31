@@ -243,6 +243,26 @@ export type OtpIssued = {
   codeExpiresAt?: string;
 };
 
+export type PaginatedAuctions = {
+  items: Auction[];
+  nextCursor: string | null;
+};
+
+export type PaginatedBids = {
+  items: Bid[];
+  nextCursor: string | null;
+};
+
+export type PaginatedBidsWithAuction = {
+  items: BidWithAuction[];
+  nextCursor: string | null;
+};
+
+export type PaginatedListings = {
+  items: Listing[];
+  nextCursor: string | null;
+};
+
 export type PasswordChanged = {
   message: string;
   accessToken: string;
@@ -458,17 +478,17 @@ export interface GetEndpoints {
   "/admin/analytics": Analytics;
   "/admin/transactions": AdminTransaction[];
   "/admin/users": AdminUser[];
-  "/auctions": Auction[];
-  "/auctions/mine/bids": BidWithAuction[];
+  "/auctions": PaginatedAuctions;
+  "/auctions/mine/bids": PaginatedBidsWithAuction;
   "/auctions/{auctionId}": Auction;
-  "/auctions/{auctionId}/bids": Bid[];
+  "/auctions/{auctionId}/bids": PaginatedBids;
   "/auth/me": {
     user: User;
   };
   "/auth/me/preferences": NotificationPrefs;
   "/health": Health;
-  "/listings/mine": Listing[];
-  "/listings/pending": Listing[];
+  "/listings/mine": PaginatedListings;
+  "/listings/pending": PaginatedListings;
   "/notifications": Notification[];
   "/payments/my-wins": WonTransaction[];
   "/payments/seller-stats": SellerStats;
@@ -476,7 +496,7 @@ export interface GetEndpoints {
   "/settings": PlatformSettings;
   "/settings/public": PublicSettings;
   "/stats": PlatformStats;
-  "/watchlist": Auction[];
+  "/watchlist": PaginatedAuctions;
 }
 
 /** What each documented POST returns, unwrapped from the response envelope. */

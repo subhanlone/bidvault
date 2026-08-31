@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
-import { useActiveAuctions } from '../../queries/auctions';
+import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
 import { api } from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { useToast } from '../../context/ToastContext';
@@ -48,7 +48,7 @@ const CATEGORY_COLORS = [
 export default function AdminDashboardOverview() {
   const navigate = useNavigate();
   const { pendingListings, refreshListings } = usePendingListings();
-  const { data: auctions = [] } = useActiveAuctions();
+  const auctions = useDrainedPages(useActiveAuctions());
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);

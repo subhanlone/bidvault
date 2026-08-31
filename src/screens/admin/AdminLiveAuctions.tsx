@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useActiveAuctions } from '../../queries/auctions';
+import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { Menu, Radio } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
@@ -71,7 +71,7 @@ function AuctionRow({ auction }: { auction: Auction }) {
 }
 
 export default function AdminLiveAuctions() {
-  const { data: auctions = [] } = useActiveAuctions();
+  const auctions = useDrainedPages(useActiveAuctions());
 
   // AL-01: filter to ACTIVE only for table rendering
   // eslint-disable-next-line react-hooks/purity

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, BarChart2, Radio, Receipt, Settings, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
 import { useAuth } from '../../context/AuthContext';
-import { useActiveAuctions } from '../../queries/auctions';
+import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
 import { usePendingListings } from '../../hooks/usePendingListings';
 
 interface SidebarItem {
@@ -34,7 +34,7 @@ export function AdminSidebarContent({ active, onClose, collapsed = false, onTogg
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const { pendingListings, refreshListings } = usePendingListings();
-  const { data: auctions = [] } = useActiveAuctions();
+  const auctions = useDrainedPages(useActiveAuctions());
   useEffect(() => { void refreshListings(); }, [refreshListings]);
   const pendingCount = pendingListings.length;
   const activeCount = auctions.length; // the query is scoped to ?status=ACTIVE

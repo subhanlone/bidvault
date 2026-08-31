@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useMyBids } from '../../queries/auctions';
+import { useDrainedPages, useMyBids } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { Check, Zap, Trophy, X, Hammer, Ban } from 'lucide-react';
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
@@ -127,7 +127,12 @@ function BidCard({ entry }: { entry: BidEntry }) {
 
 export default function BuyerMyBids() {
   const { user, logout } = useAuth();
-  const { data: myBidRows = [], isPending: loading } = useMyBids(user?.role === 'BUYER');
+  const myBidsQuery = useMyBids(user?.role === 'BUYER');
+  const myBidRows = useDrainedPages(myBidsQuery);
+  // Stays "loading" through every page, not just the first — the Active/Winning/Total tiles
+  // below are exact counts, so showing them after page one would show a number that then
+  // silently grows.
+  const loading = myBidsQuery.isPending || myBidsQuery.hasNextPage || myBidsQuery.isFetchingNextPage;
   const navigate = useNavigate();
 
   // eslint-disable-next-line react-hooks/purity

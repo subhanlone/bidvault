@@ -120,8 +120,8 @@ export default function LandingPage() {
   const [supportEmail, setSupportEmail] = useState('support@bidvault.tech');
 
   useEffect(() => {
-    api.get('/auctions?status=ACTIVE').then(data => {
-      setFeatured(data.slice(0, 3));
+    api.get('/auctions?status=ACTIVE&limit=3').then(data => {
+      setFeatured(data.items);
       setFeaturedFailed(false);
     }).catch(() => setFeaturedFailed(true)).finally(() => setFeaturedLoading(false));
   }, []);

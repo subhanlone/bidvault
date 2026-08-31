@@ -34,13 +34,31 @@ export default function SellerProfile() {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
+    // The Approved/Pending tiles below are exact counts, so this walks every cursor page
+    // (BV-029) of /listings/mine rather than showing whatever fits on page one.
+    const fetchAllListings = async (): Promise<Listing[]> => {
+      const all: Listing[] = [];
+      let cursor: string | null = null;
+      do {
+        const page: { items: Listing[]; nextCursor: string | null } = await api.get(
+          cursor ? `/listings/mine?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/mine?limit=100',
+        );
+        all.push(...page.items);
+        cursor = page.nextCursor;
+      } while (cursor);
+      return all;
+    };
+
     Promise.allSettled([
-      api.get('/listings/mine'),
+      fetchAllListings(),
       api.get('/payments/seller-stats'),
     ]).then(([listingsResult, statsResult]) => {
+      if (cancelled) return;
       if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
       if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
     });
+    return () => { cancelled = true; };
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pending  = listings.filter(l => l.status === 'PENDING').length;

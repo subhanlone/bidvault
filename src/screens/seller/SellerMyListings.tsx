@@ -82,10 +82,30 @@ export default function SellerMyListings() {
 
   useEffect(() => {
     if (!user) return;
-    api.get('/listings/mine')
-      .then(data => setListings(data))
-      .catch(() => setError('Could not load listings. Please try again.'))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    // Every listing, not one page: the tab counts (Pending/Approved/Rejected) below are exact
+    // totals, so this walks every cursor page (BV-029) rather than showing whatever fits on
+    // page one. A seller's own listings are few enough that this costs nothing worth trading
+    // away for lazy loading.
+    (async () => {
+      try {
+        const all: Listing[] = [];
+        let cursor: string | null = null;
+        do {
+          const page: { items: Listing[]; nextCursor: string | null } = await api.get(
+            cursor ? `/listings/mine?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/mine?limit=100',
+          );
+          all.push(...page.items);
+          cursor = page.nextCursor;
+        } while (cursor);
+        if (!cancelled) setListings(all);
+      } catch {
+        if (!cancelled) setError('Could not load listings. Please try again.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const counts: Record<Tab, number> = {
