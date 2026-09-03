@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Trophy, CheckCircle, Clock, XCircle, Package, Star, Truck, AlertTriangle, ShieldAlert, RotateCcw } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Trophy, CheckCircle, Clock, XCircle, Package, Star, Truck, AlertTriangle, ShieldAlert, RotateCcw, Receipt } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BuyerNavbar, RatingModal, DisputeModal } from '../../components/ui';
 import Button from '../../components/ui/Button';
@@ -285,6 +285,15 @@ export default function BuyerMyWins() {
                         <p className="mt-4 text-[12px] text-success font-semibold text-center">
                           ✓ You rated this seller
                         </p>
+                      )}
+
+                      {(tx.status === 'DELIVERED' || tx.status === 'SHIPPED' || tx.status === 'DISPUTED') && (
+                        <Link
+                          to={`/transactions/${tx.transactionId}/invoice`}
+                          className="mt-2 text-[12px] font-semibold text-primary hover:underline flex items-center justify-center gap-1"
+                        >
+                          <Receipt size={13} /> View Invoice
+                        </Link>
                       )}
                     </div>
                   </div>

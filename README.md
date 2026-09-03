@@ -17,7 +17,7 @@ Vercel.
 | Styling | Tailwind CSS v4.3 via `@tailwindcss/vite` |
 | State | React Context — five providers, no external state library |
 | Realtime | `socket.io-client` |
-| Payments | `@stripe/react-stripe-js` |
+| Payments | self-built dummy gateway — no external processor |
 | Icons | `lucide-react` |
 | Lint | ESLint 10 + typescript-eslint |
 | E2E | Playwright |
@@ -33,7 +33,7 @@ for `tailwind.config.js` — creating one would not be picked up.
 
 ```
 src/
-  screens/      LandingPage, Privacy, Terms, NotFound, Maintenance
+  screens/      LandingPage, Privacy, Terms, NotFound, Maintenance, TransactionInvoice
     auth/       4 screens
     buyer/      7 screens
     seller/     6 screens
@@ -75,7 +75,6 @@ npm run dev
 
 ```
 VITE_API_URL=http://localhost:4000
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ## Scripts

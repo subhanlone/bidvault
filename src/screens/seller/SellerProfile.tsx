@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff, Landmark } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff, Wallet, Receipt } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { SellerNavbar, Badge, Button, Input, DeleteAccountModal } from '../../components/ui';
@@ -19,10 +19,10 @@ export default function SellerProfile() {
   const { user, logout, changePassword } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const [connectStatus, setConnectStatus] = useState<{ connected: boolean; onboardingComplete: boolean } | null>(null);
-  const [connectLoading, setConnectLoading] = useState(false);
+  const [earnings, setEarnings] = useState<{
+    ledgerBalance: number;
+    entries: { transactionId: string; auctionTitle: string; amount: number; createdAt: string }[];
+  } | null>(null);
 
   const [showPwForm, setShowPwForm] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -67,35 +67,8 @@ export default function SellerProfile() {
 
   useEffect(() => {
     if (!user) return;
-    api.get('/payments/connect/status').then(setConnectStatus).catch(() => undefined);
+    api.get('/payments/earnings').then(setEarnings).catch(() => undefined);
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Returning from Stripe's hosted onboarding — re-check status and drop the query param so a
-  // refresh doesn't keep re-triggering this.
-  useEffect(() => {
-    if (!searchParams.has('connect')) return;
-    api.get('/payments/connect/status').then(status => {
-      setConnectStatus(status);
-      showToast(
-        status.onboardingComplete
-          ? { type: 'success', title: 'Payout Setup Complete', message: 'You can now mark sales as shipped.' }
-          : { type: 'info', title: 'Payout Setup Incomplete', message: 'Finish setup with Stripe to accept payouts.' },
-      );
-    }).catch(() => undefined);
-    setSearchParams(prev => { prev.delete('connect'); return prev; }, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleConnectOnboard() {
-    setConnectLoading(true);
-    try {
-      const { url } = await api.post('/payments/connect/onboard');
-      window.location.href = url;
-    } catch {
-      showToast({ type: 'error', title: 'Could Not Start Setup', message: 'Please try again.' });
-      setConnectLoading(false);
-    }
-  }
 
   const pending  = listings.filter(l => l.status === 'PENDING').length;
   const approved = listings.filter(l => l.status === 'APPROVED').length;
@@ -268,33 +241,35 @@ export default function SellerProfile() {
                 </div>
               </div>
 
-              {/* Payout setup (BV-047) */}
+              {/* Earnings (BV-047 payout replaced by a local ledger — see PAYMENT-GATEWAY-MIGRATION.md) */}
               <div className="bg-surface border border-border-light rounded-md overflow-hidden">
                 <div className="px-5 py-4 border-b border-border-light">
-                  <h2 className="font-bold text-[14px] text-navy">Payout Setup</h2>
+                  <h2 className="font-bold text-[14px] text-navy">Earnings</h2>
                 </div>
                 <div className="p-5">
-                  {connectStatus?.onboardingComplete ? (
-                    <p className="flex items-center gap-2 font-semibold text-[13px] text-success-dark">
-                      <Check size={15} strokeWidth={2.5} /> Ready to receive payouts
-                    </p>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Wallet size={16} className="text-success-dark" />
+                    <span className="font-extrabold text-[20px] text-navy">{pkr(earnings?.ledgerBalance ?? 0)}</span>
+                  </div>
+
+                  {!earnings || earnings.entries.length === 0 ? (
+                    <p className="text-[12px] text-muted">Payouts land here automatically once a buyer confirms delivery.</p>
                   ) : (
-                    <>
-                      <p className="text-[12px] text-muted mb-3">
-                        {connectStatus?.connected
-                          ? 'Setup is started but not finished — complete it with Stripe to accept payouts.'
-                          : 'Connect a Stripe account so BidVault can pay you once a sale is delivered.'}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full rounded-sm"
-                        loading={connectLoading}
-                        onClick={handleConnectOnboard}
-                      >
-                        <Landmark size={14} /> {connectStatus?.connected ? 'Finish Setup' : 'Set Up Payouts'}
-                      </Button>
-                    </>
+                    <div className="flex flex-col divide-y divide-bg -mx-1">
+                      {earnings.entries.slice(0, 5).map(e => (
+                        <Link
+                          key={e.transactionId}
+                          to={`/transactions/${e.transactionId}/invoice`}
+                          className="flex items-center justify-between gap-3 px-1 py-2.5 hover:bg-bg rounded-sm transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[12px] font-semibold text-secondary truncate">{e.auctionTitle}</p>
+                            <p className="text-[11px] text-placeholder flex items-center gap-1"><Receipt size={10} /> {dateShort(e.createdAt)}</p>
+                          </div>
+                          <span className="font-bold text-[13px] text-success-dark shrink-0">+{pkr(e.amount)}</span>
+                        </Link>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

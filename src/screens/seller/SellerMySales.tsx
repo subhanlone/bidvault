@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Truck, ShieldAlert, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Package, Truck, ShieldAlert, CheckCircle2, XCircle, Receipt } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button } from '../../components/ui';
@@ -45,8 +45,6 @@ export default function SellerMySales() {
   const [sales, setSales] = useState<SellerSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [connectStatus, setConnectStatus] = useState<{ connected: boolean; onboardingComplete: boolean } | null>(null);
-  const [connectLoading, setConnectLoading] = useState(false);
   const [shippingId, setShippingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
 
@@ -68,25 +66,11 @@ export default function SellerMySales() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    Promise.allSettled([loadSales(), api.get('/payments/connect/status').then(setConnectStatus)])
-      .then(([salesResult]) => {
-        if (cancelled) return;
-        if (salesResult.status === 'rejected') setError('Could not load your sales. Please try again.');
-      })
+    loadSales()
+      .catch(() => { if (!cancelled) setError('Could not load your sales. Please try again.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function handleConnectOnboard() {
-    setConnectLoading(true);
-    try {
-      const { url } = await api.post('/payments/connect/onboard');
-      window.location.href = url;
-    } catch (err: unknown) {
-      setActionError({ id: '', message: err instanceof Error ? err.message : 'Could not start payout setup.' });
-      setConnectLoading(false);
-    }
-  }
 
   async function handleMarkShipped(sale: SellerSale) {
     setActionError(null);
@@ -112,18 +96,6 @@ export default function SellerMySales() {
             {loading ? 'Loading…' : `${sales.length} sale${sales.length !== 1 ? 's' : ''} awaiting or past shipment`}
           </p>
         </div>
-
-        {!loading && connectStatus && !connectStatus.onboardingComplete && (
-          <div className="bg-warning-bg border border-warning-border rounded-md flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 mb-6">
-            <AlertCircle size={16} className="text-warning shrink-0" />
-            <p className="text-[13px] text-navy flex-1">
-              Complete payout setup before you can mark an item shipped — this is where BidVault sends what buyers pay you.
-            </p>
-            <Button size="sm" loading={connectLoading} onClick={handleConnectOnboard}>
-              Set Up Payouts
-            </Button>
-          </div>
-        )}
 
         {error && (
           <div className="bg-error-bg border border-error-border rounded-md flex items-center gap-3 px-4 py-3 mb-4">
@@ -204,7 +176,6 @@ export default function SellerMySales() {
                             size="sm"
                             className="mt-3"
                             loading={shippingId === s.transactionId}
-                            disabled={!connectStatus?.onboardingComplete}
                             onClick={() => handleMarkShipped(s)}
                           >
                             <Truck size={14} /> Mark as Shipped
@@ -212,9 +183,17 @@ export default function SellerMySales() {
                         )}
 
                         {s.status === 'DELIVERED' && (
-                          <p className="mt-2 text-[12px] text-success font-semibold flex items-center gap-1.5">
-                            <CheckCircle2 size={13} /> Delivered — payout sent
-                          </p>
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <p className="text-[12px] text-success font-semibold flex items-center gap-1.5">
+                              <CheckCircle2 size={13} /> Delivered — payout sent
+                            </p>
+                            <Link
+                              to={`/transactions/${s.transactionId}/invoice`}
+                              className="text-[12px] font-semibold text-primary hover:underline flex items-center gap-1 shrink-0"
+                            >
+                              <Receipt size={13} /> Invoice
+                            </Link>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -226,7 +205,7 @@ export default function SellerMySales() {
         </div>
 
         <p className="text-[12px] text-muted mt-4">
-          Manage your payout account on your <Link to="/seller/profile" className="text-primary font-semibold">Profile</Link> page.
+          Track your earnings on your <Link to="/seller/profile" className="text-primary font-semibold">Profile</Link> page.
         </p>
       </main>
     </div>

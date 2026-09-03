@@ -45,6 +45,8 @@ const BuyerAuctionWon = lazy(() => import('./screens/buyer/BuyerAuctionWon'));
 const BuyerMyWins = lazy(() => import('./screens/buyer/BuyerMyWins'));
 const BuyerProfile = lazy(() => import('./screens/buyer/BuyerProfile'));
 
+const TransactionInvoice = lazy(() => import('./screens/TransactionInvoice'));
+
 
 /**
  * One client for the app's lifetime.
@@ -212,6 +214,13 @@ export default function App() {
                     <Route path="/buyer/profile" element={
                       <ProtectedRoute allowedRoles={['BUYER']}>
                         <BuyerProfile />
+                      </ProtectedRoute>
+                    } />
+
+                    {/* Shared: transaction invoice, reached from BuyerMyWins / SellerMySales */}
+                    <Route path="/transactions/:transactionId/invoice" element={
+                      <ProtectedRoute allowedRoles={['BUYER', 'SELLER', 'ADMIN']}>
+                        <TransactionInvoice />
                       </ProtectedRoute>
                     } />
 

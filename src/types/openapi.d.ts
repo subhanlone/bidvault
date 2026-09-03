@@ -143,21 +143,6 @@ export type ChangePasswordRequest = {
   newPassword: string;
 };
 
-export type ConnectOnboardingLink = {
-  url: string;
-};
-
-export type ConnectStatus = {
-  connected: boolean;
-  onboardingComplete: boolean;
-};
-
-export type CreateIntentRequest = {
-  transactionId: string;
-  deliveryAddress: string;
-  deliveryPhone: string;
-};
-
 export type CreateReviewRequest = {
   transactionId: string;
   stars: number;
@@ -166,6 +151,16 @@ export type CreateReviewRequest = {
 
 export type DeleteAccountRequest = {
   password: string;
+};
+
+export type Earnings = {
+  ledgerBalance: number;
+  entries: {
+    transactionId: string;
+    auctionTitle: string;
+    amount: number;
+    createdAt: string;
+  }[];
 };
 
 export type ErrorResponse = {
@@ -195,6 +190,27 @@ export type Health = {
   };
   contractViolations: number;
   workerHeartbeatAgeSeconds: number | null;
+};
+
+export type Invoice = {
+  transactionId: string;
+  invoiceNumber: string;
+  auctionTitle: string;
+  category: string;
+  buyerName: string;
+  buyerEmail: string;
+  sellerName: string;
+  sellerEmail: string;
+  amount: number;
+  status: TransactionStatus;
+  paymentReference?: string;
+  deliveryAddress?: string;
+  deliveryPhone?: string;
+  createdAt: string;
+  shippedAt?: string;
+  disputeStatus?: "OPEN" | "RESOLVED_REFUNDED" | "RESOLVED_RELEASED";
+  disputeReason?: string;
+  disputeResolutionNote?: string;
 };
 
 export type ItemCondition = "NEW" | "LIKE_NEW" | "USED";
@@ -298,8 +314,16 @@ export type PasswordChanged = {
   refreshToken: string;
 };
 
-export type PaymentIntent = {
-  clientSecret: string | null;
+export type PayResult = {
+  transactionId: string;
+  status: "COMPLETED" | "PENDING";
+  lastPaymentError?: string;
+};
+
+export type PayTransactionRequest = {
+  cardNumber: string;
+  deliveryAddress: string;
+  deliveryPhone: string;
 };
 
 export type PlaceBidRequest = {
@@ -510,10 +534,6 @@ export type WatchToggle = {
   watched: boolean;
 };
 
-export type WebhookAck = {
-  received: true;
-};
-
 export type WonTransaction = {
   transactionId: string;
   auctionId: string;
@@ -549,10 +569,11 @@ export interface GetEndpoints {
   "/listings/mine": PaginatedListings;
   "/listings/pending": PaginatedListings;
   "/notifications": Notification[];
-  "/payments/connect/status": ConnectStatus;
+  "/payments/earnings": Earnings;
   "/payments/my-sales": PaginatedSellerSales;
   "/payments/my-wins": WonTransaction[];
   "/payments/seller-stats": SellerStats;
+  "/payments/{transactionId}/invoice": Invoice;
   "/reviews/seller/{sellerId}": SellerReviews;
   "/settings": PlatformSettings;
   "/settings/public": PublicSettings;
@@ -595,9 +616,6 @@ export interface PostEndpoints {
   "/listings/{listingId}/reject": Rejection;
   "/notifications/read-all": Message;
   "/notifications/{notificationId}/read": NotificationRead;
-  "/payments/connect/onboard": ConnectOnboardingLink;
-  "/payments/create-intent": PaymentIntent;
-  "/payments/webhook": WebhookAck;
   "/payments/{transactionId}/confirm-receipt": {
     transactionId: string;
     status: "DELIVERED";
@@ -606,6 +624,7 @@ export interface PostEndpoints {
     transactionId: string;
     status: "DISPUTED";
   };
+  "/payments/{transactionId}/pay": PayResult;
   "/reviews": Review;
   "/watchlist/{auctionId}": WatchToggle;
 }
@@ -648,8 +667,8 @@ export interface PostRequests {
   "/auth/verify-reset-otp": VerifyResetOtpRequest;
   "/listings": SubmitListingRequest;
   "/listings/{listingId}/reject": RejectListingRequest;
-  "/payments/create-intent": CreateIntentRequest;
   "/payments/{transactionId}/dispute": RaiseDisputeRequest;
+  "/payments/{transactionId}/pay": PayTransactionRequest;
   "/reviews": CreateReviewRequest;
 }
 
