@@ -18,6 +18,7 @@ interface SellerNavbarProps {
 const defaultLinks: NavLink[] = [
   { label: 'Dashboard', to: '/seller/dashboard' },
   { label: 'My Listings', to: '/seller/listings' },
+  { label: 'My Sales', to: '/seller/sales' },
 ];
 
 export default function SellerNavbar({ links = defaultLinks, userName = 'Seller', onLogout }: SellerNavbarProps) {

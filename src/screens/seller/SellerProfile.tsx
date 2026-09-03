@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff, Landmark } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { SellerNavbar, Badge, Button, Input, DeleteAccountModal } from '../../components/ui';
@@ -19,6 +19,10 @@ export default function SellerProfile() {
   const { user, logout, changePassword } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [connectStatus, setConnectStatus] = useState<{ connected: boolean; onboardingComplete: boolean } | null>(null);
+  const [connectLoading, setConnectLoading] = useState(false);
 
   const [showPwForm, setShowPwForm] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -60,6 +64,38 @@ export default function SellerProfile() {
     });
     return () => { cancelled = true; };
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/payments/connect/status').then(setConnectStatus).catch(() => undefined);
+  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Returning from Stripe's hosted onboarding — re-check status and drop the query param so a
+  // refresh doesn't keep re-triggering this.
+  useEffect(() => {
+    if (!searchParams.has('connect')) return;
+    api.get('/payments/connect/status').then(status => {
+      setConnectStatus(status);
+      showToast(
+        status.onboardingComplete
+          ? { type: 'success', title: 'Payout Setup Complete', message: 'You can now mark sales as shipped.' }
+          : { type: 'info', title: 'Payout Setup Incomplete', message: 'Finish setup with Stripe to accept payouts.' },
+      );
+    }).catch(() => undefined);
+    setSearchParams(prev => { prev.delete('connect'); return prev; }, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleConnectOnboard() {
+    setConnectLoading(true);
+    try {
+      const { url } = await api.post('/payments/connect/onboard');
+      window.location.href = url;
+    } catch {
+      showToast({ type: 'error', title: 'Could Not Start Setup', message: 'Please try again.' });
+      setConnectLoading(false);
+    }
+  }
 
   const pending  = listings.filter(l => l.status === 'PENDING').length;
   const approved = listings.filter(l => l.status === 'APPROVED').length;
@@ -229,6 +265,37 @@ export default function SellerProfile() {
                       <span className="ml-auto text-placeholder text-[12px]">→</span>
                     </Link>
                   ))}
+                </div>
+              </div>
+
+              {/* Payout setup (BV-047) */}
+              <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+                <div className="px-5 py-4 border-b border-border-light">
+                  <h2 className="font-bold text-[14px] text-navy">Payout Setup</h2>
+                </div>
+                <div className="p-5">
+                  {connectStatus?.onboardingComplete ? (
+                    <p className="flex items-center gap-2 font-semibold text-[13px] text-success-dark">
+                      <Check size={15} strokeWidth={2.5} /> Ready to receive payouts
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-[12px] text-muted mb-3">
+                        {connectStatus?.connected
+                          ? 'Setup is started but not finished — complete it with Stripe to accept payouts.'
+                          : 'Connect a Stripe account so BidVault can pay you once a sale is delivered.'}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full rounded-sm"
+                        loading={connectLoading}
+                        onClick={handleConnectOnboard}
+                      >
+                        <Landmark size={14} /> {connectStatus?.connected ? 'Finish Setup' : 'Set Up Payouts'}
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
 

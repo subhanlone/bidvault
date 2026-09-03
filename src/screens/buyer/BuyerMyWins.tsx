@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, CheckCircle, Clock, XCircle, Package, Star } from 'lucide-react';
+import { Trophy, CheckCircle, Clock, XCircle, Package, Star, Truck, AlertTriangle, ShieldAlert, RotateCcw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { BuyerNavbar, RatingModal } from '../../components/ui';
+import { BuyerNavbar, RatingModal, DisputeModal } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { api } from '../../services/api';
-import { dateMedium, pkr } from '../../utils/format';
+import { dateMedium, dateTimeShort, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
+
+type TransactionStatus =
+  | 'PENDING' | 'COMPLETED' | 'FAILED' | 'VOIDED'
+  | 'SHIPPED' | 'DELIVERED' | 'DISPUTED' | 'REFUNDED';
 
 interface WinTransaction {
   transactionId: string;
@@ -17,20 +21,29 @@ interface WinTransaction {
   auctionImageUrl: string;
   sellerName: string;
   finalAmount: number;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'VOIDED';
+  status: TransactionStatus;
   // Why the last payment attempt failed, if one did. The transaction stays PENDING rather
   // than moving to FAILED so a decline is retryable — this is the explanation that goes with
   // that PENDING state instead of a separate terminal one.
   lastPaymentError?: string;
+  // BV-047: present once the seller has shipped. reviewDeadlineAt is the confirm-or-dispute
+  // deadline, computed server-side so this screen never needs reviewTimeoutHours itself.
+  shippedAt?: string;
+  reviewDeadlineAt?: string;
+  disputeReason?: string;
   createdAt: string;
   reviewed: boolean;
 }
 
-const statusConfig = {
-  PENDING:   { label: 'Payment Pending',  icon: Clock,        color: 'text-warning',  bg: 'bg-warning-bg border-warning-border' },
-  COMPLETED: { label: 'Payment Complete', icon: CheckCircle,  color: 'text-success',  bg: 'bg-success-bg border-success-border' },
-  FAILED:    { label: 'Payment Failed',   icon: XCircle,      color: 'text-error',    bg: 'bg-error-bg border-error-border' },
-  VOIDED:    { label: 'Cancelled',        icon: XCircle,      color: 'text-muted',    bg: 'bg-bg border-border-light' },
+const statusConfig: Record<TransactionStatus, { label: string; icon: typeof Clock; color: string; bg: string }> = {
+  PENDING:   { label: 'Payment Pending',    icon: Clock,        color: 'text-warning',  bg: 'bg-warning-bg border-warning-border' },
+  COMPLETED: { label: 'Awaiting Shipment',  icon: Package,      color: 'text-info',     bg: 'bg-info-bg border-info-border' },
+  SHIPPED:   { label: 'Shipped',            icon: Truck,        color: 'text-primary',  bg: 'bg-primary/10 border-primary/30' },
+  DELIVERED: { label: 'Delivered',          icon: CheckCircle,  color: 'text-success',  bg: 'bg-success-bg border-success-border' },
+  DISPUTED:  { label: 'Under Review',       icon: ShieldAlert,  color: 'text-warning',  bg: 'bg-warning-bg border-warning-border' },
+  REFUNDED:  { label: 'Refunded',           icon: RotateCcw,    color: 'text-muted',    bg: 'bg-bg border-border-light' },
+  FAILED:    { label: 'Payment Failed',     icon: XCircle,      color: 'text-error',    bg: 'bg-error-bg border-error-border' },
+  VOIDED:    { label: 'Cancelled',          icon: XCircle,      color: 'text-muted',    bg: 'bg-bg border-border-light' },
 };
 
 function WinCardSkeleton() {
@@ -63,16 +76,38 @@ export default function BuyerMyWins() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTx, setSelectedTx] = useState<WinTransaction | null>(null);
   const [ratingTx, setRatingTx] = useState<WinTransaction | null>(null);
+  const [disputeTx, setDisputeTx] = useState<WinTransaction | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<{ txId: string; message: string } | null>(null);
+
+  function refresh() {
+    return api.get('/payments/my-wins').then(setTransactions);
+  }
 
   useEffect(() => {
-    api.get('/payments/my-wins')
-      .then(setTransactions)
+    refresh()
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : 'Failed to load wins.';
         setError(message);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleConfirmReceipt(tx: WinTransaction) {
+    setActionError(null);
+    setConfirmingId(tx.transactionId);
+    try {
+      await api.post(`/payments/${tx.transactionId}/confirm-receipt`);
+      await refresh();
+    } catch (err: unknown) {
+      setActionError({
+        txId: tx.transactionId,
+        message: err instanceof Error ? err.message : 'Could not confirm receipt.',
+      });
+    } finally {
+      setConfirmingId(null);
+    }
+  }
 
   function handlePaymentSuccess() {
     const txId = selectedTx?.transactionId;
@@ -181,7 +216,62 @@ export default function BuyerMyWins() {
                         </p>
                       )}
 
-                      {tx.status === 'COMPLETED' && !tx.reviewed && (
+                      {tx.status === 'REFUNDED' && (
+                        <p className="mt-4 text-[12px] text-muted text-center">
+                          This purchase was refunded after a dispute review.
+                        </p>
+                      )}
+
+                      {tx.status === 'COMPLETED' && (
+                        <p className="mt-4 text-[12px] text-info text-center">
+                          Payment received — waiting for the seller to ship your item.
+                        </p>
+                      )}
+
+                      {tx.status === 'DISPUTED' && (
+                        <div className="mt-4 bg-warning-bg border border-warning-border rounded-md px-3 py-2">
+                          <p className="text-[12px] text-navy font-semibold flex items-center gap-1.5">
+                            <ShieldAlert size={13} /> An admin is reviewing your report
+                          </p>
+                          {tx.disputeReason && (
+                            <p className="text-[11px] text-muted mt-1">"{tx.disputeReason}"</p>
+                          )}
+                        </div>
+                      )}
+
+                      {tx.status === 'SHIPPED' && (
+                        <>
+                          {tx.reviewDeadlineAt && (
+                            <p className="mt-3 text-[11px] text-muted text-center">
+                              Confirm receipt or report a problem by {dateTimeShort(tx.reviewDeadlineAt)} —
+                              after that, receipt is confirmed automatically.
+                            </p>
+                          )}
+                          {actionError && actionError.txId === tx.transactionId && (
+                            <p className="mt-2 text-[12px] text-error bg-error-bg border border-error-border rounded-md px-3 py-2">
+                              {actionError.message}
+                            </p>
+                          )}
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <Button
+                              className="text-[13px]"
+                              loading={confirmingId === tx.transactionId}
+                              onClick={() => handleConfirmReceipt(tx)}
+                            >
+                              <Truck size={14} /> Confirm Receipt
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="text-[13px] border-error text-error hover:bg-error-bg"
+                              onClick={() => setDisputeTx(tx)}
+                            >
+                              <AlertTriangle size={14} /> Report a Problem
+                            </Button>
+                          </div>
+                        </>
+                      )}
+
+                      {tx.status === 'DELIVERED' && !tx.reviewed && (
                         <Button
                           variant="outline"
                           className="mt-4 w-full text-[13px]"
@@ -191,7 +281,7 @@ export default function BuyerMyWins() {
                         </Button>
                       )}
 
-                      {tx.status === 'COMPLETED' && tx.reviewed && (
+                      {tx.status === 'DELIVERED' && tx.reviewed && (
                         <p className="mt-4 text-[12px] text-success font-semibold text-center">
                           ✓ You rated this seller
                         </p>
@@ -227,6 +317,18 @@ export default function BuyerMyWins() {
             setRatingTx(null);
           }}
           onClose={() => setRatingTx(null)}
+        />
+      )}
+
+      {disputeTx && (
+        <DisputeModal
+          transactionId={disputeTx.transactionId}
+          auctionTitle={disputeTx.auctionTitle}
+          onSuccess={() => {
+            setDisputeTx(null);
+            void refresh();
+          }}
+          onClose={() => setDisputeTx(null)}
         />
       )}
     </div>

@@ -27,10 +27,23 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryPhone, setDeliveryPhone] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!stripe || !elements) return;
+
+    // BV-047: the platform previously held no delivery contact data at all — the seller has
+    // nowhere to send the item without this, so it's required before payment starts.
+    if (deliveryAddress.trim().length < 10) {
+      setError('Enter a delivery address the seller can ship to (at least 10 characters).');
+      return;
+    }
+    if (deliveryPhone.trim().length < 7) {
+      setError('Enter a phone number the seller can reach you on.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -38,7 +51,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
     try {
       const { clientSecret } = await api.post(
         '/payments/create-intent',
-        { transactionId },
+        { transactionId, deliveryAddress: deliveryAddress.trim(), deliveryPhone: deliveryPhone.trim() },
       );
 
       // Nullable in the contract because Stripe types client_secret as nullable and the
@@ -78,6 +91,28 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
       </div>
 
       <div className="flex flex-col gap-4">
+        <div>
+          <label className="text-[12px] font-semibold text-navy mb-2 block">Delivery Address</label>
+          <textarea
+            value={deliveryAddress}
+            onChange={e => setDeliveryAddress(e.target.value)}
+            maxLength={300}
+            rows={2}
+            placeholder="House/flat, street, area, city"
+            className="w-full border border-border-light rounded-md px-4 py-[10px] bg-surface text-[13px] text-navy placeholder:text-placeholder resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+        <div>
+          <label className="text-[12px] font-semibold text-navy mb-2 block">Delivery Phone</label>
+          <input
+            type="tel"
+            value={deliveryPhone}
+            onChange={e => setDeliveryPhone(e.target.value)}
+            maxLength={20}
+            placeholder="03xx xxxxxxx"
+            className="w-full border border-border-light rounded-md px-4 py-[10px] bg-surface text-[13px] text-navy placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
         <div>
           <label className="text-[12px] font-semibold text-navy mb-2 block">Card Number</label>
           <div className="border border-border-light rounded-md px-4 py-[14px] bg-surface">

@@ -8,6 +8,19 @@
  * see that file for why no third-party generator is used.
  */
 
+export type AdminDispute = {
+  disputeId: string;
+  transactionId: string;
+  auctionTitle: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  sellerName: string;
+  finalAmount: number;
+  reason: string;
+  createdAt: string;
+};
+
 export type AdminTransaction = {
   transactionId: string;
   auctionId: string;
@@ -130,8 +143,19 @@ export type ChangePasswordRequest = {
   newPassword: string;
 };
 
+export type ConnectOnboardingLink = {
+  url: string;
+};
+
+export type ConnectStatus = {
+  connected: boolean;
+  onboardingComplete: boolean;
+};
+
 export type CreateIntentRequest = {
   transactionId: string;
+  deliveryAddress: string;
+  deliveryPhone: string;
 };
 
 export type CreateReviewRequest = {
@@ -263,6 +287,11 @@ export type PaginatedListings = {
   nextCursor: string | null;
 };
 
+export type PaginatedSellerSales = {
+  items: SellerSale[];
+  nextCursor: string | null;
+};
+
 export type PasswordChanged = {
   message: string;
   accessToken: string;
@@ -299,6 +328,10 @@ export type PublicSettings = {
   supportEmail: string;
   minListingPrice: number;
   maxBidIncrement: number;
+};
+
+export type RaiseDisputeRequest = {
+  reason: string;
 };
 
 export type RefreshRequest = {
@@ -349,6 +382,11 @@ export type ResetPasswordRequest = {
   password: string;
 };
 
+export type ResolveDisputeRequest = {
+  resolution: "REFUND" | "RELEASE";
+  note: string;
+};
+
 export type Review = {
   reviewId: string;
   stars: number;
@@ -367,6 +405,23 @@ export type SellerReviews = {
     createdAt: string;
     buyerName: string;
   })[];
+};
+
+export type SellerSale = {
+  transactionId: string;
+  auctionId: string;
+  auctionTitle: string;
+  auctionEmoji: string;
+  auctionImageUrl: string;
+  buyerName: string;
+  finalAmount: number;
+  status: TransactionStatus;
+  deliveryAddress?: string;
+  deliveryPhone?: string;
+  shippedAt?: string;
+  reviewDeadlineAt?: string;
+  disputeReason?: string;
+  createdAt: string;
 };
 
 export type SellerStats = {
@@ -397,7 +452,7 @@ export type SubmitListingRequest = {
   attributes?: Record<string, unknown>;
 };
 
-export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "VOIDED";
+export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "VOIDED" | "SHIPPED" | "DELIVERED" | "DISPUTED" | "REFUNDED";
 
 export type UpdateSettingsRequest = {
   emailNotifsEnabled?: boolean;
@@ -469,6 +524,9 @@ export type WonTransaction = {
   finalAmount: number;
   status: TransactionStatus;
   lastPaymentError?: string;
+  shippedAt?: string;
+  reviewDeadlineAt?: string;
+  disputeReason?: string;
   createdAt: string;
   reviewed: boolean;
 };
@@ -476,6 +534,7 @@ export type WonTransaction = {
 /** What each documented GET returns, unwrapped from the response envelope. */
 export interface GetEndpoints {
   "/admin/analytics": Analytics;
+  "/admin/disputes": AdminDispute[];
   "/admin/transactions": AdminTransaction[];
   "/admin/users": AdminUser[];
   "/auctions": PaginatedAuctions;
@@ -490,6 +549,8 @@ export interface GetEndpoints {
   "/listings/mine": PaginatedListings;
   "/listings/pending": PaginatedListings;
   "/notifications": Notification[];
+  "/payments/connect/status": ConnectStatus;
+  "/payments/my-sales": PaginatedSellerSales;
   "/payments/my-wins": WonTransaction[];
   "/payments/seller-stats": SellerStats;
   "/reviews/seller/{sellerId}": SellerReviews;
@@ -501,6 +562,10 @@ export interface GetEndpoints {
 
 /** What each documented POST returns, unwrapped from the response envelope. */
 export interface PostEndpoints {
+  "/admin/disputes/{disputeId}/resolve": {
+    disputeId: string;
+    resolution: "REFUND" | "RELEASE";
+  };
   "/admin/transactions/{transactionId}/void": {
     transactionId: string;
     status: "VOIDED";
@@ -530,8 +595,17 @@ export interface PostEndpoints {
   "/listings/{listingId}/reject": Rejection;
   "/notifications/read-all": Message;
   "/notifications/{notificationId}/read": NotificationRead;
+  "/payments/connect/onboard": ConnectOnboardingLink;
   "/payments/create-intent": PaymentIntent;
   "/payments/webhook": WebhookAck;
+  "/payments/{transactionId}/confirm-receipt": {
+    transactionId: string;
+    status: "DELIVERED";
+  };
+  "/payments/{transactionId}/dispute": {
+    transactionId: string;
+    status: "DISPUTED";
+  };
   "/reviews": Review;
   "/watchlist/{auctionId}": WatchToggle;
 }
@@ -544,6 +618,10 @@ export interface PutEndpoints {
 /** What each documented PATCH returns, unwrapped from the response envelope. */
 export interface PatchEndpoints {
   "/auth/me/preferences": NotificationPrefs;
+  "/payments/{transactionId}/ship": {
+    transactionId: string;
+    status: "SHIPPED";
+  };
 }
 
 /** What each documented DELETE returns, unwrapped from the response envelope. */
@@ -553,6 +631,7 @@ export interface DeleteEndpoints {
 
 /** The body each documented POST expects. */
 export interface PostRequests {
+  "/admin/disputes/{disputeId}/resolve": ResolveDisputeRequest;
   "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
   "/admin/users/{userId}/anonymize": AnonymizeUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
@@ -570,6 +649,7 @@ export interface PostRequests {
   "/listings": SubmitListingRequest;
   "/listings/{listingId}/reject": RejectListingRequest;
   "/payments/create-intent": CreateIntentRequest;
+  "/payments/{transactionId}/dispute": RaiseDisputeRequest;
   "/reviews": CreateReviewRequest;
 }
 
