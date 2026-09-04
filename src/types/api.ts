@@ -15,6 +15,7 @@ export type {
   Listing,
   User,
   Bid,
+  PublicBid,
   BidWithAuction,
   PaginatedAuctions,
   PaginatedBids,

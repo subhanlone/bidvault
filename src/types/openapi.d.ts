@@ -289,7 +289,7 @@ export type PaginatedAuctions = {
 };
 
 export type PaginatedBids = {
-  items: Bid[];
+  items: PublicBid[];
   nextCursor: string | null;
 };
 
@@ -345,6 +345,15 @@ export type PlatformStats = {
   transactionTotal: number;
   listingCount: number;
   completedSalesCount: number;
+};
+
+export type PublicBid = {
+  bidId: string;
+  auctionId: string;
+  isMine: boolean;
+  buyerName: string;
+  amount: number;
+  timestamp: string;
 };
 
 export type PublicSettings = {

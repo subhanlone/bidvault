@@ -83,7 +83,7 @@ export default function BuyerLiveBidding() {
     if (!timer.isExpired || wonRef.current || !auction) return;
     wonRef.current = true;
     const reserveNotMet = auction.reserveMet === false;
-    const isTopBidder = auctionBids[0]?.buyerId === user?.userId;
+    const isTopBidder = auctionBids[0]?.isMine ?? false;
     navigate('/buyer/auction-won', {
       state: {
         auctionId: auction.auctionId,
@@ -168,7 +168,7 @@ export default function BuyerLiveBidding() {
   // convention) -- currentBid only needs clearing by a full increment once a bid actually exists.
   const noBidsYet        = auction.bidCount === 0;
   const minNext           = noBidsYet ? auction.currentBid : auction.currentBid + auction.minIncrement;
-  const myBids           = auctionBids.filter(b => b.buyerId === user?.userId);
+  const myBids           = auctionBids.filter(b => b.isMine);
   const isHighest        = myBids.length > 0 && myBids[0].amount === auction.currentBid;
   const isOutbid         = myBids.length > 0 && !isHighest;
   const quickAmounts     = [minNext, minNext + auction.minIncrement, minNext + auction.minIncrement * 2];
@@ -378,10 +378,10 @@ export default function BuyerLiveBidding() {
                   <div key={b.bidId} className={`flex items-center justify-between py-3 ${i < auctionBids.length - 1 ? 'border-b border-surface-raised' : ''}`}>
                     <div className="flex items-center gap-3">
                       <div className="bg-surface-raised size-[32px] rounded-full flex items-center justify-center font-bold text-[12px] text-secondary shrink-0">
-                        {b.buyerName[0]}
+                        {b.isMine ? 'Y' : b.buyerName[0]}
                       </div>
                       <div>
-                        <p className="font-bold text-[12px] text-secondary">{b.buyerName === user?.name ? `${b.buyerName} (You)` : b.buyerName}</p>
+                        <p className="font-bold text-[12px] text-secondary">{b.isMine ? 'You' : b.buyerName}</p>
                         <p className="text-[10px] text-placeholder">{timeShort(b.timestamp)}</p>
                       </div>
                     </div>
