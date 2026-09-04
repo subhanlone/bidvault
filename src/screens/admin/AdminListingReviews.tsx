@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePendingListings } from '../../hooks/usePendingListings';
+import { usePendingListings, type BulkApproveProgress } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
 import { CheckCircle2, ClipboardList, Menu, X } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
@@ -16,6 +16,7 @@ export default function AdminListingReviews() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const confirmDialogRef = useDialog<HTMLDivElement>(confirmOpen, () => setConfirmOpen(false));
   const [approving, setApproving] = useState(false);
+  const [approveProgress, setApproveProgress] = useState<BulkApproveProgress | null>(null);
   const [reviewTimeoutHours, setReviewTimeoutHours] = useState<number | null>(null);
 
   useEffect(() => { refreshListings(); }, [refreshListings]);
@@ -36,8 +37,9 @@ export default function AdminListingReviews() {
 
   const handleApproveAll = async () => {
     setApproving(true);
+    setApproveProgress(null);
     try {
-      const result = await approveAll();
+      const result = await approveAll(setApproveProgress);
       if (result.failed === 0) {
         showToast({ type: 'success', title: 'Listings Approved', message: `${result.approved} listing${result.approved !== 1 ? 's' : ''} approved.` });
       } else {
@@ -47,6 +49,7 @@ export default function AdminListingReviews() {
       showToast({ type: 'error', title: 'Approval Failed', message: 'Could not approve listings.' });
     } finally {
       setApproving(false);
+      setApproveProgress(null);
       setConfirmOpen(false);
     }
   };
@@ -201,7 +204,11 @@ export default function AdminListingReviews() {
                   disabled={approving}
                   className="flex-1 bg-primary rounded-sm py-3 font-bold text-[13px] text-white hover:bg-primary-dark disabled:opacity-60 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
                 >
-                  {approving ? 'Approving…' : 'Confirm'}
+                  {approving
+                    ? approveProgress
+                      ? `Approving… (${approveProgress.approved} so far)`
+                      : 'Approving…'
+                    : 'Confirm'}
                 </button>
               </div>
             </div>

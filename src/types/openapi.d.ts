@@ -130,6 +130,7 @@ export type BulkApproval = {
     listingId: string;
     error: string;
   }[];
+  remaining: number;
 };
 
 /** Category-specific fields; keys vary by category. */
