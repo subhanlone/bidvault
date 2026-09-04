@@ -164,7 +164,10 @@ export default function BuyerLiveBidding() {
   // ── Derived values ───────────────────────────────────────────────────────────
   const watched          = isWatched(auction.auctionId);
   const isFinalCountdown = timer.totalSeconds > 0 && timer.totalSeconds <= 60;
-  const minNext          = auction.currentBid + auction.minIncrement;
+  // BV-013: the first bid is allowed at the advertised starting price itself (matching eBay's
+  // convention) -- currentBid only needs clearing by a full increment once a bid actually exists.
+  const noBidsYet        = auction.bidCount === 0;
+  const minNext           = noBidsYet ? auction.currentBid : auction.currentBid + auction.minIncrement;
   const myBids           = auctionBids.filter(b => b.buyerId === user?.userId);
   const isHighest        = myBids.length > 0 && myBids[0].amount === auction.currentBid;
   const isOutbid         = myBids.length > 0 && !isHighest;
@@ -427,13 +430,13 @@ export default function BuyerLiveBidding() {
 
           {/* Current bid + status banners */}
           <div className="bg-surface border border-border-light rounded-md p-5">
-            <p className="text-[12px] text-muted mb-1">Current Bid</p>
+            <p className="text-[12px] text-muted mb-1">{noBidsYet ? 'Starting At' : 'Current Bid'}</p>
             <p className="font-extrabold text-[28px] text-primary leading-none mb-1">
               <span key={auction.currentBid} className="animate-price-bump inline-block">
                 {pkr(auction.currentBid)}
               </span>
             </p>
-            <p className="text-[11px] text-muted">{count(auction.bidCount, 'bid')} · Min next: {pkr(minNext)}</p>
+            <p className="text-[11px] text-muted">{count(auction.bidCount, 'bid')} · Min {noBidsYet ? 'bid' : 'next'}: {pkr(minNext)}</p>
             {/* Whether the reserve is met, never the amount — the figure itself stays private to
                 the seller. Telling bidders the floor exists and has not been reached encourages
                 them upward; telling them where it sits would just cap the bidding there. */}
@@ -565,7 +568,7 @@ export default function BuyerLiveBidding() {
               <div className="flex flex-col gap-3 mb-5">
                 {[
                   { label: 'Your bid amount',    value: pkr(pendingBidAmount),       highlight: true  },
-                  { label: 'Current highest bid', value: pkr(auction.currentBid),   highlight: false },
+                  { label: noBidsYet ? 'Starting price' : 'Current highest bid', value: pkr(auction.currentBid), highlight: false },
                   { label: 'Min increment',       value: pkr(auction.minIncrement), highlight: false },
                   { label: 'Bidding as',          value: user?.name ?? '—',                              highlight: false },
                 ].map(d => (
