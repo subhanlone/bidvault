@@ -461,7 +461,7 @@ export type Session = {
 
 export type SubmitListingRequest = {
   title: string;
-  category: string;
+  category: "Electronics & Gadgets" | "Vehicles" | "Clothing & Fashion" | "Books & Education" | "Home & Furniture" | "Sports & Fitness" | "Art & Collectibles";
   condition: "NEW" | "LIKE_NEW" | "USED";
   description: string;
   startPrice: number;

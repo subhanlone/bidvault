@@ -8,9 +8,12 @@ import { api } from '../../services/api';
 import { SellerNavbar, Button, Input, Textarea } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import type { ItemCondition } from '../../types/api';
+import type { ListingCategory } from '../../types';
 import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
 
-const CATEGORIES = [
+// BV-015: kept as a literal-typed array (not Object.keys(CATEGORY_FIELDS)) so a category typo
+// here fails the build instead of silently rendering an <option> the server would now reject.
+const CATEGORIES: ListingCategory[] = [
   'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion',
   'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles',
 ];
@@ -194,7 +197,9 @@ export default function SellerCreateListingStep1() {
                       className={`bg-surface border h-10 px-3 pr-9 rounded-lg text-sm text-secondary w-full outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow appearance-none cursor-pointer ${categoryError ? 'border-error' : 'border-border'}`}
                       value={draft.category}
                       onChange={e => {
-                        updateDraft({ category: e.target.value, attributes: {} });
+                        // The DOM event value is always a plain string; safe to narrow because
+                        // every rendered <option> below comes from the CATEGORIES array above.
+                        updateDraft({ category: e.target.value as ListingCategory | '', attributes: {} });
                         setCategoryError('');
                         setAttributeErrors({});
                       }}

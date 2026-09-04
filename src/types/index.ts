@@ -12,18 +12,22 @@
  *
  * What is left is the two shapes with no server counterpart. Do not add wire types here.
  */
-import type { ItemCondition, CategoryAttributes } from './api';
+import type { ItemCondition, CategoryAttributes, SubmitListingRequest } from './api';
+
+// BV-015: category is a real enum on the wire now, not free text -- sourced from the request
+// type itself so this cannot drift from what the server actually accepts.
+export type ListingCategory = SubmitListingRequest['category'];
 
 /**
  * The in-progress listing held by ListingContext across the three creation steps.
  *
- * Not a wire type: the server never sees this shape. `condition` allows `''` because the
- * form starts with nothing selected, which is precisely why SellerCreateListingStep3 has to
- * narrow it before submitting.
+ * Not a wire type: the server never sees this shape. `category` and `condition` both allow
+ * `''` because the form starts with nothing selected, which is precisely why
+ * SellerCreateListingStep3 has to narrow them before submitting.
  */
 export interface ListingDraft {
   title: string;
-  category: string;
+  category: ListingCategory | '';
   condition: ItemCondition | '';
   description: string;
   imageUrl: string;
