@@ -8,6 +8,12 @@ export interface BulkApproveResult {
   failures: { listingId: string; error: string }[];
 }
 
+/** Running total while approveAll loops over more than one batch — see BV-049. */
+export interface BulkApproveProgress {
+  approved: number;
+  failed: number;
+}
+
 /**
  * Every pending listing, not just the first page.
  *
@@ -48,10 +54,25 @@ export function usePendingListings() {
     setPendingListings(prev => prev.filter(l => l.listingId !== listingId));
   };
 
-  const approveAll = async (): Promise<BulkApproveResult> => {
-    const result = await api.post('/listings/approve-all');
+  // BV-049: one call approves at most 50 (the backend's own cap, to keep any single request
+  // bounded); this loops calls until the server reports nothing PENDING left, so the caller
+  // never has to think about batch size, and a genuinely large backlog no longer risks a
+  // request timeout cutting the run off partway through with no way to tell how far it got.
+  const approveAll = async (onProgress?: (progress: BulkApproveProgress) => void): Promise<BulkApproveResult> => {
+    let approved = 0;
+    let failed = 0;
+    const failures: { listingId: string; error: string }[] = [];
+    let remaining: number;
+    do {
+      const batch = await api.post('/listings/approve-all');
+      approved += batch.approved;
+      failed += batch.failed;
+      failures.push(...batch.failures);
+      remaining = batch.remaining;
+      onProgress?.({ approved, failed });
+    } while (remaining > 0);
     await refreshListings();
-    return result;
+    return { approved, failed, failures };
   };
 
   return { pendingListings, refreshListings, approveListing, rejectListing, approveAll };

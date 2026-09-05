@@ -1,9 +1,15 @@
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { Sparkles, Trophy, Frown, Package, Ban } from 'lucide-react';
+import { Sparkles, Trophy, Frown, Package, Ban, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
+import { api } from '../../services/api';
 import { pkr } from '../../utils/format';
+
+const POLL_MS = 2_000;
+const TIMEOUT_MS = 60_000;
+const SLOW_POLL_MS = 10_000;
 
 interface WonState {
   auctionId: string;
@@ -22,11 +28,52 @@ export default function BuyerAuctionWon() {
   const { user, logout } = useAuth();
   const state = location.state as WonState | null;
 
+  // BV-048: the client declares this win the instant its own countdown hits zero, but the
+  // worker settles the auction independently and can be seconds (or, after a missed job and
+  // the reconciliation sweep, minutes) behind. Navigating here is still good UX -- the reserve
+  // outcome really is a settled fact once bidding has stopped -- but nothing backs "won" with
+  // an AuctionTransaction until the worker actually runs. Poll for it rather than assume it.
+  const won = state?.won ?? true;
+  const auctionId = state?.auctionId;
+  const [confirming, setConfirming] = useState(won);
+  const [confirmTimedOut, setConfirmTimedOut] = useState(false);
+  const elapsedRef = useRef(0);
+
+  useEffect(() => {
+    if (!won || !auctionId) return;
+    let cancelled = false;
+    elapsedRef.current = 0;
+
+    async function poll() {
+      try {
+        const wins = await api.get('/payments/my-wins');
+        if (cancelled) return;
+        if (wins.some(w => w.auctionId === auctionId)) {
+          setConfirming(false);
+          return;
+        }
+      } catch {
+        // A transient network error here just means "try again" -- the timeout below is the
+        // real backstop, not this catch.
+      }
+      if (cancelled) return;
+      elapsedRef.current += POLL_MS;
+      // Caught live: the timeout is a UI signal ("this is slower than usual"), not a reason to
+      // stop looking -- the reconciliation sweep can take several minutes to catch a job the
+      // scheduler lost, and the transaction is still worth detecting whenever it actually
+      // lands. Past the timeout this backs off to a slower interval rather than giving up.
+      const timedOut = elapsedRef.current >= TIMEOUT_MS;
+      if (timedOut) setConfirmTimedOut(true);
+      setTimeout(poll, timedOut ? SLOW_POLL_MS : POLL_MS);
+    }
+    poll();
+    return () => { cancelled = true; };
+  }, [won, auctionId]);
+
   if (!state) {
     return <Navigate to="/buyer/browse" replace />;
   }
 
-  const won = state.won ?? true;
   const reserveNotMet = state.reserveNotMet ?? false;
   const title = state.title ?? 'Auction Item';
   const imageUrl = state.imageUrl;
@@ -65,7 +112,7 @@ export default function BuyerAuctionWon() {
               <div className="flex flex-col gap-3">
                 {[
                   { label: 'Winning bid', value: pkr(finalBid), highlight: true },
-                  { label: 'Status', value: 'Auction Closed' },
+                  { label: 'Status', value: confirming ? 'Confirming…' : 'Auction Closed' },
                   { label: 'Next step', value: 'Complete payment in My Wins' },
                 ].map(d => (
                   <div key={d.label} className="flex justify-between gap-4">
@@ -77,8 +124,21 @@ export default function BuyerAuctionWon() {
             </div>
 
             <div className="flex flex-col gap-3 w-full max-w-[440px]">
+              {confirming && (
+                <p className="flex items-center justify-center gap-2 text-[12px] text-muted mb-1">
+                  <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+                  Confirming your win — this takes a few seconds once bidding closes.
+                </p>
+              )}
+              {confirming && confirmTimedOut && (
+                <p className="text-[12px] text-warning text-center mb-1">
+                  This is taking longer than usual. It will appear in My Wins once confirmed —
+                  check back shortly, or reach out if it doesn't show up.
+                </p>
+              )}
               <Button
                 className="w-full rounded-sm"
+                loading={confirming && !confirmTimedOut}
                 onClick={() => navigate('/buyer/my-wins')}
               >
                 Complete Payment

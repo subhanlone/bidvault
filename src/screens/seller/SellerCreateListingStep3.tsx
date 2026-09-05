@@ -47,7 +47,9 @@ export default function SellerCreateListingStep3() {
       showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and choose the item condition.' });
       return;
     }
-    if (draft.category.trim().length < 2) {
+    // Narrows category from ListingCategory | '' to ListingCategory, the same way the
+    // condition check above narrows ItemCondition | '' -- both start empty until step 1.
+    if (!draft.category) {
       showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and choose a category.' });
       return;
     }

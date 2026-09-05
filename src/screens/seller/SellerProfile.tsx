@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff } from 'lucide-react';
+import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff, Wallet, Receipt } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { SellerNavbar, Badge, Button, Input, DeleteAccountModal } from '../../components/ui';
@@ -19,6 +19,10 @@ export default function SellerProfile() {
   const { user, logout, changePassword } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [earnings, setEarnings] = useState<{
+    ledgerBalance: number;
+    entries: { transactionId: string; auctionTitle: string; amount: number; createdAt: string }[];
+  } | null>(null);
 
   const [showPwForm, setShowPwForm] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -59,6 +63,11 @@ export default function SellerProfile() {
       if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
     });
     return () => { cancelled = true; };
+  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/payments/earnings').then(setEarnings).catch(() => undefined);
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pending  = listings.filter(l => l.status === 'PENDING').length;
@@ -229,6 +238,39 @@ export default function SellerProfile() {
                       <span className="ml-auto text-placeholder text-[12px]">→</span>
                     </Link>
                   ))}
+                </div>
+              </div>
+
+              {/* Earnings (BV-047 payout replaced by a local ledger — see PAYMENT-GATEWAY-MIGRATION.md) */}
+              <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+                <div className="px-5 py-4 border-b border-border-light">
+                  <h2 className="font-bold text-[14px] text-navy">Earnings</h2>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Wallet size={16} className="text-success-dark" />
+                    <span className="font-extrabold text-[20px] text-navy">{pkr(earnings?.ledgerBalance ?? 0)}</span>
+                  </div>
+
+                  {!earnings || earnings.entries.length === 0 ? (
+                    <p className="text-[12px] text-muted">Payouts land here automatically once a buyer confirms delivery.</p>
+                  ) : (
+                    <div className="flex flex-col divide-y divide-bg -mx-1">
+                      {earnings.entries.slice(0, 5).map(e => (
+                        <Link
+                          key={e.transactionId}
+                          to={`/transactions/${e.transactionId}/invoice`}
+                          className="flex items-center justify-between gap-3 px-1 py-2.5 hover:bg-bg rounded-sm transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[12px] font-semibold text-secondary truncate">{e.auctionTitle}</p>
+                            <p className="text-[11px] text-placeholder flex items-center gap-1"><Receipt size={10} /> {dateShort(e.createdAt)}</p>
+                          </div>
+                          <span className="font-bold text-[13px] text-success-dark shrink-0">+{pkr(e.amount)}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -1,18 +1,9 @@
 import { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { X, CreditCard, Lock } from 'lucide-react';
 import { api } from '../../services/api';
 import Button from './Button';
 import { pkr } from '../../utils/format';
 import { useDialog } from '../../hooks/useDialog';
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string);
-
-const elementStyle = {
-  base: { fontSize: '14px', color: '#1e293b', '::placeholder': { color: '#94a3b8' } },
-  invalid: { color: '#ef4444' },
-};
 
 interface Props {
   transactionId: string;
@@ -23,40 +14,50 @@ interface Props {
 }
 
 function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: Props) {
-  const stripe = useStripe();
-  const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryPhone, setDeliveryPhone] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvc, setCvc] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!stripe || !elements) return;
+
+    // BV-047: the platform previously held no delivery contact data at all — the seller has
+    // nowhere to send the item without this, so it's required before payment starts.
+    if (deliveryAddress.trim().length < 10) {
+      setError('Enter a delivery address the seller can ship to (at least 10 characters).');
+      return;
+    }
+    if (deliveryPhone.trim().length < 7) {
+      setError('Enter a phone number the seller can reach you on.');
+      return;
+    }
+    const digits = cardNumber.replace(/\s+/g, '');
+    if (digits.length < 12 || digits.length > 24) {
+      setError('Enter a card number.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      const { clientSecret } = await api.post(
-        '/payments/create-intent',
-        { transactionId },
+      const result = await api.post(
+        `/payments/${transactionId}/pay`,
+        {
+          cardNumber: digits,
+          deliveryAddress: deliveryAddress.trim(),
+          deliveryPhone: deliveryPhone.trim(),
+        },
       );
 
-      // Nullable in the contract because Stripe types client_secret as nullable and the
-      // route passes it straight through. confirmCardPayment needs a string, so a null here
-      // would fail inside Stripe.js with a message that means nothing to the buyer.
-      if (!clientSecret) {
-        setError('Could not start the payment. Please try again.');
-        return;
-      }
-
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: elements.getElement(CardNumberElement)! },
-      });
-
-      if (result.error) {
-        setError(result.error.message ?? 'Payment failed.');
-      } else if (result.paymentIntent?.status === 'succeeded') {
+      if (result.status === 'COMPLETED') {
         onSuccess();
+      } else {
+        setError(result.lastPaymentError ?? 'Card declined.');
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Payment failed.');
@@ -79,29 +80,68 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
 
       <div className="flex flex-col gap-4">
         <div>
+          <label className="text-[12px] font-semibold text-navy mb-2 block">Delivery Address</label>
+          <textarea
+            value={deliveryAddress}
+            onChange={e => setDeliveryAddress(e.target.value)}
+            maxLength={300}
+            rows={2}
+            placeholder="House/flat, street, area, city"
+            className="w-full border border-border-light rounded-md px-4 py-[10px] bg-surface text-[13px] text-navy placeholder:text-placeholder resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+        <div>
+          <label className="text-[12px] font-semibold text-navy mb-2 block">Delivery Phone</label>
+          <input
+            type="tel"
+            value={deliveryPhone}
+            onChange={e => setDeliveryPhone(e.target.value)}
+            maxLength={20}
+            placeholder="03xx xxxxxxx"
+            className="w-full border border-border-light rounded-md px-4 py-[10px] bg-surface text-[13px] text-navy placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+        <div>
           <label className="text-[12px] font-semibold text-navy mb-2 block">Card Number</label>
-          <div className="border border-border-light rounded-md px-4 py-[14px] bg-surface">
-            <CardNumberElement options={{ style: elementStyle }} />
-          </div>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={cardNumber}
+            onChange={e => setCardNumber(e.target.value)}
+            maxLength={24}
+            placeholder="4242 4242 4242 4242"
+            className="w-full border border-border-light rounded-md px-4 py-[10px] bg-surface text-[13px] text-navy placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-[12px] font-semibold text-navy mb-2 block">Expiry Date</label>
-            <div className="border border-border-light rounded-md px-4 py-[14px] bg-surface">
-              <CardExpiryElement options={{ style: elementStyle }} />
-            </div>
+            <input
+              type="text"
+              value={expiry}
+              onChange={e => setExpiry(e.target.value)}
+              maxLength={5}
+              placeholder="MM/YY"
+              className="w-full border border-border-light rounded-md px-4 py-[10px] bg-surface text-[13px] text-navy placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
           </div>
           <div>
             <label className="text-[12px] font-semibold text-navy mb-2 block">CVC</label>
-            <div className="border border-border-light rounded-md px-4 py-[14px] bg-surface">
-              <CardCvcElement options={{ style: elementStyle }} />
-            </div>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={cvc}
+              onChange={e => setCvc(e.target.value)}
+              maxLength={4}
+              placeholder="123"
+              className="w-full border border-border-light rounded-md px-4 py-[10px] bg-surface text-[13px] text-navy placeholder:text-placeholder focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
           </div>
         </div>
 
         {import.meta.env.DEV && (
-          <p className="text-[11px] text-muted">Test card: 4242 4242 4242 4242 · Any future date · Any CVC</p>
+          <p className="text-[11px] text-muted">Test cards: 4242 4242 4242 4242 approves · 4000 0000 0000 0002 declines · any expiry/CVC</p>
         )}
       </div>
 
@@ -109,7 +149,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
         <p className="text-[13px] text-error bg-error-bg border border-error-border rounded-md px-3 py-2">{error}</p>
       )}
 
-      <Button type="submit" disabled={!stripe || loading} className="w-full flex items-center justify-center gap-2">
+      <Button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2">
         <Lock size={14} />
         {loading ? 'Processing...' : `Pay PKR ${finalAmount.toLocaleString()}`}
       </Button>
@@ -141,15 +181,13 @@ export default function PaymentModal({ transactionId, auctionTitle, finalAmount,
           </button>
         </div>
 
-        <Elements stripe={stripePromise}>
-          <CheckoutForm
-            transactionId={transactionId}
-            auctionTitle={auctionTitle}
-            finalAmount={finalAmount}
-            onSuccess={onSuccess}
-            onClose={onClose}
-          />
-        </Elements>
+        <CheckoutForm
+          transactionId={transactionId}
+          auctionTitle={auctionTitle}
+          finalAmount={finalAmount}
+          onSuccess={onSuccess}
+          onClose={onClose}
+        />
       </div>
     </div>
   );

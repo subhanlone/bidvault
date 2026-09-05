@@ -8,6 +8,19 @@
  * see that file for why no third-party generator is used.
  */
 
+export type AdminDispute = {
+  disputeId: string;
+  transactionId: string;
+  auctionTitle: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  sellerName: string;
+  finalAmount: number;
+  reason: string;
+  createdAt: string;
+};
+
 export type AdminTransaction = {
   transactionId: string;
   auctionId: string;
@@ -117,6 +130,7 @@ export type BulkApproval = {
     listingId: string;
     error: string;
   }[];
+  remaining: number;
 };
 
 /** Category-specific fields; keys vary by category. */
@@ -130,10 +144,6 @@ export type ChangePasswordRequest = {
   newPassword: string;
 };
 
-export type CreateIntentRequest = {
-  transactionId: string;
-};
-
 export type CreateReviewRequest = {
   transactionId: string;
   stars: number;
@@ -142,6 +152,16 @@ export type CreateReviewRequest = {
 
 export type DeleteAccountRequest = {
   password: string;
+};
+
+export type Earnings = {
+  ledgerBalance: number;
+  entries: {
+    transactionId: string;
+    auctionTitle: string;
+    amount: number;
+    createdAt: string;
+  }[];
 };
 
 export type ErrorResponse = {
@@ -171,6 +191,27 @@ export type Health = {
   };
   contractViolations: number;
   workerHeartbeatAgeSeconds: number | null;
+};
+
+export type Invoice = {
+  transactionId: string;
+  invoiceNumber: string;
+  auctionTitle: string;
+  category: string;
+  buyerName: string;
+  buyerEmail: string;
+  sellerName: string;
+  sellerEmail: string;
+  amount: number;
+  status: TransactionStatus;
+  paymentReference?: string;
+  deliveryAddress?: string;
+  deliveryPhone?: string;
+  createdAt: string;
+  shippedAt?: string;
+  disputeStatus?: "OPEN" | "RESOLVED_REFUNDED" | "RESOLVED_RELEASED";
+  disputeReason?: string;
+  disputeResolutionNote?: string;
 };
 
 export type ItemCondition = "NEW" | "LIKE_NEW" | "USED";
@@ -249,7 +290,7 @@ export type PaginatedAuctions = {
 };
 
 export type PaginatedBids = {
-  items: Bid[];
+  items: PublicBid[];
   nextCursor: string | null;
 };
 
@@ -263,14 +304,27 @@ export type PaginatedListings = {
   nextCursor: string | null;
 };
 
+export type PaginatedSellerSales = {
+  items: SellerSale[];
+  nextCursor: string | null;
+};
+
 export type PasswordChanged = {
   message: string;
   accessToken: string;
   refreshToken: string;
 };
 
-export type PaymentIntent = {
-  clientSecret: string | null;
+export type PayResult = {
+  transactionId: string;
+  status: "COMPLETED" | "PENDING";
+  lastPaymentError?: string;
+};
+
+export type PayTransactionRequest = {
+  cardNumber: string;
+  deliveryAddress: string;
+  deliveryPhone: string;
 };
 
 export type PlaceBidRequest = {
@@ -294,11 +348,24 @@ export type PlatformStats = {
   completedSalesCount: number;
 };
 
+export type PublicBid = {
+  bidId: string;
+  auctionId: string;
+  isMine: boolean;
+  buyerName: string;
+  amount: number;
+  timestamp: string;
+};
+
 export type PublicSettings = {
   maintenanceMode: boolean;
   supportEmail: string;
   minListingPrice: number;
   maxBidIncrement: number;
+};
+
+export type RaiseDisputeRequest = {
+  reason: string;
 };
 
 export type RefreshRequest = {
@@ -349,6 +416,11 @@ export type ResetPasswordRequest = {
   password: string;
 };
 
+export type ResolveDisputeRequest = {
+  resolution: "REFUND" | "RELEASE";
+  note: string;
+};
+
 export type Review = {
   reviewId: string;
   stars: number;
@@ -369,6 +441,23 @@ export type SellerReviews = {
   })[];
 };
 
+export type SellerSale = {
+  transactionId: string;
+  auctionId: string;
+  auctionTitle: string;
+  auctionEmoji: string;
+  auctionImageUrl: string;
+  buyerName: string;
+  finalAmount: number;
+  status: TransactionStatus;
+  deliveryAddress?: string;
+  deliveryPhone?: string;
+  shippedAt?: string;
+  reviewDeadlineAt?: string;
+  disputeReason?: string;
+  createdAt: string;
+};
+
 export type SellerStats = {
   totalRevenue: number;
   itemsSold: number;
@@ -382,7 +471,7 @@ export type Session = {
 
 export type SubmitListingRequest = {
   title: string;
-  category: string;
+  category: "Electronics & Gadgets" | "Vehicles" | "Clothing & Fashion" | "Books & Education" | "Home & Furniture" | "Sports & Fitness" | "Art & Collectibles";
   condition: "NEW" | "LIKE_NEW" | "USED";
   description: string;
   startPrice: number;
@@ -397,7 +486,7 @@ export type SubmitListingRequest = {
   attributes?: Record<string, unknown>;
 };
 
-export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "VOIDED";
+export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "VOIDED" | "SHIPPED" | "DELIVERED" | "DISPUTED" | "REFUNDED";
 
 export type UpdateSettingsRequest = {
   emailNotifsEnabled?: boolean;
@@ -455,10 +544,6 @@ export type WatchToggle = {
   watched: boolean;
 };
 
-export type WebhookAck = {
-  received: true;
-};
-
 export type WonTransaction = {
   transactionId: string;
   auctionId: string;
@@ -469,6 +554,9 @@ export type WonTransaction = {
   finalAmount: number;
   status: TransactionStatus;
   lastPaymentError?: string;
+  shippedAt?: string;
+  reviewDeadlineAt?: string;
+  disputeReason?: string;
   createdAt: string;
   reviewed: boolean;
 };
@@ -476,6 +564,7 @@ export type WonTransaction = {
 /** What each documented GET returns, unwrapped from the response envelope. */
 export interface GetEndpoints {
   "/admin/analytics": Analytics;
+  "/admin/disputes": AdminDispute[];
   "/admin/transactions": AdminTransaction[];
   "/admin/users": AdminUser[];
   "/auctions": PaginatedAuctions;
@@ -490,8 +579,11 @@ export interface GetEndpoints {
   "/listings/mine": PaginatedListings;
   "/listings/pending": PaginatedListings;
   "/notifications": Notification[];
+  "/payments/earnings": Earnings;
+  "/payments/my-sales": PaginatedSellerSales;
   "/payments/my-wins": WonTransaction[];
   "/payments/seller-stats": SellerStats;
+  "/payments/{transactionId}/invoice": Invoice;
   "/reviews/seller/{sellerId}": SellerReviews;
   "/settings": PlatformSettings;
   "/settings/public": PublicSettings;
@@ -501,6 +593,10 @@ export interface GetEndpoints {
 
 /** What each documented POST returns, unwrapped from the response envelope. */
 export interface PostEndpoints {
+  "/admin/disputes/{disputeId}/resolve": {
+    disputeId: string;
+    resolution: "REFUND" | "RELEASE";
+  };
   "/admin/transactions/{transactionId}/void": {
     transactionId: string;
     status: "VOIDED";
@@ -530,8 +626,15 @@ export interface PostEndpoints {
   "/listings/{listingId}/reject": Rejection;
   "/notifications/read-all": Message;
   "/notifications/{notificationId}/read": NotificationRead;
-  "/payments/create-intent": PaymentIntent;
-  "/payments/webhook": WebhookAck;
+  "/payments/{transactionId}/confirm-receipt": {
+    transactionId: string;
+    status: "DELIVERED";
+  };
+  "/payments/{transactionId}/dispute": {
+    transactionId: string;
+    status: "DISPUTED";
+  };
+  "/payments/{transactionId}/pay": PayResult;
   "/reviews": Review;
   "/watchlist/{auctionId}": WatchToggle;
 }
@@ -544,6 +647,10 @@ export interface PutEndpoints {
 /** What each documented PATCH returns, unwrapped from the response envelope. */
 export interface PatchEndpoints {
   "/auth/me/preferences": NotificationPrefs;
+  "/payments/{transactionId}/ship": {
+    transactionId: string;
+    status: "SHIPPED";
+  };
 }
 
 /** What each documented DELETE returns, unwrapped from the response envelope. */
@@ -553,6 +660,7 @@ export interface DeleteEndpoints {
 
 /** The body each documented POST expects. */
 export interface PostRequests {
+  "/admin/disputes/{disputeId}/resolve": ResolveDisputeRequest;
   "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
   "/admin/users/{userId}/anonymize": AnonymizeUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
@@ -569,7 +677,8 @@ export interface PostRequests {
   "/auth/verify-reset-otp": VerifyResetOtpRequest;
   "/listings": SubmitListingRequest;
   "/listings/{listingId}/reject": RejectListingRequest;
-  "/payments/create-intent": CreateIntentRequest;
+  "/payments/{transactionId}/dispute": RaiseDisputeRequest;
+  "/payments/{transactionId}/pay": PayTransactionRequest;
   "/reviews": CreateReviewRequest;
 }
 

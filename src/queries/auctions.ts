@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient, type UseInfiniteQueryResult } from '@tanstack/react-query';
 import { api } from '../services/api';
-import type { Auction, Bid, PaginatedAuctions, PaginatedBidsWithAuction } from '../types/api';
+import type { Auction, PublicBid, PaginatedAuctions, PaginatedBidsWithAuction } from '../types/api';
 import { keys } from './keys';
 import { useAuth } from '../context/AuthContext';
 
@@ -151,22 +151,32 @@ export function useMyBids(enabled = true) {
  * array of `{items, nextCursor}`), not a plain array — folded page by page, item by item.
  * `useAuctionDetail`'s single-object cache entry is unaffected and still folds directly.
  */
-export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid: Bid) {
-  let alreadyKnown = false;
+export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid: PublicBid) {
+  let isNewBid = false;
 
-  queryClient.setQueryData<{ items: Bid[]; nextCursor: string | null }>(
+  queryClient.setQueryData<{ items: PublicBid[]; nextCursor: string | null }>(
     keys.bids.forAuction(auctionId),
     (old) => {
       if (!old) return old; // nothing cached for this auction; the next fetch will include it
-      if (old.items.some((b) => b.bidId === bid.bidId)) {
-        alreadyKnown = true;
-        return old;
+      const idx = old.items.findIndex((b) => b.bidId === bid.bidId);
+      if (idx === -1) {
+        isNewBid = true;
+        return { ...old, items: [bid, ...old.items] };
       }
-      return { ...old, items: [bid, ...old.items] };
+      // BV-039: the masked bid:placed broadcast and this client's own mutation response (which
+      // knows isMine for certain) can arrive in either order over two different connections --
+      // if this write knows it's the caller's own and the cached row doesn't yet, upgrade it in
+      // place rather than discard it as a duplicate.
+      if (bid.isMine && !old.items[idx].isMine) {
+        const items = [...old.items];
+        items[idx] = bid;
+        return { ...old, items };
+      }
+      return old;
     },
   );
 
-  if (alreadyKnown) return;
+  if (!isNewBid) return;
 
   const fold = (a: Auction): Auction =>
     a.auctionId === auctionId
@@ -213,7 +223,19 @@ export function usePlaceBid() {
       // Applied here as well as from the socket because the broadcast is not guaranteed — if
       // the socket is down this is the only path that updates the UI. Whichever arrives first
       // wins; the other is a no-op.
-      applyBidToCache(queryClient, auctionId, bid);
+      //
+      // BV-039: the POST response itself still carries the caller's own full identity (it's
+      // their own action), but the shared bids cache is the masked, isMine-flagged shape now —
+      // 'You' rather than the real name, consistent with how BuyerLiveBidding already renders
+      // any row with isMine set.
+      applyBidToCache(queryClient, auctionId, {
+        bidId: bid.bidId,
+        auctionId: bid.auctionId,
+        isMine: true,
+        buyerName: 'You',
+        amount: bid.amount,
+        timestamp: bid.timestamp,
+      });
     },
   });
 }

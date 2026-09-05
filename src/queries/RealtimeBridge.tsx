@@ -25,13 +25,17 @@ export function RealtimeBridge() {
 
     function onBidPlaced(payload: {
       auctionId: string;
-      bid: { bidId: string; amount: number; buyerId: string; buyerName: string; timestamp: string };
+      // BV-039: masked server-side, same as GET /:auctionId/bids -- no buyerId, buyerName is a
+      // pseudonym. This handler can't know whether the bid was the current viewer's own; if it
+      // was, usePlaceBid's onSuccess (which does know) upgrades this entry, in either arrival
+      // order -- see applyBidToCache.
+      bid: { bidId: string; amount: number; buyerName: string; timestamp: string };
     }) {
       const { auctionId, bid } = payload;
       applyBidToCache(queryClient, auctionId, {
         bidId: bid.bidId,
         auctionId,
-        buyerId: bid.buyerId,
+        isMine: false,
         buyerName: bid.buyerName,
         amount: bid.amount,
         timestamp: bid.timestamp,
