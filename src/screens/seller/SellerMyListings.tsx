@@ -7,25 +7,8 @@ import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button, ReasonModal } from '../../components/ui';
 import type { Listing, ListingStatus } from '../../types/api';
 import { conditionLabel, dateMedium, pkr } from '../../utils/format';
+import { listingBadge as badgeFor } from '../../utils/listingStatus';
 import LoadingStatus from '../../components/ui/LoadingStatus';
-
-const STATUS_CONFIG: Record<ListingStatus, { label: string; variant: 'warning' | 'success' | 'error' | 'tag' }> = {
-  PENDING:  { label: 'Pending Review',  variant: 'warning' },
-  APPROVED: { label: 'Approved',        variant: 'success' },
-  REJECTED: { label: 'Rejected',        variant: 'error'   },
-  DRAFT:    { label: 'Draft',           variant: 'tag'     },
-};
-
-// A1, Phase 6: an APPROVED listing is not necessarily still for sale — its auction may have
-// already sold or been cancelled. isLive (derived server-side from the auction join, not a
-// second status value) is what actually answers "is this live right now", so the badge for an
-// APPROVED row branches on it instead of treating every APPROVED row as interchangeable.
-function badgeFor(l: Listing): { label: string; variant: 'warning' | 'success' | 'error' | 'tag' } {
-  if (l.status === 'APPROVED') {
-    return l.isLive ? { label: 'Live', variant: 'success' } : { label: 'Ended', variant: 'tag' };
-  }
-  return STATUS_CONFIG[l.status] ?? STATUS_CONFIG.DRAFT;
-}
 
 type Tab = 'ALL' | ListingStatus;
 
@@ -34,6 +17,8 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'PENDING',  label: 'Pending',  icon: <Clock size={12} /> },
   { key: 'APPROVED', label: 'Approved', icon: <CheckCircle2 size={12} /> },
   { key: 'REJECTED', label: 'Rejected', icon: <XCircle size={12} /> },
+  // C3, Phase 7.
+  { key: 'REMOVED',  label: 'Removed',  icon: <AlertCircle size={12} /> },
 ];
 
 function RowSkeleton() {
@@ -68,6 +53,7 @@ function EmptyTab({ tab, onCreateListing }: { tab: Tab; onCreateListing: () => v
     APPROVED: { icon: <CheckCircle2 size={40} strokeWidth={1.3} className="text-success-dark" />, heading: 'No approved listings',      sub: 'Listings that have been approved and are live will appear here.', showCreate: false },
     REJECTED: { icon: <XCircle size={40} strokeWidth={1.3} className="text-error" />,             heading: 'No rejected listings',      sub: 'Great news — none of your listings have been rejected.',         showCreate: false },
     DRAFT:    { icon: <Package size={40} strokeWidth={1.3} className="text-placeholder" />,        heading: 'No drafts',                 sub: 'Unfinished listings will appear here.',                          showCreate: true  },
+    REMOVED:  { icon: <AlertCircle size={40} strokeWidth={1.3} className="text-error" />,          heading: 'No removed listings',       sub: 'Listings taken down by an admin for cause will appear here.',    showCreate: false },
   };
   const m = messages[tab];
   return (
@@ -154,6 +140,7 @@ export default function SellerMyListings() {
     APPROVED: listings.filter(l => l.status === 'APPROVED').length,
     REJECTED: listings.filter(l => l.status === 'REJECTED').length,
     DRAFT:    listings.filter(l => l.status === 'DRAFT').length,
+    REMOVED:  listings.filter(l => l.status === 'REMOVED').length,
   };
 
   const visible = tab === 'ALL' ? listings : listings.filter(l => l.status === tab);

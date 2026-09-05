@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Banknote, Gavel, PackageCheck, Clock, XCircle, Star } from 'lucide-react';
+import { Package, Banknote, Gavel, PackageCheck, Clock, XCircle, Star, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import { SellerNavbar, Badge, Button, StatCard } from '../../components/ui';
+import { SellerNavbar, Badge, Button, StatCard, ReasonModal } from '../../components/ui';
 import type { Listing, SellerReview } from '../../types/api';
 import { conditionLabel, dateShort, pkr } from '../../utils/format';
+import { listingBadge } from '../../utils/listingStatus';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 
 function StatCardSkeleton() {
@@ -43,13 +44,6 @@ function ListingRowSkeleton() {
   );
 }
 
-const STATUS_CONFIG = {
-  PENDING:  { label: 'Pending Review',  variant: 'warning' as const },
-  APPROVED: { label: 'Live / Approved', variant: 'success' as const },
-  REJECTED: { label: 'Rejected',        variant: 'error'   as const },
-  DRAFT:    { label: 'Draft',           variant: 'tag'     as const },
-};
-
 export default function SellerDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -58,6 +52,21 @@ export default function SellerDashboard() {
   const [reviewStats, setReviewStats] = useState<{ average: number | null; count: number; reviews: SellerReview[] }>({ average: null, count: 0, reviews: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<SellerReview | null>(null);
+
+  // C6, Phase 7: a one-shot reply, submitted through the same reason-prompt shape the cancel
+  // actions use — one required text field, nothing more.
+  async function handleReply(reply: string) {
+    if (!replyingTo) return;
+    const updated = await api.post(`/reviews/${replyingTo.reviewId}/reply`, { reply });
+    setReviewStats(prev => ({
+      ...prev,
+      reviews: prev.reviews.map(r => r.reviewId === replyingTo.reviewId
+        ? { ...r, sellerReply: updated.sellerReply, sellerReplyAt: updated.sellerReplyAt }
+        : r),
+    }));
+    setReplyingTo(null);
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -162,6 +171,19 @@ export default function SellerDashboard() {
                     </span>
                   </div>
                   {r.comment && <p className="text-[13px] text-secondary">{r.comment}</p>}
+                  {r.sellerReply ? (
+                    <div className="mt-2 ml-3 pl-3 border-l-2 border-border-light">
+                      <p className="text-[11px] font-bold text-navy">Your reply</p>
+                      <p className="text-[12px] text-tertiary">{r.sellerReply}</p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setReplyingTo(r)}
+                      className="mt-1.5 flex items-center gap-1 text-[11px] font-bold text-primary cursor-pointer"
+                    >
+                      <MessageSquare size={11} /> Reply
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -195,7 +217,7 @@ export default function SellerDashboard() {
               </div>
               <div className="divide-y divide-bg">
                 {listings.map(l => {
-                  const cfg = STATUS_CONFIG[l.status] ?? STATUS_CONFIG.DRAFT;
+                  const cfg = listingBadge(l);
                   return (
                     <div key={l.listingId}>
                       <div className="hidden sm:grid grid-cols-[40px_1fr_140px_110px_120px_90px] gap-4 items-center px-5 py-3.5 hover:bg-bg transition-colors">
@@ -237,6 +259,19 @@ export default function SellerDashboard() {
           )}
         </div>
       </main>
+
+      {replyingTo && (
+        <ReasonModal
+          title="Reply to Review"
+          subject={replyingTo.comment ? `"${replyingTo.comment}"` : `${replyingTo.stars}-star review`}
+          description="Visible to anyone viewing this review. You can only reply once, so make it count."
+          submitLabel="Post Reply"
+          fieldLabel="Your reply"
+          placeholder="Thank the buyer, or address their feedback"
+          onSubmit={handleReply}
+          onClose={() => setReplyingTo(null)}
+        />
+      )}
     </div>
   );
 }

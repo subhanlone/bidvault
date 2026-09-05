@@ -40,6 +40,7 @@ export type AdminUser = {
   name: string;
   email: string;
   role: UserRole;
+  status: UserStatus;
   createdAt: string;
 };
 
@@ -244,7 +245,7 @@ export type Listing = {
   auctionId?: string;
 };
 
-export type ListingStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
+export type ListingStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "REMOVED";
 
 export type LoginRequest = {
   email: string;
@@ -281,7 +282,7 @@ export type NotificationRead = {
   isRead: true;
 };
 
-export type NotificationType = "BID_OUTBID" | "AUCTION_WON" | "RESERVE_NOT_MET" | "LISTING_APPROVED" | "LISTING_REJECTED" | "NEW_REVIEW" | "ITEM_SHIPPED" | "PAYOUT_RECEIVED" | "DISPUTE_RAISED" | "DISPUTE_RESOLVED" | "AUCTION_CANCELLED" | "SECOND_CHANCE_OFFER" | "LISTING_RELISTED";
+export type NotificationType = "BID_OUTBID" | "AUCTION_WON" | "RESERVE_NOT_MET" | "LISTING_APPROVED" | "LISTING_REJECTED" | "NEW_REVIEW" | "ITEM_SHIPPED" | "PAYOUT_RECEIVED" | "DISPUTE_RAISED" | "DISPUTE_RESOLVED" | "AUCTION_CANCELLED" | "SECOND_CHANCE_OFFER" | "LISTING_RELISTED" | "REVIEW_REPLY" | "LISTING_REMOVED";
 
 export type OtpIssued = {
   message: string;
@@ -344,6 +345,7 @@ export type PlatformSettings = {
   minListingPrice: number;
   reviewTimeoutHours: number;
   paymentDeadlineHours: number;
+  reviewEditWindowHours: number;
   supportEmail: string;
 };
 
@@ -410,6 +412,10 @@ export type Rejection = {
   rejectionReason: string | null;
 };
 
+export type ReplyToReviewRequest = {
+  reply: string;
+};
+
 export type ResendVerificationRequest = {
   email: string;
 };
@@ -433,6 +439,9 @@ export type Review = {
   stars: number;
   comment: string | null;
   createdAt: string;
+  updatedAt?: string;
+  sellerReply?: string;
+  sellerReplyAt?: string;
 };
 
 export type SellerReviews = {
@@ -444,6 +453,9 @@ export type SellerReviews = {
     stars: number;
     comment: string | null;
     createdAt: string;
+    updatedAt?: string;
+    sellerReply?: string;
+    sellerReplyAt?: string;
     buyerName: string;
   })[];
 };
@@ -493,7 +505,20 @@ export type SubmitListingRequest = {
   attributes?: Record<string, unknown>;
 };
 
+export type SuspendUserRequest = {
+  reason: string;
+};
+
+export type TakedownListingRequest = {
+  reason: string;
+};
+
 export type TransactionStatus = "PENDING" | "COMPLETED" | "FAILED" | "VOIDED" | "SHIPPED" | "DELIVERED" | "DISPUTED" | "REFUNDED";
+
+export type UpdateReviewRequest = {
+  stars?: number;
+  comment?: string;
+};
 
 export type UpdateSettingsRequest = {
   emailNotifsEnabled?: boolean;
@@ -502,6 +527,7 @@ export type UpdateSettingsRequest = {
   minListingPrice?: number;
   reviewTimeoutHours?: number;
   paymentDeadlineHours?: number;
+  reviewEditWindowHours?: number;
   supportEmail?: string;
 };
 
@@ -526,6 +552,8 @@ export type User = {
 };
 
 export type UserRole = "BUYER" | "SELLER" | "ADMIN";
+
+export type UserStatus = "ACTIVE" | "SUSPENDED";
 
 export type ValidationError = {
   success: false;
@@ -567,6 +595,9 @@ export type WonTransaction = {
   disputeReason?: string;
   createdAt: string;
   reviewed: boolean;
+  reviewId?: string;
+  reviewStars?: number;
+  reviewComment?: string;
 };
 
 /** What each documented GET returns, unwrapped from the response envelope. */
@@ -609,6 +640,10 @@ export interface PostEndpoints {
     disputeId: string;
     resolution: "REFUND" | "RELEASE";
   };
+  "/admin/listings/{listingId}/takedown": {
+    listingId: string;
+    status: "REMOVED";
+  };
   "/admin/transactions/{transactionId}/void": {
     transactionId: string;
     status: "VOIDED";
@@ -616,6 +651,14 @@ export interface PostEndpoints {
   "/admin/users/{userId}/anonymize": {
     userId: string;
     status: "ANONYMIZED";
+  };
+  "/admin/users/{userId}/reinstate": {
+    userId: string;
+    status: "ACTIVE";
+  };
+  "/admin/users/{userId}/suspend": {
+    userId: string;
+    status: "SUSPENDED";
   };
   "/auctions/{auctionId}/bids": Bid;
   "/auctions/{auctionId}/cancel": {
@@ -660,6 +703,11 @@ export interface PostEndpoints {
     auctionId: string;
   };
   "/reviews": Review;
+  "/reviews/{reviewId}/reply": {
+    reviewId: string;
+    sellerReply: string;
+    sellerReplyAt: string;
+  };
   "/watchlist/{auctionId}": WatchToggle;
 }
 
@@ -676,6 +724,7 @@ export interface PatchEndpoints {
     transactionId: string;
     status: "SHIPPED";
   };
+  "/reviews/{reviewId}": Review;
 }
 
 /** What each documented DELETE returns, unwrapped from the response envelope. */
@@ -684,6 +733,10 @@ export interface DeleteEndpoints {
     listingId: string;
     status: "WITHDRAWN";
   };
+  "/reviews/{reviewId}": {
+    reviewId: string;
+    status: "DELETED";
+  };
   "/watchlist/{auctionId}": WatchToggle;
 }
 
@@ -691,8 +744,10 @@ export interface DeleteEndpoints {
 export interface PostRequests {
   "/admin/auctions/{auctionId}/cancel": CancelAuctionRequest;
   "/admin/disputes/{disputeId}/resolve": ResolveDisputeRequest;
+  "/admin/listings/{listingId}/takedown": TakedownListingRequest;
   "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
   "/admin/users/{userId}/anonymize": AnonymizeUserRequest;
+  "/admin/users/{userId}/suspend": SuspendUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
   "/auctions/{auctionId}/cancel": CancelAuctionRequest;
   "/auth/change-password": ChangePasswordRequest;
@@ -711,6 +766,7 @@ export interface PostRequests {
   "/payments/{transactionId}/dispute": RaiseDisputeRequest;
   "/payments/{transactionId}/pay": PayTransactionRequest;
   "/reviews": CreateReviewRequest;
+  "/reviews/{reviewId}/reply": ReplyToReviewRequest;
 }
 
 /** The body each documented PUT expects. */
@@ -722,4 +778,5 @@ export interface PutRequests {
 export interface PatchRequests {
   "/auth/me/preferences": NotificationPreferences;
   "/listings/{listingId}": SubmitListingRequest;
+  "/reviews/{reviewId}": UpdateReviewRequest;
 }

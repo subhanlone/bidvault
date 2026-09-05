@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trophy, CheckCircle, Clock, XCircle, Package, Star, Truck, AlertTriangle, ShieldAlert, RotateCcw, Receipt } from 'lucide-react';
+import { Trophy, CheckCircle, Clock, XCircle, Package, Star, Truck, AlertTriangle, ShieldAlert, RotateCcw, Receipt, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BuyerNavbar, RatingModal, DisputeModal } from '../../components/ui';
 import Button from '../../components/ui/Button';
@@ -33,6 +33,10 @@ interface WinTransaction {
   disputeReason?: string;
   createdAt: string;
   reviewed: boolean;
+  // C6, Phase 7.
+  reviewId?: string;
+  reviewStars?: number;
+  reviewComment?: string;
 }
 
 const statusConfig: Record<TransactionStatus, { label: string; icon: typeof Clock; color: string; bg: string }> = {
@@ -79,6 +83,26 @@ export default function BuyerMyWins() {
   const [disputeTx, setDisputeTx] = useState<WinTransaction | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ txId: string; message: string } | null>(null);
+  const [deletingReviewTx, setDeletingReviewTx] = useState<WinTransaction | null>(null);
+  const [deletingReview, setDeletingReview] = useState(false);
+
+  async function handleDeleteReview() {
+    if (!deletingReviewTx?.reviewId) return;
+    setDeletingReview(true);
+    try {
+      await api.del(`/reviews/${deletingReviewTx.reviewId}`);
+      setDeletingReviewTx(null);
+      await refresh();
+    } catch (err: unknown) {
+      setActionError({
+        txId: deletingReviewTx.transactionId,
+        message: err instanceof Error ? err.message : 'Could not delete your review.',
+      });
+      setDeletingReviewTx(null);
+    } finally {
+      setDeletingReview(false);
+    }
+  }
 
   function refresh() {
     return api.get('/payments/my-wins').then(setTransactions);
@@ -271,6 +295,12 @@ export default function BuyerMyWins() {
                         </>
                       )}
 
+                      {tx.status === 'DELIVERED' && actionError && actionError.txId === tx.transactionId && (
+                        <p className="mt-3 text-[12px] text-error bg-error-bg border border-error-border rounded-md px-3 py-2">
+                          {actionError.message}
+                        </p>
+                      )}
+
                       {tx.status === 'DELIVERED' && !tx.reviewed && (
                         <Button
                           variant="outline"
@@ -282,9 +312,30 @@ export default function BuyerMyWins() {
                       )}
 
                       {tx.status === 'DELIVERED' && tx.reviewed && (
-                        <p className="mt-4 text-[12px] text-success font-semibold text-center">
-                          ✓ You rated this seller
-                        </p>
+                        <div className="mt-4">
+                          <p className="text-[12px] text-success font-semibold text-center mb-2">
+                            ✓ You rated this seller
+                          </p>
+                          {/* C6, Phase 7: edit/delete within reviewEditWindowHours -- the server
+                              is the source of truth for the deadline, so both buttons are always
+                              shown and a 409 past the window just surfaces as an error message. */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              variant="outline"
+                              className="text-[12px]"
+                              onClick={() => setRatingTx(tx)}
+                            >
+                              <Pencil size={12} /> Edit Review
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="text-[12px] border-error text-error hover:bg-error-bg"
+                              onClick={() => setDeletingReviewTx(tx)}
+                            >
+                              <Trash2 size={12} /> Delete
+                            </Button>
+                          </div>
+                        </div>
                       )}
 
                       {(tx.status === 'DELIVERED' || tx.status === 'SHIPPED' || tx.status === 'DISPUTED') && (
@@ -319,14 +370,35 @@ export default function BuyerMyWins() {
           transactionId={ratingTx.transactionId}
           sellerName={ratingTx.sellerName}
           auctionTitle={ratingTx.auctionTitle}
+          editing={ratingTx.reviewed && ratingTx.reviewId
+            ? { reviewId: ratingTx.reviewId, stars: ratingTx.reviewStars ?? 0, comment: ratingTx.reviewComment }
+            : undefined}
           onSuccess={() => {
-            setTransactions(prev =>
-              prev.map(t => t.transactionId === ratingTx.transactionId ? { ...t, reviewed: true } : t)
-            );
             setRatingTx(null);
+            void refresh();
           }}
           onClose={() => setRatingTx(null)}
         />
+      )}
+
+      {deletingReviewTx && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4 z-50" onClick={() => setDeletingReviewTx(null)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-surface rounded-xl shadow-xl w-full max-w-[420px] p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-bold text-[16px] text-navy mb-1">Delete Review?</h2>
+            <p className="text-[13px] text-muted mb-5">
+              Your review for "{deletingReviewTx.auctionTitle}" will be permanently removed. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setDeletingReviewTx(null)}>Cancel</Button>
+              <Button variant="primary" className="flex-1" loading={deletingReview} onClick={handleDeleteReview}>Delete</Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {disputeTx && (

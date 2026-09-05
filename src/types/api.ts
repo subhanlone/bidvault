@@ -33,6 +33,8 @@ export type {
   Session,
   Registration,
   UserRole,
+  UserStatus,
+  AdminUser,
   AuctionStatus,
   ListingStatus,
   ItemCondition,
