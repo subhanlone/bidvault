@@ -102,7 +102,7 @@ export type Auction = {
   attributes?: CategoryAttributes;
 };
 
-export type AuctionStatus = "SCHEDULED" | "ACTIVE" | "CLOSED";
+export type AuctionStatus = "ACTIVE" | "CLOSED" | "CANCELLED";
 
 export type Bid = {
   bidId: string;
@@ -131,6 +131,10 @@ export type BulkApproval = {
     error: string;
   }[];
   remaining: number;
+};
+
+export type CancelAuctionRequest = {
+  reason: string;
 };
 
 /** Category-specific fields; keys vary by category. */
@@ -236,6 +240,8 @@ export type Listing = {
   imageUrl?: string;
   sellerEmail: string;
   attributes?: CategoryAttributes;
+  isLive: boolean;
+  auctionId?: string;
 };
 
 export type ListingStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
@@ -275,7 +281,7 @@ export type NotificationRead = {
   isRead: true;
 };
 
-export type NotificationType = "BID_OUTBID" | "AUCTION_WON" | "RESERVE_NOT_MET" | "LISTING_APPROVED" | "LISTING_REJECTED" | "NEW_REVIEW";
+export type NotificationType = "BID_OUTBID" | "AUCTION_WON" | "RESERVE_NOT_MET" | "LISTING_APPROVED" | "LISTING_REJECTED" | "NEW_REVIEW" | "ITEM_SHIPPED" | "PAYOUT_RECEIVED" | "DISPUTE_RAISED" | "DISPUTE_RESOLVED" | "AUCTION_CANCELLED" | "SECOND_CHANCE_OFFER" | "LISTING_RELISTED";
 
 export type OtpIssued = {
   message: string;
@@ -337,6 +343,7 @@ export type PlatformSettings = {
   maxBidIncrement: number;
   minListingPrice: number;
   reviewTimeoutHours: number;
+  paymentDeadlineHours: number;
   supportEmail: string;
 };
 
@@ -494,6 +501,7 @@ export type UpdateSettingsRequest = {
   maxBidIncrement?: number;
   minListingPrice?: number;
   reviewTimeoutHours?: number;
+  paymentDeadlineHours?: number;
   supportEmail?: string;
 };
 
@@ -593,6 +601,10 @@ export interface GetEndpoints {
 
 /** What each documented POST returns, unwrapped from the response envelope. */
 export interface PostEndpoints {
+  "/admin/auctions/{auctionId}/cancel": {
+    auctionId: string;
+    status: "CANCELLED";
+  };
   "/admin/disputes/{disputeId}/resolve": {
     disputeId: string;
     resolution: "REFUND" | "RELEASE";
@@ -606,6 +618,10 @@ export interface PostEndpoints {
     status: "ANONYMIZED";
   };
   "/auctions/{auctionId}/bids": Bid;
+  "/auctions/{auctionId}/cancel": {
+    auctionId: string;
+    status: "CANCELLED";
+  };
   "/auth/change-password": PasswordChanged;
   "/auth/delete-account": {
     message: string;
@@ -634,7 +650,15 @@ export interface PostEndpoints {
     transactionId: string;
     status: "DISPUTED";
   };
+  "/payments/{transactionId}/offer-next-bidder": {
+    transactionId: string;
+    status: "PENDING";
+  };
   "/payments/{transactionId}/pay": PayResult;
+  "/payments/{transactionId}/relist": {
+    listingId: string;
+    auctionId: string;
+  };
   "/reviews": Review;
   "/watchlist/{auctionId}": WatchToggle;
 }
@@ -647,6 +671,7 @@ export interface PutEndpoints {
 /** What each documented PATCH returns, unwrapped from the response envelope. */
 export interface PatchEndpoints {
   "/auth/me/preferences": NotificationPrefs;
+  "/listings/{listingId}": Listing;
   "/payments/{transactionId}/ship": {
     transactionId: string;
     status: "SHIPPED";
@@ -655,15 +680,21 @@ export interface PatchEndpoints {
 
 /** What each documented DELETE returns, unwrapped from the response envelope. */
 export interface DeleteEndpoints {
+  "/listings/{listingId}": {
+    listingId: string;
+    status: "WITHDRAWN";
+  };
   "/watchlist/{auctionId}": WatchToggle;
 }
 
 /** The body each documented POST expects. */
 export interface PostRequests {
+  "/admin/auctions/{auctionId}/cancel": CancelAuctionRequest;
   "/admin/disputes/{disputeId}/resolve": ResolveDisputeRequest;
   "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
   "/admin/users/{userId}/anonymize": AnonymizeUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
+  "/auctions/{auctionId}/cancel": CancelAuctionRequest;
   "/auth/change-password": ChangePasswordRequest;
   "/auth/delete-account": DeleteAccountRequest;
   "/auth/forgot-password": ForgotPasswordRequest;
@@ -690,4 +721,5 @@ export interface PutRequests {
 /** The body each documented PATCH expects. */
 export interface PatchRequests {
   "/auth/me/preferences": NotificationPreferences;
+  "/listings/{listingId}": SubmitListingRequest;
 }

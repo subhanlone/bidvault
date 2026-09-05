@@ -1,19 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, AlertCircle, Ban, Pencil } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
-import { SellerNavbar, Badge, Button } from '../../components/ui';
+import { SellerNavbar, Badge, Button, ReasonModal } from '../../components/ui';
 import type { Listing, ListingStatus } from '../../types/api';
 import { conditionLabel, dateMedium, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 
 const STATUS_CONFIG: Record<ListingStatus, { label: string; variant: 'warning' | 'success' | 'error' | 'tag' }> = {
   PENDING:  { label: 'Pending Review',  variant: 'warning' },
-  APPROVED: { label: 'Live / Approved', variant: 'success' },
+  APPROVED: { label: 'Approved',        variant: 'success' },
   REJECTED: { label: 'Rejected',        variant: 'error'   },
   DRAFT:    { label: 'Draft',           variant: 'tag'     },
 };
+
+// A1, Phase 6: an APPROVED listing is not necessarily still for sale — its auction may have
+// already sold or been cancelled. isLive (derived server-side from the auction join, not a
+// second status value) is what actually answers "is this live right now", so the badge for an
+// APPROVED row branches on it instead of treating every APPROVED row as interchangeable.
+function badgeFor(l: Listing): { label: string; variant: 'warning' | 'success' | 'error' | 'tag' } {
+  if (l.status === 'APPROVED') {
+    return l.isLive ? { label: 'Live', variant: 'success' } : { label: 'Ended', variant: 'tag' };
+  }
+  return STATUS_CONFIG[l.status] ?? STATUS_CONFIG.DRAFT;
+}
 
 type Tab = 'ALL' | ListingStatus;
 
@@ -75,38 +87,66 @@ function EmptyTab({ tab, onCreateListing }: { tab: Tab; onCreateListing: () => v
 export default function SellerMyListings() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string | null>(null);
   const [tab, setTab]           = useState<Tab>('ALL');
+  const [withdrawing, setWithdrawing] = useState<Listing | null>(null);
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [cancelling, setCancelling] = useState<Listing | null>(null);
+
+  // Every listing, not one page: the tab counts (Pending/Approved/Rejected) below are exact
+  // totals, so this walks every cursor page (BV-029) rather than showing whatever fits on
+  // page one. A seller's own listings are few enough that this costs nothing worth trading
+  // away for lazy loading. Pure fetch, no setState — the effect below and the action handlers
+  // each apply the result with their own appropriate guard (the effect's `cancelled` check;
+  // the handlers just set it directly, since they run from a user action, not mount).
+  async function fetchAllListings(): Promise<Listing[]> {
+    const all: Listing[] = [];
+    let cursor: string | null = null;
+    do {
+      const page: { items: Listing[]; nextCursor: string | null } = await api.get(
+        cursor ? `/listings/mine?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/mine?limit=100',
+      );
+      all.push(...page.items);
+      cursor = page.nextCursor;
+    } while (cursor);
+    return all;
+  }
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    // Every listing, not one page: the tab counts (Pending/Approved/Rejected) below are exact
-    // totals, so this walks every cursor page (BV-029) rather than showing whatever fits on
-    // page one. A seller's own listings are few enough that this costs nothing worth trading
-    // away for lazy loading.
-    (async () => {
-      try {
-        const all: Listing[] = [];
-        let cursor: string | null = null;
-        do {
-          const page: { items: Listing[]; nextCursor: string | null } = await api.get(
-            cursor ? `/listings/mine?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/mine?limit=100',
-          );
-          all.push(...page.items);
-          cursor = page.nextCursor;
-        } while (cursor);
-        if (!cancelled) setListings(all);
-      } catch {
-        if (!cancelled) setError('Could not load listings. Please try again.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+    fetchAllListings()
+      .then(all => { if (!cancelled) setListings(all); })
+      .catch(() => { if (!cancelled) setError('Could not load listings. Please try again.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleWithdraw() {
+    if (!withdrawing) return;
+    setWithdrawLoading(true);
+    try {
+      await api.del(`/listings/${withdrawing.listingId}`);
+      showToast({ type: 'success', title: 'Listing Withdrawn', message: `"${withdrawing.title}" has been withdrawn.` });
+      setWithdrawing(null);
+      setListings(await fetchAllListings());
+    } catch (err: unknown) {
+      showToast({ type: 'error', title: 'Could Not Withdraw', message: err instanceof Error ? err.message : 'Please try again.' });
+    } finally {
+      setWithdrawLoading(false);
+    }
+  }
+
+  async function handleCancelAuction(reason: string) {
+    if (!cancelling?.auctionId) return;
+    await api.post(`/auctions/${cancelling.auctionId}/cancel`, { reason });
+    showToast({ type: 'success', title: 'Auction Cancelled', message: `"${cancelling.title}" has been cancelled.` });
+    setCancelling(null);
+    setListings(await fetchAllListings());
+  }
 
   const counts: Record<Tab, number> = {
     ALL:      listings.length,
@@ -182,13 +222,13 @@ export default function SellerMyListings() {
           ) : (
             <>
               {/* Desktop column headers */}
-              <div className="hidden sm:grid grid-cols-[44px_1fr_140px_120px_130px_100px] gap-4 px-5 py-2.5 text-[11px] font-bold text-placeholder uppercase tracking-wide border-b border-bg">
-                <span /><span>Item</span><span>Category</span><span>Start Price</span><span>Status</span><span>Submitted</span>
+              <div className="hidden sm:grid grid-cols-[44px_1fr_140px_120px_130px_100px_140px] gap-4 px-5 py-2.5 text-[11px] font-bold text-placeholder uppercase tracking-wide border-b border-bg">
+                <span /><span>Item</span><span>Category</span><span>Start Price</span><span>Status</span><span>Submitted</span><span>Actions</span>
               </div>
 
               <div className="divide-y divide-bg">
                 {visible.map(l => {
-                  const cfg = STATUS_CONFIG[l.status] ?? STATUS_CONFIG.DRAFT;
+                  const cfg = badgeFor(l);
                   return (
                     <div key={l.listingId}>
                       {/* Rejection reason banner */}
@@ -199,7 +239,7 @@ export default function SellerMyListings() {
                         </div>
                       )}
                       {/* Desktop row */}
-                      <div className="hidden sm:grid grid-cols-[44px_1fr_140px_120px_130px_100px] gap-4 items-center px-5 py-4 hover:bg-bg transition-colors">
+                      <div className="hidden sm:grid grid-cols-[44px_1fr_140px_120px_130px_100px_140px] gap-4 items-center px-5 py-4 hover:bg-bg transition-colors">
                         <div className="w-9 h-9 bg-bg rounded-md overflow-hidden shrink-0 flex items-center justify-center border border-border-light">
                           {l.imageUrl
                             ? <img src={l.imageUrl} alt={l.title} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
@@ -216,6 +256,34 @@ export default function SellerMyListings() {
                         <p className="text-[11px] text-placeholder">
                           {dateMedium(l.submittedAt)}
                         </p>
+                        <div className="flex items-center gap-1.5">
+                          {l.status === 'PENDING' && (
+                            <button
+                              onClick={() => setWithdrawing(l)}
+                              className="border border-border-medium text-tertiary text-[11px] font-bold px-2.5 py-[5px] rounded-sm hover:bg-bg whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            >
+                              Withdraw
+                            </button>
+                          )}
+                          {l.status === 'REJECTED' && (
+                            <button
+                              onClick={() => navigate(`/seller/listings/${l.listingId}/edit`)}
+                              className="border border-border-medium text-primary text-[11px] font-bold px-2.5 py-[5px] rounded-sm hover:bg-bg whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex items-center gap-1"
+                            >
+                              <Pencil size={11} /> Edit &amp; Resubmit
+                            </button>
+                          )}
+                          {l.isLive && l.auctionId && (
+                            <button
+                              onClick={() => setCancelling(l)}
+                              aria-label="Cancel this auction"
+                              title="Cancel this auction"
+                              className="border border-border-medium text-destructive p-[5px] rounded-sm hover:bg-error-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            >
+                              <Ban size={13} />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Mobile row */}
@@ -232,7 +300,24 @@ export default function SellerMyListings() {
                             {l.category} · {pkr(l.startPrice)}
                           </p>
                         </div>
-                        <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                        <div className="flex flex-col items-end gap-1.5 shrink-0">
+                          <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                          {l.status === 'PENDING' && (
+                            <button onClick={() => setWithdrawing(l)} className="text-[10px] font-bold text-tertiary underline cursor-pointer">
+                              Withdraw
+                            </button>
+                          )}
+                          {l.status === 'REJECTED' && (
+                            <button onClick={() => navigate(`/seller/listings/${l.listingId}/edit`)} className="text-[10px] font-bold text-primary underline cursor-pointer">
+                              Edit &amp; Resubmit
+                            </button>
+                          )}
+                          {l.isLive && l.auctionId && (
+                            <button onClick={() => setCancelling(l)} className="text-[10px] font-bold text-destructive underline cursor-pointer">
+                              Cancel
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -242,6 +327,39 @@ export default function SellerMyListings() {
           )}
         </div>
       </main>
+
+      {withdrawing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4 z-50" onClick={() => setWithdrawing(null)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-surface rounded-xl shadow-xl w-full max-w-[420px] p-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="font-bold text-[16px] text-navy mb-1">Withdraw Listing?</h2>
+            <p className="text-[13px] text-muted mb-5">
+              "{withdrawing.title}" will be removed from review. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setWithdrawing(null)}>Cancel</Button>
+              <Button variant="primary" className="flex-1" loading={withdrawLoading} onClick={handleWithdraw}>Withdraw</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cancelling && (
+        <ReasonModal
+          title="Cancel Auction"
+          subject={cancelling.title}
+          description="This stops the auction immediately. No sale or charge will result, and it can't be undone."
+          submitLabel="Cancel Auction"
+          fieldLabel="Reason"
+          placeholder="e.g. Changed my mind about selling this"
+          onSubmit={handleCancelAuction}
+          onClose={() => setCancelling(null)}
+        />
+      )}
     </div>
   );
 }
