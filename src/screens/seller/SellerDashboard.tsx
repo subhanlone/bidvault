@@ -101,7 +101,10 @@ export default function SellerDashboard() {
 
   const total    = listings.length;
   const pending  = listings.filter(l => l.status === 'PENDING').length;
-  const approved = listings.filter(l => l.status === 'APPROVED').length;
+  // A1, Phase 6: was `status === 'APPROVED'`, which counts a sold or cancelled listing as live
+  // inventory the same as an actually-live one -- the exact bug A1 is about. isLive is derived
+  // server-side from the auction join (see utils/listingStatus.ts).
+  const live     = listings.filter(l => l.isLive).length;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -132,7 +135,7 @@ export default function SellerDashboard() {
           ) : (
             <>
               <StatCard label="Revenue"            value={pkr(sellerStats.totalRevenue)} icon={<Banknote size={18} />}     iconColor="success" padding="sm" />
-              <StatCard label="Approved Listings" value={approved}                                               icon={<Gavel size={18} />}        iconColor="info"    padding="sm" />
+              <StatCard label="Live Listings"      value={live}                                                  icon={<Gavel size={18} />}        iconColor="info"    padding="sm" />
               <StatCard label="Items Sold"         value={sellerStats.itemsSold}                                 icon={<PackageCheck size={18} />}  iconColor="success" padding="sm" />
               <StatCard label="Pending Review"     value={pending}                                               icon={<Clock size={18} />}         iconColor="warning" padding="sm" />
             </>
