@@ -35,6 +35,7 @@ export type {
   UserRole,
   UserStatus,
   AdminUser,
+  PaginatedAdminUsers,
   AuctionStatus,
   ListingStatus,
   ItemCondition,

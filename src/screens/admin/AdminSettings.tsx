@@ -4,10 +4,8 @@ import { Menu, Save, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
-import ReasonModal from '../../components/ui/ReasonModal';
 import { Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
-import type { AdminUser } from '../../types/api';
 // Support email is stored, so it uses the same strict rule the server enforces on PUT /settings.
 import { isStrictEmail } from '../../utils/validation';
 
@@ -23,72 +21,6 @@ interface FormState {
   minListingPrice: string;
   reviewTimeoutHours: string;
   supportEmail: string;
-}
-
-function AnonymizeUserModal({ target, onClose, onDone }: {
-  target: AdminUser;
-  onClose: () => void;
-  onDone: () => void;
-}) {
-  const [reason, setReason] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleConfirm() {
-    if (reason.trim().length < 3) {
-      setError('Give a reason of at least 3 characters — it is kept in the audit log.');
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
-    try {
-      await api.post(`/admin/users/${target.userId}/anonymize`, { reason: reason.trim() });
-      onDone();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Could not delete this account.');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="bg-surface rounded-xl shadow-xl w-full max-w-[440px] p-6"
-        onClick={e => e.stopPropagation()}
-      >
-        <h2 className="font-bold text-[16px] text-navy mb-4">Delete this account?</h2>
-        <p className="text-[13px] text-muted mb-4">
-          <span className="font-semibold text-secondary">{target.name}</span> ({target.email}) — name
-          and email will be removed and every session revoked. Refused if they have an active
-          auction or a pending transaction.
-        </p>
-        <Input
-          label="Reason"
-          placeholder="e.g. Requested via privacy@bidvault.com ticket #42"
-          value={reason}
-          onChange={e => setReason(e.target.value)}
-          maxLength={500}
-        />
-        {error && (
-          <p className="text-[13px] text-error bg-error-bg border border-error-border rounded-md px-3 py-2 mt-3">{error}</p>
-        )}
-        <div className="flex gap-3 mt-5">
-          <Button variant="outline" onClick={onClose} className="flex-1" disabled={submitting}>Cancel</Button>
-          <Button
-            variant="outline"
-            onClick={handleConfirm}
-            loading={submitting}
-            className="flex-1 border-error text-error hover:bg-error-bg"
-          >
-            Delete account
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 const EMPTY_FORM: FormState = {
@@ -115,16 +47,6 @@ export default function AdminSettings() {
   const [pwError, setPwError] = useState('');
   const [currentPwError, setCurrentPwError] = useState('');
 
-  // BV-018: search-by-email is the whole lookup -- there is no general user directory, and
-  // this is the one occasional, support-driven action that needs one.
-  const [userSearch, setUserSearch] = useState('');
-  const [userResults, setUserResults] = useState<AdminUser[] | null>(null);
-  const [userSearchLoading, setUserSearchLoading] = useState(false);
-  const [anonymizingUser, setAnonymizingUser] = useState<AdminUser | null>(null);
-  // C2, Phase 7: suspend/reinstate reuses the same email-search lookup as the delete action above.
-  const [suspendingUser, setSuspendingUser] = useState<AdminUser | null>(null);
-  const [reinstatingUserId, setReinstatingUserId] = useState<string | null>(null);
-
   useEffect(() => {
     api.get('/settings')
       .then((s) =>
@@ -143,32 +65,6 @@ export default function AdminSettings() {
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const searchUsers = async () => {
-    if (!userSearch.trim()) return;
-    setUserSearchLoading(true);
-    try {
-      const results = await api.get(`/admin/users?email=${encodeURIComponent(userSearch.trim())}`);
-      setUserResults(results);
-    } catch {
-      showToast({ type: 'error', title: 'Search Failed', message: 'Could not search for users.' });
-    } finally {
-      setUserSearchLoading(false);
-    }
-  };
-
-  const handleReinstate = async (target: AdminUser) => {
-    setReinstatingUserId(target.userId);
-    try {
-      await api.post(`/admin/users/${target.userId}/reinstate`);
-      setUserResults(prev => prev?.map(u => u.userId === target.userId ? { ...u, status: 'ACTIVE' } : u) ?? prev);
-      showToast({ type: 'success', title: 'Account Reinstated', message: `${target.name} can sign in again.` });
-    } catch (err: unknown) {
-      showToast({ type: 'error', title: 'Could Not Reinstate', message: err instanceof Error ? err.message : 'Please try again.' });
-    } finally {
-      setReinstatingUserId(null);
-    }
   };
 
   const handleSave = async () => {
@@ -354,75 +250,6 @@ export default function AdminSettings() {
             </div>
           </div>
 
-          {/* User account management (BV-018 delete, C2 suspend/reinstate) — support-driven, by email search */}
-          <div className="bg-surface border border-border-light rounded-md overflow-hidden">
-            <div className="px-5 py-4 border-b border-border-light">
-              <h2 className="font-bold text-[14px] text-navy">Manage a User Account</h2>
-              <p className="text-[11px] text-muted mt-0.5">Search by email to suspend, reinstate, or delete an account.</p>
-            </div>
-            <div className="p-5">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="user@example.com"
-                  value={userSearch}
-                  onChange={e => setUserSearch(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void searchUsers(); } }}
-                />
-                <Button onClick={searchUsers} loading={userSearchLoading} size="md">Search</Button>
-              </div>
-
-              {userResults !== null && (
-                <div className="mt-4 flex flex-col divide-y divide-bg border border-border-light rounded-sm overflow-hidden">
-                  {userResults.length === 0 ? (
-                    <p className="text-[12px] text-muted p-3">No matching accounts.</p>
-                  ) : (
-                    userResults.map(u => (
-                      <div key={u.userId} className="flex items-center justify-between gap-3 p-3">
-                        <div className="min-w-0">
-                          <p className="font-semibold text-[13px] text-secondary truncate">
-                            {u.name} <span className="font-normal text-muted">· {u.role}</span>
-                            {u.status === 'SUSPENDED' && (
-                              <span className="ml-2 font-bold text-[10px] text-error bg-error-bg border border-error-border rounded-full px-2 py-0.5 align-middle">Suspended</span>
-                            )}
-                          </p>
-                          <p className="text-[11px] text-placeholder truncate">{u.email}</p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {u.status === 'SUSPENDED' ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              loading={reinstatingUserId === u.userId}
-                              onClick={() => handleReinstate(u)}
-                            >
-                              Reinstate
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSuspendingUser(u)}
-                            >
-                              Suspend
-                            </Button>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-error text-error hover:bg-error-bg"
-                            onClick={() => setAnonymizingUser(u)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
           {loading ? (
             <div className="bg-surface border border-border-light rounded-md p-5">
               <div className="h-4 w-40 bg-border-light rounded animate-pulse mb-4" />
@@ -501,36 +328,6 @@ export default function AdminSettings() {
           )}
 
         </div>
-
-        {anonymizingUser && (
-          <AnonymizeUserModal
-            target={anonymizingUser}
-            onClose={() => setAnonymizingUser(null)}
-            onDone={() => {
-              showToast({ type: 'success', title: 'Account Deleted', message: `${anonymizingUser.name}'s account has been deleted.` });
-              setAnonymizingUser(null);
-              setUserResults(prev => prev?.filter(u => u.userId !== anonymizingUser.userId) ?? null);
-            }}
-          />
-        )}
-
-        {suspendingUser && (
-          <ReasonModal
-            title="Suspend Account"
-            subject={`${suspendingUser.name} (${suspendingUser.email})`}
-            description="This blocks sign-in immediately. It does not touch the account's data and can be reversed with Reinstate at any time."
-            submitLabel="Suspend Account"
-            fieldLabel="Reason"
-            placeholder="e.g. Reported for suspicious bidding activity"
-            onSubmit={async (reason) => {
-              await api.post(`/admin/users/${suspendingUser.userId}/suspend`, { reason });
-              showToast({ type: 'success', title: 'Account Suspended', message: `${suspendingUser.name} can no longer sign in.` });
-              setUserResults(prev => prev?.map(u => u.userId === suspendingUser.userId ? { ...u, status: 'SUSPENDED' } : u) ?? prev);
-              setSuspendingUser(null);
-            }}
-            onClose={() => setSuspendingUser(null)}
-          />
-        )}
         </>
       )}
     </AdminLayout>

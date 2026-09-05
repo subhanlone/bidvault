@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, BarChart2, Radio, Receipt, Settings, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, BarChart2, Radio, Receipt, Users, Settings, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
 import { useAuth } from '../../context/AuthContext';
 import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
@@ -18,6 +18,7 @@ const navItems: SidebarItem[] = [
   { label: 'Listing Review', to: '/admin/listing-reviews', icon: ClipboardList },
   { label: 'Analytics', to: '/admin/analytics', icon: BarChart2 },
   { label: 'Transactions', to: '/admin/transactions', icon: Receipt },
+  { label: 'Users', to: '/admin/users', icon: Users },
   { label: 'Settings', to: '/admin/settings', icon: Settings },
 ];
 

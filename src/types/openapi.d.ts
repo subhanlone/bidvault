@@ -291,6 +291,11 @@ export type OtpIssued = {
   codeExpiresAt?: string;
 };
 
+export type PaginatedAdminUsers = {
+  items: AdminUser[];
+  nextCursor: string | null;
+};
+
 export type PaginatedAuctions = {
   items: Auction[];
   nextCursor: string | null;
@@ -605,7 +610,7 @@ export interface GetEndpoints {
   "/admin/analytics": Analytics;
   "/admin/disputes": AdminDispute[];
   "/admin/transactions": AdminTransaction[];
-  "/admin/users": AdminUser[];
+  "/admin/users": PaginatedAdminUsers;
   "/auctions": PaginatedAuctions;
   "/auctions/mine/bids": PaginatedBidsWithAuction;
   "/auctions/{auctionId}": Auction;
