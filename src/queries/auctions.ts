@@ -178,18 +178,36 @@ export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid
 
   if (!isNewBid) return;
 
-  const fold = (a: Auction): Auction =>
-    a.auctionId === auctionId
-      ? { ...a, currentBid: Math.max(a.currentBid, bid.amount), bidCount: a.bidCount + 1 }
-      : a;
+  foldEveryAuctionCacheEntry(queryClient, auctionId, (a) => ({
+    ...a,
+    currentBid: Math.max(a.currentBid, bid.amount),
+    bidCount: a.bidCount + 1,
+  }));
+}
 
-  // One call, every auction-shaped cache entry: the live list, this auction's detail, the
-  // watchlist, my-bids' embedded auctions. See queries/keys.ts for why they share a prefix.
+function isAuction(item: unknown): item is Auction {
+  return typeof item === 'object' && item !== null && 'auctionId' in item && !('auction' in item);
+}
+
+/**
+ * Applies `fold` to every cached copy of one auction — the live list, its own detail entry, the
+ * watchlist, my-bids' embedded auctions — wherever it appears. Factored out of applyBidToCache
+ * so a second socket event (auction:cancelled) can reuse the exact same "every auction-shaped
+ * cache entry" traversal rather than a second, easily-drifting copy of it.
+ */
+function foldEveryAuctionCacheEntry(
+  queryClient: QueryClient,
+  auctionId: string,
+  fold: (a: Auction) => Auction,
+) {
+  const foldMatching = (a: Auction): Auction => (a.auctionId === auctionId ? fold(a) : a);
+
+  // One call, every auction-shaped cache entry. See queries/keys.ts for why they share a prefix.
   queryClient.setQueriesData<
     Auction | InfiniteData<{ items: unknown[]; nextCursor: string | null }>
   >({ queryKey: keys.auctions.all }, (old) => {
     if (!old) return old;
-    if (!('pages' in old)) return fold(old);
+    if (!('pages' in old)) return foldMatching(old);
     return {
       ...old,
       pages: old.pages.map((page) => ({
@@ -199,16 +217,22 @@ export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid
           // (my-bids, auction nested inside) pass through this same cache prefix — fold
           // whichever shape the item actually is.
           isAuction(item)
-            ? fold(item)
-            : { ...(item as { auction: Auction }), auction: fold((item as { auction: Auction }).auction) },
+            ? foldMatching(item)
+            : { ...(item as { auction: Auction }), auction: foldMatching((item as { auction: Auction }).auction) },
         ),
       })),
     };
   });
 }
 
-function isAuction(item: unknown): item is Auction {
-  return typeof item === 'object' && item !== null && 'auctionId' in item && !('auction' in item);
+/**
+ * B4/C4's real-time cancellation notice (LIFECYCLE-IMPLEMENTATION-PLAN.md) — reaches every
+ * cached copy of the cancelled auction the same way a new bid does, so BuyerLiveBidding's
+ * "Non-ACTIVE auction guard" and AdminAuctionMonitor's status line update immediately for
+ * anyone with the page open, without a refetch.
+ */
+export function applyAuctionCancelledToCache(queryClient: QueryClient, auctionId: string) {
+  foldEveryAuctionCacheEntry(queryClient, auctionId, (a) => ({ ...a, status: 'CANCELLED' }));
 }
 
 // ---- writes -------------------------------------------------------------------------------

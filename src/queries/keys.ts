@@ -32,4 +32,9 @@ export const keys = {
     mine: ['bids', 'mine'] as const,
   },
   notifications: ['notifications'] as const,
+  admin: {
+    /** GET /admin/users — cursor-paginated, unbounded, so this stays keyed per search term
+     * like auctions.active rather than drained (see queries/auctions.ts's useDrainedPages doc). */
+    users: (search: string) => ['admin', 'users', { search }] as const,
+  },
 } as const;

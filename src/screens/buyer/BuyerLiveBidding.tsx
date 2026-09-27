@@ -151,7 +151,11 @@ export default function BuyerLiveBidding() {
         <div className="flex items-center justify-center min-h-[calc(100vh-56px)]">
           <div className="text-center">
             <p className="font-bold text-[18px] text-secondary mb-2">
-              {auction.status === 'CLOSED' ? 'This auction has ended' : 'This auction has not started yet'}
+              {auction.status === 'CLOSED'
+                ? 'This auction has ended'
+                : auction.status === 'CANCELLED'
+                  ? 'This auction was cancelled'
+                  : 'This auction has not started yet'}
             </p>
             <p className="text-[13px] text-muted mb-4">Current bid: {pkr(auction.currentBid)}</p>
             <Link to="/buyer/browse" className="font-bold text-primary hover:underline"> Browse Active Auctions</Link>

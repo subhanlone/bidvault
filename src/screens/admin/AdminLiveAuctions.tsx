@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
 import { keys } from '../../queries/keys';
 import { useTimer } from '../../hooks/useTimer';
-import { Menu, Radio, Ban } from 'lucide-react';
+import { Menu, Radio, Ban, ShieldOff } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import ReasonModal from '../../components/ui/ReasonModal';
@@ -18,10 +18,19 @@ function AuctionRow({ auction }: { auction: Auction }) {
   const queryClient = useQueryClient();
   const urgent = timer.totalSeconds < 3600 && !timer.isExpired;
   const [cancelling, setCancelling] = useState(false);
+  const [takingDown, setTakingDown] = useState(false);
 
   async function handleCancel(reason: string) {
     await api.post(`/admin/auctions/${auction.auctionId}/cancel`, { reason });
     setCancelling(false);
+    void queryClient.invalidateQueries({ queryKey: keys.auctions.active });
+  }
+
+  // C3, Phase 7: pulls the listing for cause (counterfeit, stolen, prohibited, misdescribed) --
+  // cancels this auction underneath via the same service the Cancel button above uses.
+  async function handleTakedown(reason: string) {
+    await api.post(`/admin/listings/${auction.listingId}/takedown`, { reason });
+    setTakingDown(false);
     void queryClient.invalidateQueries({ queryKey: keys.auctions.active });
   }
 
@@ -60,6 +69,14 @@ function AuctionRow({ auction }: { auction: Auction }) {
           >
             <Ban size={13} />
           </button>
+          <button
+            onClick={() => setTakingDown(true)}
+            aria-label="Remove this listing"
+            title="Remove this listing"
+            className="border border-border-medium text-destructive p-[5px] rounded-sm hover:bg-error-bg whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          >
+            <ShieldOff size={13} />
+          </button>
         </div>
       </div>
 
@@ -96,6 +113,13 @@ function AuctionRow({ auction }: { auction: Auction }) {
           >
             <Ban size={13} />
           </button>
+          <button
+            onClick={() => setTakingDown(true)}
+            aria-label="Remove this listing"
+            className="border border-border-medium text-destructive p-[5px] rounded-sm hover:bg-error-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          >
+            <ShieldOff size={13} />
+          </button>
         </div>
       </div>
 
@@ -109,6 +133,19 @@ function AuctionRow({ auction }: { auction: Auction }) {
           placeholder="e.g. Suspected shill bidding, pricing error"
           onSubmit={handleCancel}
           onClose={() => setCancelling(false)}
+        />
+      )}
+
+      {takingDown && (
+        <ReasonModal
+          title="Remove Listing"
+          subject={auction.title}
+          description={`This takes the listing off the platform for cause and cancels its auction immediately${auction.bidCount > 0 ? `, notifying all ${auction.bidCount} bidder${auction.bidCount !== 1 ? 's' : ''}` : ''}. Distinct from Cancel — use this for counterfeit, stolen, prohibited, or misdescribed items.`}
+          submitLabel="Remove Listing"
+          fieldLabel="Reason"
+          placeholder="e.g. Reported as counterfeit, prohibited item"
+          onSubmit={handleTakedown}
+          onClose={() => setTakingDown(false)}
         />
       )}
     </div>

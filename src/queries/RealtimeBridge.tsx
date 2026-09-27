@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getSocket } from '../services/socket';
-import { applyBidToCache } from './auctions';
+import { applyBidToCache, applyAuctionCancelledToCache } from './auctions';
 
 /**
  * Feeds Socket.IO events into the query cache. Mounted once, renders nothing.
@@ -42,9 +42,17 @@ export function RealtimeBridge() {
       });
     }
 
+    // B4/C4: fires for anyone subscribed to this auction's room (BuyerLiveBidding,
+    // AdminAuctionMonitor) whichever path cancelled it -- seller withdrawal or admin takedown.
+    function onAuctionCancelled(payload: { auctionId: string }) {
+      applyAuctionCancelledToCache(queryClient, payload.auctionId);
+    }
+
     socket.on('bid:placed', onBidPlaced);
+    socket.on('auction:cancelled', onAuctionCancelled);
     return () => {
       socket.off('bid:placed', onBidPlaced);
+      socket.off('auction:cancelled', onAuctionCancelled);
     };
   }, [queryClient]);
 

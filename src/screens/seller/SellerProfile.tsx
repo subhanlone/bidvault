@@ -7,13 +7,7 @@ import { SellerNavbar, Badge, Button, Input, DeleteAccountModal } from '../../co
 import { api } from '../../services/api';
 import type { Listing } from '../../types/api';
 import { dateShort, monthYear, pkr } from '../../utils/format';
-
-const STATUS_CONFIG = {
-  PENDING:  { label: 'Pending Review',  variant: 'warning' as const },
-  APPROVED: { label: 'Live / Approved', variant: 'success' as const },
-  REJECTED: { label: 'Rejected',        variant: 'error'   as const },
-  DRAFT:    { label: 'Draft',           variant: 'tag'     as const },
-};
+import { listingBadge } from '../../utils/listingStatus';
 
 export default function SellerProfile() {
   const { user, logout, changePassword } = useAuth();
@@ -191,7 +185,7 @@ export default function SellerProfile() {
                 ) : (
                   <div className="flex flex-col divide-y divide-bg">
                     {listings.slice(0, 5).map(l => {
-                      const cfg = STATUS_CONFIG[l.status] ?? STATUS_CONFIG.DRAFT;
+                      const cfg = listingBadge(l);
                       return (
                         <button
                           key={l.listingId}

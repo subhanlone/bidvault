@@ -11,12 +11,14 @@ interface Props {
   auctionTitle: string;
   onSuccess: () => void;
   onClose: () => void;
+  /** C6, Phase 7: presence switches this into edit mode — PATCH instead of POST, pre-filled. */
+  editing?: { reviewId: string; stars: number; comment?: string };
 }
 
-export default function RatingModal({ transactionId, sellerName, auctionTitle, onSuccess, onClose }: Props) {
-  const [stars, setStars] = useState(0);
+export default function RatingModal({ transactionId, sellerName, auctionTitle, onSuccess, onClose, editing }: Props) {
+  const [stars, setStars] = useState(editing?.stars ?? 0);
   const [hoverStars, setHoverStars] = useState(0);
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState(editing?.comment ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +31,11 @@ export default function RatingModal({ transactionId, sellerName, auctionTitle, o
     setLoading(true);
     setError(null);
     try {
-      await api.post('/reviews', { transactionId, stars, comment: comment.trim() || undefined });
+      if (editing) {
+        await api.patch(`/reviews/${editing.reviewId}`, { stars, comment: comment.trim() || undefined });
+      } else {
+        await api.post('/reviews', { transactionId, stars, comment: comment.trim() || undefined });
+      }
       onSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Could not submit your review.');
@@ -53,7 +59,9 @@ export default function RatingModal({ transactionId, sellerName, auctionTitle, o
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 id="rating-modal-title" className="font-bold text-[16px] text-navy">Rate {sellerName}</h2>
+          <h2 id="rating-modal-title" className="font-bold text-[16px] text-navy">
+            {editing ? 'Edit Your Review' : `Rate ${sellerName}`}
+          </h2>
           <button
             onClick={onClose}
             aria-label="Close rating modal"
@@ -104,7 +112,7 @@ export default function RatingModal({ transactionId, sellerName, auctionTitle, o
           )}
 
           <Button type="submit" loading={loading} disabled={stars === 0} className="w-full">
-            Submit Review
+            {editing ? 'Save Changes' : 'Submit Review'}
           </Button>
         </form>
       </div>
