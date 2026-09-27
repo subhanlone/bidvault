@@ -14,6 +14,7 @@ export { default as RatingModal } from './RatingModal';
 export { default as DeleteAccountModal } from './DeleteAccountModal';
 export { default as PaymentModal } from './PaymentModal';
 export { default as DisputeModal } from './DisputeModal';
+export { default as ReasonModal } from './ReasonModal';
 export { default as NotificationBell } from './NotificationBell';
 export { Toast, ToastContainer } from './Toast';
 export type { ToastItem, ToastType } from './Toast';

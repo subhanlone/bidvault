@@ -1,21 +1,34 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
+import { keys } from '../../queries/keys';
 import { useTimer } from '../../hooks/useTimer';
-import { Menu, Radio } from 'lucide-react';
+import { Menu, Radio, Ban } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
+import ReasonModal from '../../components/ui/ReasonModal';
+import { api } from '../../services/api';
 import type { Auction } from '../../types/api';
 import { conditionLabel, count, pkr, pkrCompact } from '../../utils/format';
 
 function AuctionRow({ auction }: { auction: Auction }) {
   const timer = useTimer(auction.endTime);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const urgent = timer.totalSeconds < 3600 && !timer.isExpired;
+  const [cancelling, setCancelling] = useState(false);
+
+  async function handleCancel(reason: string) {
+    await api.post(`/admin/auctions/${auction.auctionId}/cancel`, { reason });
+    setCancelling(false);
+    void queryClient.invalidateQueries({ queryKey: keys.auctions.active });
+  }
 
   return (
     <div className="border-b border-bg last:border-0">
       {/* Desktop row */}
-      <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_80px] gap-4 items-center px-5 py-4 hover:bg-bg transition-colors">
+      <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_140px] gap-4 items-center px-5 py-4 hover:bg-bg transition-colors">
         <div className="bg-bg rounded-sm size-[36px] overflow-hidden shrink-0">
           {auction.imageUrl
             ? <img src={auction.imageUrl} alt={auction.title} className="w-full h-full object-cover" />
@@ -32,12 +45,22 @@ function AuctionRow({ auction }: { auction: Auction }) {
           {timer.isExpired ? 'Ended' : timer.display}
         </p>
         <p className="font-semibold text-[12px] text-tertiary">{auction.bidCount}</p>
-        <button
-          onClick={() => navigate(`/admin/monitor/${auction.auctionId}`)}
-          className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-        >
-          Monitor →
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => navigate(`/admin/monitor/${auction.auctionId}`)}
+            className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          >
+            Monitor →
+          </button>
+          <button
+            onClick={() => setCancelling(true)}
+            aria-label="Cancel this auction"
+            title="Cancel this auction"
+            className="border border-border-medium text-destructive p-[5px] rounded-sm hover:bg-error-bg whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          >
+            <Ban size={13} />
+          </button>
+        </div>
       </div>
 
       {/* Mobile card */}
@@ -59,13 +82,35 @@ function AuctionRow({ auction }: { auction: Auction }) {
           </div>
           <p className="text-[10px] text-placeholder mt-[2px]">{auction.sellerName} · {count(auction.bidCount, 'bid')}</p>
         </div>
-        <button
-          onClick={() => navigate(`/admin/monitor/${auction.auctionId}`)}
-          className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-        >
-          Monitor →
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={() => navigate(`/admin/monitor/${auction.auctionId}`)}
+            className="bg-primary font-bold text-[11px] text-white px-3 py-[5px] rounded-sm hover:bg-primary-dark whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          >
+            Monitor →
+          </button>
+          <button
+            onClick={() => setCancelling(true)}
+            aria-label="Cancel this auction"
+            className="border border-border-medium text-destructive p-[5px] rounded-sm hover:bg-error-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          >
+            <Ban size={13} />
+          </button>
+        </div>
       </div>
+
+      {cancelling && (
+        <ReasonModal
+          title="Cancel Auction"
+          subject={auction.title}
+          description={`This stops the auction immediately${auction.bidCount > 0 ? `, and notifies all ${auction.bidCount} bidder${auction.bidCount !== 1 ? 's' : ''} that it was cancelled` : ''}. No sale or charge will result.`}
+          submitLabel="Cancel Auction"
+          fieldLabel="Reason"
+          placeholder="e.g. Suspected shill bidding, pricing error"
+          onSubmit={handleCancel}
+          onClose={() => setCancelling(false)}
+        />
+      )}
     </div>
   );
 }
@@ -135,7 +180,7 @@ export default function AdminLiveAuctions() {
               <span className="hidden sm:block font-bold text-[11px] text-muted">Updates via socket events</span>
             </div>
 
-            <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_80px] gap-4 px-5 py-3 text-[11px] text-placeholder font-bold uppercase tracking-[0.5px] border-b border-bg">
+            <div className="hidden sm:grid sm:grid-cols-[44px_1fr_130px_120px_110px_70px_140px] gap-4 px-5 py-3 text-[11px] text-placeholder font-bold uppercase tracking-[0.5px] border-b border-bg">
               <span /><span>Item</span><span>Seller</span><span>Current Bid</span><span>Time Left</span><span>Bids</span><span>Action</span>
             </div>
 

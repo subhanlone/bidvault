@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Truck, ShieldAlert, CheckCircle2, XCircle, Receipt } from 'lucide-react';
+import { Package, Truck, ShieldAlert, CheckCircle2, XCircle, Receipt, RotateCcw, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 import { SellerNavbar, Badge, Button } from '../../components/ui';
 import { dateMedium, pkr } from '../../utils/format';
@@ -34,18 +35,23 @@ const STATUS_CONFIG: Partial<Record<TransactionStatus, { label: string; variant:
   DELIVERED: { label: 'Delivered',      variant: 'success' },
   DISPUTED:  { label: 'Disputed',       variant: 'error'   },
   REFUNDED:  { label: 'Refunded',       variant: 'tag'     },
+  // A3/A5, Phase 6: the winner didn't pay in time and the worker auto-voided the sale — the
+  // seller now has two ways to recover it instead of the item being stuck forever.
+  VOIDED:    { label: 'Buyer Didn\'t Pay', variant: 'error' },
 };
 
-// Sales still awaiting payment, a failed card, or a voided row have nothing for the seller to
-// do here — this screen is about the post-payment half of the sale.
-const RELEVANT_STATUSES: TransactionStatus[] = ['COMPLETED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'REFUNDED'];
+// Sales still awaiting payment or a failed card have nothing for the seller to do here — this
+// screen is about the post-payment half of the sale, plus VOIDED's own recovery actions.
+const RELEVANT_STATUSES: TransactionStatus[] = ['COMPLETED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'REFUNDED', 'VOIDED'];
 
 export default function SellerMySales() {
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const [sales, setSales] = useState<SellerSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shippingId, setShippingId] = useState<string | null>(null);
+  const [recoveringId, setRecoveringId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
 
   function loadSales() {
@@ -71,6 +77,36 @@ export default function SellerMySales() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A5, Phase 6: both recovery actions on a VOIDED sale — offering it to the next-highest
+  // bidder at their own last bid, or relisting it as a fresh listing + auction.
+  async function handleOfferNextBidder(sale: SellerSale) {
+    setActionError(null);
+    setRecoveringId(sale.transactionId);
+    try {
+      await api.post(`/payments/${sale.transactionId}/offer-next-bidder`);
+      showToast({ type: 'success', title: 'Offer Sent', message: 'The next-highest bidder has been offered this item.' });
+      await loadSales();
+    } catch (err: unknown) {
+      setActionError({ id: sale.transactionId, message: err instanceof Error ? err.message : 'Could not send the offer.' });
+    } finally {
+      setRecoveringId(null);
+    }
+  }
+
+  async function handleRelist(sale: SellerSale) {
+    setActionError(null);
+    setRecoveringId(sale.transactionId);
+    try {
+      await api.post(`/payments/${sale.transactionId}/relist`);
+      showToast({ type: 'success', title: 'Relisted', message: 'A new auction for this item is now live.' });
+      await loadSales();
+    } catch (err: unknown) {
+      setActionError({ id: sale.transactionId, message: err instanceof Error ? err.message : 'Could not relist this item.' });
+    } finally {
+      setRecoveringId(null);
+    }
+  }
 
   async function handleMarkShipped(sale: SellerSale) {
     setActionError(null);
@@ -180,6 +216,30 @@ export default function SellerMySales() {
                           >
                             <Truck size={14} /> Mark as Shipped
                           </Button>
+                        )}
+
+                        {s.status === 'VOIDED' && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <p className="basis-full text-[12px] text-muted mb-0.5">
+                              The buyer didn't complete payment in time. Offer it to the next-highest bidder, or relist it.
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              loading={recoveringId === s.transactionId}
+                              onClick={() => handleOfferNextBidder(s)}
+                            >
+                              <UserPlus size={14} /> Offer to Next Bidder
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              loading={recoveringId === s.transactionId}
+                              onClick={() => handleRelist(s)}
+                            >
+                              <RotateCcw size={14} /> Relist
+                            </Button>
+                          </div>
                         )}
 
                         {s.status === 'DELIVERED' && (
