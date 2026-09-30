@@ -1,5 +1,5 @@
 import { io, type Socket } from 'socket.io-client';
-import { getStoredAuth } from './api';
+import { getFreshAccessToken } from './api';
 
 const SOCKET_URL = (import.meta.env.VITE_API_URL as string).replace(/\/api\/v1\/?$/, '');
 
@@ -11,9 +11,15 @@ let socket: Socket | null = null;
 // within minutes. The server answers a stale token with a middleware error, and Socket.IO does
 // not retry those on its own (`connect_error`, `socket.active === false`) -- so the first
 // transport drop after a refresh left the tab without live updates until a full reload.
-function currentAuth(): { token?: string } {
-  const stored = getStoredAuth();
-  return stored?.accessToken ? { token: stored.accessToken } : {};
+//
+// Reading storage is not enough either: if nothing has made an HTTP call since the token
+// expired (a laptop waking up), the stored token is the expired one. The callback may be invoked
+// later, so the token is refreshed first when it needs it. A session that can no longer be
+// refreshed connects anonymously, which the server allows; api.ts signs the UI out on the next
+// request that fails.
+async function currentAuth(): Promise<{ token?: string }> {
+  const token = await getFreshAccessToken();
+  return token ? { token } : {};
 }
 
 export function getSocket(): Socket {
@@ -21,7 +27,7 @@ export function getSocket(): Socket {
     socket = io(SOCKET_URL, {
       autoConnect: true,
       reconnectionAttempts: 5,
-      auth: (cb) => cb(currentAuth()),
+      auth: (cb) => { void currentAuth().then(cb); },
     });
   }
   return socket;
