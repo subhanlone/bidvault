@@ -82,11 +82,15 @@ export function clearStoredAuth(): void {
 
 let refreshPromise: Promise<string | null> | null = null;
 
-// One refresh at a time, shared by everyone who needs one. The server rotates refresh tokens, so
-// two concurrent refreshes would spend the same token twice and the second would be rejected.
-function refreshOnce(): Promise<string | null> {
+// One refresh at a time per tab, shared by everyone in it who needs one. Across tabs the lock in
+// refreshAccessToken() does the same job: the server rotates refresh tokens, so two concurrent
+// refreshes would spend the same token twice.
+//
+// `staleAccessToken` is the access token the caller found unusable; refreshAccessToken() uses it
+// to tell whether another tab has already refreshed in the meantime.
+function refreshOnce(staleAccessToken: string): Promise<string | null> {
   if (!refreshPromise) {
-    refreshPromise = refreshAccessToken().finally(() => { refreshPromise = null; });
+    refreshPromise = refreshAccessToken(staleAccessToken).finally(() => { refreshPromise = null; });
   }
   return refreshPromise;
 }
@@ -122,29 +126,51 @@ export async function getFreshAccessToken(): Promise<string | null> {
   const expiresAt = tokenExpiresAtMs(stored.accessToken);
   if (expiresAt === null || expiresAt - Date.now() > EXPIRY_SKEW_MS) return stored.accessToken;
 
-  return refreshOnce();
+  return refreshOnce(stored.accessToken);
 }
 
-async function refreshAccessToken(): Promise<string | null> {
-  const stored = getStoredAuth();
-  if (!stored?.refreshToken) return null;
+const REFRESH_LOCK = 'bidvault-auth-refresh';
 
-  try {
-    const resp = await fetch(`${BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: stored.refreshToken }),
-    });
-    if (!resp.ok) return null;
+/** A hung refresh must not hold the lock -- and with it every other tab's refresh -- forever. */
+const REFRESH_TIMEOUT_MS = 15_000;
 
-    const body = await resp.json() as { data?: { accessToken: string; refreshToken: string } };
-    if (!body.data?.accessToken) return null;
+// Tabs of one browser share a single stored session (and so a single rotating refresh token), but
+// each has its own copy of this module, so refreshOnce() cannot serialize them. Two tabs that
+// needed a token at the same moment both read the same refresh token and both sent it; the server
+// accepted both (two live tokens from one) or rejected the loser as a replay and revoked the whole
+// session. The Web Locks API is the standard way to take turns across tabs of one origin. It is
+// only exposed in secure contexts (HTTPS or localhost); without it this tab still serializes
+// itself, it just cannot see the others.
+function withRefreshLock<T>(work: () => Promise<T>): Promise<T> {
+  return 'locks' in navigator ? navigator.locks.request(REFRESH_LOCK, work) : work();
+}
 
-    setStoredAuth({ user: stored.user, accessToken: body.data.accessToken, refreshToken: body.data.refreshToken });
-    return body.data.accessToken;
-  } catch {
-    return null;
-  }
+async function refreshAccessToken(staleAccessToken: string): Promise<string | null> {
+  return withRefreshLock(async () => {
+    // Read the session only now that the lock is held: a tab that held it first has already
+    // rotated the refresh token, and the copy this tab saw before waiting is spent.
+    const stored = getStoredAuth();
+    if (!stored?.refreshToken) return null;
+    if (stored.accessToken !== staleAccessToken) return stored.accessToken;
+
+    try {
+      const resp = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: stored.refreshToken }),
+        signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),
+      });
+      if (!resp.ok) return null;
+
+      const body = await resp.json() as { data?: { accessToken: string; refreshToken: string } };
+      if (!body.data?.accessToken) return null;
+
+      setStoredAuth({ user: stored.user, accessToken: body.data.accessToken, refreshToken: body.data.refreshToken });
+      return body.data.accessToken;
+    } catch {
+      return null;
+    }
+  });
 }
 
 // This module cannot reach React state, so it announces a dead session instead of trying to
@@ -173,7 +199,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   // Only attempt token refresh if the user had an active session.
   // A 401 with no stored token means wrong credentials, not an expired session.
   if (resp.status === 401 && stored?.accessToken) {
-    const newToken = await refreshOnce();
+    const newToken = await refreshOnce(stored.accessToken);
 
     if (!newToken) {
       clearStoredAuth();
