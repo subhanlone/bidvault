@@ -104,12 +104,17 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-// Route prefixes that require a session. Everything else — landing, legal pages, auth screens —
-// is readable anonymously, so an expired session there must not bounce the visitor to /login.
-const PROTECTED_PREFIXES = ['/admin', '/seller', '/buyer'];
+// This module cannot reach React state, so it announces a dead session instead of trying to
+// react to it. AuthContext owns the user/token state and subscribes here; once it drops to
+// anonymous, <ProtectedRoute> sends the visitor to /login on a route that needs a session and
+// leaves public pages (landing, legal, auth screens) alone. A route list kept in this file
+// instead silently missed any protected screen that was not on it.
+type SessionExpiredListener = () => void;
+const sessionExpiredListeners = new Set<SessionExpiredListener>();
 
-function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+export function onSessionExpired(listener: SessionExpiredListener): () => void {
+  sessionExpiredListeners.add(listener);
+  return () => { sessionExpiredListeners.delete(listener); };
 }
 
 async function request<T>(path: string, options: RequestInit): Promise<T> {
@@ -132,11 +137,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
 
     if (!newToken) {
       clearStoredAuth();
-      // Only bounce off routes that actually need a session. On a public page, dropping the
-      // stored auth is enough — AuthContext falls back to anonymous and the page re-renders.
-      if (isProtectedRoute(window.location.pathname)) {
-        window.location.href = '/login';
-      }
+      sessionExpiredListeners.forEach((listener) => listener());
       throw new ApiError(401, 'Session expired. Please sign in again.');
     }
 
