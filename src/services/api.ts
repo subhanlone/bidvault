@@ -82,6 +82,49 @@ export function clearStoredAuth(): void {
 
 let refreshPromise: Promise<string | null> | null = null;
 
+// One refresh at a time, shared by everyone who needs one. The server rotates refresh tokens, so
+// two concurrent refreshes would spend the same token twice and the second would be rejected.
+function refreshOnce(): Promise<string | null> {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
+/** Refresh when fewer than this many ms of life remain, so a token is never handed over as it dies. */
+const EXPIRY_SKEW_MS = 10_000;
+
+/** When a JWT expires, or null if it cannot be read. Only used to decide whether to refresh
+ * early -- the server stays the authority on whether a token is valid. */
+function tokenExpiresAtMs(token: string): number | null {
+  try {
+    const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const { exp } = JSON.parse(atob(payload)) as { exp?: unknown };
+    return typeof exp === 'number' ? exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The stored access token, refreshed first if it has expired or is about to. Null when there is
+ * no session or the session can no longer be refreshed.
+ *
+ * request() gets a fresh token for free -- a 401 triggers the refresh. A socket handshake has no
+ * such retry: it is rejected once and stays down, so it has to arrive with a token that already
+ * works. That matters exactly when nothing else has refreshed lately, such as a laptop waking up
+ * after the token expired.
+ */
+export async function getFreshAccessToken(): Promise<string | null> {
+  const stored = getStoredAuth();
+  if (!stored?.accessToken) return null;
+
+  const expiresAt = tokenExpiresAtMs(stored.accessToken);
+  if (expiresAt === null || expiresAt - Date.now() > EXPIRY_SKEW_MS) return stored.accessToken;
+
+  return refreshOnce();
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   const stored = getStoredAuth();
   if (!stored?.refreshToken) return null;
@@ -130,10 +173,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   // Only attempt token refresh if the user had an active session.
   // A 401 with no stored token means wrong credentials, not an expired session.
   if (resp.status === 401 && stored?.accessToken) {
-    if (!refreshPromise) {
-      refreshPromise = refreshAccessToken().finally(() => { refreshPromise = null; });
-    }
-    const newToken = await refreshPromise;
+    const newToken = await refreshOnce();
 
     if (!newToken) {
       clearStoredAuth();
