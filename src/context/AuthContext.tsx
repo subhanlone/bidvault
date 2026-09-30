@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 // includes ADMIN: a value POST /auth/register has never accepted.
 import type { User, RegisterRequest, LoginRequest } from '../types/api';
 import { api, ApiError, getStoredAuth, setStoredAuth, clearStoredAuth } from '../services/api';
-import { reconnectSocket } from '../services/socket';
+import { reconnectSocket, disconnectSocket } from '../services/socket';
 
 interface AuthContextType {
   user: User | null;
@@ -96,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (stored?.refreshToken) {
       api.post('/auth/logout', { refreshToken: stored.refreshToken }).catch(() => {});
     }
+    disconnectSocket();
     persist(null, null);
   }, []);
 
@@ -147,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // token including this one -- persist(null, null) here just clears the local copy so
       // the app reflects that immediately instead of waiting for the next failed refresh.
       await api.post('/auth/delete-account', { password });
+      disconnectSocket();
       persist(null, null);
       return { success: true };
     } catch (err: unknown) {
