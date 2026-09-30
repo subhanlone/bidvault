@@ -80,7 +80,18 @@ export function clearStoredAuth(): void {
   sessionStorage.removeItem(STORAGE_KEY);
 }
 
-let refreshPromise: Promise<string | null> | null = null;
+/**
+ * How a refresh ended. "The server said no" and "we never got an answer" must not be confused: the
+ * first means the session is over, the second says nothing about it. Treating both as a dead
+ * session signed people out for a dropped Wi-Fi connection or a deploy in progress, with a
+ * perfectly good session still waiting on the server.
+ */
+type RefreshOutcome =
+  | { kind: 'refreshed'; accessToken: string }
+  | { kind: 'rejected' }
+  | { kind: 'unavailable' };
+
+let refreshPromise: Promise<RefreshOutcome> | null = null;
 
 // One refresh at a time per tab, shared by everyone in it who needs one. Across tabs the lock in
 // refreshAccessToken() does the same job: the server rotates refresh tokens, so two concurrent
@@ -88,7 +99,7 @@ let refreshPromise: Promise<string | null> | null = null;
 //
 // `staleAccessToken` is the access token the caller found unusable; refreshAccessToken() uses it
 // to tell whether another tab has already refreshed in the meantime.
-function refreshOnce(staleAccessToken: string): Promise<string | null> {
+function refreshOnce(staleAccessToken: string): Promise<RefreshOutcome> {
   if (!refreshPromise) {
     refreshPromise = refreshAccessToken(staleAccessToken).finally(() => { refreshPromise = null; });
   }
@@ -126,13 +137,24 @@ export async function getFreshAccessToken(): Promise<string | null> {
   const expiresAt = tokenExpiresAtMs(stored.accessToken);
   if (expiresAt === null || expiresAt - Date.now() > EXPIRY_SKEW_MS) return stored.accessToken;
 
-  return refreshOnce(stored.accessToken);
+  const outcome = await refreshOnce(stored.accessToken);
+  if (outcome.kind === 'refreshed') return outcome.accessToken;
+  if (outcome.kind === 'rejected') expireSession();
+  return null;
 }
 
 const REFRESH_LOCK = 'bidvault-auth-refresh';
 
-/** A hung refresh must not hold the lock -- and with it every other tab's refresh -- forever. */
-const REFRESH_TIMEOUT_MS = 15_000;
+// Attempts per refresh, how long each may take, and the pause between them. The server answers a
+// repeat of a token it spent moments ago with the successor it already issued (see its
+// REFRESH_REUSE_INTERVAL_SECONDS, 10 s by default), which is what makes retrying safe when a
+// response was lost after the server had already processed the request. The whole sequence --
+// the last attempt starts at most 2 x (3 s + 1 s) = 8 s after the first -- therefore has to fit
+// inside that interval. The timeout also keeps a hung request from holding the lock, and with it
+// every other tab's refresh.
+const REFRESH_ATTEMPTS = 3;
+const REFRESH_ATTEMPT_TIMEOUT_MS = 3_000;
+const REFRESH_RETRY_DELAY_MS = 1_000;
 
 // Tabs of one browser share a single stored session (and so a single rotating refresh token), but
 // each has its own copy of this module, so refreshOnce() cannot serialize them. Two tabs that
@@ -145,31 +167,43 @@ function withRefreshLock<T>(work: () => Promise<T>): Promise<T> {
   return 'locks' in navigator ? navigator.locks.request(REFRESH_LOCK, work) : work();
 }
 
-async function refreshAccessToken(staleAccessToken: string): Promise<string | null> {
+/** One try. Only a definite "no" from the server (401/400/403) is `rejected`; a timeout, a dropped
+ * connection, a 5xx, a 429 or an unreadable answer leaves the question open. */
+async function attemptRefresh(refreshToken: string, user: unknown): Promise<RefreshOutcome> {
+  try {
+    const resp = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+      signal: AbortSignal.timeout(REFRESH_ATTEMPT_TIMEOUT_MS),
+    });
+    if (resp.status === 400 || resp.status === 401 || resp.status === 403) return { kind: 'rejected' };
+    if (!resp.ok) return { kind: 'unavailable' };
+
+    const body = await resp.json() as { data?: { accessToken: string; refreshToken: string } };
+    if (!body.data?.accessToken || !body.data.refreshToken) return { kind: 'unavailable' };
+
+    setStoredAuth({ user, accessToken: body.data.accessToken, refreshToken: body.data.refreshToken });
+    return { kind: 'refreshed', accessToken: body.data.accessToken };
+  } catch {
+    return { kind: 'unavailable' };
+  }
+}
+
+async function refreshAccessToken(staleAccessToken: string): Promise<RefreshOutcome> {
   return withRefreshLock(async () => {
     // Read the session only now that the lock is held: a tab that held it first has already
     // rotated the refresh token, and the copy this tab saw before waiting is spent.
     const stored = getStoredAuth();
-    if (!stored?.refreshToken) return null;
-    if (stored.accessToken !== staleAccessToken) return stored.accessToken;
+    if (!stored?.refreshToken) return { kind: 'rejected' };
+    if (stored.accessToken !== staleAccessToken) return { kind: 'refreshed', accessToken: stored.accessToken };
 
-    try {
-      const resp = await fetch(`${BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: stored.refreshToken }),
-        signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),
-      });
-      if (!resp.ok) return null;
-
-      const body = await resp.json() as { data?: { accessToken: string; refreshToken: string } };
-      if (!body.data?.accessToken) return null;
-
-      setStoredAuth({ user: stored.user, accessToken: body.data.accessToken, refreshToken: body.data.refreshToken });
-      return body.data.accessToken;
-    } catch {
-      return null;
+    let outcome: RefreshOutcome = { kind: 'unavailable' };
+    for (let attempt = 0; attempt < REFRESH_ATTEMPTS && outcome.kind === 'unavailable'; attempt++) {
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, REFRESH_RETRY_DELAY_MS));
+      outcome = await attemptRefresh(stored.refreshToken, stored.user);
     }
+    return outcome;
   });
 }
 
@@ -186,6 +220,12 @@ export function onSessionExpired(listener: SessionExpiredListener): () => void {
   return () => { sessionExpiredListeners.delete(listener); };
 }
 
+/** The server has refused the session for good: drop it locally and tell the app. */
+function expireSession(): void {
+  clearStoredAuth();
+  sessionExpiredListeners.forEach((listener) => listener());
+}
+
 async function request<T>(path: string, options: RequestInit): Promise<T> {
   const stored = getStoredAuth();
 
@@ -199,15 +239,19 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   // Only attempt token refresh if the user had an active session.
   // A 401 with no stored token means wrong credentials, not an expired session.
   if (resp.status === 401 && stored?.accessToken) {
-    const newToken = await refreshOnce(stored.accessToken);
+    const outcome = await refreshOnce(stored.accessToken);
 
-    if (!newToken) {
-      clearStoredAuth();
-      sessionExpiredListeners.forEach((listener) => listener());
+    if (outcome.kind === 'rejected') {
+      expireSession();
       throw new ApiError(401, 'Session expired. Please sign in again.');
     }
+    // Not the same thing: the session may be fine and the server just could not be reached. It is
+    // kept, so the next action retries instead of the user being signed out for a dropped connection.
+    if (outcome.kind === 'unavailable') {
+      throw new ApiError(503, 'Could not reach the server to keep you signed in. Check your connection and try again.');
+    }
 
-    headers['Authorization'] = `Bearer ${newToken}`;
+    headers['Authorization'] = `Bearer ${outcome.accessToken}`;
     resp = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   }
 
