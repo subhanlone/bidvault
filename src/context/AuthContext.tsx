@@ -1,11 +1,11 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 // All three come straight from the contract. RegisterRequest and LoginRequest replaced a
 // hand-written pair that used to sit in types/index.ts alongside copies of every other wire
 // shape — and unlike those, this pair was never even covered by the guard that compared them,
 // so nothing had ever checked it. The old RegisterData typed `role` as UserRole, which
 // includes ADMIN: a value POST /auth/register has never accepted.
 import type { User, RegisterRequest, LoginRequest } from '../types/api';
-import { api, ApiError, getStoredAuth, setStoredAuth, clearStoredAuth } from '../services/api';
+import { api, ApiError, getStoredAuth, setStoredAuth, clearStoredAuth, onSessionExpired } from '../services/api';
 import { reconnectSocket, disconnectSocket } from '../services/socket';
 
 interface AuthContextType {
@@ -48,6 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
     setToken(accessToken);
   };
+
+  // api.ts clears storage when a refresh fails but cannot touch this state, so without this the
+  // UI kept showing the signed-in user (and the old socket stayed connected) until a reload.
+  useEffect(() => onSessionExpired(() => {
+    disconnectSocket();
+    persist(null, null);
+  }), []);
 
   const register = async (data: RegisterRequest) => {
     try {
