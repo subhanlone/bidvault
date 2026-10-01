@@ -14,12 +14,41 @@ let socket: Socket | null = null;
 //
 // Reading storage is not enough either: if nothing has made an HTTP call since the token
 // expired (a laptop waking up), the stored token is the expired one. The callback may be invoked
-// later, so the token is refreshed first when it needs it. A session that can no longer be
-// refreshed connects anonymously, which the server allows; api.ts signs the UI out on the next
-// request that fails.
+// later, so the token is refreshed first when it needs it.
+//
+// When the refresh cannot be completed because the server could not be reached -- not because it
+// said no -- the session is probably fine, so the socket connects anonymously (the server allows
+// it, and live updates keep flowing) but does not settle for that: it keeps trying to come back
+// authenticated. A session the server has ended is different: api.ts signs the UI out and the
+// socket simply stays anonymous.
+const UPGRADE_DELAYS_MS = [2_000, 4_000, 8_000, 16_000, 30_000];
+let upgradeAttempt = 0;
+let upgradeTimer: ReturnType<typeof setTimeout> | undefined;
+
+function cancelUpgrade(): void {
+  clearTimeout(upgradeTimer);
+  upgradeTimer = undefined;
+  upgradeAttempt = 0;
+}
+
+function scheduleUpgrade(): void {
+  if (upgradeTimer || upgradeAttempt >= UPGRADE_DELAYS_MS.length) return;
+  upgradeTimer = setTimeout(() => {
+    upgradeTimer = undefined;
+    upgradeAttempt++;
+    // Reconnecting runs currentAuth() again, which tries the refresh again.
+    socket?.disconnect().connect();
+  }, UPGRADE_DELAYS_MS[upgradeAttempt]);
+}
+
 async function currentAuth(): Promise<{ token?: string }> {
-  const token = await getFreshAccessToken();
-  return token ? { token } : {};
+  const result = await getFreshAccessToken();
+  if (result.kind === 'token') {
+    cancelUpgrade();
+    return { token: result.accessToken };
+  }
+  if (result.kind === 'unavailable') scheduleUpgrade();
+  return {};
 }
 
 export function getSocket(): Socket {
@@ -40,11 +69,13 @@ export function getSocket(): Socket {
 
 /** Call after login so the socket reconnects and re-reads the new token. */
 export function reconnectSocket(): void {
+  cancelUpgrade();
   socket?.disconnect().connect();
 }
 
 /** Call whenever the stored session is cleared. A manual disconnect does not auto-reconnect,
  * so the old token's connection stays closed until the next reconnectSocket(). */
 export function disconnectSocket(): void {
+  cancelUpgrade();
   socket?.disconnect();
 }

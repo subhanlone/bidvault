@@ -122,25 +122,38 @@ function tokenExpiresAtMs(token: string): number | null {
 }
 
 /**
- * The stored access token, refreshed first if it has expired or is about to. Null when there is
- * no session or the session can no longer be refreshed.
+ * What a caller that needs a token right now gets: one, nothing (no session, or the server ended
+ * it), or "could not find out" -- the session may well be fine and the server just unreachable.
+ */
+export type FreshAccessToken =
+  | { kind: 'token'; accessToken: string }
+  | { kind: 'none' }
+  | { kind: 'unavailable' };
+
+/**
+ * The stored access token, refreshed first if it has expired or is about to.
  *
  * request() gets a fresh token for free -- a 401 triggers the refresh. A socket handshake has no
  * such retry: it is rejected once and stays down, so it has to arrive with a token that already
  * works. That matters exactly when nothing else has refreshed lately, such as a laptop waking up
  * after the token expired.
  */
-export async function getFreshAccessToken(): Promise<string | null> {
+export async function getFreshAccessToken(): Promise<FreshAccessToken> {
   const stored = getStoredAuth();
-  if (!stored?.accessToken) return null;
+  if (!stored?.accessToken) return { kind: 'none' };
 
   const expiresAt = tokenExpiresAtMs(stored.accessToken);
-  if (expiresAt === null || expiresAt - Date.now() > EXPIRY_SKEW_MS) return stored.accessToken;
+  if (expiresAt === null || expiresAt - Date.now() > EXPIRY_SKEW_MS) {
+    return { kind: 'token', accessToken: stored.accessToken };
+  }
 
   const outcome = await refreshOnce(stored.accessToken);
-  if (outcome.kind === 'refreshed') return outcome.accessToken;
-  if (outcome.kind === 'rejected') expireSession();
-  return null;
+  if (outcome.kind === 'refreshed') return { kind: 'token', accessToken: outcome.accessToken };
+  if (outcome.kind === 'rejected') {
+    expireSession();
+    return { kind: 'none' };
+  }
+  return { kind: 'unavailable' };
 }
 
 const REFRESH_LOCK = 'bidvault-auth-refresh';
