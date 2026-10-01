@@ -13,8 +13,9 @@ const POLL_MS = 45_000;
  * The provider held a `setInterval`, a manual `active` flag to avoid setting state after
  * unmount, a microtask to clear on logout without a synchronous setState in the effect body,
  * and two optimistic updaters — 70 lines of bookkeeping around one polled GET. `refetchInterval`
- * and two mutations cover all of it, and the awkward parts stop existing: a query that is
- * `enabled: false` returns no data, so logging out clears the list with nothing to schedule.
+ * and two mutations cover all of it. `enabled: false` only stops fetching: a disabled query still
+ * returns whatever the cache holds, so what empties the list on logout is AuthProvider clearing
+ * the query cache when the signed-in identity changes, not this flag.
  */
 export function useNotifications() {
   const { user } = useAuth();

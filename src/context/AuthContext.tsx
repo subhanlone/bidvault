@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 // All three come straight from the contract. RegisterRequest and LoginRequest replaced a
 // hand-written pair that used to sit in types/index.ts alongside copies of every other wire
 // shape — and unlike those, this pair was never even covered by the guard that compared them,
@@ -28,6 +29,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
+
+  // Everything in the query cache was fetched as whoever was signed in: My Bids, the watchlist,
+  // notifications, and the public bid feed too (it masks every bidder except the caller). Its keys
+  // do not carry a user id and entries live for minutes after their screen unmounts, so without
+  // this the next person to sign in on the same tab was shown the previous one's data until it
+  // happened to refetch. A fetch still in flight for the old identity needs no separate
+  // cancellation: clear() detaches its query from the cache, so the late response is written to
+  // that detached query and never reaches the fresh one (checked with a response held back 5 s
+  // across a sign-out and a sign-in as someone else).
+  const dropCachedData = useCallback(() => {
+    queryClient.clear();
+  }, [queryClient]);
+
   const [user, setUser] = useState<User | null>(() => {
     const stored = getStoredAuth();
     return (stored?.accessToken && stored.user) ? stored.user as User : null;
@@ -53,8 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // UI kept showing the signed-in user (and the old socket stayed connected) until a reload.
   useEffect(() => onSessionExpired(() => {
     disconnectSocket();
+    dropCachedData();
     persist(null, null);
-  }), []);
+  }), [dropCachedData]);
 
   const register = async (data: RegisterRequest) => {
     try {
@@ -86,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (data: LoginRequest, remember = true) => {
     try {
       const result = await api.post('/auth/login', data);
+      dropCachedData();
       persist(result.user, result.accessToken, result.refreshToken, remember);
       reconnectSocket();
       return { success: true, user: result.user };
@@ -104,8 +121,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       api.post('/auth/logout', { refreshToken: stored.refreshToken }).catch(() => {});
     }
     disconnectSocket();
+    dropCachedData();
     persist(null, null);
-  }, []);
+  }, [dropCachedData]);
 
   const forgotPassword = async (email: string) => {
     try {
@@ -156,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // the app reflects that immediately instead of waiting for the next failed refresh.
       await api.post('/auth/delete-account', { password });
       disconnectSocket();
+      dropCachedData();
       persist(null, null);
       return { success: true };
     } catch (err: unknown) {
