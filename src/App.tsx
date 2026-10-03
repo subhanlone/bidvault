@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RealtimeBridge } from './queries/RealtimeBridge';
@@ -213,11 +213,13 @@ export default function App() {
                       </ProtectedRoute>
                     } />
 
-                    <Route path="/buyer/auction-won" element={
+                    <Route path="/buyer/auction-won/:auctionId" element={
                       <ProtectedRoute allowedRoles={['BUYER']}>
                         <BuyerAuctionWon />
                       </ProtectedRoute>
                     } />
+                    {/* The old address carried the outcome in navigation state; without an id there is nothing to show. */}
+                    <Route path="/buyer/auction-won" element={<Navigate to="/buyer/browse" replace />} />
                     <Route path="/buyer/my-wins" element={
                       <ProtectedRoute allowedRoles={['BUYER']}>
                         <BuyerMyWins />
