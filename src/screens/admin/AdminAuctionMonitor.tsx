@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuctionDetail, useBids } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
-import { getSocket } from '../../services/socket';
+import { connectSocket } from '../../services/socket';
 import { Menu, Search } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
@@ -21,7 +21,7 @@ export default function AdminAuctionMonitor() {
 
   useEffect(() => {
     if (!auctionId) return;
-    const socket = getSocket();
+    const socket = connectSocket();
     const subscribe = () => socket.emit('auction:subscribe', auctionId);
     subscribe();
     socket.on('connect', subscribe);

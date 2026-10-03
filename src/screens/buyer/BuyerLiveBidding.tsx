@@ -11,7 +11,7 @@ import {
 import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import { getSocket } from '../../services/socket';
+import { connectSocket } from '../../services/socket';
 import { api } from '../../services/api';
 import type { SellerReview } from '../../types/api';
 import { getCategoryFields } from '../../config/categoryFields';
@@ -63,7 +63,7 @@ export default function BuyerLiveBidding() {
   // Socket subscription — re-subscribes automatically on reconnect
   useEffect(() => {
     if (!auctionId) return;
-    const socket = getSocket();
+    const socket = connectSocket();
     const subscribe = () => socket.emit('auction:subscribe', auctionId);
     subscribe();
     socket.on('connect', subscribe);
