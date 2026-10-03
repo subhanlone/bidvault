@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Truck, ShieldAlert, CheckCircle2, XCircle, Receipt, RotateCcw, UserPlus } from 'lucide-react';
+import { Package, Truck, ShieldAlert, CheckCircle2, Receipt, RotateCcw, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
-import { SellerNavbar, Badge, Button } from '../../components/ui';
+import { SellerNavbar, Badge, Button, ErrorState } from '../../components/ui';
 import { dateMedium, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 
@@ -44,6 +44,22 @@ const STATUS_CONFIG: Partial<Record<TransactionStatus, { label: string; variant:
 // screen is about the post-payment half of the sale, plus VOIDED's own recovery actions.
 const RELEVANT_STATUSES: TransactionStatus[] = ['COMPLETED', 'SHIPPED', 'DELIVERED', 'DISPUTED', 'REFUNDED', 'VOIDED'];
 
+// Every page of the seller's sales, keeping only the ones this screen is about. A plain function
+// outside the component: the load effect then depends on nothing but the signed-in user, and the
+// action handlers can reload through it too.
+async function fetchAllSales(): Promise<SellerSale[]> {
+  const all: SellerSale[] = [];
+  let cursor: string | null = null;
+  do {
+    const page: { items: SellerSale[]; nextCursor: string | null } = await api.get(
+      cursor ? `/payments/my-sales?limit=100&cursor=${encodeURIComponent(cursor)}` : '/payments/my-sales?limit=100',
+    );
+    all.push(...page.items);
+    cursor = page.nextCursor;
+  } while (cursor);
+  return all.filter(s => RELEVANT_STATUSES.includes(s.status));
+}
+
 export default function SellerMySales() {
   const { user, logout } = useAuth();
   const { showToast } = useToast();
@@ -54,29 +70,28 @@ export default function SellerMySales() {
   const [recoveringId, setRecoveringId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
 
-  function loadSales() {
-    return (async () => {
-      const all: SellerSale[] = [];
-      let cursor: string | null = null;
-      do {
-        const page: { items: SellerSale[]; nextCursor: string | null } = await api.get(
-          cursor ? `/payments/my-sales?limit=100&cursor=${encodeURIComponent(cursor)}` : '/payments/my-sales?limit=100',
-        );
-        all.push(...page.items);
-        cursor = page.nextCursor;
-      } while (cursor);
-      setSales(all.filter(s => RELEVANT_STATUSES.includes(s.status)));
-    })();
-  }
+  const loadSales = async () => { setSales(await fetchAllSales()); };
 
+  const userId = user?.userId;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     let cancelled = false;
-    loadSales()
+    fetchAllSales()
+      .then(all => { if (!cancelled) setSales(all); })
       .catch(() => { if (!cancelled) setError('Could not load your sales. Please try again.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // "Try again": back to the loading state, then the same request the first load makes.
+  function retryLoad() {
+    setError(null);
+    setLoading(true);
+    fetchAllSales()
+      .then(setSales)
+      .catch(() => setError('Could not load your sales. Please try again.'))
+      .finally(() => setLoading(false));
+  }
 
   // A5, Phase 6: both recovery actions on a VOIDED sale — offering it to the next-highest
   // bidder at their own last bid, or relisting it as a fresh listing + auction.
@@ -129,17 +144,13 @@ export default function SellerMySales() {
         <div className="mb-6">
           <h1 className="text-xl font-extrabold text-navy">My Sales</h1>
           <p className="text-sm text-muted mt-0.5">
-            {loading ? 'Loading…' : `${sales.length} sale${sales.length !== 1 ? 's' : ''} awaiting or past shipment`}
+            {loading ? 'Loading…' : error ? 'Could not load your sales' : `${sales.length} sale${sales.length !== 1 ? 's' : ''} awaiting or past shipment`}
           </p>
         </div>
 
-        {error && (
-          <div className="bg-error-bg border border-error-border rounded-md flex items-center gap-3 px-4 py-3 mb-4">
-            <XCircle size={16} className="text-error shrink-0" />
-            <p className="text-[13px] text-error font-medium">{error}</p>
-          </div>
-        )}
-
+        {error && !loading ? (
+          <ErrorState title="Could not load your sales" onRetry={retryLoad} />
+        ) : (
         <div className="bg-surface border border-border-light rounded-md overflow-hidden">
           {loading ? (
             <div className="divide-y divide-bg">
@@ -263,6 +274,7 @@ export default function SellerMySales() {
             </div>
           )}
         </div>
+        )}
 
         <p className="text-[12px] text-muted mt-4">
           Track your earnings on your <Link to="/seller/profile" className="text-primary font-semibold">Profile</Link> page.

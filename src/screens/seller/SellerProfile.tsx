@@ -1,13 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff, Wallet, Receipt } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { SellerNavbar, Badge, Button, Input, DeleteAccountModal } from '../../components/ui';
+import { SellerNavbar, Badge, Button, Input, DeleteAccountModal, ErrorState } from '../../components/ui';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 import { api } from '../../services/api';
+import { fetchAllMyListings } from '../../services/myListings';
 import type { Listing } from '../../types/api';
 import { dateShort, monthYear, pkr } from '../../utils/format';
 import { listingBadge } from '../../utils/listingStatus';
+
+// Three independent requests, each of which can fail alone. Which one did is kept: a 0 or an empty
+// list drawn from a failed request is a claim about the seller's account -- "PKR 0" earnings most
+// of all -- so each figure and panel checks whether *its* data arrived.
+const loadProfileData = () =>
+  Promise.allSettled([
+    fetchAllMyListings(),
+    api.get('/payments/seller-stats'),
+    api.get('/payments/earnings'),
+  ]);
+
+type ProfileResult = Awaited<ReturnType<typeof loadProfileData>>;
 
 export default function SellerProfile() {
   const { user, logout, changePassword } = useAuth();
@@ -29,40 +43,35 @@ export default function SellerProfile() {
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [sellerStats, setSellerStats] = useState({ totalRevenue: 0, itemsSold: 0 });
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState({ listings: false, stats: false, earnings: false });
 
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    // The Approved/Pending tiles below are exact counts, so this walks every cursor page
-    // (BV-029) of /listings/mine rather than showing whatever fits on page one.
-    const fetchAllListings = async (): Promise<Listing[]> => {
-      const all: Listing[] = [];
-      let cursor: string | null = null;
-      do {
-        const page: { items: Listing[]; nextCursor: string | null } = await api.get(
-          cursor ? `/listings/mine?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/mine?limit=100',
-        );
-        all.push(...page.items);
-        cursor = page.nextCursor;
-      } while (cursor);
-      return all;
-    };
-
-    Promise.allSettled([
-      fetchAllListings(),
-      api.get('/payments/seller-stats'),
-    ]).then(([listingsResult, statsResult]) => {
-      if (cancelled) return;
-      if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
-      if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
+  const applyResult = useCallback(([listingsResult, statsResult, earningsResult]: ProfileResult) => {
+    if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
+    if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
+    if (earningsResult.status === 'fulfilled') setEarnings(earningsResult.value);
+    setFailed({
+      listings: listingsResult.status === 'rejected',
+      stats: statsResult.status === 'rejected',
+      earnings: earningsResult.status === 'rejected',
     });
-    return () => { cancelled = true; };
-  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+    setLoaded(true);
+  }, []);
 
+  const userId = user?.userId;
   useEffect(() => {
-    if (!user) return;
-    api.get('/payments/earnings').then(setEarnings).catch(() => undefined);
-  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!userId) return;
+    let cancelled = false;
+    void loadProfileData().then(result => { if (!cancelled) applyResult(result); });
+    return () => { cancelled = true; };
+  }, [userId, applyResult]);
+
+  // "Try again": show the dashes again, then all three requests again.
+  function retryLoad() {
+    setLoaded(false);
+    void loadProfileData().then(applyResult);
+  }
+  const anyFailed = failed.listings || failed.stats || failed.earnings;
 
   const pending  = listings.filter(l => l.status === 'PENDING').length;
   const approved = listings.filter(l => l.status === 'APPROVED').length;
@@ -70,10 +79,10 @@ export default function SellerProfile() {
   const memberSince = user?.createdAt ? monthYear(user.createdAt) : '—';
 
   const stats = [
-    { label: 'Approved Listings', value: approved,                       icon: <Gavel size={18} strokeWidth={1.8} className="text-primary" />,      bg: 'bg-primary-surface' },
-    { label: 'Items Sold',        value: sellerStats.itemsSold,          icon: <PackageCheck size={18} strokeWidth={1.8} className="text-success-dark" />, bg: 'bg-success-bg' },
-    { label: 'Pending Review',    value: pending,                        icon: <Clock size={18} strokeWidth={1.8} className="text-gold" />,          bg: 'bg-warning-surface' },
-    { label: 'Total Revenue',     value: pkr(sellerStats.totalRevenue),  icon: <Banknote size={18} strokeWidth={1.8} className="text-navy" />,       bg: 'bg-info-card-bg' },
+    { label: 'Approved Listings', value: loaded && !failed.listings ? approved : '—',                       icon: <Gavel size={18} strokeWidth={1.8} className="text-primary" />,      bg: 'bg-primary-surface' },
+    { label: 'Items Sold',        value: loaded && !failed.stats ? sellerStats.itemsSold : '—',          icon: <PackageCheck size={18} strokeWidth={1.8} className="text-success-dark" />, bg: 'bg-success-bg' },
+    { label: 'Pending Review',    value: loaded && !failed.listings ? pending : '—',                        icon: <Clock size={18} strokeWidth={1.8} className="text-gold" />,          bg: 'bg-warning-surface' },
+    { label: 'Total Revenue',     value: loaded && !failed.stats ? pkr(sellerStats.totalRevenue) : '—',  icon: <Banknote size={18} strokeWidth={1.8} className="text-navy" />,       bg: 'bg-info-card-bg' },
   ];
 
   const quickLinks = [
@@ -141,6 +150,13 @@ export default function SellerProfile() {
             ))}
           </div>
 
+          {loaded && anyFailed && (
+            <div role="alert" className="bg-error-bg border border-error-border rounded-md px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-[12px] text-error">Some of this page could not be loaded.</p>
+              <Button variant="outline" size="sm" onClick={retryLoad}>Try again</Button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-5">
 
             {/* Left column */}
@@ -176,7 +192,14 @@ export default function SellerProfile() {
                   <h2 className="font-bold text-[14px] text-navy">Recent Listings</h2>
                   <Link to="/seller/listings" className="font-bold text-[12px] text-primary hover:underline">View All →</Link>
                 </div>
-                {listings.length === 0 ? (
+                {!loaded ? (
+                  <div className="flex flex-col gap-3 px-5 py-6">
+                    <LoadingStatus label="Loading your listings" />
+                    {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-10 bg-border-light rounded animate-pulse" />)}
+                  </div>
+                ) : failed.listings ? (
+                  <ErrorState title="Could not load your listings" onRetry={retryLoad} className="border-0 rounded-none py-10" />
+                ) : listings.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
                     <Package size={32} strokeWidth={1.3} className="text-placeholder mb-3" />
                     <p className="font-semibold text-[13px] text-muted">No listings yet.</p>
@@ -243,10 +266,14 @@ export default function SellerProfile() {
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-4">
                     <Wallet size={16} className="text-success-dark" />
-                    <span className="font-extrabold text-[20px] text-navy">{pkr(earnings?.ledgerBalance ?? 0)}</span>
+                    <span className="font-extrabold text-[20px] text-navy">{loaded && !failed.earnings && earnings ? pkr(earnings.ledgerBalance) : '—'}</span>
                   </div>
 
-                  {!earnings || earnings.entries.length === 0 ? (
+                  {!loaded ? (
+                    <p className="text-[12px] text-muted">Loading…</p>
+                  ) : failed.earnings || !earnings ? (
+                    <p className="text-[12px] text-error">Could not load your earnings.</p>
+                  ) : earnings.entries.length === 0 ? (
                     <p className="text-[12px] text-muted">Payouts land here automatically once a buyer confirms delivery.</p>
                   ) : (
                     <div className="flex flex-col divide-y divide-bg -mx-1">

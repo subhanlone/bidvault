@@ -4,9 +4,10 @@ import { ChevronLeft, Upload, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
-import { SellerNavbar, Button, Input, Textarea } from '../../components/ui';
+import { fetchAllMyListings } from '../../services/myListings';
+import { SellerNavbar, Button, ErrorState, Input, Textarea } from '../../components/ui';
 import LoadingStatus from '../../components/ui/LoadingStatus';
-import type { Listing, ItemCondition, CategoryAttributes } from '../../types/api';
+import type { ItemCondition, CategoryAttributes } from '../../types/api';
 import type { ListingCategory } from '../../types';
 import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
 
@@ -52,27 +53,23 @@ export default function SellerEditListing() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // A request that failed (worth retrying) as opposed to a listing that is not there or not editable.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [form, setForm] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const userId = user?.userId;
   useEffect(() => {
-    if (!user || !listingId) return;
+    if (!userId || !listingId) return;
     let cancelled = false;
     (async () => {
       try {
         // No single-listing GET route exists for a seller — /listings/mine is small enough at
         // this project's scale to walk in full, same as SellerMyListings does.
-        const all: Listing[] = [];
-        let cursor: string | null = null;
-        do {
-          const page: { items: Listing[]; nextCursor: string | null } = await api.get(
-            cursor ? `/listings/mine?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/mine?limit=100',
-          );
-          all.push(...page.items);
-          cursor = page.nextCursor;
-        } while (cursor);
+        const all = await fetchAllMyListings();
 
         const listing = all.find(l => l.listingId === listingId);
         if (!listing) { if (!cancelled) setLoadError('Listing not found.'); return; }
@@ -95,13 +92,20 @@ export default function SellerEditListing() {
           });
         }
       } catch {
-        if (!cancelled) setLoadError('Could not load this listing. Please try again.');
+        if (!cancelled) { setLoadError('Could not load this listing. Please try again.'); setLoadFailed(true); }
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.userId, listingId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, listingId, attempt]);
+
+  function retryLoad() {
+    setLoadError(null);
+    setLoadFailed(false);
+    setLoading(true);
+    setAttempt(a => a + 1);
+  }
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm(f => f ? { ...f, [key]: value } : f);
@@ -214,6 +218,8 @@ export default function SellerEditListing() {
 
         {loading ? (
           <LoadingStatus label="Loading listing" />
+        ) : loadError && loadFailed ? (
+          <ErrorState title="Could not load this listing" onRetry={retryLoad} />
         ) : loadError ? (
           <div className="bg-error-bg border border-error-border rounded-md px-4 py-3">
             <p className="text-[13px] text-error font-medium">{loadError}</p>
