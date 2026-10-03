@@ -23,12 +23,22 @@ const DEFAULT_DRAFT: ListingDraft = {
   attributes: {},
 };
 
+/** Messages the server attached to the two fields Step 2 owns, when a submit on Step 3 was refused. */
+export type LimitFieldErrors = { startPrice?: string; minIncrement?: string };
+
 interface ListingContextType {
   draft: ListingDraft;
   updateDraft: (partial: Partial<ListingDraft>) => void;
   clearDraft: () => void;
   submittedListingCode: string | null;
   setSubmittedListingCode: (code: string | null) => void;
+  /**
+   * What the server said about the starting price / increment when it refused the submit. Kept
+   * here, not in navigation state: this store is per account (see ListingProvider), so one
+   * account's message can never be shown on the next account's form.
+   */
+  fieldErrors: LimitFieldErrors;
+  setFieldErrors: (errors: LimitFieldErrors) => void;
 }
 
 const ListingContext = createContext<ListingContextType | null>(null);
@@ -57,6 +67,7 @@ function ListingStore({ userId, children }: { userId: string | null; children: R
     }
   });
   const [submittedListingCode, setSubmittedListingCode] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<LimitFieldErrors>({});
 
   const updateDraft = (partial: Partial<ListingDraft>) => {
     setDraft(prev => {
@@ -74,10 +85,11 @@ function ListingStore({ userId, children }: { userId: string | null; children: R
     }
     setDraft({ ...DEFAULT_DRAFT });
     setSubmittedListingCode(null);
+    setFieldErrors({});
   };
 
   return (
-    <ListingContext.Provider value={{ draft, updateDraft, clearDraft, submittedListingCode, setSubmittedListingCode }}>
+    <ListingContext.Provider value={{ draft, updateDraft, clearDraft, submittedListingCode, setSubmittedListingCode, fieldErrors, setFieldErrors }}>
       {children}
     </ListingContext.Provider>
   );
