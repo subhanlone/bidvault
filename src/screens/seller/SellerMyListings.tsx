@@ -4,7 +4,8 @@ import { Package, Clock, CheckCircle2, XCircle, AlertCircle, Ban, Pencil } from 
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
-import { SellerNavbar, Badge, Button, ReasonModal } from '../../components/ui';
+import { fetchAllMyListings } from '../../services/myListings';
+import { SellerNavbar, Badge, Button, ErrorState, ReasonModal } from '../../components/ui';
 import type { Listing, ListingStatus } from '../../types/api';
 import { conditionLabel, dateMedium, pkr } from '../../utils/format';
 import { listingBadge as badgeFor } from '../../utils/listingStatus';
@@ -82,34 +83,26 @@ export default function SellerMyListings() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [cancelling, setCancelling] = useState<Listing | null>(null);
 
-  // Every listing, not one page: the tab counts (Pending/Approved/Rejected) below are exact
-  // totals, so this walks every cursor page (BV-029) rather than showing whatever fits on
-  // page one. A seller's own listings are few enough that this costs nothing worth trading
-  // away for lazy loading. Pure fetch, no setState — the effect below and the action handlers
-  // each apply the result with their own appropriate guard (the effect's `cancelled` check;
-  // the handlers just set it directly, since they run from a user action, not mount).
-  async function fetchAllListings(): Promise<Listing[]> {
-    const all: Listing[] = [];
-    let cursor: string | null = null;
-    do {
-      const page: { items: Listing[]; nextCursor: string | null } = await api.get(
-        cursor ? `/listings/mine?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/mine?limit=100',
-      );
-      all.push(...page.items);
-      cursor = page.nextCursor;
-    } while (cursor);
-    return all;
-  }
-
+  const userId = user?.userId;
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     let cancelled = false;
-    fetchAllListings()
+    fetchAllMyListings()
       .then(all => { if (!cancelled) setListings(all); })
       .catch(() => { if (!cancelled) setError('Could not load listings. Please try again.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // "Try again": back to the loading state, then the same request the first load makes.
+  function retryLoad() {
+    setError(null);
+    setLoading(true);
+    fetchAllMyListings()
+      .then(setListings)
+      .catch(() => setError('Could not load listings. Please try again.'))
+      .finally(() => setLoading(false));
+  }
 
   async function handleWithdraw() {
     if (!withdrawing) return;
@@ -118,7 +111,7 @@ export default function SellerMyListings() {
       await api.del(`/listings/${withdrawing.listingId}`);
       showToast({ type: 'success', title: 'Listing Withdrawn', message: `"${withdrawing.title}" has been withdrawn.` });
       setWithdrawing(null);
-      setListings(await fetchAllListings());
+      setListings(await fetchAllMyListings());
     } catch (err: unknown) {
       showToast({ type: 'error', title: 'Could Not Withdraw', message: err instanceof Error ? err.message : 'Please try again.' });
     } finally {
@@ -131,7 +124,7 @@ export default function SellerMyListings() {
     await api.post(`/auctions/${cancelling.auctionId}/cancel`, { reason });
     showToast({ type: 'success', title: 'Auction Cancelled', message: `"${cancelling.title}" has been cancelled.` });
     setCancelling(null);
-    setListings(await fetchAllListings());
+    setListings(await fetchAllMyListings());
   }
 
   const counts: Record<Tab, number> = {
@@ -156,7 +149,7 @@ export default function SellerMyListings() {
           <div>
             <h1 className="text-xl font-extrabold text-navy">My Listings</h1>
             <p className="text-sm text-muted mt-0.5">
-              {loading ? 'Loading…' : `${counts.ALL} listing${counts.ALL !== 1 ? 's' : ''} total`}
+              {loading ? 'Loading…' : error ? 'Could not load your listings' : `${counts.ALL} listing${counts.ALL !== 1 ? 's' : ''} total`}
             </p>
           </div>
           <Button variant="primary" size="sm" onClick={() => navigate('/seller/create-listing/step-1')}>
@@ -179,7 +172,7 @@ export default function SellerMyListings() {
             >
               {icon}
               {label}
-              {!loading && (
+              {!loading && !error && (
                 <span className={`ml-1 text-[11px] font-bold px-1.5 py-px rounded-full ${
                   tab === key ? 'bg-primary text-white' : 'bg-surface-raised text-placeholder'
                 }`}>
@@ -190,14 +183,10 @@ export default function SellerMyListings() {
           ))}
         </div>
 
-        {error && (
-          <div className="bg-error-bg border border-error-border rounded-md flex items-center gap-3 px-4 py-3 mb-4">
-            <XCircle size={16} className="text-error shrink-0" />
-            <p className="text-[13px] text-error font-medium">{error}</p>
-          </div>
-        )}
-
         {/* Listings table */}
+        {error && !loading ? (
+          <ErrorState title="Could not load your listings" onRetry={retryLoad} />
+        ) : (
         <div className="bg-surface border border-border-light rounded-md overflow-hidden">
           {loading ? (
             <div className="divide-y divide-bg">
@@ -313,6 +302,7 @@ export default function SellerMyListings() {
             </>
           )}
         </div>
+        )}
       </main>
 
       {withdrawing && (

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Banknote, Gavel, PackageCheck, Clock, XCircle, Star, MessageSquare } from 'lucide-react';
+import { Package, Banknote, Gavel, PackageCheck, Clock, Star, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
-import { SellerNavbar, Badge, Button, StatCard, ReasonModal } from '../../components/ui';
+import { fetchAllMyListings } from '../../services/myListings';
+import { SellerNavbar, Badge, Button, ErrorState, StatCard, ReasonModal } from '../../components/ui';
 import type { Listing, SellerReview } from '../../types/api';
 import { conditionLabel, dateShort, pkr } from '../../utils/format';
 import { listingBadge } from '../../utils/listingStatus';
@@ -44,6 +45,18 @@ function ListingRowSkeleton() {
   );
 }
 
+// The three requests are independent, so each can fail alone. Which one did is kept (not one
+// generic "something failed"): every figure and panel needs to know whether *its* data is missing,
+// because a 0 or an empty list drawn from a failed request is a claim about the seller's account.
+const loadDashboard = (userId: string) =>
+  Promise.allSettled([
+    fetchAllMyListings(),
+    api.get('/payments/seller-stats'),
+    api.get(`/reviews/seller/${userId}`),
+  ]);
+
+type DashboardResult = Awaited<ReturnType<typeof loadDashboard>>;
+
 export default function SellerDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -51,7 +64,7 @@ export default function SellerDashboard() {
   const [sellerStats, setSellerStats] = useState({ totalRevenue: 0, itemsSold: 0 });
   const [reviewStats, setReviewStats] = useState<{ average: number | null; count: number; reviews: SellerReview[] }>({ average: null, count: 0, reviews: [] });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState({ listings: false, stats: false, reviews: false });
   const [replyingTo, setReplyingTo] = useState<SellerReview | null>(null);
 
   // C6, Phase 7: a one-shot reply, submitted through the same reason-prompt shape the cancel
@@ -68,36 +81,32 @@ export default function SellerDashboard() {
     setReplyingTo(null);
   }
 
-  useEffect(() => {
-    if (!user) return;
-    // The Total/Pending/Approved tiles below are exact counts, so this walks every cursor page
-    // (BV-029) of /listings/mine rather than showing whatever fits on page one.
-    const fetchAllListings = async (): Promise<Listing[]> => {
-      const all: Listing[] = [];
-      let cursor: string | null = null;
-      do {
-        const page: { items: Listing[]; nextCursor: string | null } = await api.get(
-          cursor ? `/listings/mine?limit=100&cursor=${encodeURIComponent(cursor)}` : '/listings/mine?limit=100',
-        );
-        all.push(...page.items);
-        cursor = page.nextCursor;
-      } while (cursor);
-      return all;
-    };
+  const applyResult = useCallback(([listingsResult, statsResult, reviewsResult]: DashboardResult) => {
+    if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
+    if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
+    if (reviewsResult.status === 'fulfilled') setReviewStats(reviewsResult.value);
+    setFailed({
+      listings: listingsResult.status === 'rejected',
+      stats: statsResult.status === 'rejected',
+      reviews: reviewsResult.status === 'rejected',
+    });
+    setLoading(false);
+  }, []);
 
-    Promise.allSettled([
-      fetchAllListings(),
-      api.get('/payments/seller-stats'),
-      api.get(`/reviews/seller/${user.userId}`),
-    ]).then(([listingsResult, statsResult, reviewsResult]) => {
-      if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
-      if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
-      if (reviewsResult.status === 'fulfilled') setReviewStats(reviewsResult.value);
-      if (listingsResult.status === 'rejected' || statsResult.status === 'rejected' || reviewsResult.status === 'rejected') {
-        setError('Some dashboard data could not be loaded.');
-      }
-    }).finally(() => setLoading(false));
-  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const userId = user?.userId;
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    void loadDashboard(userId).then(result => { if (!cancelled) applyResult(result); });
+    return () => { cancelled = true; };
+  }, [userId, applyResult]);
+
+  // "Try again": back to the loading state, then all three requests again.
+  function retryLoad() {
+    if (!userId) return;
+    setLoading(true);
+    void loadDashboard(userId).then(applyResult);
+  }
 
   const total    = listings.length;
   const pending  = listings.filter(l => l.status === 'PENDING').length;
@@ -122,22 +131,15 @@ export default function SellerDashboard() {
           </Button>
         </div>
 
-        {error && (
-          <div className="bg-error-bg border border-error-border rounded-md flex items-center gap-3 px-4 py-3 mb-4">
-            <XCircle size={16} className="text-error shrink-0" />
-            <p className="text-[13px] text-error font-medium">{error}</p>
-          </div>
-        )}
-
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {loading ? (
             <><LoadingStatus label="Loading dashboard statistics" />{Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}</>
           ) : (
             <>
-              <StatCard label="Revenue"            value={pkr(sellerStats.totalRevenue)} icon={<Banknote size={18} />}     iconColor="success" padding="sm" />
-              <StatCard label="Live Listings"      value={live}                                                  icon={<Gavel size={18} />}        iconColor="info"    padding="sm" />
-              <StatCard label="Items Sold"         value={sellerStats.itemsSold}                                 icon={<PackageCheck size={18} />}  iconColor="success" padding="sm" />
-              <StatCard label="Pending Review"     value={pending}                                               icon={<Clock size={18} />}         iconColor="warning" padding="sm" />
+              <StatCard label="Revenue"            value={failed.stats ? '—' : pkr(sellerStats.totalRevenue)} icon={<Banknote size={18} />}     iconColor="success" padding="sm" />
+              <StatCard label="Live Listings"      value={failed.listings ? '—' : live}                                                  icon={<Gavel size={18} />}        iconColor="info"    padding="sm" />
+              <StatCard label="Items Sold"         value={failed.stats ? '—' : sellerStats.itemsSold}                                 icon={<PackageCheck size={18} />}  iconColor="success" padding="sm" />
+              <StatCard label="Pending Review"     value={failed.listings ? '—' : pending}                                               icon={<Clock size={18} />}         iconColor="warning" padding="sm" />
             </>
           )}
         </div>
@@ -145,7 +147,7 @@ export default function SellerDashboard() {
         <div className="bg-surface border border-border-light rounded-md p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-bold text-navy">Reviews</h2>
-            {!loading && (
+            {!loading && !failed.reviews && (
               <span className="text-xs text-muted">
                 {reviewStats.average !== null ? `${reviewStats.average} ★ average · ` : ''}
                 {reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''}
@@ -154,6 +156,8 @@ export default function SellerDashboard() {
           </div>
           {loading ? (
             <div className="h-12 bg-border-light rounded-md animate-pulse" />
+          ) : failed.reviews ? (
+            <ErrorState title="Could not load your reviews" onRetry={retryLoad} className="border-0 rounded-none py-8" />
           ) : reviewStats.count === 0 ? (
             <p className="text-sm text-muted text-center py-4">No reviews yet — they'll show up here after buyers rate completed purchases.</p>
           ) : (
@@ -196,7 +200,7 @@ export default function SellerDashboard() {
         <div className="bg-surface border border-border-light rounded-md">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
             <h2 className="text-sm font-bold text-navy">My Listings</h2>
-            {!loading && total > 0 && <span className="text-xs text-muted">{total} listing{total !== 1 ? 's' : ''}</span>}
+            {!loading && !failed.listings && total > 0 && <span className="text-xs text-muted">{total} listing{total !== 1 ? 's' : ''}</span>}
           </div>
 
           {loading ? (
@@ -204,6 +208,8 @@ export default function SellerDashboard() {
               <LoadingStatus label="Loading your listings" />
               {Array.from({ length: 4 }).map((_, i) => <ListingRowSkeleton key={i} />)}
             </div>
+          ) : failed.listings ? (
+            <ErrorState title="Could not load your listings" onRetry={retryLoad} className="border-0 rounded-none" />
           ) : total === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
               <Package size={44} strokeWidth={1.3} className="text-placeholder mb-4" />
