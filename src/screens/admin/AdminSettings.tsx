@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, Save, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
-import { Button, Input } from '../../components/ui';
+import { Button, ErrorState, Input } from '../../components/ui';
 import { api } from '../../services/api';
 // Support email is stored, so it uses the same strict rule the server enforces on PUT /settings.
 import { isStrictEmail } from '../../utils/validation';
@@ -35,7 +35,10 @@ const EMPTY_FORM: FormState = {
 export default function AdminSettings() {
   const { user, logout, changePassword } = useAuth();
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  // 'error' keeps the form off the screen entirely. It used to render the blank defaults with Save
+  // enabled, so an admin could type over the real settings without ever having seen them.
+  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const loading = loadState === 'loading';
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
@@ -47,9 +50,9 @@ export default function AdminSettings() {
   const [pwError, setPwError] = useState('');
   const [currentPwError, setCurrentPwError] = useState('');
 
-  useEffect(() => {
+  const loadSettings = useCallback(() =>
     api.get('/settings')
-      .then((s) =>
+      .then((s) => {
         setForm({
           emailNotifsEnabled: s.emailNotifsEnabled,
           maintenanceMode: s.maintenanceMode,
@@ -57,11 +60,12 @@ export default function AdminSettings() {
           minListingPrice: String(s.minListingPrice),
           reviewTimeoutHours: String(s.reviewTimeoutHours),
           supportEmail: s.supportEmail,
-        }),
-      )
-      .catch(() => showToast({ type: 'error', title: 'Load Failed', message: 'Could not load platform settings.' }))
-      .finally(() => setLoading(false));
-  }, [showToast]);
+        });
+        setLoadState('ready');
+      })
+      .catch(() => setLoadState('error')), []);
+
+  useEffect(() => { void loadSettings(); }, [loadSettings]);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -131,7 +135,7 @@ export default function AdminSettings() {
         </div>
         <div className="flex items-center gap-3">
           <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
-          <Button variant="primary" onClick={handleSave} loading={isSaving} disabled={loading}>
+          <Button variant="primary" onClick={handleSave} loading={isSaving} disabled={loadState !== 'ready'}>
             <Save size={14} strokeWidth={2.5} />
             <span className="hidden sm:inline">Save Changes</span>
           </Button>
@@ -256,6 +260,11 @@ export default function AdminSettings() {
               <div className="h-10 bg-border-light rounded animate-pulse mb-3" />
               <div className="h-10 bg-border-light rounded animate-pulse" />
             </div>
+          ) : loadState === 'error' ? (
+            <ErrorState
+              title="Could not load the platform settings"
+              onRetry={() => { setLoadState('loading'); void loadSettings(); }}
+            />
           ) : (
             <>
               {/* Platform Toggles */}

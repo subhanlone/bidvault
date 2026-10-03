@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Star, Menu, TrendingUp } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
 import { pkrCompact, count } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
+import ErrorState from '../../components/ui/ErrorState';
 
 interface AnalyticsData {
   totalRevenue:         number;
@@ -36,12 +37,17 @@ export default function AdminAnalytics() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadAnalytics = useCallback(() =>
     api.get('/admin/analytics')
       .then(d => setAnalyticsData(d))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+      .catch(() => setAnalyticsData(null))
+      .finally(() => setLoading(false)), []);
+
+  useEffect(() => { void loadAnalytics(); }, [loadAnalytics]);
+
+  // No data and not loading means the request failed. The charts below would draw that as a flat
+  // zero-revenue year, so the whole body is replaced by the error instead of a small banner above them.
+  const failed = !loading && !analyticsData;
 
   const allMonths = analyticsData?.monthlyRevenue ?? [];
   const periodData = period === '3m' ? allMonths.slice(-3) : period === '6m' ? allMonths.slice(-6) : allMonths;
@@ -91,6 +97,12 @@ export default function AdminAnalytics() {
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col gap-5">
 
+          {failed ? (
+            <ErrorState
+              title="Could not load the analytics"
+              onRetry={() => { setLoading(true); void loadAnalytics(); }}
+            />
+          ) : (<>
           {/* KPI cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {loading
@@ -108,9 +120,7 @@ export default function AdminAnalytics() {
                     <p className="text-[10px] text-placeholder mt-1">{k.sub}</p>
                   </div>
                 ))
-              : <div className="col-span-2 md:col-span-4 bg-surface border border-border-light rounded-md py-6 text-center">
-                  <p className="text-[13px] text-placeholder">Analytics data could not be loaded. Please try refreshing.</p>
-                </div>
+              : null
             }
           </div>
 
@@ -245,6 +255,7 @@ export default function AdminAnalytics() {
             )}
           </div>
 
+          </>)}
         </div>
         </>
       )}

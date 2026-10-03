@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Menu, Receipt, ShieldAlert, X } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import Button from '../../components/ui/Button';
+import ErrorState from '../../components/ui/ErrorState';
 import Textarea from '../../components/ui/Textarea';
 import { useDialog } from '../../hooks/useDialog';
 import { useToast } from '../../context/ToastContext';
@@ -225,29 +226,33 @@ export default function AdminTransactions() {
   const [voidingTx, setVoidingTx] = useState<PendingTransaction | null>(null);
   const [resolvingDispute, setResolvingDispute] = useState<Dispute | null>(null);
 
-  // Pure fetches — no synchronous setLoading(true), so the mount effect below can call them
-  // directly without tripping the "setState synchronously within an effect" rule. Loading
-  // starts true via useState already; these only ever need to flip it back to true for a
-  // *re*-fetch, which the wrapped versions below handle for the event-handler callers.
-  const loadTransactions = () =>
-    api.get('/admin/transactions')
-      .then(d => setTransactions(d))
-      .catch(() => showToast({ type: 'error', title: 'Could not load transactions', message: 'Please try again.' }))
-      .finally(() => setLoadingTransactions(false));
+  // A failed load is its own state, not a toast over an empty tab: "Nothing awaiting payment" and
+  // "No open disputes" both assert the queue is clear, which a failed request cannot know.
+  const [transactionsError, setTransactionsError] = useState(false);
+  const [disputesError, setDisputesError] = useState(false);
 
-  const loadDisputes = () =>
+  // Pure fetches -- state changes only in the promise callbacks, so the mount effect can call
+  // them directly. Loading starts true via useState; the wrapped versions below flip it back to
+  // true for a *re*-fetch, for the event-handler callers. useCallback with no dependencies keeps
+  // them stable, which is what lets the effect list them honestly.
+  const loadTransactions = useCallback(() =>
+    api.get('/admin/transactions')
+      .then(d => { setTransactions(d); setTransactionsError(false); })
+      .catch(() => setTransactionsError(true))
+      .finally(() => setLoadingTransactions(false)), []);
+
+  const loadDisputes = useCallback(() =>
     api.get('/admin/disputes')
-      .then(d => setDisputes(d))
-      .catch(() => showToast({ type: 'error', title: 'Could not load disputes', message: 'Please try again.' }))
-      .finally(() => setLoadingDisputes(false));
+      .then(d => { setDisputes(d); setDisputesError(false); })
+      .catch(() => setDisputesError(true))
+      .finally(() => setLoadingDisputes(false)), []);
 
   const fetchTransactions = () => { setLoadingTransactions(true); void loadTransactions(); };
   const fetchDisputes = () => { setLoadingDisputes(true); void loadDisputes(); };
 
-  // Both load on mount — the disputes count badge needs the count regardless of which tab is
+  // Both load on mount -- the disputes count badge needs the count regardless of which tab is
   // active, and it means switching tabs is a pure view toggle with nothing to fetch.
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once; showToast is stable
-  useEffect(() => { void loadTransactions(); void loadDisputes(); }, []);
+  useEffect(() => { void loadTransactions(); void loadDisputes(); }, [loadTransactions, loadDisputes]);
 
   const loading = tab === 'pending' ? loadingTransactions : loadingDisputes;
 
@@ -298,7 +303,7 @@ export default function AdminTransactions() {
                 className={`px-4 py-2.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer
                   ${tab === t ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-secondary'}`}
               >
-                {t === 'pending' ? 'Awaiting Payment' : `Disputes${disputes.length > 0 ? ` (${disputes.length})` : ''}`}
+                {t === 'pending' ? 'Awaiting Payment' : `Disputes${!loadingDisputes && !disputesError && disputes.length > 0 ? ` (${disputes.length})` : ''}`}
               </button>
             ))}
           </div>
@@ -306,6 +311,10 @@ export default function AdminTransactions() {
           <div className="flex-1 overflow-auto p-4 sm:p-6">
             {loading ? (
               <div className="bg-surface border border-border-light rounded-md p-10 text-center text-[13px] text-muted">Loading…</div>
+            ) : tab === 'pending' && transactionsError ? (
+              <ErrorState title="Could not load the transactions" onRetry={fetchTransactions} />
+            ) : tab === 'disputes' && disputesError ? (
+              <ErrorState title="Could not load the disputes" onRetry={fetchDisputes} />
             ) : tab === 'pending' ? (
               transactions.length === 0 ? (
                 <div className="bg-surface border border-border-light rounded-md flex flex-col items-center justify-center py-16 px-6 text-center">

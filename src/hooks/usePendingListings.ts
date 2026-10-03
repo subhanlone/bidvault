@@ -15,6 +15,12 @@ export interface BulkApproveProgress {
 }
 
 /**
+ * `loading` until the first answer, then `ready` or `error`. A screen must check this before it
+ * reads `pendingListings`: an empty array means "nothing pending" only when the status is `ready`.
+ */
+export type PendingStatus = 'loading' | 'ready' | 'error';
+
+/**
  * Every pending listing, not just the first page.
  *
  * The review queue does prev/next navigation and "X of Y" counts across the whole set, and the
@@ -25,6 +31,7 @@ export interface BulkApproveProgress {
  */
 export function usePendingListings() {
   const [pendingListings, setPendingListings] = useState<Listing[]>([]);
+  const [status, setStatus] = useState<PendingStatus>('loading');
 
   const refreshListings = useCallback(async () => {
     try {
@@ -38,10 +45,21 @@ export function usePendingListings() {
         cursor = page.nextCursor;
       } while (cursor);
       setPendingListings(all);
+      setStatus('ready');
     } catch {
-      setPendingListings([]);
+      // The failure used to empty the list, which every screen then drew as "All caught up!" --
+      // telling an admin the review queue was clear when it was simply unreachable. Whatever the
+      // list held is no longer known to be current either (the queue may have changed), so the
+      // status says so and the screens show an error instead of rows.
+      setStatus('error');
     }
   }, []);
+
+  /** For a "Try again" button: show the loading state again, then ask again. */
+  const retry = useCallback(() => {
+    setStatus('loading');
+    void refreshListings();
+  }, [refreshListings]);
 
   const approveListing = async (listingId: string): Promise<{ warning?: string }> => {
     const result = await api.post(`/listings/${listingId}/approve`);
@@ -75,5 +93,5 @@ export function usePendingListings() {
     return { approved, failed, failures };
   };
 
-  return { pendingListings, refreshListings, approveListing, rejectListing, approveAll };
+  return { pendingListings, status, retry, refreshListings, approveListing, rejectListing, approveAll };
 }

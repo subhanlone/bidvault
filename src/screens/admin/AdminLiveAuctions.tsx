@@ -8,6 +8,8 @@ import { Menu, Radio, Ban, ShieldOff } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import ReasonModal from '../../components/ui/ReasonModal';
+import ErrorState from '../../components/ui/ErrorState';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 import { api } from '../../services/api';
 import type { Auction } from '../../types/api';
 import { conditionLabel, count, pkr, pkrCompact } from '../../utils/format';
@@ -153,7 +155,11 @@ function AuctionRow({ auction }: { auction: Auction }) {
 }
 
 export default function AdminLiveAuctions() {
-  const auctions = useDrainedPages(useActiveAuctions());
+  const activeQuery = useActiveAuctions();
+  const auctions = useDrainedPages(activeQuery);
+  // The tiles are totals over every page, so they are only true once the last page is in. Until
+  // then, and after a failure, they show a dash and the table says why instead of "No active auctions".
+  const known = !activeQuery.isError && !activeQuery.isPending && !activeQuery.hasNextPage && !activeQuery.isFetchingNextPage;
 
   // AL-01: filter to ACTIVE only for table rendering
   // eslint-disable-next-line react-hooks/purity
@@ -196,10 +202,10 @@ export default function AdminLiveAuctions() {
       <div className="flex-1 overflow-auto p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { label: 'Total Active',    value: String(active.length),                    color: 'text-navy',         sub: 'Across all categories' },
-              { label: 'Ending in <1hr', value: String(endingSoon.length),                 color: 'text-destructive',  sub: 'Needs attention' },
-              { label: 'Total Bids',      value: totalBids.toLocaleString(),               color: 'text-success-dark', sub: 'Active auctions' },
-              { label: 'Highest Bid',     value: pkrCompact(highestBid), color: 'text-primary',      sub: 'Single item' },
+              { label: 'Total Active',    value: known ? String(active.length) : '—',                    color: 'text-navy',         sub: 'Across all categories' },
+              { label: 'Ending in <1hr', value: known ? String(endingSoon.length) : '—',                 color: 'text-destructive',  sub: 'Needs attention' },
+              { label: 'Total Bids',      value: known ? totalBids.toLocaleString() : '—',               color: 'text-success-dark', sub: 'Active auctions' },
+              { label: 'Highest Bid',     value: known ? pkrCompact(highestBid) : '—', color: 'text-primary',      sub: 'Single item' },
             ].map(s => (
               <div key={s.label} className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
                 <p className="font-medium text-[11px] sm:text-[12px] text-muted mb-1 sm:mb-2">{s.label}</p>
@@ -212,7 +218,7 @@ export default function AdminLiveAuctions() {
           <div className="bg-surface border border-border-light rounded-md">
             <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-border-light">
               {/* AL-01: header count uses active.length */}
-              <h2 className="font-bold text-[14px] text-navy">Active Auctions ({active.length})</h2>
+              <h2 className="font-bold text-[14px] text-navy">Active Auctions{known ? ` (${active.length})` : ''}</h2>
               {/* AL-03: accurate label */}
               <span className="hidden sm:block font-bold text-[11px] text-muted">Updates via socket events</span>
             </div>
@@ -223,7 +229,24 @@ export default function AdminLiveAuctions() {
 
             <div className="flex flex-col">
               {/* AL-01: render active.map, not auctions.map */}
-              {active.length === 0 ? (
+              {activeQuery.isError ? (
+                <ErrorState
+                  title="Could not load the live auctions"
+                  onRetry={() => { void activeQuery.refetch(); }}
+                  retrying={activeQuery.isFetching}
+                  className="border-0 rounded-none"
+                />
+              ) : !known ? (
+                <div className="flex flex-col divide-y divide-bg">
+                  <LoadingStatus label="Loading live auctions" />
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 px-5 py-4">
+                      <div className="bg-border-light rounded-sm size-[44px] animate-pulse shrink-0" />
+                      <div className="flex-1 h-3 bg-border-light rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : active.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
                   <Radio size={48} strokeWidth={1.3} className="text-placeholder" />
                   <p className="font-bold text-[15px] text-secondary">No active auctions</p>

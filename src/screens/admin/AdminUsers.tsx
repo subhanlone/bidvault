@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import ReasonModal from '../../components/ui/ReasonModal';
-import { Button, Input } from '../../components/ui';
+import { Button, ErrorState, Input } from '../../components/ui';
 import { api } from '../../services/api';
 import { flattenPages } from '../../queries/auctions';
 import { useAdminUsers } from '../../queries/admin';
@@ -137,11 +137,13 @@ export default function AdminUsers() {
   const [suspendingUser, setSuspendingUser] = useState<AdminUser | null>(null);
   const [reinstatingUserId, setReinstatingUserId] = useState<string | null>(null);
 
-  const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } = useAdminUsers(debouncedSearch);
+  const { data, isPending, isError, isFetching, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } = useAdminUsers(debouncedSearch);
   const users = flattenPages(data);
   const sentinelRef = useInfiniteScrollTrigger(
     () => { void fetchNextPage(); },
-    hasNextPage === true && !isFetchingNextPage,
+    // Not while errored: a failed page leaves hasNextPage true and isFetchingNextPage false, so the
+    // observer re-attached to a sentinel that is still on screen and asked again at once -- forever.
+    hasNextPage === true && !isFetchingNextPage && !isError,
   );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: keys.admin.users(debouncedSearch) });
@@ -204,6 +206,13 @@ export default function AdminUsers() {
                     </div>
                   ))}
                 </div>
+              ) : isError && users.length === 0 ? (
+                <ErrorState
+                  title="Could not load accounts"
+                  onRetry={() => { void refetch(); }}
+                  retrying={isFetching}
+                  className="border-0 rounded-none"
+                />
               ) : users.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
                   <UsersIcon size={40} strokeWidth={1.3} className="text-placeholder" />
@@ -226,11 +235,16 @@ export default function AdminUsers() {
               )}
             </div>
 
-            {hasNextPage && (
+            {hasNextPage && (isError ? (
+              <div role="alert" className="flex items-center justify-center gap-3 py-4">
+                <p className="text-[12px] text-error">Could not load more accounts.</p>
+                <Button variant="outline" size="sm" loading={isFetching} onClick={() => { void fetchNextPage(); }}>Try again</Button>
+              </div>
+            ) : (
               <div ref={sentinelRef} className="flex items-center justify-center py-4">
                 <div className="size-5 border-2 border-border-medium border-t-primary rounded-full animate-spin" />
               </div>
-            )}
+            ))}
           </div>
 
           {anonymizingUser && (

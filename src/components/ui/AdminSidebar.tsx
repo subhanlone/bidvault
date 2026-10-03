@@ -34,15 +34,19 @@ interface AdminSidebarContentProps {
 export function AdminSidebarContent({ active, onClose, collapsed = false, onToggleCollapse }: AdminSidebarContentProps) {
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
-  const { pendingListings, refreshListings } = usePendingListings();
-  const auctions = useDrainedPages(useActiveAuctions());
+  const { pendingListings, status: pendingStatus, refreshListings } = usePendingListings();
+  const activeQuery = useActiveAuctions();
+  const auctions = useDrainedPages(activeQuery);
   useEffect(() => { void refreshListings(); }, [refreshListings]);
   const pendingCount = pendingListings.length;
   const activeCount = auctions.length; // the query is scoped to ?status=ACTIVE
+  const activeKnown = !activeQuery.isError && !activeQuery.isPending && !activeQuery.hasNextPage && !activeQuery.isFetchingNextPage;
 
   const badgeFor = (label: string): string | undefined => {
-    if (label === 'Listing Review') return pendingCount > 0 ? String(pendingCount) : undefined;
-    if (label === 'Live Auctions') return activeCount > 0 ? String(activeCount) : undefined;
+    // No badge until the number is known: while loading, or after a failed request, the lists are
+    // empty because they are unknown -- and a missing badge says less than a wrong one.
+    if (label === 'Listing Review') return pendingStatus === 'ready' && pendingCount > 0 ? String(pendingCount) : undefined;
+    if (label === 'Live Auctions') return activeKnown && activeCount > 0 ? String(activeCount) : undefined;
     return undefined;
   };
 

@@ -4,6 +4,8 @@ import { usePendingListings, type BulkApproveProgress } from '../../hooks/usePen
 import { useToast } from '../../context/ToastContext';
 import { CheckCircle2, ClipboardList, Menu, X } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
+import ErrorState from '../../components/ui/ErrorState';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
 import { dateMedium, pkrCompact } from '../../utils/format';
@@ -11,7 +13,7 @@ import { useDialog } from '../../hooks/useDialog';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
-  const { pendingListings, refreshListings, approveAll } = usePendingListings();
+  const { pendingListings, status, retry, refreshListings, approveAll } = usePendingListings();
   const { showToast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const confirmDialogRef = useDialog<HTMLDivElement>(confirmOpen, () => setConfirmOpen(false));
@@ -33,7 +35,10 @@ export default function AdminListingReviews() {
     reviewTimeoutHours != null &&
     now - new Date(submittedAt).getTime() > reviewTimeoutHours * 3_600_000;
 
-  const pendingCount = pendingListings.length;
+  // Only `ready` makes the list mean anything: while loading or after a failure it is empty because
+  // it is unknown, not because nothing is pending.
+  const ready = status === 'ready';
+  const pendingCount = ready ? pendingListings.length : 0;
 
   const handleApproveAll = async () => {
     setApproving(true);
@@ -70,7 +75,9 @@ export default function AdminListingReviews() {
           <div>
             <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Listing Review</h1>
             <p className="text-[12px] text-muted">
-              {pendingCount > 0 ? `${pendingCount} listing${pendingCount !== 1 ? 's' : ''} awaiting review` : 'All listings reviewed'}
+              {status === 'loading' ? 'Loading the review queue…'
+                : status === 'error' ? 'Could not load the review queue'
+                : pendingCount > 0 ? `${pendingCount} listing${pendingCount !== 1 ? 's' : ''} awaiting review` : 'All listings reviewed'}
             </p>
           </div>
         </div>
@@ -93,7 +100,22 @@ export default function AdminListingReviews() {
       </header>
 
       <div className="flex-1 overflow-auto p-4 sm:p-6">
-          {pendingCount === 0 ? (
+          {status === 'error' ? (
+            <ErrorState title="Could not load the review queue" onRetry={retry} />
+          ) : status === 'loading' ? (
+            <div className="bg-surface border border-border-light rounded-md divide-y divide-bg">
+              <LoadingStatus label="Loading the review queue" />
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-5 py-4">
+                  <div className="bg-border-light rounded-sm size-[38px] animate-pulse shrink-0" />
+                  <div className="flex-1">
+                    <div className="h-3 w-2/5 bg-border-light rounded animate-pulse mb-2" />
+                    <div className="h-2 w-1/4 bg-border-light rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : pendingCount === 0 ? (
             <div className="bg-surface border border-border-light rounded-md flex flex-col items-center justify-center py-16 px-6 text-center">
               <CheckCircle2 size={48} strokeWidth={1.3} className="text-success-dark mb-4" />
               <h2 className="font-bold text-[17px] text-navy mb-2">All caught up!</h2>

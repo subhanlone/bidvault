@@ -6,6 +6,8 @@ import { connectSocket } from '../../services/socket';
 import { Menu, Search } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
+import ErrorState from '../../components/ui/ErrorState';
+import { ApiError } from '../../services/api';
 import { conditionLabel, count, pkr, timeShort } from '../../utils/format';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
@@ -14,8 +16,8 @@ export default function AdminAuctionMonitor() {
   const { auctionId } = useParams<{ auctionId: string }>();
   // Fetched directly rather than looked up in the ACTIVE list. That lookup is what made a
   // closed auction unopenable (NEW-17); GET /auctions/{id} answers for any status.
-  const { data: auction, isPending: auctionsPending } = useAuctionDetail(auctionId);
-  const { data: auctionBids = [] } = useBids(auctionId);
+  const { data: auction, isPending: auctionsPending, isError, error, isFetching, refetch } = useAuctionDetail(auctionId);
+  const { data: auctionBids = [], isError: bidsFailed, refetch: refetchBids } = useBids(auctionId);
   const auctionsLoaded = !auctionsPending;
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
 
@@ -63,6 +65,9 @@ export default function AdminAuctionMonitor() {
               <div className="h-[220px] bg-surface border border-border-light rounded-md animate-pulse" />
               <div className="h-[120px] bg-surface border border-border-light rounded-md animate-pulse" />
             </div>
+          ) : isError && !auction && !(error instanceof ApiError && error.status === 404) ? (
+            // Only a 404 means there is no such auction; any other failure is a failed load.
+            <ErrorState title="Could not load this auction" onRetry={() => { void refetch(); }} retrying={isFetching} className="max-w-[700px]" />
           ) : !auction ? (
             <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
               <Search size={40} strokeWidth={1.3} className="text-placeholder" />
@@ -101,8 +106,13 @@ export default function AdminAuctionMonitor() {
 
               {/* Bid history */}
               <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
-                <h3 className="font-bold text-[14px] text-navy mb-4">Bid History ({auctionBids.length})</h3>
-                {auctionBids.length === 0 ? (
+                <h3 className="font-bold text-[14px] text-navy mb-4">Bid History{!(bidsFailed && auctionBids.length === 0) && ` (${auctionBids.length})`}</h3>
+                {bidsFailed && auctionBids.length === 0 ? (
+                  <p className="text-[13px] text-error text-center py-6">
+                    Could not load the bid history.{' '}
+                    <button type="button" onClick={() => { void refetchBids(); }} className="font-bold underline cursor-pointer">Try again</button>
+                  </p>
+                ) : auctionBids.length === 0 ? (
                   <p className="text-[13px] text-muted text-center py-6">No bids yet.</p>
                 ) : (
                   <div className="flex flex-col gap-1">
