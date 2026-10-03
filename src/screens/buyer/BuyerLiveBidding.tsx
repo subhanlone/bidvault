@@ -75,27 +75,13 @@ export default function BuyerLiveBidding() {
 
   const latestBidId = auctionBids[0]?.bidId;
 
-  // Navigate to auction-won when timer expires.
-  // Being the top bidder is not enough to have won: if the seller set a reserve and bidding
-  // finished below it, the auction is unsold. Bidding has stopped by this point, so currentBid
-  // is final and this is a settled fact, not a guess — the worker will reach the same verdict.
+  // Go to the result screen when the timer expires. It works out win / reserve-not-met / lost from
+  // the server for whoever is signed in, so nothing about the outcome is passed along here.
   useEffect(() => {
     if (!timer.isExpired || wonRef.current || !auction) return;
     wonRef.current = true;
-    const reserveNotMet = auction.reserveMet === false;
-    const isTopBidder = auctionBids[0]?.isMine ?? false;
-    navigate('/buyer/auction-won', {
-      state: {
-        auctionId: auction.auctionId,
-        title: auction.title,
-        emoji: auction.emoji,
-        imageUrl: auction.imageUrl,
-        finalBid: auction.currentBid,
-        won: isTopBidder && !reserveNotMet,
-        reserveNotMet: reserveNotMet && isTopBidder,
-      },
-    });
-  }, [timer.isExpired, auction, auctionBids, user, navigate]);
+    navigate(`/buyer/auction-won/${auction.auctionId}`);
+  }, [timer.isExpired, auction, navigate]);
 
   // Flash the timer panel when a new bid arrives
   useEffect(() => {

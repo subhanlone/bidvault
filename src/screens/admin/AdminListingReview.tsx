@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import { ChevronLeft, ChevronRight, Menu, Package, MessageSquare } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
@@ -10,7 +11,25 @@ import Textarea from '../../components/ui/Textarea';
 import { getCategoryFields } from '../../config/categoryFields';
 import { conditionLabel, dateMedium, dateShort, pkr, pkrCompact } from '../../utils/format';
 
-const NOTES_KEY = (id: string) => `admin_review_notes_${id}`;
+// Notes are private to the admin who wrote them: keyed by admin id as well as listing id, so a
+// second admin on the same browser neither reads nor overwrites them, and an admin gets their own
+// back after signing in again.
+const NOTES_PREFIX = 'admin_review_notes_';
+const NOTES_KEY = (adminId: string, listingId: string) => `${NOTES_PREFIX}${adminId}_${listingId}`;
+
+/** Notes saved before they were keyed by admin cannot be attributed to anyone, so they are dropped. */
+function dropLegacyNotes(): void {
+  try {
+    const legacy: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      // New keys are `<prefix><adminId>_<listingId>`; the old ones were `<prefix><listingId>` with
+      // no second underscore-separated id (ids are cuids, which contain no underscores).
+      if (key?.startsWith(NOTES_PREFIX) && !key.slice(NOTES_PREFIX.length).includes('_')) legacy.push(key);
+    }
+    legacy.forEach(k => localStorage.removeItem(k));
+  } catch { /* storage unavailable */ }
+}
 
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
@@ -19,6 +38,7 @@ export default function AdminListingReview() {
 
   useEffect(() => { refreshListings(); }, [refreshListings]);
   const { showToast } = useToast();
+  const adminId = useAuth().user?.userId;
 
   const [notes, setNotes] = useState('');
   const [rejecting, setRejecting] = useState(false);
@@ -32,17 +52,18 @@ export default function AdminListingReview() {
   const nextListing = currentIndex < pendingListings.length - 1 ? pendingListings[currentIndex + 1] : null;
 
   // AR-03: Load persisted notes for this listing
+  useEffect(() => { dropLegacyNotes(); }, []);
   useEffect(() => {
-    if (!listingId) return;
+    if (!listingId || !adminId) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    try { setNotes(localStorage.getItem(NOTES_KEY(listingId)) ?? ''); } catch { setNotes(''); }
-  }, [listingId]);
+    try { setNotes(localStorage.getItem(NOTES_KEY(adminId, listingId)) ?? ''); } catch { setNotes(''); }
+  }, [adminId, listingId]);
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setNotes(val);
-    if (listingId) {
-      try { localStorage.setItem(NOTES_KEY(listingId), val); } catch { /* noop */ }
+    if (listingId && adminId) {
+      try { localStorage.setItem(NOTES_KEY(adminId, listingId), val); } catch { /* noop */ }
     }
   };
 

@@ -1,46 +1,106 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { Sparkles, Trophy, Frown, Package, Ban, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BuyerNavbar } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import { api } from '../../services/api';
+import { useAuctionDetail, useBids } from '../../queries/auctions';
 import { pkr } from '../../utils/format';
+import { useTimer } from '../../hooks/useTimer';
+import type { Auction, PublicBid } from '../../types/api';
 
 const POLL_MS = 2_000;
 const TIMEOUT_MS = 60_000;
 const SLOW_POLL_MS = 10_000;
 
-interface WonState {
-  auctionId: string;
-  title: string;
-  emoji: string;
-  imageUrl?: string;
-  finalBid: number;
-  won: boolean;
-  /** Set when this user bid highest but the seller's reserve was not reached, so nothing sold. */
-  reserveNotMet?: boolean;
+/**
+ * The outcome is worked out here, from the server's answer for whoever is signed in right now --
+ * not handed over in navigation state. History state outlives a sign-out: after switching accounts,
+ * Back used to show the previous buyer's "You Won!" to the next one.
+ */
+export default function BuyerAuctionWon() {
+  const { auctionId } = useParams<{ auctionId: string }>();
+  const { user, logout } = useAuth();
+  const auctionQuery = useAuctionDetail(auctionId);
+  const bidsQuery = useBids(auctionId);
+
+  if (auctionQuery.isError || bidsQuery.isError) {
+    return (
+      <Shell userName={user?.name} onLogout={logout}>
+        <p className="font-bold text-[16px] text-secondary mb-2">Couldn't load this auction's result</p>
+        <p className="text-[13px] text-muted mb-5">Check your connection and try again.</p>
+        <Button className="rounded-sm" onClick={() => { void auctionQuery.refetch(); void bidsQuery.refetch(); }}>Retry</Button>
+      </Shell>
+    );
+  }
+  if (!auctionQuery.data || !bidsQuery.data) {
+    return (
+      <Shell userName={user?.name} onLogout={logout}>
+        <Loader2 size={28} className="animate-spin text-muted" aria-label="Loading" />
+      </Shell>
+    );
+  }
+
+  return <Result auction={auctionQuery.data} bids={bidsQuery.data} />;
 }
 
-export default function BuyerAuctionWon() {
-  const location = useLocation();
+/** Mounted only once the auction and its bids are loaded, so the timer starts from the real end time. */
+function Result({ auction, bids }: { auction: Auction; bids: PublicBid[] }) {
+  const timer = useTimer(auction.endTime);
+
+  // Not over yet (or never went ahead): the live screen is where this auction is shown.
+  if (auction.status === 'CANCELLED' || (auction.status === 'ACTIVE' && !timer.isExpired)) {
+    return <Navigate to={`/buyer/live-bidding/${auction.auctionId}`} replace />;
+  }
+
+  // Being the top bidder is not enough to have won: if the seller set a reserve and bidding
+  // finished below it, the auction is unsold. Bidding has stopped by this point, so currentBid
+  // is final and this is a settled fact, not a guess -- the worker will reach the same verdict.
+  const reserveNotMet = auction.reserveMet === false;
+  const isTopBidder = bids[0]?.isMine ?? false;
+  return (
+    <Outcome
+      auction={auction}
+      won={isTopBidder && !reserveNotMet}
+      reserveNotMet={isTopBidder && reserveNotMet}
+    />
+  );
+}
+
+function Shell({ userName, onLogout, children }: { userName?: string; onLogout: () => void; children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-bg">
+      <BuyerNavbar userName={userName} onLogout={onLogout} />
+      <main className="flex flex-col items-center justify-center py-16 px-4">{children}</main>
+    </div>
+  );
+}
+
+interface OutcomeProps {
+  auction: Auction;
+  won: boolean;
+  /** Set when this user bid highest but the seller's reserve was not reached, so nothing sold. */
+  reserveNotMet: boolean;
+}
+
+function Outcome({ auction, won, reserveNotMet }: OutcomeProps) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const state = location.state as WonState | null;
+  const auctionId = auction.auctionId;
 
   // BV-048: the client declares this win the instant its own countdown hits zero, but the
   // worker settles the auction independently and can be seconds (or, after a missed job and
   // the reconciliation sweep, minutes) behind. Navigating here is still good UX -- the reserve
   // outcome really is a settled fact once bidding has stopped -- but nothing backs "won" with
   // an AuctionTransaction until the worker actually runs. Poll for it rather than assume it.
-  const won = state?.won ?? true;
-  const auctionId = state?.auctionId;
-  const [confirming, setConfirming] = useState(won);
+  const [confirmed, setConfirmed] = useState(false);
+  const confirming = won && !confirmed;
   const [confirmTimedOut, setConfirmTimedOut] = useState(false);
   const elapsedRef = useRef(0);
 
   useEffect(() => {
-    if (!won || !auctionId) return;
+    if (!won) return;
     let cancelled = false;
     elapsedRef.current = 0;
 
@@ -49,7 +109,7 @@ export default function BuyerAuctionWon() {
         const wins = await api.get('/payments/my-wins');
         if (cancelled) return;
         if (wins.some(w => w.auctionId === auctionId)) {
-          setConfirming(false);
+          setConfirmed(true);
           return;
         }
       } catch {
@@ -70,14 +130,9 @@ export default function BuyerAuctionWon() {
     return () => { cancelled = true; };
   }, [won, auctionId]);
 
-  if (!state) {
-    return <Navigate to="/buyer/browse" replace />;
-  }
-
-  const reserveNotMet = state.reserveNotMet ?? false;
-  const title = state.title ?? 'Auction Item';
-  const imageUrl = state.imageUrl;
-  const finalBid = state.finalBid ?? 0;
+  const title = auction.title;
+  const imageUrl = auction.imageUrl;
+  const finalBid = auction.currentBid;
 
   return (
     <div className="min-h-screen bg-bg">
