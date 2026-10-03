@@ -3,7 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useWatchlistToggle } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { Clock, Heart } from 'lucide-react';
-import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
+import { BuyerNavbar, AuctionThumbnail, ErrorState } from '../../components/ui';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 import type { Auction } from '../../types/api';
 import { count, pkr } from '../../utils/format';
 
@@ -62,9 +63,23 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
   );
 }
 
+function WatchCardSkeleton() {
+  return (
+    <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+      <div className="h-[160px] bg-border-light animate-pulse" />
+      <div className="p-4">
+        <div className="h-4 w-1/3 bg-border-light rounded-full animate-pulse mb-3" />
+        <div className="h-4 w-4/5 bg-border-light rounded animate-pulse mb-4" />
+        <div className="h-3 w-16 bg-border-light rounded animate-pulse mb-1" />
+        <div className="h-6 w-28 bg-border-light rounded animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 export default function BuyerWatchlist() {
   const { user, logout } = useAuth();
-  const { toggle, watched: watchlistAuctions } = useWatchlistToggle();
+  const { toggle, watched: watchlistAuctions, loading, isError, isRefetching, refetch } = useWatchlistToggle();
 
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
@@ -85,7 +100,7 @@ export default function BuyerWatchlist() {
             <h1 className="font-extrabold text-[20px] sm:text-[22px] text-navy">Watchlist</h1>
             <p className="text-[13px] text-muted mt-0.5">Auctions you're keeping an eye on</p>
           </div>
-          {watched.length > 0 && (
+          {!isError && !loading && watched.length > 0 && (
             <div className="flex items-center gap-3">
               {endedWatched.length > 0 && (
                 <button
@@ -110,7 +125,16 @@ export default function BuyerWatchlist() {
           )}
         </div>
 
-        {watched.length === 0 ? (
+        {/* Error first, then loading: before this the list read as empty in both states, so a failed
+            or still-running request said "Your watchlist is empty". */}
+        {isError ? (
+          <ErrorState title="Could not load your watchlist" onRetry={refetch} retrying={isRefetching} />
+        ) : loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <LoadingStatus label="Loading your watchlist" />
+            {Array.from({ length: 4 }).map((_, i) => <WatchCardSkeleton key={i} />)}
+          </div>
+        ) : watched.length === 0 ? (
           <div className="bg-surface border border-border-light rounded-lg flex flex-col items-center justify-center py-14 sm:py-16 px-6 text-center">
             <div className="flex justify-center mb-4">
               <Heart size={48} strokeWidth={1.3} className="text-primary" fill="rgba(208,2,27,0.15)" />

@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { flattenPages, useActiveAuctions, useWatchlistToggle } from '../../queries/auctions';
 import { useInfiniteScrollTrigger } from '../../hooks/useInfiniteScrollTrigger';
 import { useTimer } from '../../hooks/useTimer';
-import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
+import { BuyerNavbar, AuctionThumbnail, ErrorState } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types/api';
 import { conditionLabel, count, pkr } from '../../utils/format';
@@ -157,7 +157,7 @@ export default function BuyerBrowseAuctions() {
   }, [search]);
 
   const {
-    data, isPending, isError: auctionsError, hasNextPage, isFetchingNextPage, fetchNextPage,
+    data, isPending, isError: auctionsError, isFetching, refetch, hasNextPage, isFetchingNextPage, fetchNextPage,
   } = useActiveAuctions({ category: category === 'All' ? undefined : category, search: debouncedSearch });
   const auctions = flattenPages(data);
   // isPending rather than a success flag: BUG-16's lesson is that a screen must be able to
@@ -380,16 +380,7 @@ export default function BuyerBrowseAuctions() {
               {Array.from({ length: 6 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
             </div>
           ) : auctionsError ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="bg-surface-raised rounded-full p-5">
-                <Search size={40} strokeWidth={1.3} className="text-error" />
-              </div>
-              <p className="font-bold text-[16px] text-secondary">Could not load auctions</p>
-              <p className="text-[13px] text-muted">Check your connection and try refreshing the page</p>
-              <Button variant="ghost" onClick={() => window.location.reload()} className="mt-1">
-                Refresh
-              </Button>
-            </div>
+            <ErrorState title="Could not load auctions" onRetry={() => { void refetch(); }} retrying={isFetching} />
           ) : sorted.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="bg-surface-raised rounded-full p-5">

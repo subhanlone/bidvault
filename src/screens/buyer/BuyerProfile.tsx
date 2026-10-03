@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingUp, Eye, EyeOff, Bell, BellOff, Search, Hammer } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useDrainedPages, useMyBids, useWatchlist } from '../../queries/auctions';
 import { useToast } from '../../context/ToastContext';
-import { BuyerNavbar, DeleteAccountModal } from '../../components/ui';
+import { BuyerNavbar, DeleteAccountModal, ErrorState } from '../../components/ui';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { api } from '../../services/api';
@@ -13,8 +14,15 @@ import { dateTimeShort, monthYear, pkr, pkrCompact } from '../../utils/format';
 
 export default function BuyerProfile() {
   const { user, logout, changePassword } = useAuth();
-  const myBidRows = useDrainedPages(useMyBids());
-  const watchlistRows = useDrainedPages(useWatchlist());
+  const bidsQuery = useMyBids();
+  const watchlistQuery = useWatchlist();
+  const myBidRows = useDrainedPages(bidsQuery);
+  const watchlistRows = useDrainedPages(watchlistQuery);
+  // A figure is only known once its list has loaded through the last page. Until then -- and after
+  // a failure -- the tile shows an em dash: a count of rows fetched so far, or 0 for a request
+  // that failed, would state something the page does not actually know.
+  const bidsKnown = !bidsQuery.isError && !bidsQuery.isPending && !bidsQuery.hasNextPage && !bidsQuery.isFetchingNextPage;
+  const watchlistKnown = !watchlistQuery.isError && !watchlistQuery.isPending && !watchlistQuery.hasNextPage && !watchlistQuery.isFetchingNextPage;
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -39,26 +47,34 @@ export default function BuyerProfile() {
   // "Won", and the only truthful source for that is this same list. `null` means the request
   // has not resolved (or failed), which is why the tile shows an em dash rather than 0.
   const [wins, setWins] = useState<WonTransaction[] | null>(null);
+  const [winsFailed, setWinsFailed] = useState(false);
   const winCount = wins?.length ?? null;
 
 
 
-  useEffect(() => {
+  // State changes only inside the promise callbacks, never synchronously in the effect: the
+  // initial values (`null`, `false`) already describe "not loaded yet", so there is nothing to reset.
+  const loadWins = useCallback(() => {
     api.get('/payments/my-wins')
-      .then(setWins)
-      .catch(() => setWins(null));
+      .then(w => { setWins(w); setWinsFailed(false); })
+      .catch(() => { setWins(null); setWinsFailed(true); });
   }, []);
+  useEffect(() => { loadWins(); }, [loadWins]);
 
   // A bid is the winning bid when its auction was won and its amount is the price the
   // transaction settled at. Matching on auction alone would label every earlier bid on that
   // auction "Won" as well.
   const winningBidKeys = new Set((wins ?? []).map(w => `${w.auctionId}:${w.finalAmount}`));
 
-  useEffect(() => {
+  // The switches below start from defaults, so until the saved values arrive -- or if they never do
+  // -- they would show settings the account does not have. They stay disabled unless 'ready'.
+  const [prefsState, setPrefsState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const loadPrefs = useCallback(() => {
     api.get('/auth/me/preferences')
-      .then(p => { setNotifBids(p.notifyOutbid); setNotifWins(p.notifyWins); setNotifNews(p.notifyNews); })
-      .catch(() => {});
+      .then(p => { setNotifBids(p.notifyOutbid); setNotifWins(p.notifyWins); setNotifNews(p.notifyNews); setPrefsState('ready'); })
+      .catch(() => setPrefsState('failed'));
   }, []);
+  useEffect(() => { loadPrefs(); }, [loadPrefs]);
 
   const savePref = (key: 'notifyOutbid' | 'notifyWins' | 'notifyNews', value: boolean) => {
     api.patch('/auth/me/preferences', { [key]: value }).catch(() => {
@@ -82,12 +98,12 @@ export default function BuyerProfile() {
     : '—';
 
   const stats = [
-    { label: 'Total Bids', value: myBids.length, icon: <Gavel size={18} strokeWidth={1.8} className="text-primary" />, bg: 'bg-primary-surface' },
+    { label: 'Total Bids', value: bidsKnown ? myBids.length : '—', icon: <Gavel size={18} strokeWidth={1.8} className="text-primary" />, bg: 'bg-primary-surface' },
     // '—' while loading or if the request failed: rendering 0 would assert "you have won
     // nothing", which is a different claim from "not known yet".
     { label: 'Auctions Won', value: winCount ?? '—', icon: <Trophy size={18} strokeWidth={1.8} className="text-gold" />, bg: 'bg-warning-surface' },
-    { label: 'Watchlist Items', value: watchlistCount, icon: <Heart size={18} strokeWidth={1.8} className="text-success-dark" />, bg: 'bg-success-bg' },
-    { label: 'Total Bid Value', value: pkrCompact(totalBidAmount), icon: <TrendingUp size={18} strokeWidth={1.8} className="text-navy" />, bg: 'bg-info-card-bg' },
+    { label: 'Watchlist Items', value: watchlistKnown ? watchlistCount : '—', icon: <Heart size={18} strokeWidth={1.8} className="text-success-dark" />, bg: 'bg-success-bg' },
+    { label: 'Total Bid Value', value: bidsKnown ? pkrCompact(totalBidAmount) : '—', icon: <TrendingUp size={18} strokeWidth={1.8} className="text-navy" />, bg: 'bg-info-card-bg' },
   ];
 
   const quickLinks = [
@@ -155,6 +171,22 @@ export default function BuyerProfile() {
               </div>
             ))}
           </div>
+          {(bidsQuery.isError || watchlistQuery.isError || winsFailed) && (
+            <div role="alert" className="bg-error-bg border border-error-border rounded-md px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-[12px] text-error">Some of these figures could not be loaded.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (bidsQuery.isError) void bidsQuery.refetch();
+                  if (watchlistQuery.isError) void watchlistQuery.refetch();
+                  if (winsFailed) loadWins();
+                }}
+              >
+                Try again
+              </Button>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-5">
 
@@ -195,7 +227,19 @@ export default function BuyerProfile() {
                   <h2 className="font-bold text-[14px] text-navy">Recent Bids</h2>
                   <Link to="/buyer/my-bids" className="font-bold text-[12px] text-primary hover:underline">View All →</Link>
                 </div>
-                {myBids.length === 0 ? (
+                {bidsQuery.isError ? (
+                  <ErrorState
+                    title="Could not load your bids"
+                    onRetry={() => { void bidsQuery.refetch(); }}
+                    retrying={bidsQuery.isFetching}
+                    className="border-0 rounded-none py-10"
+                  />
+                ) : !bidsKnown && myBids.length === 0 ? (
+                  <div className="flex flex-col gap-3 px-5 py-6">
+                    <LoadingStatus label="Loading your bids" />
+                    {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-10 bg-border-light rounded animate-pulse" />)}
+                  </div>
+                ) : myBids.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
                     <Gavel size={32} strokeWidth={1.3} className="text-placeholder mb-3" />
                     <p className="font-semibold text-[13px] text-muted">No bids placed yet.</p>
@@ -264,6 +308,12 @@ export default function BuyerProfile() {
                   <h2 className="font-bold text-[14px] text-navy">Notifications</h2>
                 </div>
                 <div className="p-5 flex flex-col gap-4">
+                  {prefsState === 'failed' && (
+                    <div role="alert" className="flex items-center justify-between gap-3 flex-wrap">
+                      <p className="text-[12px] text-error">Could not load your saved preferences.</p>
+                      <Button variant="outline" size="sm" onClick={() => { setPrefsState('loading'); loadPrefs(); }}>Try again</Button>
+                    </div>
+                  )}
                   {[
                     { label: 'Outbid alerts', sub: 'When someone outbids you', value: notifBids, set: setNotifBids, key: 'notifyOutbid' as const },
                     { label: 'Win notifications', sub: 'When you win an auction', value: notifWins, set: setNotifWins, key: 'notifyWins' as const },
@@ -279,8 +329,9 @@ export default function BuyerProfile() {
                       </div>
                       <button
                         onClick={() => { const nv = !n.value; n.set(nv); savePref(n.key, nv); }}
+                        disabled={prefsState !== 'ready'}
                         aria-label={`Toggle ${n.label}`}
-                        className={`shrink-0 w-[38px] h-[22px] rounded-full transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${n.value ? 'bg-success-dark' : 'bg-border-medium'}`}
+                        className={`disabled:opacity-50 disabled:cursor-not-allowed shrink-0 w-[38px] h-[22px] rounded-full transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${n.value ? 'bg-success-dark' : 'bg-border-medium'}`}
                       >
                         <span className={`absolute top-[3px] size-[16px] rounded-full bg-surface shadow transition-transform ${n.value ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
                       </button>

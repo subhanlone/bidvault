@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useDrainedPages, useMyBids } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { Check, Zap, Trophy, X, Hammer, Ban } from 'lucide-react';
-import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
+import { BuyerNavbar, AuctionThumbnail, ErrorState } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types/api';
 import { pkr } from '../../utils/format';
@@ -181,7 +181,7 @@ export default function BuyerMyBids() {
             <h1 className="font-extrabold text-[20px] sm:text-[22px] text-navy">My Bids</h1>
             <p className="text-[13px] text-muted mt-0.5">All auctions you've placed bids on</p>
           </div>
-          {!loading && myBidEntries.length > 0 && (
+          {!myBidsQuery.isError && !loading && myBidEntries.length > 0 && (
             <div className="flex gap-2 sm:gap-3">
               {[
                 { val: activeCount, label: 'Active', color: 'text-navy' },
@@ -197,7 +197,15 @@ export default function BuyerMyBids() {
           )}
         </div>
 
-        {loading ? (
+        {/* Checked before `loading`: a page that fails leaves hasNextPage true, which reads as "still
+            loading" forever. Partial rows are not shown either -- the tiles are exact counts. */}
+        {myBidsQuery.isError ? (
+          <ErrorState
+            title="Could not load your bids"
+            onRetry={() => { void myBidsQuery.refetch(); }}
+            retrying={myBidsQuery.isFetching}
+          />
+        ) : loading ? (
           <div className="flex flex-col gap-3">
             <LoadingStatus label="Loading your bids" />
             {Array.from({ length: 4 }).map((_, i) => <BidCardSkeleton key={i} />)}

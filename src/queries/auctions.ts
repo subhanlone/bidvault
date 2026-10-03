@@ -40,10 +40,15 @@ export function flattenPages<T>(data: InfiniteData<{ items: T[]; nextCursor: str
 export function useDrainedPages<T>(
   query: UseInfiniteQueryResult<InfiniteData<{ items: T[]; nextCursor: string | null }>>,
 ): T[] {
-  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = query;
+  const { data, hasNextPage, isFetchingNextPage, isError, fetchNextPage } = query;
   useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+    // Not while the query is in an error state. A page that fails leaves hasNextPage true and
+    // isFetchingNextPage false -- exactly the condition this effect fires on -- so without the
+    // guard a failing page was requested again the moment it failed, about twice a second for as
+    // long as the screen stayed open, and the screen sat on its loading skeleton throughout.
+    // The screen offers "Try again" (refetch), which clears the error and lets this resume.
+    if (hasNextPage && !isFetchingNextPage && !isError) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, isError, fetchNextPage]);
   return flattenPages(data);
 }
 
@@ -365,5 +370,18 @@ export function useWatchlistToggle() {
     });
   };
 
-  return { toggle, isWatched, watched };
+  // `loading` stays true through every page for the same reason the drained screens' tiles do:
+  // the screen shows counts, and `watched` is only complete once the last page is in. `isError`
+  // is the state the screens must check first -- an empty `watched` then means "unknown", not
+  // "nothing watched". (The query is disabled for roles that cannot watch: no load, no error.)
+  const loading = canWatch && (watchlistQuery.isPending || watchlistQuery.hasNextPage || watchlistQuery.isFetchingNextPage);
+  return {
+    toggle,
+    isWatched,
+    watched,
+    loading,
+    isError: watchlistQuery.isError,
+    isRefetching: watchlistQuery.isFetching,
+    refetch: () => { void watchlistQuery.refetch(); },
+  };
 }
