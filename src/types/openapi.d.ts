@@ -250,6 +250,10 @@ export type ListingStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "REM
 export type LoginRequest = {
   email: string;
   password: string;
+  /**
+   * false for a session that should end with the browser session instead of lasting 14 days. Default true.
+   */
+  remember?: boolean;
 };
 
 export type Message = {
@@ -383,7 +387,10 @@ export type RaiseDisputeRequest = {
 };
 
 export type RefreshRequest = {
-  refreshToken: string;
+  /**
+   * Omit it to use the HttpOnly refresh cookie, which the browser sends by itself. Sending it in the body is for clients that still hold the token, and moves their session onto the cookie.
+   */
+  refreshToken?: string;
 };
 
 export type RefreshedTokens = {
