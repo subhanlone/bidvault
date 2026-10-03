@@ -5,6 +5,8 @@ import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { ChevronLeft, ChevronRight, Menu, Package, MessageSquare } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
+import ErrorState from '../../components/ui/ErrorState';
+import LoadingStatus from '../../components/ui/LoadingStatus';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { Button } from '../../components/ui';
 import Textarea from '../../components/ui/Textarea';
@@ -34,7 +36,7 @@ function dropLegacyNotes(): void {
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
-  const { pendingListings, refreshListings, approveListing, rejectListing } = usePendingListings();
+  const { pendingListings, status, retry, refreshListings, approveListing, rejectListing } = usePendingListings();
 
   useEffect(() => { refreshListings(); }, [refreshListings]);
   const { showToast } = useToast();
@@ -111,6 +113,28 @@ export default function AdminListingReview() {
   if (!listing) {
     // suppress "not found" flash during the 800ms navigate delay after approve/reject
     if (navigating) return null;
+    // "Not found" is only true once the queue has actually loaded. Before that, or after a failed
+    // load, the listing is missing because the list is -- not because someone already reviewed it.
+    if (status !== 'ready') {
+      return (
+        <div className="flex min-h-screen bg-bg items-center justify-center px-4">
+          {status === 'loading' ? (
+            <div className="bg-surface border border-border-light rounded-md w-full max-w-[560px] p-6">
+              <LoadingStatus label="Loading the listing" />
+              <div className="h-4 w-1/3 bg-border-light rounded animate-pulse mb-4" />
+              <div className="h-[160px] bg-border-light rounded animate-pulse" />
+            </div>
+          ) : (
+            <div className="w-full max-w-[560px]">
+              <ErrorState title="Could not load this listing" onRetry={retry} />
+              <div className="text-center mt-4">
+                <Button variant="ghost" onClick={() => navigate('/admin/listing-reviews')}>Back to Review Queue</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
     return (
       <div className="flex min-h-screen bg-bg items-center justify-center">
         <div className="text-center">

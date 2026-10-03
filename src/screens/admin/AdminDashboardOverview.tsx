@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
 import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
@@ -11,6 +11,8 @@ import NotificationBell from '../../components/ui/NotificationBell';
 import StatCard from '../../components/ui/StatCard';
 import { dateLong, dateShort, pkr, pkrCompact } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
+import ErrorState from '../../components/ui/ErrorState';
+import Button from '../../components/ui/Button';
 
 interface PlatformStats {
   userCount: number;
@@ -47,8 +49,13 @@ const CATEGORY_COLORS = [
 
 export default function AdminDashboardOverview() {
   const navigate = useNavigate();
-  const { pendingListings, refreshListings } = usePendingListings();
-  const auctions = useDrainedPages(useActiveAuctions());
+  const { pendingListings, status: pendingStatus, retry: retryPending, refreshListings } = usePendingListings();
+  const activeQuery = useActiveAuctions();
+  const auctions = useDrainedPages(activeQuery);
+  // `auctions` is empty while loading and after a failure; only a completed load makes "no auctions"
+  // a true statement.
+  const activeKnown = !activeQuery.isError && !activeQuery.isPending && !activeQuery.hasNextPage && !activeQuery.isFetchingNextPage;
+  const activeUnknownText = activeQuery.isError ? 'Could not load auctions' : 'Loading…';
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
@@ -57,13 +64,21 @@ export default function AdminDashboardOverview() {
   // indistinguishable from a genuinely empty platform, on the screen an admin trusts most.
   const [statsFailed, setStatsFailed] = useState(false);
 
-  useEffect(() => {
+  const loadStats = useCallback(() =>
     Promise.allSettled([
-      refreshListings(),
-      api.get('/stats').then(d => setPlatformStats(d)).catch(() => setStatsFailed(true)),
-      api.get('/admin/analytics').then(d => setAnalytics(d)).catch(() => setStatsFailed(true)),
-    ]).finally(() => setLoading(false));
-  }, [refreshListings]);
+      api.get('/stats').then(d => { setPlatformStats(d); }).catch(() => setStatsFailed(true)),
+      api.get('/admin/analytics').then(d => { setAnalytics(d); }).catch(() => setStatsFailed(true)),
+    ]).finally(() => setLoading(false)), []);
+
+  useEffect(() => { void loadStats(); }, [loadStats]);
+  useEffect(() => { void refreshListings(); }, [refreshListings]);
+
+  // The banner's button: start from the loading state again, then repeat both requests.
+  const retryStats = () => {
+    setStatsFailed(false);
+    setLoading(true);
+    void loadStats();
+  };
 
   // AD-07: live-update the pending queue when a seller submits a new listing
   useEffect(() => {
@@ -76,7 +91,8 @@ export default function AdminDashboardOverview() {
     return () => { socket.off('listing:submitted', onSubmitted); };
   }, [refreshListings, showToast]);
 
-  const pendingCount = pendingListings.length;
+  const pendingReady = pendingStatus === 'ready';
+  const pendingCount = pendingReady ? pendingListings.length : 0;
   const active = auctions.filter(a => a.status === 'ACTIVE');
 
   // Top auctions by current bid for "Top Auctions" panel
@@ -145,15 +161,16 @@ export default function AdminDashboardOverview() {
               <div role="alert" className="col-span-2 md:col-span-4 bg-error-bg border border-error-border rounded-md px-4 py-3">
                 <p className="font-bold text-[13px] text-error">Platform statistics could not be loaded</p>
                 <p className="text-[12px] text-error mt-0.5">
-                  The figures below may be incomplete. Refresh to try again.
+                  The figures below may be incomplete.
                 </p>
+                <Button variant="outline" size="sm" className="mt-2" onClick={retryStats}>Try again</Button>
               </div>
             ) : (
               <>
                 <StatCard label="Active Auctions"  value={platformStats?.activeAuctionCount ?? '—'}           icon={<Gavel size={18} />}    iconColor="info"    padding="sm" />
                 <StatCard label="Total Bids"        value={(analytics?.totalBids ?? 0).toLocaleString()}       icon={<BarChart3 size={18} />} iconColor="success" padding="sm" />
                 <StatCard label="Platform Revenue"  value={pkrCompact(platformStats?.transactionTotal ?? 0)}   icon={<Banknote size={18} />}  iconColor="success" padding="sm" />
-                <StatCard label="Pending Listings"  value={String(pendingCount)} trendLabel="Awaiting review"  icon={<Clock size={18} />}     iconColor="warning" padding="sm" />
+                <StatCard label="Pending Listings"  value={pendingReady ? String(pendingCount) : '—'} trendLabel="Awaiting review"  icon={<Clock size={18} />}     iconColor="warning" padding="sm" />
               </>
             )}
           </div>
@@ -175,7 +192,11 @@ export default function AdminDashboardOverview() {
                   zero-height parent, so every bar rendered at 0px and the chart was permanently
                   blank whatever the bid counts. Each wrapper anchors its own bar with justify-end. */}
               <div className="flex items-stretch gap-[3px] h-[100px]">
-                {chartBars.length === 0 ? (
+                {!activeKnown ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <p className={`text-[11px] ${activeQuery.isError ? 'text-error' : 'text-placeholder'}`}>{activeUnknownText}</p>
+                  </div>
+                ) : chartBars.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center">
                     <p className="text-[11px] text-placeholder">No active auctions</p>
                   </div>
@@ -216,7 +237,9 @@ export default function AdminDashboardOverview() {
                   ))}
                 </div>
               ) : (
-                <p className="text-[12px] text-placeholder py-4 text-center">No auction data yet</p>
+                <p className={`text-[12px] py-4 text-center ${statsFailed ? 'text-error' : 'text-placeholder'}`}>
+                  {statsFailed ? 'Could not load category data' : loading ? 'Loading…' : 'No auction data yet'}
+                </p>
               )}
             </div>
 
@@ -225,7 +248,7 @@ export default function AdminDashboardOverview() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Top Auctions</h3>
                 <span className="text-[12px] text-success-dark font-bold">
-                  {active.length > 0 ? `${active.length} Active` : 'None Active'}
+                  {!activeKnown ? '—' : active.length > 0 ? `${active.length} Active` : 'None Active'}
                 </span>
               </div>
               {topAuctions.length > 0 ? (
@@ -247,7 +270,9 @@ export default function AdminDashboardOverview() {
                   ))}
                 </div>
               ) : (
-                <p className="text-[12px] text-placeholder py-4 text-center">No auctions yet</p>
+                <p className={`text-[12px] py-4 text-center ${activeQuery.isError ? 'text-error' : 'text-placeholder'}`}>
+                  {activeKnown ? 'No auctions yet' : activeUnknownText}
+                </p>
               )}
             </div>
           </div>
@@ -257,11 +282,18 @@ export default function AdminDashboardOverview() {
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div className="flex items-center gap-3 flex-wrap">
                 <h3 className="font-bold text-[13px] sm:text-[14px] text-navy">Pending Listings — Review Queue</h3>
-                <span className="bg-gold font-bold text-[10px] text-white px-2 py-[2px] rounded-full">{pendingCount} Pending</span>
+                {pendingReady && <span className="bg-gold font-bold text-[10px] text-white px-2 py-[2px] rounded-full">{pendingCount} Pending</span>}
               </div>
             </div>
 
-            {pendingCount === 0 ? (
+            {pendingStatus === 'error' ? (
+              <ErrorState title="Could not load the review queue" onRetry={retryPending} className="border-0 rounded-none py-8" />
+            ) : pendingStatus === 'loading' ? (
+              <div className="flex flex-col gap-2">
+                <LoadingStatus label="Loading the review queue" />
+                {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-[52px] bg-border-light rounded-sm animate-pulse" />)}
+              </div>
+            ) : pendingCount === 0 ? (
               <div className="flex items-center justify-center gap-2 py-8">
                 <CheckCircle2 size={16} strokeWidth={2} className="text-success-dark" />
                 <p className="text-[13px] text-muted">No pending listings. All caught up!</p>
