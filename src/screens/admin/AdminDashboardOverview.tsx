@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
 import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
 import { api } from '../../services/api';
-import { getSocket } from '../../services/socket';
+import { connectSocket } from '../../services/socket';
 import { useToast } from '../../context/ToastContext';
 import { CheckCircle2, Menu, BarChart3, Gavel, Banknote, Clock, ChevronRight } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
@@ -67,7 +67,7 @@ export default function AdminDashboardOverview() {
 
   // AD-07: live-update the pending queue when a seller submits a new listing
   useEffect(() => {
-    const socket = getSocket();
+    const socket = connectSocket();
     const onSubmitted = (data: { listingId: string; title: string }) => {
       void refreshListings();
       showToast({ type: 'info', title: 'New listing submitted', message: data.title });

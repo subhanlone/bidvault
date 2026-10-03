@@ -19,8 +19,8 @@ let socket: Socket | null = null;
 // When the refresh cannot be completed because the server could not be reached -- not because it
 // said no -- the session is probably fine, so the socket connects anonymously (the server allows
 // it, and live updates keep flowing) but does not settle for that: it keeps trying to come back
-// authenticated. A session the server has ended is different: api.ts signs the UI out and the
-// socket simply stays anonymous.
+// authenticated. A session the server has ended is different: api.ts signs the UI out and
+// AuthContext closes the socket, exactly as for a sign-out.
 const UPGRADE_DELAYS_MS = [2_000, 4_000, 8_000, 16_000, 30_000];
 let upgradeAttempt = 0;
 let upgradeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -51,15 +51,37 @@ async function currentAuth(): Promise<{ token?: string }> {
   return {};
 }
 
+/**
+ * The shared socket, for attaching listeners. This does NOT open a connection: a screen that needs
+ * live events calls connectSocket() instead.
+ */
 export function getSocket(): Socket {
   if (!socket) {
     socket = io(SOCKET_URL, {
-      autoConnect: true,
+      // The socket exists from the first getSocket() but opens no connection until someone asks
+      // for one (connectSocket(), or reconnectSocket() on sign-in). A visitor who never signs in and
+      // never opens a screen that needs live data therefore holds no WebSocket -- and "anonymous"
+      // means the same thing however you got there: after a sign-out the socket is closed too.
+      // OWASP: "persistent WebSocket connections increase DoS risk"; "when users log out, close all
+      // their WebSocket connections immediately".
+      autoConnect: false,
       reconnectionAttempts: 5,
       auth: (cb) => { void currentAuth().then(cb); },
     });
   }
   return socket;
+}
+
+/**
+ * Open the connection if it is not open, and return the socket. For a screen that needs live
+ * events: signed in, the socket is already connecting (sign-in and session restore open it), so
+ * this is a no-op; on a screen that is meant for visitors it is what opens an anonymous one.
+ * Idempotent -- Socket.IO ignores connect() on a socket that is connected or connecting.
+ */
+export function connectSocket(): Socket {
+  const s = getSocket();
+  s.connect();
+  return s;
 }
 
 // Both functions below keep the same Socket instance instead of discarding it. Listeners are
@@ -70,7 +92,7 @@ export function getSocket(): Socket {
 /** Call after login so the socket reconnects and re-reads the new token. */
 export function reconnectSocket(): void {
   cancelUpgrade();
-  socket?.disconnect().connect();
+  getSocket().disconnect().connect();
 }
 
 /** Call whenever the stored session is cleared. A manual disconnect does not auto-reconnect,
