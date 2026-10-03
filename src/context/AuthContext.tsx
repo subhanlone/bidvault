@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 // All three come straight from the contract. RegisterRequest and LoginRequest replaced a
 // hand-written pair that used to sit in types/index.ts alongside copies of every other wire
@@ -6,12 +6,25 @@ import { useQueryClient } from '@tanstack/react-query';
 // so nothing had ever checked it. The old RegisterData typed `role` as UserRole, which
 // includes ADMIN: a value POST /auth/register has never accepted.
 import type { User, RegisterRequest, LoginRequest } from '../types/api';
-import { api, ApiError, getStoredAuth, setStoredAuth, clearStoredAuth, onSessionExpired } from '../services/api';
+import {
+  api,
+  ApiError,
+  clearSessionHint,
+  hasLegacySession,
+  isSessionHintEvent,
+  onIdentityChanged,
+  onSessionExpired,
+  readSessionHint,
+  restoreSession,
+  setAccessToken,
+  setExpectedUserId,
+  writeSessionHint,
+} from '../services/api';
 import { reconnectSocket, disconnectSocket } from '../services/socket';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
+  /** True while a session that may exist is being restored on startup. Protected routes wait for it. */
   isLoading: boolean;
   register: (data: RegisterRequest) => Promise<{ success: boolean; verificationCode?: string; codeExpiresAt?: string; error?: string }>;
   verifyEmail: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
@@ -43,34 +56,109 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryClient.clear();
   }, [queryClient]);
 
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = getStoredAuth();
-    return (stored?.accessToken && stored.user) ? stored.user as User : null;
-  });
-  const [token, setToken] = useState<string | null>(() => {
-    const stored = getStoredAuth();
-    return stored?.accessToken ?? null;
-  });
-  const [isLoading] = useState(false);
+  // The user lives in memory only. After a reload it is fetched again from the server, using the
+  // access token the refresh cookie buys, so a stale copy of "who I am" can never outlive the
+  // session it described.
+  const [user, setUser] = useState<User | null>(null);
+  // Starts true only when a session might exist (a hint from a previous sign-in, or one from
+  // before the cookie), so a first-time visitor is never held up behind a request.
+  const [isLoading, setIsLoading] = useState(() => readSessionHint() !== null || hasLegacySession());
 
-  const persist = (u: User | null, accessToken: string | null, refreshToken?: string, remember = true) => {
-    if (u && accessToken) {
-      const stored = getStoredAuth();
-      setStoredAuth({ user: u, accessToken, refreshToken: refreshToken ?? stored?.refreshToken ?? '' }, remember);
-    } else {
-      clearStoredAuth();
-    }
+  // The id of the user on screen, readable from event handlers without re-subscribing them.
+  const userIdRef = useRef<string | null>(null);
+
+  /** Make `u` the signed-in user: the identity this tab acts as, the hint the other tabs read. */
+  const adopt = useCallback((u: User) => {
+    if (userIdRef.current !== u.userId) dropCachedData();
+    userIdRef.current = u.userId;
+    setExpectedUserId(u.userId);
+    writeSessionHint(u.userId);
     setUser(u);
-    setToken(accessToken);
-  };
+    reconnectSocket();
+  }, [dropCachedData]);
 
-  // api.ts clears storage when a refresh fails but cannot touch this state, so without this the
-  // UI kept showing the signed-in user (and the old socket stayed connected) until a reload.
-  useEffect(() => onSessionExpired(() => {
+  /**
+   * Forget the session in this tab. `announce` is for a sign-out this tab initiated: removing the
+   * hint is what tells the other tabs. A tab reacting to someone else's removal passes false and
+   * leaves it alone.
+   */
+  const becomeAnonymous = useCallback((announce: boolean) => {
+    setAccessToken(null);
+    setExpectedUserId(null);
+    if (announce) clearSessionHint();
     disconnectSocket();
     dropCachedData();
-    persist(null, null);
-  }), [dropCachedData]);
+    userIdRef.current = null;
+    setUser(null);
+  }, [dropCachedData]);
+
+  // One restore at a time: StrictMode runs effects twice in development, and a sign-in elsewhere
+  // can land while one is already running.
+  const restoring = useRef<Promise<void> | null>(null);
+
+  /** Ask the browser's own session (the cookie) who is signed in, and make this tab agree. */
+  const restore = useCallback((): Promise<void> => {
+    if (restoring.current) return restoring.current;
+
+    const run = (async () => {
+      // About to learn who this is: nothing to protect from, so no identity to hold the answer to.
+      setExpectedUserId(null);
+      const result = await restoreSession();
+
+      if (result.kind === 'restored') {
+        try {
+          const { user: me } = await api.get('/auth/me');
+          adopt(me);
+        } catch {
+          // A session was found but who it belongs to could not be read. Not signed in here, and
+          // no token is left behind for requests to pick up.
+          setAccessToken(null);
+          if (userIdRef.current !== null) becomeAnonymous(false);
+        }
+      } else if (result.kind === 'anonymous') {
+        // The hint (or the old stored session) promised a session the server no longer has.
+        clearSessionHint();
+        if (userIdRef.current !== null) becomeAnonymous(false);
+      }
+      // 'unavailable': the server could not be reached. Keep the hint so the next load tries again.
+      setIsLoading(false);
+    })().finally(() => { restoring.current = null; });
+
+    restoring.current = run;
+    return run;
+  }, [adopt, becomeAnonymous]);
+
+  // Startup: if a session might exist, restore it.
+  useEffect(() => {
+    if (readSessionHint() !== null || hasLegacySession()) void restore();
+  }, [restore]);
+
+  // Another tab signed in, switched account, or signed out. The `storage` event reaches every tab
+  // except the one that wrote, so each tab just re-reads the hint and catches up: a removal signs
+  // this tab out, a different user id (or a first sign-in while this tab is anonymous) asks the
+  // server, through the shared cookie, who is signed in now.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (!isSessionHintEvent(event)) return;
+      const hint = readSessionHint();
+      if (!hint) {
+        if (userIdRef.current !== null) becomeAnonymous(false);
+      } else if (hint.userId !== userIdRef.current) {
+        void restore();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [becomeAnonymous, restore]);
+
+  // api.ts clears its token when a refresh is refused but cannot touch this state, so without this
+  // the UI kept showing the signed-in user (and the old socket stayed connected) until a reload.
+  useEffect(() => onSessionExpired(() => becomeAnonymous(false)), [becomeAnonymous]);
+
+  // A refresh came back as a different account than the one on screen, which means another tab
+  // switched accounts and its `storage` event has not (or could not) reach this tab. The request
+  // that noticed was not sent as them; this brings the screen in line.
+  useEffect(() => onIdentityChanged(() => { void restore(); }), [restore]);
 
   const register = async (data: RegisterRequest) => {
     try {
@@ -101,10 +189,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (data: LoginRequest, remember = true) => {
     try {
-      const result = await api.post('/auth/login', data);
-      dropCachedData();
-      persist(result.user, result.accessToken, result.refreshToken, remember);
-      reconnectSocket();
+      // `remember` is the server's to honour now: it decides whether the cookie it sets outlives the
+      // browser session. The refresh token in the response body is deliberately not kept anywhere.
+      const result = await api.post('/auth/login', { ...data, remember });
+      setAccessToken(result.accessToken);
+      adopt(result.user);
       return { success: true, user: result.user };
     } catch (err: unknown) {
       return {
@@ -116,14 +205,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = useCallback(() => {
-    const stored = getStoredAuth();
-    if (stored?.refreshToken) {
-      api.post('/auth/logout', { refreshToken: stored.refreshToken }).catch(() => {});
-    }
-    disconnectSocket();
-    dropCachedData();
-    persist(null, null);
-  }, [dropCachedData]);
+    // The cookie identifies the session to revoke; no token has to be handed over. Fire and forget:
+    // the local sign-out must not wait on, or depend on, the network.
+    api.post('/auth/logout', {}).catch(() => {});
+    becomeAnonymous(true);
+  }, [becomeAnonymous]);
 
   const forgotPassword = async (email: string) => {
     try {
@@ -155,12 +241,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const changePassword = async (currentPassword: string, newPassword: string) => {
     try {
       // Changing a password revokes every session the account has, this one included, so the
-      // server issues a replacement pair with the confirmation. Storing it is what keeps the
-      // user signed in: ignore it and the stored refresh token is already dead, and the next
-      // silent refresh -- minutes later, mid-task -- signs them out of the device they just
+      // server issues a replacement pair with the confirmation, and sets the replacement cookie.
+      // Keeping the new access token is what keeps the user signed in: ignore it and the next
+      // silent refresh -- minutes later, mid-task -- would sign them out of the device they just
       // used to change it. Their own successful action logs them out.
       const session = await api.post('/auth/change-password', { currentPassword, newPassword });
-      if (user) persist(user, session.accessToken, session.refreshToken);
+      setAccessToken(session.accessToken);
       return { success: true };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to change password' };
@@ -170,12 +256,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const deleteAccount = async (password: string) => {
     try {
       // BV-018: the account is anonymised server-side, which already revokes every refresh
-      // token including this one -- persist(null, null) here just clears the local copy so
-      // the app reflects that immediately instead of waiting for the next failed refresh.
+      // token and clears the cookie -- becoming anonymous here just makes the app reflect that
+      // immediately instead of waiting for the next failed refresh.
       await api.post('/auth/delete-account', { password });
-      disconnectSocket();
-      dropCachedData();
-      persist(null, null);
+      becomeAnonymous(true);
       return { success: true };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to delete account' };
@@ -183,13 +267,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUser = (u: User) => {
-    const stored = getStoredAuth();
-    if (stored?.refreshToken) persist(u, token, stored.refreshToken);
+    setUser(u);
   };
 
   return (
     <AuthContext.Provider value={{
-      user, token, isLoading,
+      user, isLoading,
       register, verifyEmail, resendVerification, login, logout,
       forgotPassword, verifyResetOtp, resetPassword, changePassword, deleteAccount, updateUser,
     }}>

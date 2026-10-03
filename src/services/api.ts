@@ -10,7 +10,8 @@ import type {
 } from '../types/openapi';
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
-const STORAGE_KEY = 'bidvault_auth_v1';
+/** Where both tokens used to be kept, before they moved out of web storage. Read once to migrate. */
+const LEGACY_STORAGE_KEY = 'bidvault_auth_v1';
 
 /** Field -> messages, as produced by the backend's z.flattenError().fieldErrors. */
 export type ValidationDetails = Record<string, string[]>;
@@ -51,33 +52,105 @@ function readableError(error: string | undefined, details: ValidationDetails | u
   return error ?? 'Request failed';
 }
 
-interface StoredAuth {
-  user: unknown;
-  accessToken: string;
-  refreshToken: string;
+// ── Session state ────────────────────────────────────────────────────────────────────
+//
+// Nothing here is a credential that script can keep. The refresh token lives in an HttpOnly
+// cookie the browser attaches by itself (see the backend's refresh-cookie.ts), so this module never
+// sees it; the access token lives in this variable and nowhere else -- not in web storage, which
+// is what OWASP says credentials must stay out of, because one XSS reads all of it.
+
+let accessToken: string | null = null;
+
+export function getAccessToken(): string | null {
+  return accessToken;
 }
 
-export function getStoredAuth(): StoredAuth | null {
+export function setAccessToken(token: string | null): void {
+  accessToken = token;
+}
+
+/**
+ * Who this tab believes is signed in. Set by the tab that signs in, read by every tab.
+ *
+ * A hint, not a credential: it says "there is probably a session for this user", which saves an
+ * anonymous visitor a refresh round trip on every page load, and -- because a `storage` event
+ * reaches every *other* tab of the origin when it changes -- it is how a sign-in or sign-out in one
+ * tab reaches the rest. Whether the session really exists is always decided by the cookie and the
+ * server, never by this.
+ */
+const SESSION_HINT_KEY = 'bidvault_session_v2';
+
+export function readSessionHint(): { userId: string } | null {
   try {
-    // sessionStorage takes priority (remember=false login); fall back to localStorage
-    const raw = sessionStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(SESSION_HINT_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as StoredAuth;
+    const parsed = JSON.parse(raw) as { userId?: unknown };
+    return typeof parsed.userId === 'string' && parsed.userId ? { userId: parsed.userId } : null;
   } catch {
     return null;
   }
 }
 
-export function setStoredAuth(auth: StoredAuth, remember = true): void {
-  // If the current session already lives in sessionStorage, keep it there (preserves remember=false across refreshes)
-  const inSession = !!sessionStorage.getItem(STORAGE_KEY);
-  const storage = (inSession || !remember) ? sessionStorage : localStorage;
-  storage.setItem(STORAGE_KEY, JSON.stringify(auth));
+export function writeSessionHint(userId: string): void {
+  try { localStorage.setItem(SESSION_HINT_KEY, JSON.stringify({ userId })); } catch { /* storage unavailable */ }
 }
 
-export function clearStoredAuth(): void {
-  localStorage.removeItem(STORAGE_KEY);
-  sessionStorage.removeItem(STORAGE_KEY);
+export function clearSessionHint(): void {
+  try { localStorage.removeItem(SESSION_HINT_KEY); } catch { /* storage unavailable */ }
+}
+
+/** Whether a storage event is about the session hint (a null key means storage was cleared). */
+export function isSessionHintEvent(event: StorageEvent): boolean {
+  return event.key === null || event.key === SESSION_HINT_KEY;
+}
+
+// Sessions created before the cookie existed still hold both tokens in web storage. They are moved
+// onto the cookie once (the old refresh token goes to the server in a request body, which answers
+// with the cookie) and the stored copies are deleted, so nobody has to sign in again.
+interface LegacySession { refreshToken: string }
+
+function readLegacySession(): LegacySession | null {
+  try {
+    // sessionStorage took priority in the old code (a login with "keep me signed in" unticked).
+    const raw = sessionStorage.getItem(LEGACY_STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { refreshToken?: unknown };
+    return typeof parsed.refreshToken === 'string' && parsed.refreshToken ? { refreshToken: parsed.refreshToken } : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearLegacySession(): void {
+  try {
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch { /* storage unavailable */ }
+}
+
+export function hasLegacySession(): boolean {
+  return readLegacySession() !== null;
+}
+
+// Which user the UI is showing, so a token that belongs to someone else is never used on their
+// behalf. The cookie is shared by every tab, memory is not: if another tab switched accounts, this
+// tab's next refresh would come back as the *new* account while the screen still shows the old
+// one, and every action from here would silently run as someone the user is not looking at.
+let expectedUserId: string | null = null;
+
+export function setExpectedUserId(userId: string | null): void {
+  expectedUserId = userId;
+}
+
+/** The `sub` of a JWT, or null if it cannot be read. Only used to compare identities. */
+function tokenSubject(token: string): string | null {
+  try {
+    const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const { sub } = JSON.parse(atob(payload)) as { sub?: unknown };
+    return typeof sub === 'string' ? sub : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -85,23 +158,23 @@ export function clearStoredAuth(): void {
  * first means the session is over, the second says nothing about it. Treating both as a dead
  * session signed people out for a dropped Wi-Fi connection or a deploy in progress, with a
  * perfectly good session still waiting on the server.
+ *
+ * `identity-changed` is the third kind of failure: the server answered with a session, but it
+ * belongs to a different account than the one this tab is showing.
  */
 type RefreshOutcome =
   | { kind: 'refreshed'; accessToken: string }
   | { kind: 'rejected' }
-  | { kind: 'unavailable' };
+  | { kind: 'unavailable' }
+  | { kind: 'identity-changed' };
 
 let refreshPromise: Promise<RefreshOutcome> | null = null;
 
 // One refresh at a time per tab, shared by everyone in it who needs one. Across tabs the lock in
-// refreshAccessToken() does the same job: the server rotates refresh tokens, so two concurrent
-// refreshes would spend the same token twice.
-//
-// `staleAccessToken` is the access token the caller found unusable; refreshAccessToken() uses it
-// to tell whether another tab has already refreshed in the meantime.
-function refreshOnce(staleAccessToken: string): Promise<RefreshOutcome> {
+// refreshAccessToken() and the server's reuse interval do the same job.
+function refreshOnce(): Promise<RefreshOutcome> {
   if (!refreshPromise) {
-    refreshPromise = refreshAccessToken(staleAccessToken).finally(() => { refreshPromise = null; });
+    refreshPromise = refreshAccessToken().finally(() => { refreshPromise = null; });
   }
   return refreshPromise;
 }
@@ -131,7 +204,7 @@ export type FreshAccessToken =
   | { kind: 'unavailable' };
 
 /**
- * The stored access token, refreshed first if it has expired or is about to.
+ * The access token, refreshed first if it has expired or is about to.
  *
  * request() gets a fresh token for free -- a 401 triggers the refresh. A socket handshake has no
  * such retry: it is rejected once and stays down, so it has to arrive with a token that already
@@ -139,20 +212,20 @@ export type FreshAccessToken =
  * after the token expired.
  */
 export async function getFreshAccessToken(): Promise<FreshAccessToken> {
-  const stored = getStoredAuth();
-  if (!stored?.accessToken) return { kind: 'none' };
+  if (!accessToken) return { kind: 'none' };
 
-  const expiresAt = tokenExpiresAtMs(stored.accessToken);
+  const expiresAt = tokenExpiresAtMs(accessToken);
   if (expiresAt === null || expiresAt - Date.now() > EXPIRY_SKEW_MS) {
-    return { kind: 'token', accessToken: stored.accessToken };
+    return { kind: 'token', accessToken };
   }
 
-  const outcome = await refreshOnce(stored.accessToken);
+  const outcome = await refreshOnce();
   if (outcome.kind === 'refreshed') return { kind: 'token', accessToken: outcome.accessToken };
   if (outcome.kind === 'rejected') {
     expireSession();
     return { kind: 'none' };
   }
+  if (outcome.kind === 'identity-changed') return { kind: 'none' };
   return { kind: 'unavailable' };
 }
 
@@ -169,103 +242,157 @@ const REFRESH_ATTEMPTS = 3;
 const REFRESH_ATTEMPT_TIMEOUT_MS = 3_000;
 const REFRESH_RETRY_DELAY_MS = 1_000;
 
-// Tabs of one browser share a single stored session (and so a single rotating refresh token), but
-// each has its own copy of this module, so refreshOnce() cannot serialize them. Two tabs that
-// needed a token at the same moment both read the same refresh token and both sent it; the server
-// accepted both (two live tokens from one) or rejected the loser as a replay and revoked the whole
-// session. The Web Locks API is the standard way to take turns across tabs of one origin. It is
-// only exposed in secure contexts (HTTPS or localhost); without it this tab still serializes
-// itself, it just cannot see the others.
+// Tabs of one browser share the refresh cookie, but each has its own copy of this module, so
+// refreshOnce() cannot serialize them. The Web Locks API is the standard way to take turns across
+// tabs of one origin. It is only exposed in secure contexts (HTTPS or localhost); without it this
+// tab still serializes itself, and the server's reuse interval answers a simultaneous repeat with
+// the successor it already issued.
 function withRefreshLock<T>(work: () => Promise<T>): Promise<T> {
   return 'locks' in navigator ? navigator.locks.request(REFRESH_LOCK, work) : work();
 }
 
-/** One try. Only a definite "no" from the server (401/400/403) is `rejected`; a timeout, a dropped
- * connection, a 5xx, a 429 or an unreadable answer leaves the question open. */
-async function attemptRefresh(refreshToken: string, user: unknown): Promise<RefreshOutcome> {
+/** One try. With no `legacyRefreshToken` the browser supplies the HttpOnly cookie by itself (hence
+ * `credentials: 'include'`); with one it is the old stored token, sent once to move that session
+ * onto the cookie. Only a definite "no" from the server (401/400/403) is `rejected`; a timeout, a
+ * dropped connection, a 5xx, a 429 or an unreadable answer leaves the question open. */
+async function attemptRefresh(legacyRefreshToken?: string): Promise<RefreshOutcome> {
   try {
     const resp = await fetch(`${BASE_URL}/auth/refresh`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      body: JSON.stringify(legacyRefreshToken ? { refreshToken: legacyRefreshToken } : {}),
       signal: AbortSignal.timeout(REFRESH_ATTEMPT_TIMEOUT_MS),
     });
     if (resp.status === 400 || resp.status === 401 || resp.status === 403) return { kind: 'rejected' };
     if (!resp.ok) return { kind: 'unavailable' };
 
-    const body = await resp.json() as { data?: { accessToken: string; refreshToken: string } };
-    if (!body.data?.accessToken || !body.data.refreshToken) return { kind: 'unavailable' };
+    const body = await resp.json() as { data?: { accessToken: string } };
+    const fresh = body.data?.accessToken;
+    if (!fresh) return { kind: 'unavailable' };
 
-    setStoredAuth({ user, accessToken: body.data.accessToken, refreshToken: body.data.refreshToken });
-    return { kind: 'refreshed', accessToken: body.data.accessToken };
+    // Not this tab's account any more: do not adopt it, or every request would run as someone else.
+    const subject = tokenSubject(fresh);
+    if (expectedUserId !== null && subject !== null && subject !== expectedUserId) {
+      return { kind: 'identity-changed' };
+    }
+
+    accessToken = fresh;
+    return { kind: 'refreshed', accessToken: fresh };
   } catch {
     return { kind: 'unavailable' };
   }
 }
 
-async function refreshAccessToken(staleAccessToken: string): Promise<RefreshOutcome> {
+async function refreshAccessToken(legacyRefreshToken?: string): Promise<RefreshOutcome> {
   return withRefreshLock(async () => {
-    // Read the session only now that the lock is held: a tab that held it first has already
-    // rotated the refresh token, and the copy this tab saw before waiting is spent.
-    const stored = getStoredAuth();
-    if (!stored?.refreshToken) return { kind: 'rejected' };
-    if (stored.accessToken !== staleAccessToken) return { kind: 'refreshed', accessToken: stored.accessToken };
-
     let outcome: RefreshOutcome = { kind: 'unavailable' };
     for (let attempt = 0; attempt < REFRESH_ATTEMPTS && outcome.kind === 'unavailable'; attempt++) {
       if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, REFRESH_RETRY_DELAY_MS));
-      outcome = await attemptRefresh(stored.refreshToken, stored.user);
+      outcome = await attemptRefresh(legacyRefreshToken);
     }
     return outcome;
   });
 }
 
-// This module cannot reach React state, so it announces a dead session instead of trying to
-// react to it. AuthContext owns the user/token state and subscribes here; once it drops to
-// anonymous, <ProtectedRoute> sends the visitor to /login on a route that needs a session and
-// leaves public pages (landing, legal, auth screens) alone. A route list kept in this file
-// instead silently missed any protected screen that was not on it.
-type SessionExpiredListener = () => void;
-const sessionExpiredListeners = new Set<SessionExpiredListener>();
+/**
+ * Get this tab a session from what the browser already holds: the refresh cookie, or a session
+ * from before the cookie existed. Called when the app starts and whenever another tab changes who
+ * is signed in. On `restored` the access token is in memory; the caller fetches the user.
+ */
+export type RestoreResult =
+  | { kind: 'restored' }
+  | { kind: 'anonymous' }
+  | { kind: 'unavailable' };
 
-export function onSessionExpired(listener: SessionExpiredListener): () => void {
+export async function restoreSession(): Promise<RestoreResult> {
+  const legacy = readLegacySession();
+  if (legacy) {
+    const outcome = await refreshAccessToken(legacy.refreshToken);
+    if (outcome.kind === 'refreshed') {
+      clearLegacySession();
+      return { kind: 'restored' };
+    }
+    if (outcome.kind === 'unavailable') return { kind: 'unavailable' };   // keep it, try again next load
+    clearLegacySession();                                                  // the server refused it: it is dead
+    return { kind: 'anonymous' };
+  }
+
+  const outcome = await refreshOnce();
+  if (outcome.kind === 'refreshed') return { kind: 'restored' };
+  if (outcome.kind === 'unavailable') return { kind: 'unavailable' };
+  return { kind: 'anonymous' };
+}
+
+// This module cannot reach React state, so it announces a dead session instead of trying to
+// react to it. AuthContext owns the user state and subscribes here; once it drops to anonymous,
+// <ProtectedRoute> sends the visitor to /login on a route that needs a session and leaves public
+// pages (landing, legal, auth screens) alone. A route list kept in this file instead silently
+// missed any protected screen that was not on it.
+type Listener = () => void;
+const sessionExpiredListeners = new Set<Listener>();
+const identityChangedListeners = new Set<Listener>();
+
+export function onSessionExpired(listener: Listener): () => void {
   sessionExpiredListeners.add(listener);
   return () => { sessionExpiredListeners.delete(listener); };
 }
 
-/** The server has refused the session for good: drop it locally and tell the app. */
+/** Fires when a refresh handed back a different account than the one this tab is showing. */
+export function onIdentityChanged(listener: Listener): () => void {
+  identityChangedListeners.add(listener);
+  return () => { identityChangedListeners.delete(listener); };
+}
+
+/** The server has refused the session for good: drop it everywhere and tell the app. Clearing the
+ * hint is also what tells every other tab, which share the same dead cookie. */
 function expireSession(): void {
-  clearStoredAuth();
+  accessToken = null;
+  clearSessionHint();
   sessionExpiredListeners.forEach((listener) => listener());
 }
 
 async function request<T>(path: string, options: RequestInit): Promise<T> {
-  const stored = getStoredAuth();
+  const sentToken = accessToken;
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (stored?.accessToken) {
-    headers['Authorization'] = `Bearer ${stored.accessToken}`;
+  if (sentToken) {
+    headers['Authorization'] = `Bearer ${sentToken}`;
   }
 
-  let resp = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  // `credentials: 'include'` on every call: the cookie only ever travels to the auth routes (its
+  // Path), but those need it, and a cross-origin Set-Cookie is ignored without it.
+  let resp = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include' });
 
   // Only attempt token refresh if the user had an active session.
-  // A 401 with no stored token means wrong credentials, not an expired session.
-  if (resp.status === 401 && stored?.accessToken) {
-    const outcome = await refreshOnce(stored.accessToken);
+  // A 401 with no token means wrong credentials, not an expired session.
+  if (resp.status === 401 && sentToken) {
+    // Another request in this tab may already have refreshed while this one was in flight.
+    let retryToken = accessToken !== null && accessToken !== sentToken ? accessToken : null;
 
-    if (outcome.kind === 'rejected') {
-      expireSession();
-      throw new ApiError(401, 'Session expired. Please sign in again.');
-    }
-    // Not the same thing: the session may be fine and the server just could not be reached. It is
-    // kept, so the next action retries instead of the user being signed out for a dropped connection.
-    if (outcome.kind === 'unavailable') {
-      throw new ApiError(503, 'Could not reach the server to keep you signed in. Check your connection and try again.');
+    if (!retryToken) {
+      const outcome = await refreshOnce();
+
+      if (outcome.kind === 'rejected') {
+        expireSession();
+        throw new ApiError(401, 'Session expired. Please sign in again.');
+      }
+      // Not the same thing: the session may be fine and the server just could not be reached. It is
+      // kept, so the next action retries instead of the user being signed out for a dropped connection.
+      if (outcome.kind === 'unavailable') {
+        throw new ApiError(503, 'Could not reach the server to keep you signed in. Check your connection and try again.');
+      }
+      // The browser's session now belongs to someone else (another tab switched accounts). This
+      // request is not sent as them; the app is told to catch up with who is signed in.
+      if (outcome.kind === 'identity-changed') {
+        identityChangedListeners.forEach((listener) => listener());
+        throw new ApiError(409, 'Your account was changed in another tab. Your session is being refreshed -- please try again.', 'ACCOUNT_CHANGED');
+      }
+      retryToken = outcome.accessToken;
     }
 
-    headers['Authorization'] = `Bearer ${outcome.accessToken}`;
-    resp = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+    headers['Authorization'] = `Bearer ${retryToken}`;
+    resp = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include' });
   }
 
   // 204 has no body by definition -- calling .json() on one throws, and nothing in this
