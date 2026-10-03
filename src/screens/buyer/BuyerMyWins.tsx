@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trophy, CheckCircle, Clock, XCircle, Package, Star, Truck, AlertTriangle, ShieldAlert, RotateCcw, Receipt, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { BuyerNavbar, RatingModal, DisputeModal } from '../../components/ui';
+import { BuyerNavbar, RatingModal, DisputeModal, ErrorState } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { api } from '../../services/api';
@@ -108,6 +108,17 @@ export default function BuyerMyWins() {
     return api.get('/payments/my-wins').then(setTransactions);
   }
 
+  // Start over from the loading state, then the same request the first load makes.
+  function retryLoad() {
+    setError(null);
+    setLoading(true);
+    refresh()
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to load wins.');
+      })
+      .finally(() => setLoading(false));
+  }
+
   useEffect(() => {
     refresh()
       .catch((err: unknown) => {
@@ -162,11 +173,7 @@ export default function BuyerMyWins() {
             {Array.from({ length: 3 }).map((_, i) => <WinCardSkeleton key={i} />)}
           </div>
         ) : error ? (
-          <div className="bg-surface border border-border-light rounded-md flex flex-col items-center justify-center py-20 text-center">
-            <XCircle size={48} strokeWidth={1.2} className="text-error mx-auto mb-4" />
-            <p className="font-bold text-[16px] text-navy mb-1">Could not load wins</p>
-            <p className="text-[13px] text-muted">{error}</p>
-          </div>
+          <ErrorState title="Could not load wins" onRetry={retryLoad} />
         ) : transactions.length === 0 ? (
           <div className="bg-surface border border-border-light rounded-md flex flex-col items-center justify-center py-20 px-6 text-center">
             <Trophy size={48} strokeWidth={1.2} className="text-placeholder mx-auto mb-4" />

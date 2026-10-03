@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { Sparkles, Trophy, Frown, Package, Ban, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { BuyerNavbar } from '../../components/ui';
+import { BuyerNavbar, ErrorState } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import { api } from '../../services/api';
 import { useAuctionDetail, useBids } from '../../queries/auctions';
@@ -28,9 +28,12 @@ export default function BuyerAuctionWon() {
   if (auctionQuery.isError || bidsQuery.isError) {
     return (
       <Shell userName={user?.name} onLogout={logout}>
-        <p className="font-bold text-[16px] text-secondary mb-2">Couldn't load this auction's result</p>
-        <p className="text-[13px] text-muted mb-5">Check your connection and try again.</p>
-        <Button className="rounded-sm" onClick={() => { void auctionQuery.refetch(); void bidsQuery.refetch(); }}>Retry</Button>
+        <ErrorState
+          title="Could not load this auction's result"
+          onRetry={() => { void auctionQuery.refetch(); void bidsQuery.refetch(); }}
+          retrying={auctionQuery.isFetching || bidsQuery.isFetching}
+          className="w-full max-w-[480px]"
+        />
       </Shell>
     );
   }

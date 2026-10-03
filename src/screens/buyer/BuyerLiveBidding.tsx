@@ -8,11 +8,11 @@ import {
   Search, Check, Zap, Star, Heart,
   Timer, Flame, AlertTriangle, X, ChevronRight, Ban,
 } from 'lucide-react';
-import { BuyerNavbar, AuctionThumbnail } from '../../components/ui';
+import { BuyerNavbar, AuctionThumbnail, ErrorState } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { connectSocket } from '../../services/socket';
-import { api } from '../../services/api';
+import { api, ApiError } from '../../services/api';
 import type { SellerReview } from '../../types/api';
 import { getCategoryFields } from '../../config/categoryFields';
 import { conditionLabel, count, dateMedium, pkr, timeShort } from '../../utils/format';
@@ -32,8 +32,8 @@ export default function BuyerLiveBidding() {
   // watchlist rows, so a closed watched auction resolved to undefined on a cold load and
   // this screen rendered "Auction not found" (NEW-17). GET /auctions/{id} answers for any
   // status, and is the only endpoint that overlays the Redis bid cache.
-  const { data: auction, isPending } = useAuctionDetail(auctionId);
-  const { data: auctionBids = [] } = useBids(auctionId);
+  const { data: auction, isPending, isError, error, isFetching, refetch } = useAuctionDetail(auctionId);
+  const { data: auctionBids = [], isError: bidsFailed, refetch: refetchBids } = useBids(auctionId);
   const auctionsLoaded = !isPending;
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
 
@@ -109,6 +109,21 @@ export default function BuyerLiveBidding() {
             <div className="h-[100px] bg-surface border border-border-light rounded-md animate-pulse" />
             <div className="h-[220px] bg-surface border border-border-light rounded-md animate-pulse" />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Could not load ────────────────────────────────────────────────────────────
+  // Only 404 means "no such auction". Any other failure used to fall through to the not-found
+  // screen below, telling a buyer in the middle of an auction that it did not exist. With data
+  // already on screen a failed background refetch changes nothing -- the page keeps what it has.
+  if (isError && !auction && !(error instanceof ApiError && error.status === 404)) {
+    return (
+      <div className="min-h-screen bg-bg">
+        <BuyerNavbar userName={user?.name} onLogout={logout} />
+        <div className="max-w-[560px] mx-auto px-4 py-16">
+          <ErrorState title="Could not load this auction" onRetry={() => { void refetch(); }} retrying={isFetching} />
         </div>
       </div>
     );
@@ -359,8 +374,13 @@ export default function BuyerLiveBidding() {
 
           {/* Bid history */}
           <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
-            <h3 className="font-bold text-[14px] text-navy mb-4">Bid History ({auctionBids.length})</h3>
-            {auctionBids.length === 0 ? (
+            <h3 className="font-bold text-[14px] text-navy mb-4">Bid History{!(bidsFailed && auctionBids.length === 0) && ` (${auctionBids.length})`}</h3>
+            {bidsFailed && auctionBids.length === 0 ? (
+              <p className="text-[13px] text-error text-center py-6">
+                Could not load the bid history.{' '}
+                <button type="button" onClick={() => { void refetchBids(); }} className="font-bold underline cursor-pointer">Try again</button>
+              </p>
+            ) : auctionBids.length === 0 ? (
               <p className="text-[13px] text-muted text-center py-6">No bids yet. Be the first!</p>
             ) : (
               <div className="flex flex-col gap-1">
