@@ -178,14 +178,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const resendVerification = async (email: string) => {
+  // Stable (no dependencies): a screen that sends a code from an effect lists this in its
+  // dependencies, and a new function on every render would send it again on every render.
+  const resendVerification = useCallback(async (email: string) => {
     try {
       const result = await api.post('/auth/resend-verification', { email });
       return { success: true, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt };
     } catch (err: unknown) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to resend code' };
     }
-  };
+  }, []);
 
   const login = async (data: LoginRequest, remember = true) => {
     try {
