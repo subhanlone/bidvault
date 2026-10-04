@@ -384,8 +384,6 @@ export type PublicBid = {
 export type PublicSettings = {
   maintenanceMode: boolean;
   supportEmail: string;
-  minListingPrice: number;
-  maxBidIncrement: number;
 };
 
 export type RaiseDisputeRequest = {

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, BarChart2, Radio, Receipt, Users, Settings, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
@@ -34,10 +33,9 @@ interface AdminSidebarContentProps {
 export function AdminSidebarContent({ active, onClose, collapsed = false, onToggleCollapse }: AdminSidebarContentProps) {
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
-  const { pendingListings, status: pendingStatus, refreshListings } = usePendingListings();
+  const { pendingListings, status: pendingStatus } = usePendingListings();
   const activeQuery = useActiveAuctions();
   const auctions = useDrainedPages(activeQuery);
-  useEffect(() => { void refreshListings(); }, [refreshListings]);
   const pendingCount = pendingListings.length;
   const activeCount = auctions.length; // the query is scoped to ?status=ACTIVE
   const activeKnown = !activeQuery.isError && !activeQuery.isPending && !activeQuery.hasNextPage && !activeQuery.isFetchingNextPage;

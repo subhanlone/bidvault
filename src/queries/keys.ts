@@ -36,5 +36,8 @@ export const keys = {
     /** GET /admin/users — cursor-paginated, unbounded, so this stays keyed per search term
      * like auctions.active rather than drained (see queries/auctions.ts's useDrainedPages doc). */
     users: (search: string) => ['admin', 'users', { search }] as const,
+    /** GET /listings/pending, every page -- the review queue the sidebar badge, the dashboard and the
+     * review screens all read, so a change made on one is seen by the others. */
+    pendingListings: ['admin', 'pendingListings'] as const,
   },
 } as const;

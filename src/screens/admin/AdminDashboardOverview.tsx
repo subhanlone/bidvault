@@ -49,7 +49,7 @@ const CATEGORY_COLORS = [
 
 export default function AdminDashboardOverview() {
   const navigate = useNavigate();
-  const { pendingListings, status: pendingStatus, retry: retryPending, refreshListings } = usePendingListings();
+  const { pendingListings, status: pendingStatus, retry: retryPending, retrying: retryingPending, refreshListings } = usePendingListings();
   const activeQuery = useActiveAuctions();
   const auctions = useDrainedPages(activeQuery);
   // `auctions` is empty while loading and after a failure; only a completed load makes "no auctions"
@@ -71,7 +71,6 @@ export default function AdminDashboardOverview() {
     ]).finally(() => setLoading(false)), []);
 
   useEffect(() => { void loadStats(); }, [loadStats]);
-  useEffect(() => { void refreshListings(); }, [refreshListings]);
 
   // The banner's button: start from the loading state again, then repeat both requests.
   const retryStats = () => {
@@ -251,7 +250,10 @@ export default function AdminDashboardOverview() {
                   {!activeKnown ? '—' : active.length > 0 ? `${active.length} Active` : 'None Active'}
                 </span>
               </div>
-              {topAuctions.length > 0 ? (
+              {/* Only on a completed load: after a failed refetch the cache can still hold rows, and
+                  listing them here while "Bid Activity" beside it says the auctions could not load
+                  contradicts the page. */}
+              {activeKnown && topAuctions.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {topAuctions.map((a, i) => (
                     <div key={a.auctionId} className="flex items-center gap-3">
@@ -287,7 +289,7 @@ export default function AdminDashboardOverview() {
             </div>
 
             {pendingStatus === 'error' ? (
-              <ErrorState title="Could not load the review queue" onRetry={retryPending} className="border-0 rounded-none py-8" />
+              <ErrorState title="Could not load the review queue" onRetry={retryPending} retrying={retryingPending} className="border-0 rounded-none py-8" />
             ) : pendingStatus === 'loading' ? (
               <div className="flex flex-col gap-2">
                 <LoadingStatus label="Loading the review queue" />

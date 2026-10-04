@@ -141,6 +141,17 @@ export default function SellerCreateListingStep2() {
                   </p>
                 </div>
 
+                {limitsFailed && (
+                  <div role="status" className="flex items-center justify-between gap-3 flex-wrap bg-surface-raised border border-border-light rounded-md px-3 py-2">
+                    <p className="text-[12px] text-muted">
+                      Could not load the platform's price limits. They will be checked when you submit.
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => { setLimitsFailed(false); void loadLimits(); }}>
+                      Try again
+                    </Button>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <span id="duration-label" className="text-xs font-bold text-secondary">Duration <span className="text-primary">*</span></span>
@@ -195,16 +206,6 @@ export default function SellerCreateListingStep2() {
                       <p role="alert" className="text-[12px] text-error">{durationError}</p>
                     )}
                   </div>
-                  {limitsFailed && (
-                    <div role="status" className="flex items-center justify-between gap-3 flex-wrap bg-surface-raised border border-border-light rounded-md px-3 py-2">
-                      <p className="text-[12px] text-muted">
-                        Could not load the platform's price limits. They will be checked when you submit.
-                      </p>
-                      <Button variant="outline" size="sm" onClick={() => { setLimitsFailed(false); void loadLimits(); }}>
-                        Try again
-                      </Button>
-                    </div>
-                  )}
                   <Input
                     label="Starting price (PKR)"
                     type="number"

@@ -36,9 +36,8 @@ function dropLegacyNotes(): void {
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
-  const { pendingListings, status, retry, refreshListings, approveListing, rejectListing } = usePendingListings();
+  const { pendingListings, status, retry, retrying, approveListing, rejectListing } = usePendingListings();
 
-  useEffect(() => { refreshListings(); }, [refreshListings]);
   const { showToast } = useToast();
   const adminId = useAuth().user?.userId;
 
@@ -126,7 +125,7 @@ export default function AdminListingReview() {
             </div>
           ) : (
             <div className="w-full max-w-[560px]">
-              <ErrorState title="Could not load this listing" onRetry={retry} />
+              <ErrorState title="Could not load this listing" onRetry={retry} retrying={retrying} />
               <div className="text-center mt-4">
                 <Button variant="ghost" onClick={() => navigate('/admin/listing-reviews')}>Back to Review Queue</Button>
               </div>
