@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Package, Smartphone, Car } from 'lucide-react';
 import { useListing } from '../../context/ListingContext';
@@ -16,31 +16,31 @@ const MAX_PRICE = 100_000_000;
 const MIN_DURATION = 1;
 const MAX_DURATION = 30;
 
-/** Platform limits enforced by POST /listings. Defaults match the seeded PlatformSetting row and
- *  are only used if /settings/public is unreachable — the server stays the real authority. */
-const FALLBACK_LIMITS = { minListingPrice: 1_000, maxBidIncrement: 500_000 };
-
 export default function SellerCreateListingStep2() {
   const navigate = useNavigate();
-  const { draft, updateDraft } = useListing();
+  const { draft, updateDraft, fieldErrors, setFieldErrors } = useListing();
   const { showToast } = useToast();
-  const [startingPriceError, setStartingPriceError] = useState('');
-  const [minIncrementError, setMinIncrementError] = useState('');
+  // Starts from whatever the server said when it last refused this listing on Step 3.
+  const [startingPriceError, setStartingPriceError] = useState(fieldErrors.startPrice ?? '');
+  const [minIncrementError, setMinIncrementError] = useState(fieldErrors.minIncrement ?? '');
   const [reservePriceError, setReservePriceError] = useState('');
   const [durationError, setDurationError] = useState('');
-  const [limits, setLimits] = useState(FALLBACK_LIMITS);
+  // The platform's two price rules, as the admin has them set right now. `null` means not known --
+  // loading, or the request failed -- and then there is nothing to check against and nothing to
+  // say: the checks below are skipped and the server, which enforces them on submit, decides. A
+  // stored copy of the numbers is not an answer: the admin can change them, and a stale copy both
+  // refused valid prices and accepted invalid ones.
+  const [limits, setLimits] = useState<{ minListingPrice: number; maxBidIncrement: number } | null>(null);
+  const [limitsFailed, setLimitsFailed] = useState(false);
   const [customDuration, setCustomDuration] = useState(!DURATIONS.includes(draft.duration));
 
   // These limits are enforced server-side at submit. Fetching them here is what lets the form
-  // fail at the offending field instead of via a toast two steps later.
-  useEffect(() => {
-    api.get('/settings/public')
-      .then(s => setLimits({
-        minListingPrice: s.minListingPrice ?? FALLBACK_LIMITS.minListingPrice,
-        maxBidIncrement: s.maxBidIncrement ?? FALLBACK_LIMITS.maxBidIncrement,
-      }))
-      .catch(() => {});
-  }, []);
+  // fail at the offending field instead of two steps later. Seller-only: GET /listings/limits.
+  const loadLimits = useCallback(() =>
+    api.get('/listings/limits')
+      .then(l => { setLimits(l); setLimitsFailed(false); })
+      .catch(() => setLimitsFailed(true)), []);
+  useEffect(() => { void loadLimits(); }, [loadLimits]);
 
   const fmtPrice = (n: number) => n > 0 ? pkr(n) : '';
 
@@ -61,12 +61,12 @@ export default function SellerCreateListingStep2() {
     if (draft.startingPrice <= 0) { setStartingPriceError('Starting price is required'); invalidCount += 1; }
     else if (!Number.isInteger(draft.startingPrice)) { setStartingPriceError('Starting price must be a whole number'); invalidCount += 1; }
     // Same rule POST /listings applies — checked here so it surfaces on the field itself.
-    else if (draft.startingPrice < limits.minListingPrice) { setStartingPriceError(`Starting price must be at least ${pkr(limits.minListingPrice)}`); invalidCount += 1; }
+    else if (limits && draft.startingPrice < limits.minListingPrice) { setStartingPriceError(`Starting price must be at least ${pkr(limits.minListingPrice)}`); invalidCount += 1; }
     else if (draft.startingPrice > MAX_PRICE) { setStartingPriceError(`Starting price must be under PKR ${MAX_PRICE.toLocaleString()}`); invalidCount += 1; }
 
     if (draft.minIncrement <= 0) { setMinIncrementError('Minimum increment is required'); invalidCount += 1; }
     else if (!Number.isInteger(draft.minIncrement)) { setMinIncrementError('Minimum increment must be a whole number'); invalidCount += 1; }
-    else if (draft.minIncrement > limits.maxBidIncrement) { setMinIncrementError(`Minimum increment cannot exceed ${pkr(limits.maxBidIncrement)}`); invalidCount += 1; }
+    else if (limits && draft.minIncrement > limits.maxBidIncrement) { setMinIncrementError(`Minimum increment cannot exceed ${pkr(limits.maxBidIncrement)}`); invalidCount += 1; }
     // An increment larger than the asking price means the first legal bid more than doubles it,
     // which is almost never intended — PKR 500 start with a PKR 1,000 increment was accepted.
     else if (draft.startingPrice > 0 && draft.minIncrement > draft.startingPrice) {
@@ -195,6 +195,16 @@ export default function SellerCreateListingStep2() {
                       <p role="alert" className="text-[12px] text-error">{durationError}</p>
                     )}
                   </div>
+                  {limitsFailed && (
+                    <div role="status" className="flex items-center justify-between gap-3 flex-wrap bg-surface-raised border border-border-light rounded-md px-3 py-2">
+                      <p className="text-[12px] text-muted">
+                        Could not load the platform's price limits. They will be checked when you submit.
+                      </p>
+                      <Button variant="outline" size="sm" onClick={() => { setLimitsFailed(false); void loadLimits(); }}>
+                        Try again
+                      </Button>
+                    </div>
+                  )}
                   <Input
                     label="Starting price (PKR)"
                     type="number"
@@ -206,8 +216,9 @@ export default function SellerCreateListingStep2() {
                     onChange={e => {
                       updateDraft({ startingPrice: Number(e.target.value) });
                       setStartingPriceError('');
+                      if (fieldErrors.startPrice) setFieldErrors({ ...fieldErrors, startPrice: undefined });
                     }}
-                    hint={`Platform minimum ${pkr(limits.minListingPrice)}`}
+                    hint={limits ? `Platform minimum ${pkr(limits.minListingPrice)}` : undefined}
                     error={startingPriceError}
                     required
                   />
@@ -225,6 +236,7 @@ export default function SellerCreateListingStep2() {
                     onChange={e => {
                       updateDraft({ minIncrement: Number(e.target.value) });
                       setMinIncrementError('');
+                      if (fieldErrors.minIncrement) setFieldErrors({ ...fieldErrors, minIncrement: undefined });
                     }}
                     error={minIncrementError}
                     required

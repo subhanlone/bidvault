@@ -173,6 +173,7 @@ export type ErrorResponse = {
   success: false;
   error: string;
   code?: string;
+  details?: Record<string, string[]>;
 };
 
 export type ForgotPasswordRequest = {
@@ -243,6 +244,11 @@ export type Listing = {
   attributes?: CategoryAttributes;
   isLive: boolean;
   auctionId?: string;
+};
+
+export type ListingLimits = {
+  minListingPrice: number;
+  maxBidIncrement: number;
 };
 
 export type ListingStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "REMOVED";
@@ -627,6 +633,7 @@ export interface GetEndpoints {
   };
   "/auth/me/preferences": NotificationPrefs;
   "/health": Health;
+  "/listings/limits": ListingLimits;
   "/listings/mine": PaginatedListings;
   "/listings/pending": PaginatedListings;
   "/notifications": Notification[];

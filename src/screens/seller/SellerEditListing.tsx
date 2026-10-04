@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Upload, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { api } from '../../services/api';
+import { api, ApiError } from '../../services/api';
 import { fetchAllMyListings } from '../../services/myListings';
 import { SellerNavbar, Button, ErrorState, Input, Textarea } from '../../components/ui';
 import LoadingStatus from '../../components/ui/LoadingStatus';
@@ -196,6 +196,19 @@ export default function SellerEditListing() {
       showToast({ type: 'success', title: 'Resubmitted', message: 'Your listing has been resubmitted for review.' });
       navigate('/seller/listings');
     } catch (err: unknown) {
+      // The server names the field when the price or increment breaks a platform limit: show it
+      // on that field as well as in the toast.
+      if (err instanceof ApiError) {
+        const startPriceError = err.details?.startPrice?.[0];
+        const minIncrementError = err.details?.minIncrement?.[0];
+        if (startPriceError || minIncrementError) {
+          setErrors(prev => ({
+            ...prev,
+            ...(startPriceError ? { startPrice: startPriceError } : {}),
+            ...(minIncrementError ? { minIncrement: minIncrementError } : {}),
+          }));
+        }
+      }
       showToast({ type: 'error', title: 'Could Not Resubmit', message: err instanceof Error ? err.message : 'Please try again.' });
     } finally {
       setSubmitting(false);

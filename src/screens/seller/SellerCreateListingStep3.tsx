@@ -14,7 +14,7 @@ import { conditionLabel, pkr } from '../../utils/format';
 export default function SellerCreateListingStep3() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { draft, setSubmittedListingCode } = useListing();
+  const { draft, setSubmittedListingCode, setFieldErrors } = useListing();
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -77,6 +77,18 @@ export default function SellerCreateListingStep3() {
       showToast({ type: 'success', title: 'Listing Submitted!', message: 'Your listing is under admin review.' });
       navigate('/seller/listing-submitted');
     } catch (err) {
+      // The server names the field when the starting price or increment breaks a platform limit
+      // (they are set by an admin and may have changed since Step 2 checked them, or Step 2 could
+      // not load them). Those two fields live on Step 2, so go back there with the message on the
+      // field instead of leaving it only in a toast.
+      const startPrice = err instanceof ApiError ? err.details?.startPrice?.[0] : undefined;
+      const minIncrement = err instanceof ApiError ? err.details?.minIncrement?.[0] : undefined;
+      if (startPrice || minIncrement) {
+        setFieldErrors({ startPrice, minIncrement });
+        showToast({ type: 'error', title: 'Check the auction setup', message: startPrice ?? minIncrement ?? '' });
+        navigate('/seller/create-listing/step-2');
+        return;
+      }
       showToast({ type: 'error', title: 'Submission Failed', message: err instanceof ApiError ? err.message : 'Please try again.' });
     } finally {
       setIsSubmitting(false);
