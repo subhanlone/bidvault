@@ -13,7 +13,7 @@ import { useDialog } from '../../hooks/useDialog';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
-  const { pendingListings, status, retry, refreshListings, approveAll } = usePendingListings();
+  const { pendingListings, status, retry, retrying, approveAll } = usePendingListings();
   const { showToast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const confirmDialogRef = useDialog<HTMLDivElement>(confirmOpen, () => setConfirmOpen(false));
@@ -21,7 +21,6 @@ export default function AdminListingReviews() {
   const [approveProgress, setApproveProgress] = useState<BulkApproveProgress | null>(null);
   const [reviewTimeoutHours, setReviewTimeoutHours] = useState<number | null>(null);
 
-  useEffect(() => { refreshListings(); }, [refreshListings]);
 
   // The review deadline decides which rows say "Overdue". When it could not be loaded no row can be
   // judged, and a queue with no "Overdue" marks reads as "nothing is overdue" -- the screen says so
@@ -105,7 +104,7 @@ export default function AdminListingReviews() {
 
       <div className="flex-1 overflow-auto p-4 sm:p-6">
           {status === 'error' ? (
-            <ErrorState title="Could not load the review queue" onRetry={retry} />
+            <ErrorState title="Could not load the review queue" onRetry={retry} retrying={retrying} />
           ) : status === 'loading' ? (
             <div className="bg-surface border border-border-light rounded-md divide-y divide-bg">
               <LoadingStatus label="Loading the review queue" />

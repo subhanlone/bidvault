@@ -31,6 +31,10 @@ export default function EmailVerificationScreen() {
   const [expiresAt, setExpiresAt] = useState(() => deadlineFrom(state?.codeExpiresAt));
   const [, setTick]               = useState(0);
   const [otpError, setOtpError]   = useState('');
+  // What the page may claim about the code. Arriving from a blocked login the code is being sent as
+  // this page opens, and until that answers (or if it fails) "we sent a code" and a running expiry
+  // countdown would describe a code that does not exist.
+  const [codeState, setCodeState] = useState<'sending' | 'sent' | 'failed'>(autoResend && email ? 'sending' : 'sent');
   const [resending, setResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -56,11 +60,13 @@ export default function EmailVerificationScreen() {
       if (r.success) {
         setExpiresAt(deadlineFrom(r.codeExpiresAt));
         setVerificationCode(r.verificationCode);
+        setCodeState('sent');
         showToast({ type: 'info', title: 'New code sent', message: `A new code was sent to ${email}` });
       } else {
         // Nothing was sent, so the resend cooldown (started for a code that does not exist) must
         // not keep the button locked.
         setResendSecs(0);
+        setCodeState('failed');
         showToast({ type: 'error', title: 'Could not send a new code', message: r.error || 'Press "Resend Code" to try again.' });
       }
     });
@@ -135,6 +141,7 @@ export default function EmailVerificationScreen() {
     setResending(false);
     if (result.success) {
       setResendSecs(RESEND_COOLDOWN_SECONDS);
+      setCodeState('sent');
       setExpiresAt(deadlineFrom(result.codeExpiresAt));
       setVerificationCode(result.verificationCode);
       setOtp(['', '', '', '', '', '']);
@@ -156,7 +163,8 @@ export default function EmailVerificationScreen() {
         'Your account is 100% secure',
       ]}
       stats={[
-        { value: fmtTime(codeExpiry), label: 'Code Expires' },
+        // A dash unless a code really was sent: this tile counted down for a code that never existed.
+        { value: codeState === 'sent' ? fmtTime(codeExpiry) : '—', label: 'Code Expires' },
         { value: '6',                 label: 'Digit Code'   },
         { value: '100%',              label: 'Secure'        },
       ]}
@@ -180,7 +188,7 @@ export default function EmailVerificationScreen() {
           <div>
             <h2 className="text-2xl font-extrabold text-navy">Check your inbox</h2>
             <p className="text-sm text-muted mt-1">
-              We sent a 6-digit code to<br />
+              {codeState === 'sent' ? 'We sent a 6-digit code to' : codeState === 'sending' ? 'Sending a 6-digit code to' : 'We could not send a code to'}<br />
               <span className="font-bold text-secondary">{email || 'your email'}</span>
             </p>
           </div>
@@ -191,7 +199,9 @@ export default function EmailVerificationScreen() {
           <Mail size={17} className="text-muted flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-secondary truncate">{email || 'your email'}</p>
-            <p className="text-[11.5px] text-placeholder">Code expires in {fmtTime(codeExpiry)}</p>
+            <p className={`text-[11.5px] ${codeState === 'failed' ? 'text-error' : 'text-placeholder'}`}>
+              {codeState === 'sent' ? `Code expires in ${fmtTime(codeExpiry)}` : codeState === 'sending' ? 'Sending your code…' : 'No code was sent. Press Resend Code to try again.'}
+            </p>
           </div>
           <Link to="/register" className="text-xs font-bold text-primary hover:underline flex-shrink-0">Change</Link>
         </div>
