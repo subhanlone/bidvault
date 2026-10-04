@@ -42,14 +42,29 @@ export default function EmailVerificationScreen() {
   useEffect(() => { inputRefs.current[0]?.focus(); }, []);
 
   // Arrived here from a blocked login attempt — explain why, and send a fresh code immediately.
+  // Sending an email is a side effect, so it must not depend on how often the effect re-runs (React
+  // StrictMode runs it twice in development): the ref makes it once per visit.
+  const autoResendSent = useRef(false);
   useEffect(() => {
-    if (!email || !autoResend) return;
-    showToast({ type: 'info', title: 'Email Not Verified', message: 'Please verify your email to sign in. We sent you a new code.' });
-    resendVerification(email)
-      .then(r => { if (r.success) { setExpiresAt(deadlineFrom(r.codeExpiresAt)); setVerificationCode(r.verificationCode); } })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!email || !autoResend || autoResendSent.current) return;
+    autoResendSent.current = true;
+    showToast({ type: 'info', title: 'Email Not Verified', message: 'Please verify your email to sign in. Sending you a new code…' });
+    // resendVerification answers { success: false } rather than throwing, so that is the branch to
+    // handle. The toast above used to say the code had been sent before anyone knew, and a failure
+    // here left it saying so.
+    void resendVerification(email).then(r => {
+      if (r.success) {
+        setExpiresAt(deadlineFrom(r.codeExpiresAt));
+        setVerificationCode(r.verificationCode);
+        showToast({ type: 'info', title: 'New code sent', message: `A new code was sent to ${email}` });
+      } else {
+        // Nothing was sent, so the resend cooldown (started for a code that does not exist) must
+        // not keep the button locked.
+        setResendSecs(0);
+        showToast({ type: 'error', title: 'Could not send a new code', message: r.error || 'Press "Resend Code" to try again.' });
+      }
+    });
+  }, [email, autoResend, resendVerification, showToast]);
 
   useEffect(() => {
     if (resendSecs <= 0) return;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePendingListings, type BulkApproveProgress } from '../../hooks/usePendingListings';
 import { useToast } from '../../context/ToastContext';
@@ -23,11 +23,15 @@ export default function AdminListingReviews() {
 
   useEffect(() => { refreshListings(); }, [refreshListings]);
 
-  useEffect(() => {
+  // The review deadline decides which rows say "Overdue". When it could not be loaded no row can be
+  // judged, and a queue with no "Overdue" marks reads as "nothing is overdue" -- the screen says so
+  // instead of leaving the absence to be misread.
+  const [deadlineFailed, setDeadlineFailed] = useState(false);
+  const loadDeadline = useCallback(() =>
     api.get('/settings')
-      .then(s => setReviewTimeoutHours(s.reviewTimeoutHours))
-      .catch(() => {});
-  }, []);
+      .then(s => { setReviewTimeoutHours(s.reviewTimeoutHours); setDeadlineFailed(false); })
+      .catch(() => setDeadlineFailed(true)), []);
+  useEffect(() => { void loadDeadline(); }, [loadDeadline]);
 
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
@@ -131,6 +135,12 @@ export default function AdminListingReviews() {
                   <div>
                     <h2 className="font-bold text-[14px] text-navy">Pending Listings Queue</h2>
                     <p className="text-[11px] text-muted">Click Review to inspect and approve or reject</p>
+                    {deadlineFailed && (
+                      <p role="alert" className="text-[11px] text-error mt-0.5">
+                        Overdue markers are unavailable: the review deadline could not be loaded.{' '}
+                        <button type="button" onClick={() => { void loadDeadline(); }} className="font-bold underline cursor-pointer">Try again</button>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
