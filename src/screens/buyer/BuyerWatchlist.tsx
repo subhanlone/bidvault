@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { useWatchlistToggle } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { Clock, Heart } from 'lucide-react';
@@ -7,6 +7,7 @@ import { BuyerNavbar, AuctionThumbnail, ErrorState } from '../../components/ui';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 import type { Auction } from '../../types/api';
 import { count, pkr } from '../../utils/format';
+import { useNow } from '../../hooks/useNow';
 
 function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => void }) {
   const navigate = useNavigate();
@@ -81,8 +82,7 @@ export default function BuyerWatchlist() {
   const { user, logout } = useAuth();
   const { toggle, watched: watchlistAuctions, loading, isError, isRefetching, refetch } = useWatchlistToggle();
 
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
+  const now = useNow(5_000);
   // NEW-12: read the rows /watchlist returned. This used to intersect the watched ids with
   // `auctions`, which only ever holds ACTIVE auctions — so a watched auction disappeared the
   // moment it closed, and "Clear Ended" could never appear.

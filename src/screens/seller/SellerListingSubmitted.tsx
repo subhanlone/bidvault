@@ -1,7 +1,7 @@
 ﻿import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useListing } from '../../context/ListingContext';
+import { useAuth } from '../../context/auth';
+import { useListing } from '../../context/listing';
 import { Button } from '../../components/ui';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
 import { dateMedium, timeShort } from '../../utils/format';

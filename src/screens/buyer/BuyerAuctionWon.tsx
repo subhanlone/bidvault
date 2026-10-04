@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Navigate } from 'react-router-dom';
 import { Sparkles, Trophy, Frown, Package, Ban, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { BuyerNavbar, ErrorState } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import { api } from '../../services/api';

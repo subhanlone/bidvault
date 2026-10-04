@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import type { AppNotification } from '../types/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/auth';
 import { keys } from './keys';
 
 /** How often to re-check while a tab is open. Unchanged from the hand-rolled setInterval. */

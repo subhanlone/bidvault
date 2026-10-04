@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Car, Package, Info } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useListing } from '../../context/ListingContext';
-import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/auth';
+import { useListing } from '../../context/listing';
+import { useToast } from '../../context/toast';
 import { api, ApiError } from '../../services/api';
 import { Button } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';

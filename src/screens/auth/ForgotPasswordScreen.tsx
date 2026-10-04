@@ -1,8 +1,8 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Eye, EyeOff, Info, RefreshCw, MailOpen, ArrowLeft, Check } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/auth';
+import { useToast } from '../../context/toast';
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { OTP_WINDOW_SECONDS, RESEND_COOLDOWN_SECONDS } from '../../config/otp';
 // Password reset looks an existing account up, so it uses the permissive rule.

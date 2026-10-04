@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import Button from './Button';
 import Input from './Input';
 import { useDialog } from '../../hooks/useDialog';

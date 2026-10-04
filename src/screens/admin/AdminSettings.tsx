@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { Menu, Save, AlertTriangle, Eye, EyeOff } from 'lucide-react';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../context/toast';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import { Button, ErrorState, Input } from '../../components/ui';

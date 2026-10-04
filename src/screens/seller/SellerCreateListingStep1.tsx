@@ -1,9 +1,9 @@
 ﻿import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ClipboardList, Camera, ChevronDown, Upload, Loader2, X, RefreshCw } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useListing } from '../../context/ListingContext';
-import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/auth';
+import { useListing } from '../../context/listing';
+import { useToast } from '../../context/toast';
 import { api } from '../../services/api';
 import { SellerNavbar, Button, Input, Textarea } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';

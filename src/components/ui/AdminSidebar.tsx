@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ClipboardList, BarChart2, Radio, Receipt, Users, Settings, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
 import { usePendingListings } from '../../hooks/usePendingListings';
 

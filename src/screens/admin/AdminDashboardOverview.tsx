@@ -4,7 +4,7 @@ import { usePendingListings } from '../../hooks/usePendingListings';
 import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
 import { api } from '../../services/api';
 import { connectSocket } from '../../services/socket';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../context/toast';
 import { CheckCircle2, Menu, BarChart3, Gavel, Banknote, Clock, ChevronRight } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';

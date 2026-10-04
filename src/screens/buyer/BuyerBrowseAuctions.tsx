@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, SlidersHorizontal, Heart, Check } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { flattenPages, useActiveAuctions, useWatchlistToggle } from '../../queries/auctions';
 import { useInfiniteScrollTrigger } from '../../hooks/useInfiniteScrollTrigger';
 import { useTimer } from '../../hooks/useTimer';
@@ -10,6 +10,7 @@ import Button from '../../components/ui/Button';
 import type { Auction } from '../../types/api';
 import { conditionLabel, count, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
+import { useNow } from '../../hooks/useNow';
 
 // Kept in sync with SellerCreateListingStep1.tsx CATEGORIES
 const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles'];
@@ -183,8 +184,7 @@ export default function BuyerBrowseAuctions() {
     setter(String(num));
   };
 
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
+  const now = useNow(30_000);
   const min = minPrice.trim() === '' ? null : Number(minPrice);
   const max = maxPrice.trim() === '' ? null : Number(maxPrice);
   const priceRangeInvalid = min !== null && max !== null && min > max;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Banknote, Gavel, PackageCheck, Clock, Star, MessageSquare } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { api } from '../../services/api';
 import { fetchAllMyListings } from '../../services/myListings';
 import { SellerNavbar, Badge, Button, ErrorState, StatCard, ReasonModal } from '../../components/ui';

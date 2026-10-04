@@ -13,6 +13,7 @@ import LoadingStatus from '../../components/ui/LoadingStatus';
 import { api } from '../../services/api';
 import type { Auction } from '../../types/api';
 import { conditionLabel, count, pkr, pkrCompact } from '../../utils/format';
+import { useNow } from '../../hooks/useNow';
 
 function AuctionRow({ auction }: { auction: Auction }) {
   const timer = useTimer(auction.endTime);
@@ -162,8 +163,7 @@ export default function AdminLiveAuctions() {
   const known = !activeQuery.isError && !activeQuery.isPending && !activeQuery.hasNextPage && !activeQuery.isFetchingNextPage;
 
   // AL-01: filter to ACTIVE only for table rendering
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
+  const now = useNow(30_000);
   const active = auctions.filter(a => a.status === 'ACTIVE');
   const endingSoon = active.filter(a => {
     const secs = Math.max(0, (new Date(a.endTime).getTime() - now) / 1000);

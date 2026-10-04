@@ -5,7 +5,7 @@ import { useTimer } from '../hooks/useTimer';
 import type { Auction } from '../types/api';
 import { Button, AuctionThumbnail } from '../components/ui';
 import { api } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/auth';
 import { conditionLabel, count, pkr } from '../utils/format';
 import LoadingStatus from '../components/ui/LoadingStatus';
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 // All three come straight from the contract. RegisterRequest and LoginRequest replaced a
 // hand-written pair that used to sit in types/index.ts alongside copies of every other wire
@@ -21,25 +21,7 @@ import {
   writeSessionHint,
 } from '../services/api';
 import { reconnectSocket, disconnectSocket } from '../services/socket';
-
-interface AuthContextType {
-  user: User | null;
-  /** True while a session that may exist is being restored on startup. Protected routes wait for it. */
-  isLoading: boolean;
-  register: (data: RegisterRequest) => Promise<{ success: boolean; verificationCode?: string; codeExpiresAt?: string; error?: string }>;
-  verifyEmail: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
-  resendVerification: (email: string) => Promise<{ success: boolean; verificationCode?: string; codeExpiresAt?: string; error?: string }>;
-  login: (data: LoginRequest, remember?: boolean) => Promise<{ success: boolean; error?: string; code?: string; user?: User }>;
-  logout: () => void;
-  forgotPassword: (email: string) => Promise<{ success: boolean; resetCode?: string; codeExpiresAt?: string; error?: string }>;
-  verifyResetOtp: (email: string, otp: string) => Promise<{ success: boolean; error?: string }>;
-  resetPassword: (email: string, otp: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
-  deleteAccount: (password: string) => Promise<{ success: boolean; error?: string }>;
-  updateUser: (u: User) => void;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
+import { AuthContext } from './auth';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
@@ -281,11 +263,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
 }

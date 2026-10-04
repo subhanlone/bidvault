@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { useDrainedPages, useMyBids } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
 import { Check, Zap, Trophy, X, Hammer, Ban } from 'lucide-react';
@@ -8,6 +8,7 @@ import Button from '../../components/ui/Button';
 import type { Auction } from '../../types/api';
 import { pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
+import { useNow } from '../../hooks/useNow';
 
 interface BidEntry {
   auction: Auction;
@@ -135,8 +136,7 @@ export default function BuyerMyBids() {
   const loading = myBidsQuery.isPending || myBidsQuery.hasNextPage || myBidsQuery.isFetchingNextPage;
   const navigate = useNavigate();
 
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
+  const now = useNow(5_000);
 
   // GET /auctions/mine/bids returns each bid with its auction attached, and is already scoped
   // to the signed-in buyer. Both of those used to be the caller's problem: this screen read a

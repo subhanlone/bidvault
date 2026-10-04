@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trophy, CheckCircle, Clock, XCircle, Package, Star, Truck, AlertTriangle, ShieldAlert, RotateCcw, Receipt, Pencil, Trash2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { BuyerNavbar, RatingModal, DisputeModal, ErrorState } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import PaymentModal from '../../components/ui/PaymentModal';
