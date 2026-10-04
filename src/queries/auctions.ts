@@ -3,7 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteD
 import { api } from '../services/api';
 import type { Auction, PublicBid, PaginatedAuctions, PaginatedBidsWithAuction } from '../types/api';
 import { keys } from './keys';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/auth';
 
 /**
  * Auction data, as queries rather than a hand-rolled cache.

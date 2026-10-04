@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { useState } from 'react';
 import type { ListingDraft } from '../types';
-import { useAuth } from './AuthContext';
+import { useAuth } from './auth';
+import { ListingContext, type LimitFieldErrors } from './listing';
 
 // One draft per account. The draft holds the seller's reserve price, and one key for everyone
 // meant that whoever signed in next on the same tab was handed the previous seller's half-written
@@ -22,26 +23,6 @@ const DEFAULT_DRAFT: ListingDraft = {
   reservePrice: 0,
   attributes: {},
 };
-
-/** Messages the server attached to the two fields Step 2 owns, when a submit on Step 3 was refused. */
-export type LimitFieldErrors = { startPrice?: string; minIncrement?: string };
-
-interface ListingContextType {
-  draft: ListingDraft;
-  updateDraft: (partial: Partial<ListingDraft>) => void;
-  clearDraft: () => void;
-  submittedListingCode: string | null;
-  setSubmittedListingCode: (code: string | null) => void;
-  /**
-   * What the server said about the starting price / increment when it refused the submit. Kept
-   * here, not in navigation state: this store is per account (see ListingProvider), so one
-   * account's message can never be shown on the next account's form.
-   */
-  fieldErrors: LimitFieldErrors;
-  setFieldErrors: (errors: LimitFieldErrors) => void;
-}
-
-const ListingContext = createContext<ListingContextType | null>(null);
 
 /**
  * Remounts the draft store whenever the signed-in account changes, so React state can never carry
@@ -93,11 +74,4 @@ function ListingStore({ userId, children }: { userId: string | null; children: R
       {children}
     </ListingContext.Provider>
   );
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useListing() {
-  const ctx = useContext(ListingContext);
-  if (!ctx) throw new Error('useListing must be used within ListingProvider');
-  return ctx;
 }

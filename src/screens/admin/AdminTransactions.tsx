@@ -6,7 +6,7 @@ import Button from '../../components/ui/Button';
 import ErrorState from '../../components/ui/ErrorState';
 import Textarea from '../../components/ui/Textarea';
 import { useDialog } from '../../hooks/useDialog';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../context/toast';
 import { api } from '../../services/api';
 import { dateMedium, pkrCompact } from '../../utils/format';
 

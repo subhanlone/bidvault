@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, PackageCheck, Clock, Banknote, Eye, EyeOff, Wallet, Receipt } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/auth';
+import { useToast } from '../../context/toast';
 import { SellerNavbar, Badge, Button, Input, DeleteAccountModal, ErrorState } from '../../components/ui';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 import { api } from '../../services/api';

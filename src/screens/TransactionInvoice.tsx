@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Receipt, XCircle, ShieldAlert } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/auth';
 import { SellerNavbar, BuyerNavbar } from '../components/ui';
 import { api } from '../services/api';
 import { dateLong, pkr } from '../utils/format';

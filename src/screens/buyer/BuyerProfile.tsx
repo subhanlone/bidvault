@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, Package, Shield, Mail, Calendar, Gavel, Trophy, Heart, TrendingUp, Eye, EyeOff, Bell, BellOff, Search, Hammer } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { useDrainedPages, useMyBids, useWatchlist } from '../../queries/auctions';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../context/toast';
 import { BuyerNavbar, DeleteAccountModal, ErrorState } from '../../components/ui';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 import Button from '../../components/ui/Button';

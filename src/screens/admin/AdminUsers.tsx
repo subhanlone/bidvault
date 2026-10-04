@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Menu, Search, Users as UsersIcon } from 'lucide-react';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../context/toast';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import ReasonModal from '../../components/ui/ReasonModal';

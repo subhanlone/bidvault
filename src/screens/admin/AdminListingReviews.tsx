@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePendingListings, type BulkApproveProgress } from '../../hooks/usePendingListings';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../context/toast';
 import { CheckCircle2, ClipboardList, Menu, X } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import ErrorState from '../../components/ui/ErrorState';
@@ -10,6 +10,7 @@ import NotificationBell from '../../components/ui/NotificationBell';
 import { api } from '../../services/api';
 import { dateMedium, pkrCompact } from '../../utils/format';
 import { useDialog } from '../../hooks/useDialog';
+import { useNow } from '../../hooks/useNow';
 
 export default function AdminListingReviews() {
   const navigate = useNavigate();
@@ -32,8 +33,7 @@ export default function AdminListingReviews() {
       .catch(() => setDeadlineFailed(true)), []);
   useEffect(() => { void loadDeadline(); }, [loadDeadline]);
 
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
+  const now = useNow(60_000);
   const isOverdue = (submittedAt: string) =>
     reviewTimeoutHours != null &&
     now - new Date(submittedAt).getTime() > reviewTimeoutHours * 3_600_000;

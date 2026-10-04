@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePendingListings } from '../../hooks/usePendingListings';
-import { useToast } from '../../context/ToastContext';
-import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/toast';
+import { useAuth } from '../../context/auth';
 import { ChevronLeft, ChevronRight, Menu, Package, MessageSquare } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import ErrorState from '../../components/ui/ErrorState';
@@ -33,6 +33,39 @@ function dropLegacyNotes(): void {
   } catch { /* storage unavailable */ }
 }
 
+function readNotes(adminId: string, listingId: string): string {
+  try { return localStorage.getItem(NOTES_KEY(adminId, listingId)) ?? ''; } catch { return ''; }
+}
+
+/**
+ * The admin's private notes for one listing. It reads its saved text once, when it is created, and
+ * the parent gives it a `key` made of both ids: a different listing or a different admin is a
+ * different component, which starts from its own storage entry. That replaces an effect that copied
+ * storage into state after every id change (a render with the previous listing's notes, then a
+ * second one with the right ones).
+ */
+function ReviewNotes({ adminId, listingId }: { adminId: string; listingId: string }) {
+  const [notes, setNotes] = useState(() => readNotes(adminId, listingId));
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setNotes(val);
+    try { localStorage.setItem(NOTES_KEY(adminId, listingId), val); } catch { /* noop */ }
+  };
+
+  return (
+    <Textarea
+      label="Review notes (internal)"
+      placeholder="Add internal notes about this listing decision..."
+      value={notes}
+      onChange={handleChange}
+      rows={3}
+      maxLength={2000}
+      className="text-[12px]"
+    />
+  );
+}
+
 export default function AdminListingReview() {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
@@ -41,7 +74,6 @@ export default function AdminListingReview() {
   const { showToast } = useToast();
   const adminId = useAuth().user?.userId;
 
-  const [notes, setNotes] = useState('');
   const [rejecting, setRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,21 +84,8 @@ export default function AdminListingReview() {
   const prevListing = currentIndex > 0 ? pendingListings[currentIndex - 1] : null;
   const nextListing = currentIndex < pendingListings.length - 1 ? pendingListings[currentIndex + 1] : null;
 
-  // AR-03: Load persisted notes for this listing
+  // AR-03: persisted notes live in <ReviewNotes>; only the unattributable legacy entries are cleared here.
   useEffect(() => { dropLegacyNotes(); }, []);
-  useEffect(() => {
-    if (!listingId || !adminId) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    try { setNotes(localStorage.getItem(NOTES_KEY(adminId, listingId)) ?? ''); } catch { setNotes(''); }
-  }, [adminId, listingId]);
-
-  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    setNotes(val);
-    if (listingId && adminId) {
-      try { localStorage.setItem(NOTES_KEY(adminId, listingId), val); } catch { /* noop */ }
-    }
-  };
 
   // AR-04: only removes from UI on success (hook throws on API failure)
   // AR-05: delay navigate 800ms so toast is visible
@@ -349,15 +368,7 @@ export default function AdminListingReview() {
               </button>
 
               {/* AR-03: Notes saved to localStorage */}
-              <Textarea
-                label="Review notes (internal)"
-                placeholder="Add internal notes about this listing decision..."
-                value={notes}
-                onChange={handleNotesChange}
-                rows={3}
-                maxLength={2000}
-                className="text-[12px]"
-              />
+              {adminId && listingId && <ReviewNotes key={`${adminId}:${listingId}`} adminId={adminId} listingId={listingId} />}
             </div>
 
             {/* Other Pending Listings */}

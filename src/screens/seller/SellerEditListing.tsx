@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Upload, X, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/auth';
+import { useToast } from '../../context/toast';
 import { api, ApiError } from '../../services/api';
 import { fetchAllMyListings } from '../../services/myListings';
 import { SellerNavbar, Button, ErrorState, Input, Textarea } from '../../components/ui';

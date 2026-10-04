@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/auth';
 import { useAuctionDetail, useBids, usePlaceBid, useWatchlistToggle } from '../../queries/auctions';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../context/toast';
 import { useTimer } from '../../hooks/useTimer';
 import {
   Search, Check, Zap, Star, Heart,

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, ShoppingBag, Tag } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/auth';
+import { useToast } from '../../context/toast';
 // The role this form can submit, taken from the contract rather than the wider UserRole:
 // registration accepts BUYER and SELLER only, and the two buttons below produce nothing
 // else. The wider type let ADMIN through the type system all the way to the API.

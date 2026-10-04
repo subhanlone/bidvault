@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Check } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/auth';
+import { useToast } from '../../context/toast';
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
 import { pkrCompact } from '../../utils/format';
