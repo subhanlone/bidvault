@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuctionDetail, useBids } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
-import { connectSocket } from '../../services/socket';
+import { useAuctionRoom } from '../../hooks/useAuctionRoom';
 import { Menu, Search } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
@@ -21,17 +20,7 @@ export default function AdminAuctionMonitor() {
   const auctionsLoaded = !auctionsPending;
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
 
-  useEffect(() => {
-    if (!auctionId) return;
-    const socket = connectSocket();
-    const subscribe = () => socket.emit('auction:subscribe', auctionId);
-    subscribe();
-    socket.on('connect', subscribe);
-    return () => {
-      socket.off('connect', subscribe);
-      socket.emit('auction:unsubscribe', auctionId);
-    };
-  }, [auctionId]);
+  useAuctionRoom(auctionId);
 
   return (
     <AdminLayout active="Live Auctions">
