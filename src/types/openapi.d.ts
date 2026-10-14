@@ -334,7 +334,6 @@ export type PaginatedSellerSales = {
 export type PasswordChanged = {
   message: string;
   accessToken: string;
-  refreshToken: string;
 };
 
 export type PayResult = {
@@ -399,7 +398,6 @@ export type RefreshRequest = {
 
 export type RefreshedTokens = {
   accessToken: string;
-  refreshToken: string;
 };
 
 export type RegisterRequest = {
@@ -500,7 +498,6 @@ export type SellerStats = {
 
 export type Session = {
   accessToken: string;
-  refreshToken: string;
   user: User;
 };
 
