@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Clock, CheckCircle2, XCircle, AlertCircle, Ban, Pencil, Radio } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, AlertCircle, Ban, Pencil } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { useToast } from '../../context/toast';
 import { api } from '../../services/api';
@@ -251,16 +251,6 @@ export default function SellerMyListings() {
                           )}
                           {l.isLive && l.auctionId && (
                             <button
-                              onClick={() => navigate('/seller/auctions')}
-                              aria-label="See this auction's live numbers"
-                              title="See this auction's live numbers"
-                              className="border border-border-medium text-primary p-[5px] rounded-sm hover:bg-bg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                            >
-                              <Radio size={13} />
-                            </button>
-                          )}
-                          {l.isLive && l.auctionId && (
-                            <button
                               onClick={() => setCancelling(l)}
                               aria-label="Cancel this auction"
                               title="Cancel this auction"
@@ -296,11 +286,6 @@ export default function SellerMyListings() {
                           {l.status === 'REJECTED' && (
                             <button onClick={() => navigate(`/seller/listings/${l.listingId}/edit`)} className="text-[10px] font-bold text-primary underline cursor-pointer">
                               Edit &amp; Resubmit
-                            </button>
-                          )}
-                          {l.isLive && l.auctionId && (
-                            <button onClick={() => navigate('/seller/auctions')} className="text-[10px] font-bold text-primary underline cursor-pointer">
-                              Live numbers
                             </button>
                           )}
                           {l.isLive && l.auctionId && (
