@@ -118,7 +118,9 @@ function AuctionCard({ auction }: { auction: Auction }) {
           <div>
             <p className="text-[10px] text-muted mb-[2px]">Current bid</p>
             <p className="font-extrabold text-[17px] text-primary leading-none">{pkr(auction.currentBid)}</p>
-            <p className="text-[10px] text-placeholder mt-1">{count(auction.bidCount, 'bid')}</p>
+            <p className="text-[10px] text-placeholder mt-1">
+              {count(auction.bidCount, 'bid')}{auction.watcherCount > 0 ? ` · ${auction.watcherCount} watching` : ''}
+            </p>
           </div>
           {/* An auction stays in the ACTIVE list until the worker closes it, which can lag
               endTime by up to the 5-minute reconcile interval. During that window the card

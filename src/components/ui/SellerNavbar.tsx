@@ -18,6 +18,7 @@ interface SellerNavbarProps {
 const defaultLinks: NavLink[] = [
   { label: 'Dashboard', to: '/seller/dashboard' },
   { label: 'My Listings', to: '/seller/listings' },
+  { label: 'Live Auctions', to: '/seller/auctions' },
   { label: 'My Sales', to: '/seller/sales' },
 ];
 

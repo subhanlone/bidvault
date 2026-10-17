@@ -23,6 +23,8 @@ export const keys = {
     detail: (auctionId: string) => ['auctions', 'detail', auctionId] as const,
     /** GET /watchlist — full auction rows, closed ones included. */
     watchlist: ['auctions', 'watchlist'] as const,
+    /** GET /auctions/mine?status=… — the signed-in seller's own auctions, one list per status. */
+    mine: (status: string) => ['auctions', 'mine', status] as const,
   },
   bids: {
     all: ['bids'] as const,

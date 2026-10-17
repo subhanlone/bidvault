@@ -79,6 +79,31 @@ export function useActiveAuctions(params?: { category?: string; search?: string 
   });
 }
 
+export type MyAuctionStatus = 'ACTIVE' | 'CLOSED' | 'CANCELLED';
+
+/**
+ * The signed-in seller's own auctions with one status (GET /auctions/mine), cursor-paginated.
+ *
+ * Sits under `keys.auctions.all` like every other copy of an auction, so a `bid:placed` event that
+ * does reach this tab updates these rows too. None does by itself: the broadcast goes to the
+ * auction's room and a seller is not in it, so the live tab simply re-reads the numbers on an
+ * interval (and when the window regains focus, React Query's default).
+ */
+export function useMyAuctions(status: MyAuctionStatus, enabled = true) {
+  return useInfiniteQuery({
+    queryKey: keys.auctions.mine(status),
+    queryFn: ({ pageParam }) => {
+      const qs = new URLSearchParams({ status });
+      if (pageParam) qs.set('cursor', pageParam);
+      return api.get(`/auctions/mine?${qs.toString()}`);
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage: PaginatedAuctions) => lastPage.nextCursor ?? undefined,
+    enabled,
+    refetchInterval: status === 'ACTIVE' ? 20_000 : false,
+  });
+}
+
 /**
  * One auction, fetched directly rather than looked up in a list.
  *
