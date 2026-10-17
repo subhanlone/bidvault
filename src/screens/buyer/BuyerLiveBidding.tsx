@@ -15,7 +15,7 @@ import { useAuctionRoom } from '../../hooks/useAuctionRoom';
 import { api, ApiError } from '../../services/api';
 import type { SellerReview } from '../../types/api';
 import { getCategoryFields } from '../../config/categoryFields';
-import { conditionLabel, count, dateMedium, pkr, timeShort } from '../../utils/format';
+import { conditionLabel, count, dateMedium, monthYear, pkr, timeShort } from '../../utils/format';
 import { useDialog } from '../../hooks/useDialog';
 
 const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
@@ -314,7 +314,7 @@ export default function BuyerLiveBidding() {
                 <div className="flex items-center gap-1 flex-wrap">
                   <Star size={12} fill="currentColor" className="text-gold" />
                   <span className="text-[11px] text-muted">
-                    {auction.sellerRating ? `${auction.sellerRating}★` : 'No ratings yet'} · {auction.sellerSales ? count(auction.sellerSales, 'sale') : 'No sales yet'}
+                    {auction.sellerRating ? `${auction.sellerRating}★` : 'No ratings yet'} · {auction.sellerSales ? count(auction.sellerSales, 'sale') : 'No sales yet'} · Member since {monthYear(auction.sellerMemberSince)}
                   </span>
                   <button
                     type="button"
@@ -437,6 +437,9 @@ export default function BuyerLiveBidding() {
               </span>
             </p>
             <p className="text-[11px] text-muted">{count(auction.bidCount, 'bid')} · Min {noBidsYet ? 'bid' : 'next'}: {pkr(minNext)}</p>
+            {auction.watcherCount > 0 && (
+              <p className="text-[11px] text-muted mt-0.5">{auction.watcherCount} watching</p>
+            )}
             {/* Whether the reserve is met, never the amount — the figure itself stays private to
                 the seller. Telling bidders the floor exists and has not been reached encourages
                 them upward; telling them where it sits would just cap the bidding there. */}

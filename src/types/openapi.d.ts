@@ -90,11 +90,13 @@ export type Auction = {
   sellerName: string;
   sellerRating: number | null;
   sellerSales: number | null;
+  sellerMemberSince: string;
   startPrice: number;
   currentBid: number;
   minIncrement: number;
   reserveMet: boolean | null;
   bidCount: number;
+  watcherCount: number;
   startTime: string;
   endTime: string;
   status: AuctionStatus;
@@ -620,6 +622,7 @@ export interface GetEndpoints {
   "/admin/transactions": AdminTransaction[];
   "/admin/users": PaginatedAdminUsers;
   "/auctions": PaginatedAuctions;
+  "/auctions/mine": PaginatedAuctions;
   "/auctions/mine/bids": PaginatedBidsWithAuction;
   "/auctions/{auctionId}": Auction;
   "/auctions/{auctionId}/bids": PaginatedBids;
