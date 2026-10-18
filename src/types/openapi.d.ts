@@ -19,6 +19,9 @@ export type AdminDispute = {
   finalAmount: number;
   reason: string;
   createdAt: string;
+  sellerResponse?: string;
+  sellerRespondedAt?: string;
+  responseDueAt: string;
 };
 
 export type AdminTransaction = {
@@ -450,6 +453,10 @@ export type ResolveDisputeRequest = {
   note: string;
 };
 
+export type RespondToDisputeRequest = {
+  response: string;
+};
+
 export type Review = {
   reviewId: string;
   stars: number;
@@ -710,6 +717,10 @@ export interface PostEndpoints {
     transactionId: string;
     status: "DISPUTED";
   };
+  "/payments/{transactionId}/dispute/response": {
+    transactionId: string;
+    sellerRespondedAt: string;
+  };
   "/payments/{transactionId}/offer-next-bidder": {
     transactionId: string;
     status: "PENDING";
@@ -781,6 +792,7 @@ export interface PostRequests {
   "/listings": SubmitListingRequest;
   "/listings/{listingId}/reject": RejectListingRequest;
   "/payments/{transactionId}/dispute": RaiseDisputeRequest;
+  "/payments/{transactionId}/dispute/response": RespondToDisputeRequest;
   "/payments/{transactionId}/pay": PayTransactionRequest;
   "/reviews": CreateReviewRequest;
   "/reviews/{reviewId}/reply": ReplyToReviewRequest;
