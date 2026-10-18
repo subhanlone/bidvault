@@ -50,12 +50,14 @@ export function RealtimeBridge() {
     }
 
     // B3: sent to a seller's own room when someone bids on one of their auctions. It carries
-    // only numbers, and the notification text and the My Items rows are the server's to word and
-    // derive, so this refetches them instead of patching the cache. Without it they would wait
-    // for the next poll.
-    function onBidReceived() {
+    // only numbers, and the notification text, the My Items rows and the masked bidder names are
+    // the server's to word and derive, so this refetches them instead of patching the cache.
+    // Without it they would wait for the next poll. The bids list needs it too: the seller is
+    // not in the auction's own room, so `bid:placed` never reaches an expanded row's list.
+    function onBidReceived(payload: { auctionId: string }) {
       void queryClient.invalidateQueries({ queryKey: keys.notifications });
       void queryClient.invalidateQueries({ queryKey: keys.sellerItems.all });
+      void queryClient.invalidateQueries({ queryKey: keys.bids.forAuction(payload.auctionId) });
     }
 
     socket.on('bid:placed', onBidPlaced);
