@@ -15,9 +15,11 @@ function targetFor(n: AppNotification): string | null {
     // equivalent outcome screen, so the notification text has to carry it for them.
     case 'RESERVE_NOT_MET':
       return '/buyer/my-bids';
+    // An approved listing is now live; a rejected one waits under Rejected / Removed with its reason.
     case 'LISTING_APPROVED':
+      return '/seller/items?tab=live';
     case 'LISTING_REJECTED':
-      return '/seller/listings';
+      return '/seller/items?tab=closed';
     default:
       return null;
   }

@@ -30,10 +30,8 @@ const AdminUsers = lazy(() => import('./screens/admin/AdminUsers'));
 const AdminSettings = lazy(() => import('./screens/admin/AdminSettings'));
 
 const SellerDashboard = lazy(() => import('./screens/seller/SellerDashboard'));
-const SellerMyListings = lazy(() => import('./screens/seller/SellerMyListings'));
 const SellerMyItems = lazy(() => import('./screens/seller/SellerMyItems'));
 const SellerEditListing = lazy(() => import('./screens/seller/SellerEditListing'));
-const SellerMySales = lazy(() => import('./screens/seller/SellerMySales'));
 const SellerCreateListingStep1 = lazy(() => import('./screens/seller/SellerCreateListingStep1'));
 const SellerCreateListingStep2 = lazy(() => import('./screens/seller/SellerCreateListingStep2'));
 const SellerCreateListingStep3 = lazy(() => import('./screens/seller/SellerCreateListingStep3'));
@@ -156,19 +154,12 @@ export default function App() {
                         <SellerMyItems />
                       </ProtectedRoute>
                     } />
-                    <Route path="/seller/listings" element={
-                      <ProtectedRoute allowedRoles={['SELLER']}>
-                        <SellerMyListings />
-                      </ProtectedRoute>
-                    } />
+                    {/* My Listings and My Sales became My Items; old links and bookmarks land there. */}
+                    <Route path="/seller/listings" element={<Navigate to="/seller/items" replace />} />
+                    <Route path="/seller/sales" element={<Navigate to="/seller/items" replace />} />
                     <Route path="/seller/listings/:listingId/edit" element={
                       <ProtectedRoute allowedRoles={['SELLER']}>
                         <SellerEditListing />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/seller/sales" element={
-                      <ProtectedRoute allowedRoles={['SELLER']}>
-                        <SellerMySales />
                       </ProtectedRoute>
                     } />
                     <Route path="/seller/create-listing/step-1" element={
@@ -237,7 +228,7 @@ export default function App() {
                       </ProtectedRoute>
                     } />
 
-                    {/* Shared: transaction invoice, reached from BuyerMyWins / SellerMySales */}
+                    {/* Shared: transaction invoice, reached from BuyerMyWins / SellerMyItems */}
                     <Route path="/transactions/:transactionId/invoice" element={
                       <ProtectedRoute allowedRoles={['BUYER', 'SELLER', 'ADMIN']}>
                         <TransactionInvoice />
