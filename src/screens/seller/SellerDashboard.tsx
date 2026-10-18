@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Package, Banknote, Gavel, PackageCheck, Clock, Star, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { api } from '../../services/api';
-import { fetchAllMyListings } from '../../services/myListings';
-import { SellerNavbar, Badge, Button, ErrorState, StatCard, ReasonModal } from '../../components/ui';
-import type { Listing, SellerReview } from '../../types/api';
-import { conditionLabel, dateShort, pkr } from '../../utils/format';
-import { listingBadge } from '../../utils/listingStatus';
+import { useSellerItemsSummary } from '../../queries/sellerItems';
+import { SellerNavbar, Button, ErrorState, StatCard, ReasonModal } from '../../components/ui';
+import type { SellerReview } from '../../types/api';
+import { TAB_LABELS, TAB_ORDER } from '../../utils/sellerItemStage';
+import { dateShort, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 
 function StatCardSkeleton() {
@@ -19,38 +19,12 @@ function StatCardSkeleton() {
   );
 }
 
-function ListingRowSkeleton() {
-  return (
-    <div className="border-b border-bg last:border-0">
-      <div className="hidden sm:grid grid-cols-[40px_1fr_140px_110px_120px_90px] gap-4 items-center px-5 py-3.5">
-        <div className="w-9 h-9 bg-border-light rounded-md animate-pulse" />
-        <div>
-          <div className="h-4 w-3/4 bg-border-light rounded-md animate-pulse mb-1.5" />
-          <div className="h-3 w-1/3 bg-border-light rounded-md animate-pulse" />
-        </div>
-        <div className="h-4 w-20 bg-border-light rounded-md animate-pulse" />
-        <div className="h-4 w-16 bg-border-light rounded-md animate-pulse" />
-        <div className="h-5 w-24 bg-border-light rounded-full animate-pulse" />
-        <div className="h-3 w-12 bg-border-light rounded-md animate-pulse" />
-      </div>
-      <div className="sm:hidden flex items-center gap-3 px-4 py-3">
-        <div className="w-11 h-11 bg-border-light rounded-md animate-pulse flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <div className="h-4 w-3/4 bg-border-light rounded-md animate-pulse mb-1.5" />
-          <div className="h-3 w-1/2 bg-border-light rounded-md animate-pulse" />
-        </div>
-        <div className="h-5 w-16 bg-border-light rounded-full animate-pulse" />
-      </div>
-    </div>
-  );
-}
-
-// The three requests are independent, so each can fail alone. Which one did is kept (not one
-// generic "something failed"): every figure and panel needs to know whether *its* data is missing,
-// because a 0 or an empty list drawn from a failed request is a claim about the seller's account.
+// The two requests are independent, so each can fail alone. Which one did is kept (not one generic
+// "something failed"): every figure and panel needs to know whether *its* data is missing, because
+// a 0 or an empty list drawn from a failed request is a claim about the seller's account. The item
+// counts come from the My Items summary, which is its own query below.
 const loadDashboard = (userId: string) =>
   Promise.allSettled([
-    fetchAllMyListings(),
     api.get('/payments/seller-stats'),
     api.get(`/reviews/seller/${userId}`),
   ]);
@@ -60,11 +34,11 @@ type DashboardResult = Awaited<ReturnType<typeof loadDashboard>>;
 export default function SellerDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [listings, setListings] = useState<Listing[]>([]);
+  const summary = useSellerItemsSummary();
   const [sellerStats, setSellerStats] = useState({ totalRevenue: 0, itemsSold: 0 });
   const [reviewStats, setReviewStats] = useState<{ average: number | null; count: number; reviews: SellerReview[] }>({ average: null, count: 0, reviews: [] });
   const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState({ listings: false, stats: false, reviews: false });
+  const [failed, setFailed] = useState({ stats: false, reviews: false });
   const [replyingTo, setReplyingTo] = useState<SellerReview | null>(null);
 
   // C6, Phase 7: a one-shot reply, submitted through the same reason-prompt shape the cancel
@@ -81,12 +55,10 @@ export default function SellerDashboard() {
     setReplyingTo(null);
   }
 
-  const applyResult = useCallback(([listingsResult, statsResult, reviewsResult]: DashboardResult) => {
-    if (listingsResult.status === 'fulfilled') setListings(listingsResult.value);
+  const applyResult = useCallback(([statsResult, reviewsResult]: DashboardResult) => {
     if (statsResult.status === 'fulfilled') setSellerStats(statsResult.value);
     if (reviewsResult.status === 'fulfilled') setReviewStats(reviewsResult.value);
     setFailed({
-      listings: listingsResult.status === 'rejected',
       stats: statsResult.status === 'rejected',
       reviews: reviewsResult.status === 'rejected',
     });
@@ -101,19 +73,19 @@ export default function SellerDashboard() {
     return () => { cancelled = true; };
   }, [userId, applyResult]);
 
-  // "Try again": back to the loading state, then all three requests again.
+  // "Try again": back to the loading state, then both requests again.
   function retryLoad() {
     if (!userId) return;
     setLoading(true);
     void loadDashboard(userId).then(applyResult);
   }
 
-  const total    = listings.length;
-  const pending  = listings.filter(l => l.status === 'PENDING').length;
-  // A1, Phase 6: was `status === 'APPROVED'`, which counts a sold or cancelled listing as live
-  // inventory the same as an actually-live one -- the exact bug A1 is about. isLive is derived
-  // server-side from the auction join (see utils/listingStatus.ts).
-  const live     = listings.filter(l => l.isLive).length;
+  // The server decides which tab each item is in, so "live" here is an auction that is actually
+  // running, not a listing that was once approved (A1, Phase 6), and nothing is counted twice.
+  const counts = summary.data;
+  const total = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : 0;
+  const countsLoading = summary.isLoading;
+  const countsFailed = summary.isError;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -132,14 +104,14 @@ export default function SellerDashboard() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          {loading ? (
+          {loading || countsLoading ? (
             <><LoadingStatus label="Loading dashboard statistics" />{Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}</>
           ) : (
             <>
               <StatCard label="Revenue"            value={failed.stats ? '—' : pkr(sellerStats.totalRevenue)} icon={<Banknote size={18} />}     iconColor="success" padding="sm" />
-              <StatCard label="Live Listings"      value={failed.listings ? '—' : live}                                                  icon={<Gavel size={18} />}        iconColor="info"    padding="sm" />
-              <StatCard label="Items Sold"         value={failed.stats ? '—' : sellerStats.itemsSold}                                 icon={<PackageCheck size={18} />}  iconColor="success" padding="sm" />
-              <StatCard label="Pending Review"     value={failed.listings ? '—' : pending}                                               icon={<Clock size={18} />}         iconColor="warning" padding="sm" />
+              <StatCard label="Live Listings"      value={countsFailed ? '—' : counts?.live ?? '—'}          icon={<Gavel size={18} />}        iconColor="info"    padding="sm" />
+              <StatCard label="Items Sold"         value={failed.stats ? '—' : sellerStats.itemsSold}        icon={<PackageCheck size={18} />}  iconColor="success" padding="sm" />
+              <StatCard label="Pending Review"     value={countsFailed ? '—' : counts?.review ?? '—'}       icon={<Clock size={18} />}         iconColor="warning" padding="sm" />
             </>
           )}
         </div>
@@ -199,72 +171,44 @@ export default function SellerDashboard() {
 
         <div className="bg-surface border border-border-light rounded-md">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
-            <h2 className="text-sm font-bold text-navy">My Listings</h2>
-            {!loading && !failed.listings && total > 0 && <span className="text-xs text-muted">{total} listing{total !== 1 ? 's' : ''}</span>}
+            <h2 className="text-sm font-bold text-navy">My Items</h2>
+            <Link to="/seller/items" className="text-xs font-bold text-primary hover:underline">View all →</Link>
           </div>
 
-          {loading ? (
-            <div className="divide-y divide-bg">
-              <LoadingStatus label="Loading your listings" />
-              {Array.from({ length: 4 }).map((_, i) => <ListingRowSkeleton key={i} />)}
+          {countsLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-5">
+              <LoadingStatus label="Loading your items" />
+              {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-16 bg-border-light rounded-md animate-pulse" />)}
             </div>
-          ) : failed.listings ? (
-            <ErrorState title="Could not load your listings" onRetry={retryLoad} className="border-0 rounded-none" />
+          ) : countsFailed ? (
+            <ErrorState title="Could not load your items" onRetry={() => void summary.refetch()} className="border-0 rounded-none" />
           ) : total === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
               <Package size={44} strokeWidth={1.3} className="text-placeholder mb-4" />
-              <h3 className="text-base font-bold text-navy mb-2">No listings yet</h3>
+              <h3 className="text-base font-bold text-navy mb-2">No items yet</h3>
               <p className="text-sm text-muted mb-5 max-w-xs">Create your first auction listing to start selling on BidVault.</p>
               <Button variant="primary" onClick={() => navigate('/seller/create-listing/step-1')}>
                 Create Your First Listing
               </Button>
             </div>
           ) : (
-            <>
-              <div className="hidden sm:grid grid-cols-[40px_1fr_140px_110px_120px_90px] gap-4 px-5 py-2.5 text-[11px] font-bold text-placeholder uppercase tracking-wide border-b border-bg">
-                <span /><span>Item</span><span>Category</span><span>Start Price</span><span>Status</span><span>Submitted</span>
-              </div>
-              <div className="divide-y divide-bg">
-                {listings.map(l => {
-                  const cfg = listingBadge(l);
-                  return (
-                    <div key={l.listingId}>
-                      <div className="hidden sm:grid grid-cols-[40px_1fr_140px_110px_120px_90px] gap-4 items-center px-5 py-3.5 hover:bg-bg transition-colors">
-                        <div className="w-9 h-9 bg-bg rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
-                          {l.imageUrl
-                            ? <img src={l.imageUrl} alt={l.title} className="w-full h-full object-cover" />
-                            : <span className="text-base">{l.emoji}</span>
-                          }
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-secondary truncate">{l.title}</p>
-                          <p className="text-[11px] text-placeholder">{conditionLabel(l.condition)}</p>
-                        </div>
-                        <p className="text-xs text-tertiary">{l.category}</p>
-                        <p className="text-sm font-bold text-navy">{pkr(l.startPrice)}</p>
-                        <Badge variant={cfg.variant}>{cfg.label}</Badge>
-                        <p className="text-[11px] text-placeholder">
-                          {dateShort(l.submittedAt)}
-                        </p>
-                      </div>
-                      <div className="sm:hidden flex items-center gap-3 px-4 py-3 hover:bg-bg transition-colors">
-                        <div className="w-11 h-11 bg-bg rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
-                          {l.imageUrl
-                            ? <img src={l.imageUrl} alt={l.title} className="w-full h-full object-cover" />
-                            : <span className="text-lg">{l.emoji}</span>
-                          }
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-secondary truncate">{l.title}</p>
-                          <p className="text-[11px] text-placeholder">{l.category} · {pkr(l.startPrice)}</p>
-                        </div>
-                        <Badge variant={cfg.variant}>{cfg.label}</Badge>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-5">
+              {TAB_ORDER.map(tab => {
+                const n = counts?.[tab] ?? 0;
+                const attention = tab === 'action' && n > 0;
+                return (
+                  <Link
+                    key={tab}
+                    to={tab === 'action' ? '/seller/items' : `/seller/items?tab=${tab}`}
+                    className={`rounded-md border px-4 py-3 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
+                      ${attention ? 'border-primary bg-primary-light' : 'border-border-light bg-bg'}`}
+                  >
+                    <p className={`text-[22px] font-extrabold ${attention ? 'text-primary' : 'text-navy'}`}>{n}</p>
+                    <p className="text-[12px] font-semibold text-tertiary">{TAB_LABELS[tab]}</p>
+                  </Link>
+                );
+              })}
+            </div>
           )}
         </div>
       </main>

@@ -68,7 +68,7 @@ export default function SellerEditListing() {
     (async () => {
       try {
         // No single-listing GET route exists for a seller — /listings/mine is small enough at
-        // this project's scale to walk in full, same as SellerMyListings does.
+        // this project's scale to walk in full, same as the Dashboard once did.
         const all = await fetchAllMyListings();
 
         const listing = all.find(l => l.listingId === listingId);
@@ -194,7 +194,7 @@ export default function SellerEditListing() {
         attributes: form.attributes,
       });
       showToast({ type: 'success', title: 'Resubmitted', message: 'Your listing has been resubmitted for review.' });
-      navigate('/seller/listings');
+      navigate('/seller/items?tab=review');
     } catch (err: unknown) {
       // The server names the field when the price or increment breaks a platform limit: show it
       // on that field as well as in the toast.
@@ -220,10 +220,10 @@ export default function SellerEditListing() {
       <SellerNavbar userName={user?.name} onLogout={logout} />
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <button
-          onClick={() => navigate('/seller/listings')}
+          onClick={() => navigate('/seller/items?tab=closed')}
           className="flex items-center gap-1 text-[13px] font-semibold text-muted hover:text-navy mb-4 cursor-pointer"
         >
-          <ChevronLeft size={16} /> Back to My Listings
+          <ChevronLeft size={16} /> Back to My Items
         </button>
 
         <h1 className="text-xl font-extrabold text-navy mb-1">Edit &amp; Resubmit</h1>

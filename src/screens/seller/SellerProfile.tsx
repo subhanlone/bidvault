@@ -87,7 +87,7 @@ export default function SellerProfile() {
 
   const quickLinks = [
     { label: 'Dashboard', to: '/seller/dashboard', icon: <Package size={15} className="text-muted" /> },
-    { label: 'My Listings', to: '/seller/listings', icon: <Gavel size={15} className="text-muted" /> },
+    { label: 'My Items', to: '/seller/items', icon: <Gavel size={15} className="text-muted" /> },
     { label: 'Create New Listing', to: '/seller/create-listing/step-1', icon: <PackageCheck size={15} className="text-muted" /> },
   ];
 
@@ -190,7 +190,7 @@ export default function SellerProfile() {
               <div className="bg-surface border border-border-light rounded-md overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
                   <h2 className="font-bold text-[14px] text-navy">Recent Listings</h2>
-                  <Link to="/seller/listings" className="font-bold text-[12px] text-primary hover:underline">View All →</Link>
+                  <Link to="/seller/items" className="font-bold text-[12px] text-primary hover:underline">View All →</Link>
                 </div>
                 {!loaded ? (
                   <div className="flex flex-col gap-3 px-5 py-6">
@@ -213,7 +213,7 @@ export default function SellerProfile() {
                         <button
                           key={l.listingId}
                           className="flex items-center gap-3 px-5 py-3 hover:bg-bg transition-colors text-left w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                          onClick={() => navigate('/seller/listings')}
+                          onClick={() => navigate('/seller/items')}
                         >
                           <div className="bg-bg rounded-sm size-[38px] overflow-hidden shrink-0 flex items-center justify-center">
                             {l.imageUrl
