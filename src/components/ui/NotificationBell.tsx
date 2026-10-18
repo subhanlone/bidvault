@@ -20,6 +20,9 @@ function targetFor(n: AppNotification): string | null {
       return '/seller/items?tab=live';
     case 'LISTING_REJECTED':
       return '/seller/items?tab=closed';
+    // The item is live and has a new bid: its row is under Live.
+    case 'BID_RECEIVED':
+      return '/seller/items?tab=live';
     default:
       return null;
   }

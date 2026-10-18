@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getSocket } from '../services/socket';
 import { applyBidToCache, applyAuctionCancelledToCache } from './auctions';
+import { keys } from './keys';
 
 /**
  * Feeds Socket.IO events into the query cache. Mounted once, renders nothing.
@@ -48,11 +49,22 @@ export function RealtimeBridge() {
       applyAuctionCancelledToCache(queryClient, payload.auctionId);
     }
 
+    // B3: sent to a seller's own room when someone bids on one of their auctions. It carries
+    // only numbers, and the notification text and the My Items rows are the server's to word and
+    // derive, so this refetches them instead of patching the cache. Without it they would wait
+    // for the next poll.
+    function onBidReceived() {
+      void queryClient.invalidateQueries({ queryKey: keys.notifications });
+      void queryClient.invalidateQueries({ queryKey: keys.sellerItems.all });
+    }
+
     socket.on('bid:placed', onBidPlaced);
     socket.on('auction:cancelled', onAuctionCancelled);
+    socket.on('bid:received', onBidReceived);
     return () => {
       socket.off('bid:placed', onBidPlaced);
       socket.off('auction:cancelled', onAuctionCancelled);
+      socket.off('bid:received', onBidReceived);
     };
   }, [queryClient]);
 
