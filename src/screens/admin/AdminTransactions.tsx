@@ -7,6 +7,7 @@ import ErrorState from '../../components/ui/ErrorState';
 import Textarea from '../../components/ui/Textarea';
 import { useDialog } from '../../hooks/useDialog';
 import { useNow } from '../../hooks/useNow';
+import { useTabKeys } from '../../hooks/useTabKeys';
 import { useToast } from '../../context/toast';
 import { api } from '../../services/api';
 import type { AdminDispute } from '../../types/api';
@@ -187,9 +188,10 @@ function ResolveModal({ dispute, now, onClose, onResolved }: {
           <SellerResponseNote dispute={dispute} now={now} full />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div role="group" aria-label="Decision" className="grid grid-cols-2 gap-2 mb-4">
           <button
             type="button"
+            aria-pressed={resolution === 'REFUND'}
             onClick={() => setResolution('REFUND')}
             className={`text-left px-3 py-2.5 rounded-md border text-[13px] font-semibold transition-colors cursor-pointer
               ${resolution === 'REFUND' ? 'border-error bg-error-bg text-error' : 'border-border-light text-tertiary hover:bg-bg'}`}
@@ -199,6 +201,7 @@ function ResolveModal({ dispute, now, onClose, onResolved }: {
           </button>
           <button
             type="button"
+            aria-pressed={resolution === 'RELEASE'}
             onClick={() => setResolution('RELEASE')}
             className={`text-left px-3 py-2.5 rounded-md border text-[13px] font-semibold transition-colors cursor-pointer
               ${resolution === 'RELEASE' ? 'border-success bg-success-bg text-success-dark' : 'border-border-light text-tertiary hover:bg-bg'}`}
@@ -232,6 +235,7 @@ function ResolveModal({ dispute, now, onClose, onResolved }: {
 export default function AdminTransactions() {
   const { showToast } = useToast();
   const [tab, setTab] = useState<'pending' | 'disputes'>('pending');
+  const onTabKeys = useTabKeys(['pending', 'disputes'] as const, tab, setTab);
   const [transactions, setTransactions] = useState<PendingTransaction[]>([]);
   const [disputes, setDisputes] = useState<AdminDispute[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
@@ -310,10 +314,16 @@ export default function AdminTransactions() {
             <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
           </header>
 
-          <div className="flex items-center gap-1 px-4 sm:px-6 pt-4 border-b border-border-light bg-surface">
+          <div role="tablist" aria-label="Transactions" onKeyDown={onTabKeys} className="flex items-center gap-1 px-4 sm:px-6 pt-4 border-b border-border-light bg-surface">
             {(['pending', 'disputes'] as const).map(t => (
               <button
                 key={t}
+                type="button"
+                role="tab"
+                id={`transactions-tab-${t}`}
+                aria-selected={tab === t}
+                aria-controls="transactions-panel"
+                tabIndex={tab === t ? 0 : -1}
                 onClick={() => setTab(t)}
                 className={`px-4 py-2.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer
                   ${tab === t ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-secondary'}`}
@@ -323,7 +333,7 @@ export default function AdminTransactions() {
             ))}
           </div>
 
-          <div className="flex-1 overflow-auto p-4 sm:p-6">
+          <div id="transactions-panel" role="tabpanel" aria-labelledby={`transactions-tab-${tab}`} className="flex-1 overflow-auto p-4 sm:p-6">
             {loading ? (
               <div className="bg-surface border border-border-light rounded-md p-10 text-center text-[13px] text-muted">Loading…</div>
             ) : tab === 'pending' && transactionsError ? (

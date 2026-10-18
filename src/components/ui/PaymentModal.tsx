@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { X, CreditCard, Lock } from 'lucide-react';
 import { api } from '../../services/api';
 import Button from './Button';
@@ -14,6 +14,9 @@ interface Props {
 }
 
 function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: Props) {
+  // Each label is tied to its field by id: a bare <label> next to a field names nothing, so the
+  // checkout fields had no accessible name at all, only a placeholder.
+  const fieldId = useId();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState('');
@@ -80,8 +83,9 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
 
       <div className="flex flex-col gap-4">
         <div>
-          <label className="text-[12px] font-semibold text-navy mb-2 block">Delivery Address</label>
+          <label htmlFor={`${fieldId}-address`} className="text-[12px] font-semibold text-navy mb-2 block">Delivery Address</label>
           <textarea
+            id={`${fieldId}-address`}
             value={deliveryAddress}
             onChange={e => setDeliveryAddress(e.target.value)}
             maxLength={300}
@@ -91,8 +95,9 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
           />
         </div>
         <div>
-          <label className="text-[12px] font-semibold text-navy mb-2 block">Delivery Phone</label>
+          <label htmlFor={`${fieldId}-phone`} className="text-[12px] font-semibold text-navy mb-2 block">Delivery Phone</label>
           <input
+            id={`${fieldId}-phone`}
             type="tel"
             value={deliveryPhone}
             onChange={e => setDeliveryPhone(e.target.value)}
@@ -102,8 +107,9 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
           />
         </div>
         <div>
-          <label className="text-[12px] font-semibold text-navy mb-2 block">Card Number</label>
+          <label htmlFor={`${fieldId}-card`} className="text-[12px] font-semibold text-navy mb-2 block">Card Number</label>
           <input
+            id={`${fieldId}-card`}
             type="text"
             inputMode="numeric"
             value={cardNumber}
@@ -116,8 +122,9 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-[12px] font-semibold text-navy mb-2 block">Expiry Date</label>
+            <label htmlFor={`${fieldId}-expiry`} className="text-[12px] font-semibold text-navy mb-2 block">Expiry Date</label>
             <input
+              id={`${fieldId}-expiry`}
               type="text"
               value={expiry}
               onChange={e => setExpiry(e.target.value)}
@@ -127,8 +134,9 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
             />
           </div>
           <div>
-            <label className="text-[12px] font-semibold text-navy mb-2 block">CVC</label>
+            <label htmlFor={`${fieldId}-cvc`} className="text-[12px] font-semibold text-navy mb-2 block">CVC</label>
             <input
+              id={`${fieldId}-cvc`}
               type="text"
               inputMode="numeric"
               value={cvc}

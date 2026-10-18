@@ -329,8 +329,11 @@ export default function BuyerProfile() {
                       </div>
                       <button
                         onClick={() => { const nv = !n.value; n.set(nv); savePref(n.key, nv); }}
+                        type="button"
+                        role="switch"
+                        aria-checked={n.value}
                         disabled={prefsState !== 'ready'}
-                        aria-label={`Toggle ${n.label}`}
+                        aria-label={n.label}
                         className={`disabled:opacity-50 disabled:cursor-not-allowed shrink-0 w-[38px] h-[22px] rounded-full transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${n.value ? 'bg-success-dark' : 'bg-border-medium'}`}
                       >
                         <span className={`absolute top-[3px] size-[16px] rounded-full bg-surface shadow transition-transform ${n.value ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />

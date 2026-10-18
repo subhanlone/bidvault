@@ -186,6 +186,7 @@ export default function AdminUsers() {
             <div className="relative">
               <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-placeholder pointer-events-none" />
               <Input
+                aria-label="Search users by name or email"
                 placeholder="Search by name or email"
                 value={search}
                 onChange={e => setSearch(e.target.value)}

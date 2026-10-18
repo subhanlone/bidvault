@@ -7,6 +7,7 @@ import { useToast } from '../../context/toast';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useDialog } from '../../hooks/useDialog';
 import { useNow } from '../../hooks/useNow';
+import { useTabKeys } from '../../hooks/useTabKeys';
 import { flattenPages } from '../../queries/auctions';
 import {
   useCancelAuction,
@@ -103,6 +104,8 @@ export default function SellerMyItems() {
     setParams(next === 'action' ? {} : { tab: next });
     setExpandedId(null);
   }
+
+  const onTabKeys = useTabKeys(TAB_ORDER, tab, pickTab);
 
   /** Runs one action on one item, showing it as busy and reporting the outcome. */
   async function run(item: SellerItem, action: SellerItemAction, work: () => Promise<unknown>, done: { title: string; message: string }, failTitle: string) {
@@ -211,7 +214,7 @@ export default function SellerMyItems() {
           </div>
         </div>
 
-        <div role="tablist" aria-label="Item stage" className="flex gap-0.5 border-b border-border-light overflow-x-auto mb-4">
+        <div role="tablist" aria-label="Item stage" onKeyDown={onTabKeys} className="flex gap-0.5 border-b border-border-light overflow-x-auto mb-4">
           {TAB_ORDER.map(key => {
             const on = key === tab;
             const badge = summary.data?.[key];
@@ -222,6 +225,7 @@ export default function SellerMyItems() {
                 role="tab"
                 id={`tab-${key}`}
                 aria-selected={on}
+                tabIndex={on ? 0 : -1}
                 aria-controls="items-panel"
                 onClick={() => pickTab(key)}
                 className={`-mb-px flex items-center gap-2 px-4 py-3 text-sm font-bold whitespace-nowrap border-b-2 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary

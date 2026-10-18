@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
 import { useTimer } from '../hooks/useTimer';
+import { useTabKeys } from '../hooks/useTabKeys';
 import type { Auction } from '../types/api';
 import { Button, AuctionThumbnail } from '../components/ui';
 import { api } from '../services/api';
@@ -111,6 +112,7 @@ export default function LandingPage() {
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'buyers' | 'sellers'>('buyers');
+  const onTabKeys = useTabKeys(['buyers', 'sellers'] as const, activeTab, setActiveTab);
   const [featured, setFeatured] = useState<Auction[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
   // Swallowing the error left `featured` empty, which renders as "No Live Auctions Right Now" —
@@ -471,11 +473,16 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center justify-center mb-8 sm:mb-10">
-            <div className="bg-bg border border-border-light rounded-md p-1 flex gap-1">
+            <div role="tablist" aria-label="How BidVault works" onKeyDown={onTabKeys} className="bg-bg border border-border-light rounded-md p-1 flex gap-1">
               {(['buyers', 'sellers'] as const).map(tab => (
                 <button
                   key={tab}
                   type="button"
+                  role="tab"
+                  id={`how-tab-${tab}`}
+                  aria-selected={activeTab === tab}
+                  aria-controls="how-panel"
+                  tabIndex={activeTab === tab ? 0 : -1}
                   onClick={() => setActiveTab(tab)}
                   className={`font-bold text-[13px] px-5 py-2 rounded-sm transition-all ${activeTab === tab ? 'bg-navy text-white shadow-sm' : 'text-muted hover:text-secondary'}`}
                 >
@@ -485,7 +492,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div id="how-panel" role="tabpanel" aria-labelledby={`how-tab-${activeTab}`} className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {(activeTab === 'buyers' ? buyerSteps : sellerSteps).map((step, i) => (
               <div key={step.step} className="relative">
                 {i < 2 && (

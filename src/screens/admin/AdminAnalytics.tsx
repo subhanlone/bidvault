@@ -80,10 +80,12 @@ export default function AdminAnalytics() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-bg border border-border-light rounded-sm p-1">
+          <div role="group" aria-label="Period" className="flex items-center gap-1 bg-bg border border-border-light rounded-sm p-1">
             {(['3m', '6m', '12m'] as const).map(p => (
               <button
                 key={p}
+                type="button"
+                aria-pressed={period === p}
                 onClick={() => setPeriod(p)}
                 className={`font-bold text-[11px] px-3 py-1.5 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${period === p ? 'bg-navy text-white' : 'text-muted hover:text-secondary'}`}
               >

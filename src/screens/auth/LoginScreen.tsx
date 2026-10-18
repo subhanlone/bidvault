@@ -149,9 +149,9 @@ export default function LoginScreen() {
               type="checkbox"
               checked={remember}
               onChange={e => setRemember(e.target.checked)}
-              className="sr-only"
+              className="sr-only peer"
             />
-            <span className={`w-[18px] h-[18px] rounded flex items-center justify-center border-2 transition-colors ${remember ? 'bg-primary border-primary' : 'bg-surface border-border'}`}>
+            <span className={`w-[18px] h-[18px] rounded flex items-center justify-center border-2 transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 ${remember ? 'bg-primary border-primary' : 'bg-surface border-border'}`}>
               {remember && <Check size={12} className="text-white" aria-hidden="true" />}
             </span>
             <span className="text-[12.5px] text-tertiary">Keep me signed in</span>
