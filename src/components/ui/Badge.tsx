@@ -1,5 +1,5 @@
 interface BadgeProps {
-  variant?: 'tag' | 'success' | 'warning' | 'error';
+  variant?: 'tag' | 'success' | 'warning' | 'error' | 'info';
   children: React.ReactNode;
   className?: string;
 }
@@ -8,12 +8,14 @@ const successStyle = 'bg-success-bg text-success border border-success-border';
 const warningStyle = 'bg-warning-bg text-warning border border-warning-border';
 const errorStyle = 'bg-primary-light text-primary border border-primary';
 const tagStyle = 'bg-surface-raised text-body border border-border';
+const infoStyle = 'bg-info-bg text-info border border-info-border';
 
 const variantStyles = {
   success: successStyle,
   warning: warningStyle,
   error: errorStyle,
   tag: tagStyle,
+  info: infoStyle,
 };
 
 export default function Badge({ variant = 'tag', children, className = '' }: BadgeProps) {

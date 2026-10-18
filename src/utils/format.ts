@@ -111,3 +111,28 @@ export function timeShort(value: string | Date): string {
 export function dateTimeShort(value: string | Date): string {
   return `${dateShort(value)}, ${timeShort(value)}`;
 }
+
+/* ── Relative time ────────────────────────────────────────────────────────── */
+
+/**
+ * `just now` / `12 min ago` / `3 h ago` / `2 d ago`. `now` is passed in, not read here: a screen
+ * that shows it keeps the clock in state (`useNow`), because `Date.now()` in a render is not allowed.
+ */
+export function timeAgo(value: string | Date, now: number): string {
+  const minutes = Math.floor(Math.max(0, now - toDate(value).getTime()) / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  return `${Math.floor(hours / 24)} d ago`;
+}
+
+/** `2 h 14 m` / `1 d 6 h` / `9 m`, or `Ended` once the time has passed. Two units at most. */
+export function timeLeft(value: string | Date, now: number): string {
+  const minutes = Math.floor((toDate(value).getTime() - now) / 60_000);
+  if (minutes <= 0) return 'Ended';
+  const days = Math.floor(minutes / 1_440);
+  const hours = Math.floor((minutes % 1_440) / 60);
+  if (days > 0) return `${days} d ${hours} h`;
+  return hours > 0 ? `${hours} h ${minutes % 60} m` : `${minutes} m`;
+}
