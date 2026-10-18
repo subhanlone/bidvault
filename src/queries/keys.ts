@@ -32,6 +32,15 @@ export const keys = {
     mine: ['bids', 'mine'] as const,
   },
   notifications: ['notifications'] as const,
+  sellerItems: {
+    /** Every seller-items cache entry; one invalidation after any action on an item refreshes the
+     * list, the tab counts and the other tabs together, since an action moves an item between tabs. */
+    all: ['sellerItems'] as const,
+    /** GET /seller/items — one tab, narrowed by the search text. */
+    list: (tab: string, search: string) => ['sellerItems', 'list', { tab, search }] as const,
+    /** GET /seller/items/summary — the tab badges. */
+    summary: ['sellerItems', 'summary'] as const,
+  },
   admin: {
     /** GET /admin/users — cursor-paginated, unbounded, so this stays keyed per search term
      * like auctions.active rather than drained (see queries/auctions.ts's useDrainedPages doc). */

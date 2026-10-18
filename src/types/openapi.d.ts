@@ -331,6 +331,11 @@ export type PaginatedListings = {
   nextCursor: string | null;
 };
 
+export type PaginatedSellerItems = {
+  items: SellerItem[];
+  nextCursor: string | null;
+};
+
 export type PaginatedSellerSales = {
   items: SellerSale[];
   nextCursor: string | null;
@@ -465,6 +470,78 @@ export type Review = {
   updatedAt?: string;
   sellerReply?: string;
   sellerReplyAt?: string;
+};
+
+export type SellerItem = {
+  itemId: string;
+  listingCode: string;
+  title: string;
+  category: string;
+  condition: ItemCondition;
+  emoji: string;
+  imageUrl?: string;
+  tab: SellerItemTab;
+  stage: SellerItemStage;
+  actions: SellerItemAction[];
+  listing: {
+    description: string;
+    startPrice: number;
+    reservePrice?: number;
+    minIncrement: number;
+    durationDays: number;
+    submittedAt: string;
+    rejectionReason?: string;
+    attributes?: CategoryAttributes;
+  };
+  auction?: {
+    auctionId: string;
+    status: AuctionStatus;
+    currentBid: number;
+    bidCount: number;
+    watcherCount: number;
+    reserveMet: boolean | null;
+    startTime: string;
+    endTime: string;
+  };
+  sale?: {
+    transactionId: string;
+    status: TransactionStatus;
+    finalAmount: number;
+    buyerName: string;
+    deliveryAddress?: string;
+    deliveryPhone?: string;
+    paidAt?: string;
+    shippedAt?: string;
+    reviewDeadlineAt?: string;
+    disputeReason?: string;
+    disputeResponseDueAt?: string;
+    disputeSellerResponse?: string;
+    disputeSellerRespondedAt?: string;
+    payoutAt?: string;
+    reviewStars?: number;
+    nextBidderOffer: number | null;
+  };
+  relistedAs?: {
+    listingId: string;
+    listingCode: string;
+  };
+};
+
+export type SellerItemAction = "WITHDRAW" | "EDIT_RESUBMIT" | "CANCEL_AUCTION" | "MARK_SHIPPED" | "RESPOND_TO_DISPUTE" | "OFFER_NEXT_BIDDER" | "RELIST" | "LIST_AGAIN" | "VIEW_INVOICE";
+
+export type SellerItemStage = "UNDER_REVIEW" | "REJECTED" | "REMOVED" | "LIVE" | "AWAITING_PAYMENT" | "NEEDS_SHIPPING" | "SHIPPED" | "DELIVERED" | "DISPUTE_AWAITING_RESPONSE" | "DISPUTED" | "REFUNDED" | "PAYMENT_DEFAULTED" | "RELISTED" | "ENDED_RESERVE_NOT_MET" | "ENDED_NO_BIDS" | "CANCELLED";
+
+export type SellerItemTab = "action" | "review" | "live" | "sold" | "unsold" | "closed";
+
+export type SellerItemsSummary = {
+  counts: {
+    action: number;
+    review: number;
+    live: number;
+    sold: number;
+    unsold: number;
+    closed: number;
+  };
 };
 
 export type SellerReviews = {
@@ -648,6 +725,8 @@ export interface GetEndpoints {
   "/payments/seller-stats": SellerStats;
   "/payments/{transactionId}/invoice": Invoice;
   "/reviews/seller/{sellerId}": SellerReviews;
+  "/seller/items": PaginatedSellerItems;
+  "/seller/items/summary": SellerItemsSummary;
   "/settings": PlatformSettings;
   "/settings/public": PublicSettings;
   "/stats": PlatformStats;
