@@ -6,8 +6,10 @@ import Button from '../../components/ui/Button';
 import ErrorState from '../../components/ui/ErrorState';
 import Textarea from '../../components/ui/Textarea';
 import { useDialog } from '../../hooks/useDialog';
+import { useNow } from '../../hooks/useNow';
 import { useToast } from '../../context/toast';
 import { api } from '../../services/api';
+import type { AdminDispute } from '../../types/api';
 import { dateMedium, pkrCompact } from '../../utils/format';
 
 interface PendingTransaction {
@@ -24,17 +26,26 @@ interface PendingTransaction {
   createdAt: string;
 }
 
-interface Dispute {
-  disputeId: string;
-  transactionId: string;
-  auctionTitle: string;
-  buyerId: string;
-  buyerName: string;
-  sellerId: string;
-  sellerName: string;
-  finalAmount: number;
-  reason: string;
-  createdAt: string;
+/**
+ * What the seller has said about a dispute, and where the response window stands. The window is
+ * advice from the backend (createdAt + 3 days), not a rule: nothing here ever disables Resolve.
+ */
+function SellerResponseNote({ dispute, now, full = false }: { dispute: AdminDispute; now: number; full?: boolean }) {
+  if (dispute.sellerResponse && dispute.sellerRespondedAt) {
+    return (
+      <p className={`text-[11px] text-success-dark ${full ? '' : 'truncate'}`}>
+        Seller responded {dateMedium(dispute.sellerRespondedAt)}: "{dispute.sellerResponse}"
+      </p>
+    );
+  }
+  const windowOpen = new Date(dispute.responseDueAt).getTime() > now;
+  return (
+    <p className={`text-[11px] ${windowOpen ? 'text-muted' : 'text-warning'}`}>
+      {windowOpen
+        ? `No seller response yet · window ends ${dateMedium(dispute.responseDueAt)}`
+        : `No seller response · window ended ${dateMedium(dispute.responseDueAt)}`}
+    </p>
+  );
 }
 
 function VoidModal({ tx, onClose, onVoided }: {
@@ -113,8 +124,9 @@ function VoidModal({ tx, onClose, onVoided }: {
   );
 }
 
-function ResolveModal({ dispute, onClose, onResolved }: {
-  dispute: Dispute;
+function ResolveModal({ dispute, now, onClose, onResolved }: {
+  dispute: AdminDispute;
+  now: number;
   onClose: () => void;
   onResolved: (resolution: 'REFUND' | 'RELEASE') => void;
 }) {
@@ -170,9 +182,10 @@ function ResolveModal({ dispute, onClose, onResolved }: {
         <p className="text-[13px] text-muted mb-1">
           <span className="font-semibold text-secondary">{dispute.auctionTitle}</span> — {pkrCompact(dispute.finalAmount)}
         </p>
-        <p className="text-[12px] text-muted bg-bg border border-border-light rounded-md px-3 py-2 mb-4">
-          Buyer ({dispute.buyerName}) said: "{dispute.reason}"
-        </p>
+        <div className="text-[12px] text-muted bg-bg border border-border-light rounded-md px-3 py-2 mb-4 flex flex-col gap-1.5">
+          <p>Buyer ({dispute.buyerName}) said: "{dispute.reason}"</p>
+          <SellerResponseNote dispute={dispute} now={now} full />
+        </div>
 
         <div className="grid grid-cols-2 gap-2 mb-4">
           <button
@@ -220,11 +233,13 @@ export default function AdminTransactions() {
   const { showToast } = useToast();
   const [tab, setTab] = useState<'pending' | 'disputes'>('pending');
   const [transactions, setTransactions] = useState<PendingTransaction[]>([]);
-  const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [disputes, setDisputes] = useState<AdminDispute[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [loadingDisputes, setLoadingDisputes] = useState(true);
   const [voidingTx, setVoidingTx] = useState<PendingTransaction | null>(null);
-  const [resolvingDispute, setResolvingDispute] = useState<Dispute | null>(null);
+  const [resolvingDispute, setResolvingDispute] = useState<AdminDispute | null>(null);
+  // A response window is days long, so a minute is plenty fresh for "ends" versus "ended".
+  const now = useNow(60_000);
 
   // A failed load is its own state, not a toast over an empty tab: "Nothing awaiting payment" and
   // "No open disputes" both assert the queue is clear, which a failed request cannot know.
@@ -370,6 +385,7 @@ export default function AdminTransactions() {
                       <div className="min-w-0">
                         <p className="font-semibold text-[13px] text-secondary truncate">{d.auctionTitle}</p>
                         <p className="text-[11px] text-muted truncate">"{d.reason}"</p>
+                        <SellerResponseNote dispute={d} now={now} />
                       </div>
                       <p className="text-[12px] text-tertiary truncate">{d.buyerName}</p>
                       <p className="text-[12px] text-tertiary truncate">{d.sellerName}</p>
@@ -395,7 +411,7 @@ export default function AdminTransactions() {
           )}
 
           {resolvingDispute && (
-            <ResolveModal dispute={resolvingDispute} onClose={() => setResolvingDispute(null)} onResolved={handleResolved} />
+            <ResolveModal dispute={resolvingDispute} now={now} onClose={() => setResolvingDispute(null)} onResolved={handleResolved} />
           )}
         </>
       )}
