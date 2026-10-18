@@ -125,9 +125,11 @@ function VoidModal({ tx, onClose, onVoided }: {
   );
 }
 
-function ResolveModal({ dispute, now, onClose, onResolved }: {
+function ResolveModal({ dispute, now, checking, onClose, onResolved }: {
   dispute: AdminDispute;
   now: number;
+  /** The latest copy of this dispute is still being fetched: the decision waits for it. */
+  checking: boolean;
   onClose: () => void;
   onResolved: (resolution: 'REFUND' | 'RELEASE') => void;
 }) {
@@ -186,6 +188,7 @@ function ResolveModal({ dispute, now, onClose, onResolved }: {
         <div className="text-[12px] text-muted bg-bg border border-border-light rounded-md px-3 py-2 mb-4 flex flex-col gap-1.5">
           <p>Buyer ({dispute.buyerName}) said: "{dispute.reason}"</p>
           <SellerResponseNote dispute={dispute} now={now} full />
+          {checking && <p role="status">Checking for the seller's latest response…</p>}
         </div>
 
         <div role="group" aria-label="Decision" className="grid grid-cols-2 gap-2 mb-4">
@@ -225,7 +228,7 @@ function ResolveModal({ dispute, now, onClose, onResolved }: {
 
         <div className="flex gap-3 mt-5">
           <Button variant="outline" onClick={onClose} className="flex-1" disabled={submitting}>Cancel</Button>
-          <Button onClick={handleResolve} loading={submitting} className="flex-1">Resolve</Button>
+          <Button onClick={handleResolve} loading={submitting} disabled={checking} className="flex-1">Resolve</Button>
         </div>
       </div>
     </div>
@@ -242,6 +245,7 @@ export default function AdminTransactions() {
   const [loadingDisputes, setLoadingDisputes] = useState(true);
   const [voidingTx, setVoidingTx] = useState<PendingTransaction | null>(null);
   const [resolvingDispute, setResolvingDispute] = useState<AdminDispute | null>(null);
+  const [checkingDispute, setCheckingDispute] = useState(false);
   // A response window is days long, so a minute is plenty fresh for "ends" versus "ended".
   const now = useNow(60_000);
 
@@ -274,6 +278,30 @@ export default function AdminTransactions() {
   useEffect(() => { void loadTransactions(); void loadDisputes(); }, [loadTransactions, loadDisputes]);
 
   const loading = tab === 'pending' ? loadingTransactions : loadingDisputes;
+
+  // The list was loaded when the page opened, and the seller can respond at any time after that.
+  // Opening Resolve therefore re-reads the disputes and swaps in the current copy of this one, and
+  // the decision stays disabled until that is done: an admin never rules on evidence that is
+  // already out of date.
+  const openResolve = (dispute: AdminDispute) => {
+    setResolvingDispute(dispute);
+    setCheckingDispute(true);
+    api.get('/admin/disputes')
+      .then(fresh => {
+        setDisputes(fresh);
+        setDisputesError(false);
+        const current = fresh.find(d => d.disputeId === dispute.disputeId);
+        if (!current) return;
+        setResolvingDispute(open => (open?.disputeId === dispute.disputeId ? current : open));
+        if (current.sellerRespondedAt && !dispute.sellerRespondedAt) {
+          showToast({ type: 'info', title: 'The seller has responded', message: 'Their response is now shown. Read it before you decide.' });
+        }
+      })
+      // The copy already on screen is still the best there is; the server refuses a dispute that
+      // was resolved in the meantime.
+      .catch(() => undefined)
+      .finally(() => setCheckingDispute(false));
+  };
 
   const handleVoided = () => {
     showToast({ type: 'success', title: 'Transaction voided', message: `${voidingTx?.auctionTitle} will no longer show as awaiting payment.` });
@@ -404,7 +432,7 @@ export default function AdminTransactions() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setResolvingDispute(d)}
+                        onClick={() => openResolve(d)}
                         className="w-fit"
                       >
                         Resolve
@@ -421,7 +449,7 @@ export default function AdminTransactions() {
           )}
 
           {resolvingDispute && (
-            <ResolveModal dispute={resolvingDispute} now={now} onClose={() => setResolvingDispute(null)} onResolved={handleResolved} />
+            <ResolveModal dispute={resolvingDispute} now={now} checking={checkingDispute} onClose={() => setResolvingDispute(null)} onResolved={handleResolved} />
           )}
         </>
       )}

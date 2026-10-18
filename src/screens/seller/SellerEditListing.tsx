@@ -4,6 +4,7 @@ import { ChevronLeft, Upload, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { useToast } from '../../context/toast';
 import { api, ApiError } from '../../services/api';
+import { useRefreshSellerItems } from '../../queries/sellerItems';
 import { fetchAllMyListings } from '../../services/myListings';
 import { SellerNavbar, Button, ErrorState, Input, Textarea } from '../../components/ui';
 import LoadingStatus from '../../components/ui/LoadingStatus';
@@ -45,6 +46,7 @@ interface FormState {
  * validation, same category-attribute config — just PATCH instead of POST at the end.
  */
 export default function SellerEditListing() {
+  const refreshSellerItems = useRefreshSellerItems();
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -193,6 +195,7 @@ export default function SellerEditListing() {
         imageUrl: form.imageUrl || undefined,
         attributes: form.attributes,
       });
+      void refreshSellerItems();
       showToast({ type: 'success', title: 'Resubmitted', message: 'Your listing has been resubmitted for review.' });
       navigate('/seller/items?tab=review');
     } catch (err: unknown) {

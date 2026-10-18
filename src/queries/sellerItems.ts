@@ -11,8 +11,14 @@ import { keys } from './keys';
  * list being shown, the other tabs and the badges all have to be re-read, not just one of them.
  */
 
-/** How often a tab is re-read while it is open: a live auction and a sale waiting to ship change under you. */
-const REFRESH_MS: Partial<Record<SellerItemTab, number>> = { live: 20_000, action: 20_000 };
+/**
+ * How often a tab is re-read while it is open: a live auction and a sale waiting to ship change
+ * under you. Review and sold change without the seller doing anything too -- an admin approves an
+ * item, a buyer pays, a package is confirmed -- and nothing else tells this screen, so they are
+ * re-read as well, less often. Unsold and closed only change by the seller's own actions, which
+ * invalidate everything below.
+ */
+const REFRESH_MS: Partial<Record<SellerItemTab, number>> = { live: 20_000, action: 20_000, review: 30_000, sold: 30_000 };
 
 export function useSellerItems(tab: SellerItemTab, search: string) {
   const term = search.trim();
@@ -43,6 +49,15 @@ export function useSellerItemsSummary() {
     select: (data) => data.counts,
     refetchInterval: 20_000,
   });
+}
+
+/**
+ * For the writes that happen outside this file (creating a listing, resubmitting a rejected one):
+ * call it after they succeed, so My Items does not show a list, or a tab count, from before.
+ */
+export function useRefreshSellerItems() {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: keys.sellerItems.all });
 }
 
 /** Runs one action on an item, then re-reads everything on the screen. */
