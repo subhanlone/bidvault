@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
  * Fires `onIntersect` when a sentinel element scrolls into view — the trigger for BV-029's one
  * genuinely lazy-loaded screen, Browse Auctions.
  *
- * Every other paginated list in this app (My Bids, Watchlist, My Listings, the admin Listing
+ * Every other paginated list in this app (My Bids, Watchlist, My Items, the admin Listing
  * Review queue, dashboard/sidebar stats) shows an exact count or aggregate derived from the
  * whole set, so those all drain every page up front via `useDrainedPages` instead of loading
  * lazily — see its doc comment in queries/auctions.ts. Browse Auctions is the one public,

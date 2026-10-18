@@ -15,7 +15,7 @@ const BASE_CONFIG: Record<ListingStatus, { label: string; variant: BadgeVariant 
 /**
  * A1, Phase 6 (found duplicated into SellerDashboard.tsx and SellerProfile.tsx while fixing an
  * unrelated TypeScript error for C3's new REMOVED status -- both had their own un-isLive-aware
- * copy of the exact badge this file originally centralised only for SellerMyListings.tsx).
+ * copy of the exact badge this file originally centralised only for the old My Listings screen).
  *
  * An APPROVED listing is not necessarily still for sale -- its auction may have already sold or
  * been cancelled. isLive (derived server-side from the auction join, not a second status value)
