@@ -5,6 +5,7 @@ import { useAuth } from '../../context/auth';
 import { useListing } from '../../context/listing';
 import { useToast } from '../../context/toast';
 import { api, ApiError } from '../../services/api';
+import { useRefreshSellerItems } from '../../queries/sellerItems';
 import { Button } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
@@ -12,6 +13,7 @@ import { getCategoryFields, validateCategoryFields } from '../../config/category
 import { conditionLabel, pkr } from '../../utils/format';
 
 export default function SellerCreateListingStep3() {
+  const refreshSellerItems = useRefreshSellerItems();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { draft, setSubmittedListingCode, setFieldErrors } = useListing();
@@ -74,6 +76,7 @@ export default function SellerCreateListingStep3() {
         attributes: draft.attributes,
       });
       setSubmittedListingCode(data.listingCode);
+      void refreshSellerItems();
       showToast({ type: 'success', title: 'Listing Submitted!', message: 'Your listing is under admin review.' });
       navigate('/seller/listing-submitted');
     } catch (err) {

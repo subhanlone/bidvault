@@ -194,6 +194,9 @@ export default function SellerCreateListingStep1() {
                   <div className="relative">
                     <select
                       id="listing-category"
+                      aria-required="true"
+                      aria-invalid={!!categoryError}
+                      aria-describedby={categoryError ? 'listing-category-error' : undefined}
                       className={`bg-surface border h-10 px-3 pr-9 rounded-lg text-sm text-secondary w-full outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow appearance-none cursor-pointer ${categoryError ? 'border-error' : 'border-border'}`}
                       value={draft.category}
                       onChange={e => {
@@ -209,7 +212,7 @@ export default function SellerCreateListingStep1() {
                     </select>
                     <ChevronDown size={16} aria-hidden="true" className="absolute right-3 top-1/2 -translate-y-1/2 text-placeholder" />
                   </div>
-                  {categoryError && <p className="text-[12px] text-primary" role="alert">{categoryError}</p>}
+                  {categoryError && <p id="listing-category-error" className="text-[12px] text-primary" role="alert">{categoryError}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -265,6 +268,9 @@ export default function SellerCreateListingStep1() {
                             <div className="relative">
                               <select
                                 id={`attr-${field.key}`}
+                                aria-required={field.required ? 'true' : undefined}
+                                aria-invalid={!!error}
+                                aria-describedby={error ? `attr-${field.key}-error` : undefined}
                                 className={`bg-surface border h-10 px-3 pr-9 rounded-lg text-sm text-secondary w-full outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow appearance-none cursor-pointer ${error ? 'border-error' : 'border-border'}`}
                                 value={rawValue === undefined ? '' : String(rawValue)}
                                 onChange={e => setValue(e.target.value)}
@@ -274,7 +280,7 @@ export default function SellerCreateListingStep1() {
                               </select>
                               <ChevronDown size={16} aria-hidden="true" className="absolute right-3 top-1/2 -translate-y-1/2 text-placeholder" />
                             </div>
-                            {error && <p className="text-[12px] text-primary" role="alert">{error}</p>}
+                            {error && <p id={`attr-${field.key}-error`} className="text-[12px] text-primary" role="alert">{error}</p>}
                           </div>
                         );
                       }
@@ -397,7 +403,7 @@ export default function SellerCreateListingStep1() {
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="mt-2 flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer focus-visible:outline-none"
+                  className="mt-2 flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <RefreshCw size={11} /> Change image
                 </button>

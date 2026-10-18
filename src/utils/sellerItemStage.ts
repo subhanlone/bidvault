@@ -159,7 +159,9 @@ export function stageView(item: SellerItem, now: number): StageView {
       return view('Ended with no bids', auction ? `Ended ${dateMedium(auction.endTime)}` : '', 'warn', 2, 2,
         { label: 'Not sold', variant: 'warning' }, [fact('Start price', pkr(listing.startPrice)), fact('Bids', '0')]);
     case 'CANCELLED':
-      return view('Auction cancelled', auction ? `Ended ${dateMedium(auction.endTime)}` : '', 'info', 1, null,
+      // Not dated: cancelling leaves the scheduled end where it was, so endTime would be a date
+      // in the future for an auction that has already stopped. The server does not record when.
+      return view('Auction cancelled', 'Stopped before its scheduled end', 'info', 1, null,
         { label: 'Cancelled', variant: 'tag' }, [fact('Start price', pkr(listing.startPrice)), fact('Bids', String(bidCount))]);
   }
 }
@@ -257,7 +259,8 @@ export function timeline(item: SellerItem): TimelineEvent[] {
 
   if (auction) {
     events.push({ text: 'Listing went live', at: auction.startTime });
-    if (auction.status === 'CANCELLED') events.push({ text: 'Auction cancelled', at: auction.endTime });
+    // Undated, for the reason given at the CANCELLED view above.
+    if (auction.status === 'CANCELLED') events.push({ text: 'Auction cancelled' });
     if (auction.status === 'CLOSED') {
       events.push({
         text: auction.reserveMet === false ? 'Auction ended, reserve not met' : 'Auction ended',

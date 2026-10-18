@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Check } from 'lucide-react';
+import { useAuth } from '../../context/auth';
 import { useNotifications } from '../../queries/notifications';
 import type { AppNotification } from '../../types/api';
 
 // Best-effort landing page when a notification is clicked.
-function targetFor(n: AppNotification): string | null {
+function targetFor(n: AppNotification, role: string | undefined): string | null {
   switch (n.type) {
     case 'BID_OUTBID':
       return '/buyer/my-bids';
     case 'AUCTION_WON':
       return '/buyer/my-wins';
-    // Goes to both parties. My Bids is right for the bidder; the seller has no
-    // equivalent outcome screen, so the notification text has to carry it for them.
+    // Goes to both parties, and each has their own place for it: the bidder's My Bids, the
+    // seller's item under Unsold. A buyer-only route would bounce the seller to their dashboard.
     case 'RESERVE_NOT_MET':
-      return '/buyer/my-bids';
+      return role === 'SELLER' ? '/seller/items?tab=unsold' : '/buyer/my-bids';
     // An approved listing is now live; a rejected one waits under Rejected / Removed with its reason.
     case 'LISTING_APPROVED':
       return '/seller/items?tab=live';
@@ -47,6 +48,7 @@ interface Props {
 
 export default function NotificationBell({ iconClass = 'text-white/70 hover:text-white', align = 'right' }: Props) {
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
@@ -62,7 +64,7 @@ export default function NotificationBell({ iconClass = 'text-white/70 hover:text
 
   const handleClick = (n: AppNotification) => {
     if (!n.isRead) void markRead(n.id);
-    const to = targetFor(n);
+    const to = targetFor(n, user?.role);
     setOpen(false);
     if (to) navigate(to);
   };
