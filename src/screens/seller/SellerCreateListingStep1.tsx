@@ -347,12 +347,13 @@ export default function SellerCreateListingStep1() {
               </div>
             </div>
 
-            {/* Hidden file input */}
+            {/* Hidden file input: the "Upload" button below opens it. display:none (not sr-only) so it is
+                not a second, unnamed stop in the tab order. */}
             <input
               ref={fileRef}
               type="file"
               accept="image/*"
-              className="sr-only"
+              className="hidden"
               onChange={handleFileChange}
             />
 

@@ -242,8 +242,12 @@ export default function SellerEditListing() {
             <Input label="Item Title" required value={form.title} onChange={e => set('title', e.target.value)} error={errors.title} maxLength={150} />
 
             <div>
-              <label className="text-[13px] font-semibold text-body mb-1 block">Category<span className="text-primary ml-0.5">*</span></label>
+              <label htmlFor="edit-category" className="text-[13px] font-semibold text-body mb-1 block">Category<span className="text-primary ml-0.5">*</span></label>
               <select
+                id="edit-category"
+                aria-required="true"
+                aria-invalid={!!errors.category}
+                aria-describedby={errors.category ? 'edit-category-error' : undefined}
                 value={form.category}
                 onChange={e => set('category', e.target.value as ListingCategory)}
                 className={`w-full h-10 px-3 rounded-lg border text-sm bg-surface ${errors.category ? 'border-error' : 'border-border'}`}
@@ -251,16 +255,17 @@ export default function SellerEditListing() {
                 <option value="">Select a category</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              {errors.category && <p className="text-[12px] text-primary mt-1">{errors.category}</p>}
+              {errors.category && <p id="edit-category-error" role="alert" className="text-[12px] text-primary mt-1">{errors.category}</p>}
             </div>
 
             <div>
-              <label className="text-[13px] font-semibold text-body mb-1 block">Condition<span className="text-primary ml-0.5">*</span></label>
-              <div className="flex gap-2">
+              <span id="edit-condition-label" className="text-[13px] font-semibold text-body mb-1 block">Condition<span className="text-primary ml-0.5">*</span></span>
+              <div role="group" aria-labelledby="edit-condition-label" className="flex gap-2">
                 {CONDITIONS.map(c => (
                   <button
                     key={c.value}
                     type="button"
+                    aria-pressed={form.condition === c.value}
                     onClick={() => set('condition', c.value)}
                     className={`flex-1 h-10 rounded-lg border text-sm font-semibold cursor-pointer ${form.condition === c.value ? 'border-primary bg-primary/5 text-primary' : 'border-border text-tertiary hover:bg-bg'}`}
                   >
@@ -268,36 +273,50 @@ export default function SellerEditListing() {
                   </button>
                 ))}
               </div>
-              {errors.condition && <p className="text-[12px] text-primary mt-1">{errors.condition}</p>}
+              {errors.condition && <p role="alert" className="text-[12px] text-primary mt-1">{errors.condition}</p>}
             </div>
 
             <Textarea label="Description" required value={form.description} onChange={e => set('description', e.target.value)} error={errors.description} maxLength={5000} />
 
-            {form.category && getCategoryFields(form.category).map(field => (
-              <div key={field.key}>
-                <label className="text-[13px] font-semibold text-body mb-1 block">
-                  {field.label}{field.required && <span className="text-primary ml-0.5">*</span>}
-                </label>
-                {field.type === 'select' ? (
-                  <select
-                    value={String(form.attributes[field.key] ?? '')}
-                    onChange={e => set('attributes', { ...form.attributes, [field.key]: e.target.value })}
-                    className={`w-full h-10 px-3 rounded-lg border text-sm bg-surface ${errors[field.key] ? 'border-error' : 'border-border'}`}
-                  >
-                    <option value="">Select</option>
-                    {field.options?.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                ) : (
-                  <Input
-                    type={field.type === 'number' ? 'number' : 'text'}
-                    placeholder={field.placeholder}
-                    value={String(form.attributes[field.key] ?? '')}
-                    onChange={e => set('attributes', { ...form.attributes, [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value })}
-                    error={errors[field.key]}
-                  />
-                )}
-              </div>
-            ))}
+            {form.category && getCategoryFields(form.category).map(field => {
+              const error = errors[field.key];
+              const attrId = `edit-attr-${field.key}`;
+              const value = String(form.attributes[field.key] ?? '');
+              if (field.type === 'select') {
+                return (
+                  <div key={field.key}>
+                    <label htmlFor={attrId} className="text-[13px] font-semibold text-body mb-1 block">
+                      {field.label}{field.required && <span className="text-primary ml-0.5">*</span>}
+                    </label>
+                    <select
+                      id={attrId}
+                      aria-required={field.required ? 'true' : undefined}
+                      aria-invalid={!!error}
+                      aria-describedby={error ? `${attrId}-error` : undefined}
+                      value={value}
+                      onChange={e => set('attributes', { ...form.attributes, [field.key]: e.target.value })}
+                      className={`w-full h-10 px-3 rounded-lg border text-sm bg-surface ${error ? 'border-error' : 'border-border'}`}
+                    >
+                      <option value="">Select</option>
+                      {field.options?.map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    {error && <p id={`${attrId}-error`} role="alert" className="text-[12px] text-primary mt-1">{error}</p>}
+                  </div>
+                );
+              }
+              return (
+                <Input
+                  key={field.key}
+                  label={field.label}
+                  required={field.required}
+                  type={field.type === 'number' ? 'number' : 'text'}
+                  placeholder={field.placeholder}
+                  value={value}
+                  onChange={e => set('attributes', { ...form.attributes, [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value })}
+                  error={error}
+                />
+              );
+            })}
 
             <div className="grid grid-cols-2 gap-4">
               <Input label="Starting Price (PKR)" type="number" required value={form.startPrice} onChange={e => set('startPrice', e.target.value)} error={errors.startPrice} />
@@ -306,8 +325,8 @@ export default function SellerEditListing() {
               <Input label="Duration (days)" type="number" required value={form.durationDays} onChange={e => set('durationDays', e.target.value)} error={errors.durationDays} />
             </div>
 
-            <div>
-              <label className="text-[13px] font-semibold text-body mb-1 block">Photo</label>
+            <div role="group" aria-labelledby="edit-photo-label">
+              <span id="edit-photo-label" className="text-[13px] font-semibold text-body mb-1 block">Photo</span>
               {form.imageUrl ? (
                 <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border-light">
                   <img src={form.imageUrl} alt="Listing" className="w-full h-full object-cover" />

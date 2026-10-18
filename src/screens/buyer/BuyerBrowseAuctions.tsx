@@ -28,7 +28,7 @@ const FilterCheckbox = ({ checked, onClick, label }: { checked: boolean; onClick
   <label className="flex items-center gap-2.5 cursor-pointer group">
     <span className="relative flex">
       <input type="checkbox" checked={checked} onChange={onClick} className="sr-only peer" />
-      <span className={`w-[14px] h-[14px] rounded-xs border-2 flex items-center justify-center transition-colors ${checked ? 'bg-primary border-primary' : 'border-border-strong group-hover:border-primary/50'}`}>
+      <span className={`w-[14px] h-[14px] rounded-xs border-2 flex items-center justify-center transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 ${checked ? 'bg-primary border-primary' : 'border-border-strong group-hover:border-primary/50'}`}>
         {checked && <Check size={9} strokeWidth={3} className="text-white" />}
       </span>
     </span>
@@ -304,11 +304,13 @@ export default function BuyerBrowseAuctions() {
                 <h2 className="font-bold text-[13px] text-navy">Filters</h2>
                 <button onClick={clearAll} className="text-[11px] text-primary font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">Clear All</button>
               </div>
-              <p className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Category</p>
-              <div className="flex flex-wrap gap-2 mb-3">
+              <p id="mobile-category-label" className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Category</p>
+              <div role="group" aria-labelledby="mobile-category-label" className="flex flex-wrap gap-2 mb-3">
                 {CATEGORIES.map(c => (
                   <button
                     key={c}
+                    type="button"
+                    aria-pressed={category === c}
                     onClick={() => setCategory(c)}
                     className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${category === c ? 'bg-primary text-white border-primary' : 'bg-surface text-muted border-border-light'}`}
                   >

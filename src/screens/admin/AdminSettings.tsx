@@ -32,6 +32,27 @@ const EMPTY_FORM: FormState = {
   supportEmail: '',
 };
 
+/**
+ * An on/off switch. Declared here, at module level, not inside AdminSettings: a component declared
+ * inside another is a new component on every render, so React threw the button away and built a
+ * fresh one each time a setting changed, and the keyboard focus went with it. It also has to say
+ * what it is: a `switch` with a name and its state, where it used to be an unnamed button.
+ */
+function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={value}
+      aria-label={label}
+      onClick={onChange}
+      className={`shrink-0 w-[42px] h-[24px] rounded-full transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${value ? 'bg-success-dark' : 'bg-border-medium'}`}
+    >
+      <span className={`absolute top-[4px] size-[16px] rounded-full bg-surface shadow-sm transition-transform ${value ? 'translate-x-[22px]' : 'translate-x-[4px]'}`} />
+    </button>
+  );
+}
+
 export default function AdminSettings() {
   const { user, logout, changePassword } = useAuth();
   const { showToast } = useToast();
@@ -104,16 +125,6 @@ export default function AdminSettings() {
       setIsSaving(false);
     }
   };
-
-  const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
-    <button
-      type="button"
-      onClick={onChange}
-      className={`shrink-0 w-[42px] h-[24px] rounded-full transition-colors relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${value ? 'bg-success-dark' : 'bg-border-medium'}`}
-    >
-      <span className={`absolute top-[4px] size-[16px] rounded-full bg-surface shadow-sm transition-transform ${value ? 'translate-x-[22px]' : 'translate-x-[4px]'}`} />
-    </button>
-  );
 
   return (
     <AdminLayout active="Settings">
@@ -289,7 +300,7 @@ export default function AdminSettings() {
                           </p>
                         )}
                       </div>
-                      <Toggle value={form[t.key]} onChange={() => update(t.key, !form[t.key])} />
+                      <Toggle label={t.label} value={form[t.key]} onChange={() => update(t.key, !form[t.key])} />
                     </div>
                   ))}
                 </div>

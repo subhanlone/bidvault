@@ -144,8 +144,8 @@ export default function RegisterScreen() {
 
         {/* Role selector */}
         <div>
-          <p className="text-[12px] font-bold text-secondary mb-2">I want to <span className="text-primary">*</span></p>
-          <div className="grid grid-cols-2 gap-3">
+          <p id="signup-role-label" className="text-[12px] font-bold text-secondary mb-2">I want to <span className="text-primary">*</span></p>
+          <div role="group" aria-labelledby="signup-role-label" className="grid grid-cols-2 gap-3">
             {([
               { r: 'BUYER'  as SignupRole, label: 'Buyer',  desc: 'Browse & bid on live auctions', Icon: ShoppingBag },
               { r: 'SELLER' as SignupRole, label: 'Seller', desc: 'List items & run your auctions', Icon: Tag        },
@@ -155,6 +155,7 @@ export default function RegisterScreen() {
                 <button
                   key={r}
                   type="button"
+                  aria-pressed={sel}
                   onClick={() => setRole(r)}
                   className={`relative rounded-md h-[110px] border-2 text-left transition-all cursor-pointer p-4 ${sel ? 'bg-primary-surface border-primary' : 'bg-bg border-border-light hover:border-primary'}`}
                 >
@@ -235,16 +236,19 @@ export default function RegisterScreen() {
               id="terms-agree"
               checked={agree}
               onChange={e => { setAgree(e.target.checked); clearError('agree'); }}
-              className="sr-only"
+              className="sr-only peer"
+              // The sentence next to the box is the name; the box itself (the label below) holds
+              // no text, so without this the checkbox had no accessible name at all.
+              aria-labelledby="terms-agree-text"
               aria-describedby={errors.agree ? 'agree-error' : undefined}
             />
             <label
               htmlFor="terms-agree"
-              className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center flex-shrink-0 mt-px transition-colors cursor-pointer ${agree ? 'bg-primary border-primary' : 'bg-surface border-border-medium'}`}
+              className={`w-[18px] h-[18px] rounded border-2 flex items-center justify-center flex-shrink-0 mt-px transition-colors cursor-pointer peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 ${agree ? 'bg-primary border-primary' : 'bg-surface border-border-medium'}`}
             >
               {agree && <svg viewBox="0 0 10 8" className="w-2.5 h-2 fill-none stroke-white stroke-2"><polyline points="1,4 4,7 9,1" /></svg>}
             </label>
-            <span className="text-[12.5px] text-tertiary leading-relaxed">
+            <span id="terms-agree-text" className="text-[12.5px] text-tertiary leading-relaxed">
               I agree to BidVault's{' '}
               <Link to="/terms" className="font-bold text-primary hover:underline">Terms of Service</Link>{' '}and{' '}
               <Link to="/privacy" className="font-bold text-primary hover:underline">Privacy Policy</Link>
