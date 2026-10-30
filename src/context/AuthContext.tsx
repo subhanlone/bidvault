@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 // shape — and unlike those, this pair was never even covered by the guard that compared them,
 // so nothing had ever checked it. The old RegisterData typed `role` as UserRole, which
 // includes ADMIN: a value POST /auth/register has never accepted.
-import type { User, RegisterRequest, LoginRequest } from '../types/api';
+import type { User, RegisterRequest, LoginRequest, EnrollSellerRequest } from '../types/api';
 import {
   api,
   ApiError,
@@ -254,11 +254,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
   };
 
+  const becomeSeller = async (data: EnrollSellerRequest) => {
+    try {
+      const { user: updated } = await api.post('/seller/enroll', data);
+      setUser(updated);
+      // The server puts a socket in the seller's own room (bids on their items) when it connects,
+      // so a connection opened before this person was a seller has to be opened again.
+      reconnectSocket();
+      return { success: true };
+    } catch (err: unknown) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Could not set up your seller account',
+        details: err instanceof ApiError ? err.details : undefined,
+      };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user, isLoading,
       register, verifyEmail, resendVerification, login, logout,
-      forgotPassword, verifyResetOtp, resetPassword, changePassword, deleteAccount, updateUser,
+      forgotPassword, verifyResetOtp, resetPassword, changePassword, deleteAccount, updateUser, becomeSeller,
     }}>
       {children}
     </AuthContext.Provider>

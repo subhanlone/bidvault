@@ -359,7 +359,7 @@ export default function LandingPage() {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={() => navigate('/register?role=SELLER')}
+                onClick={() => navigate(user ? '/become-a-seller' : '/register')}
                 className="w-full sm:w-auto bg-transparent border-white/25 text-white hover:border-white hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
               >
                 Sell Your Items
@@ -620,7 +620,7 @@ export default function LandingPage() {
               <p className="font-bold text-[12px] text-[rgba(255,255,255,0.5)] uppercase tracking-[1px] mb-4">Platform</p>
               <div className="flex flex-col gap-2.5">
                 <button type="button" onClick={() => scrollToSection('featured')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Browse Auctions</button>
-                <button type="button" onClick={() => navigate('/register?role=SELLER')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Sell an Item</button>
+                <button type="button" onClick={() => navigate(user ? '/become-a-seller' : '/register')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Sell an Item</button>
                 <button type="button" onClick={() => scrollToSection('how-it-works')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">How It Works</button>
               </div>
             </div>

@@ -128,7 +128,7 @@ function BidCard({ entry }: { entry: BidEntry }) {
 
 export default function BuyerMyBids() {
   const { user, logout } = useAuth();
-  const myBidsQuery = useMyBids(user?.role === 'BUYER');
+  const myBidsQuery = useMyBids(!!user && user.role !== 'ADMIN');
   const myBidRows = useDrainedPages(myBidsQuery);
   // Stays "loading" through every page, not just the first — the Active/Winning/Total tiles
   // below are exact counts, so showing them after page one would show a number that then

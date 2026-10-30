@@ -342,7 +342,8 @@ export function useToggleWatchlist() {
  */
 export function useWatchlistToggle() {
   const { user } = useAuth();
-  const canWatch = user?.role === 'BUYER' || user?.role === 'ADMIN';
+  // Every signed-in account can watch (a seller is a buyer too).
+  const canWatch = user !== null;
 
   const watchlistQuery = useWatchlist(canWatch);
   const { data: activePages } = useActiveAuctions();

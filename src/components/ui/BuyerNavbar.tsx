@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
 import NotificationBell from './NotificationBell';
+import ModeSwitch from './ModeSwitch';
 
 interface NavLink {
   label: string;
@@ -55,6 +56,7 @@ export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', 
         })}
       </ul>
       <div className="hidden md:flex items-center gap-3 ml-auto">
+        <ModeSwitch side="buying" className="text-sm font-semibold text-white border border-white/30 hover:border-white rounded-lg px-3 py-1 transition-colors no-underline" />
         <NotificationBell />
         <Link to="/buyer/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           {avatarUrl ? (
@@ -97,6 +99,9 @@ export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', 
                   </li>
                 );
               })}
+              <li>
+                <ModeSwitch side="buying" onNavigate={() => setMobileOpen(false)} className="flex items-center gap-3 px-6 py-3 text-sm font-semibold text-white hover:bg-white/5 transition-colors" />
+              </li>
             </ul>
             <div className="border-t border-white/10 px-6 py-3 flex items-center justify-between gap-3">
               <Link to="/buyer/profile" onClick={() => setMobileOpen(false)} className="text-sm text-white/70 hover:text-white transition-colors truncate">

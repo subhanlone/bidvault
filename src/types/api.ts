@@ -51,6 +51,7 @@ export type {
   CategoryAttributes,
   RegisterRequest,
   LoginRequest,
+  EnrollSellerRequest,
   SubmitListingRequest,
   CreateReviewRequest,
   UpdateSettingsRequest,

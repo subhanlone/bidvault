@@ -157,6 +157,8 @@ export default function BuyerLiveBidding() {
   }
 
   // ── Derived values ───────────────────────────────────────────────────────────
+  // A seller can buy too now, but never from themselves: the server refuses it, so the form is not offered.
+  const isOwnAuction     = user?.userId === auction.sellerId;
   const watched          = isWatched(auction.auctionId);
   const isFinalCountdown = timer.totalSeconds > 0 && timer.totalSeconds <= 60;
   // BV-013: the first bid is allowed at the advertised starting price itself (matching eBay's
@@ -475,6 +477,15 @@ export default function BuyerLiveBidding() {
           </div>
 
           {/* Quick bids + custom bid */}
+          {isOwnAuction ? (
+            <div className="bg-surface border border-border-light rounded-md p-5">
+              <p className="font-bold text-[13px] text-navy mb-1">This is your auction</p>
+              <p className="text-[12.5px] text-muted">
+                You cannot bid on your own items.{' '}
+                <Link to="/seller/items" className="font-bold text-primary hover:underline">Manage it in My Items</Link>
+              </p>
+            </div>
+          ) : (
           <div className="bg-surface border border-border-light rounded-md p-5">
             <p className="font-bold text-[13px] text-navy mb-3">
               {isFinalCountdown ? 'Place Final Bid' : 'Quick Bid'}
@@ -525,6 +536,7 @@ export default function BuyerLiveBidding() {
               </div>
             </form>
           </div>
+          )}
         </div>
       </main>
 

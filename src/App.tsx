@@ -37,6 +37,7 @@ const SellerCreateListingStep2 = lazy(() => import('./screens/seller/SellerCreat
 const SellerCreateListingStep3 = lazy(() => import('./screens/seller/SellerCreateListingStep3'));
 const SellerListingSubmitted = lazy(() => import('./screens/seller/SellerListingSubmitted'));
 const SellerProfile = lazy(() => import('./screens/seller/SellerProfile'));
+const BecomeSeller = lazy(() => import('./screens/seller/BecomeSeller'));
 
 const BuyerBrowseAuctions = lazy(() => import('./screens/buyer/BuyerBrowseAuctions'));
 const BuyerMyBids = lazy(() => import('./screens/buyer/BuyerMyBids'));
@@ -140,6 +141,13 @@ export default function App() {
                     <Route path="/admin/settings" element={
                       <ProtectedRoute allowedRoles={['ADMIN']}>
                         <AdminSettings />
+                      </ProtectedRoute>
+                    } />
+
+                    {/* Any signed-in account can become a seller; a seller who opens this goes on to the dashboard. */}
+                    <Route path="/become-a-seller" element={
+                      <ProtectedRoute allowedRoles={['BUYER']}>
+                        <BecomeSeller />
                       </ProtectedRoute>
                     } />
 

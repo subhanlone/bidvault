@@ -1,16 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { User, Mail, Lock, Eye, EyeOff, ShoppingBag, Tag } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { useToast } from '../../context/toast';
-// The role this form can submit, taken from the contract rather than the wider UserRole:
-// registration accepts BUYER and SELLER only, and the two buttons below produce nothing
-// else. The wider type let ADMIN through the type system all the way to the API.
-import type { RegisterRequest } from '../../types/api';
-type SignupRole = RegisterRequest['role'];
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
 import { isStrictEmail, EMAIL_INVALID_MESSAGE } from '../../utils/validation';
+import { homePath } from '../../utils/account';
 
 const PW_CONFIG = [
   { width: '0%',   label: '',       labelClass: 'text-muted',   barClass: 'bg-border' },
@@ -34,13 +30,9 @@ const NAME_REGEX = /^[\p{L}\s'-]+$/u;
 
 export default function RegisterScreen() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user, register } = useAuth();
   const { showToast } = useToast();
 
-  const [role, setRole] = useState<SignupRole>(
-    searchParams.get('role') === 'SELLER' ? 'SELLER' : 'BUYER',
-  );
   const [name, setName]         = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -59,9 +51,7 @@ export default function RegisterScreen() {
   // RG-02: redirect already-logged-in users to their role dashboard
   useEffect(() => {
     if (!user) return;
-    if (user.role === 'ADMIN')       navigate('/admin/dashboard',  { replace: true });
-    else if (user.role === 'SELLER') navigate('/seller/dashboard', { replace: true });
-    else                             navigate('/buyer/browse',     { replace: true });
+    navigate(homePath(user), { replace: true });
   }, [user, navigate]);
 
   // RG-03: replace hardcoded stats with live API data
@@ -101,7 +91,7 @@ export default function RegisterScreen() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setLoading(true);
-    const result = await register({ name: name.trim(), email: email.trim(), password, role });
+    const result = await register({ name: name.trim(), email: email.trim(), password });
     setLoading(false);
     if (result.success) {
       showToast({ type: 'success', title: 'Account Created!', message: 'Check your email for a verification code.' });
@@ -140,39 +130,6 @@ export default function RegisterScreen() {
             Already have an account?{' '}
             <Link to="/login" className="font-bold text-primary hover:underline">Sign in here</Link>
           </p>
-        </div>
-
-        {/* Role selector */}
-        <div>
-          <p id="signup-role-label" className="text-[12px] font-bold text-secondary mb-2">I want to <span className="text-primary">*</span></p>
-          <div role="group" aria-labelledby="signup-role-label" className="grid grid-cols-2 gap-3">
-            {([
-              { r: 'BUYER'  as SignupRole, label: 'Buyer',  desc: 'Browse & bid on live auctions', Icon: ShoppingBag },
-              { r: 'SELLER' as SignupRole, label: 'Seller', desc: 'List items & run your auctions', Icon: Tag        },
-            ]).map(({ r, label, desc, Icon }) => {
-              const sel = role === r;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  aria-pressed={sel}
-                  onClick={() => setRole(r)}
-                  className={`relative rounded-md h-[110px] border-2 text-left transition-all cursor-pointer p-4 ${sel ? 'bg-primary-surface border-primary' : 'bg-bg border-border-light hover:border-primary'}`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${sel ? 'bg-primary/12' : 'bg-border-light'}`}>
-                      <Icon size={16} className={sel ? 'text-primary' : 'text-muted'} />
-                    </div>
-                    <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${sel ? 'border-primary' : 'border-border-medium'}`}>
-                      {sel && <div className="w-2 h-2 rounded-full bg-primary" />}
-                    </div>
-                  </div>
-                  <p className={`text-[13px] font-bold leading-tight ${sel ? 'text-primary-dark' : 'text-secondary'}`}>{label}</p>
-                  <p className="text-[11px] text-muted mt-0.5">{desc}</p>
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {/* Name + Email */}
@@ -260,6 +217,11 @@ export default function RegisterScreen() {
         <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>
           Create Account
         </Button>
+
+        {/* One account buys and sells; becoming a seller is a step taken later, not a kind of account. */}
+        <p className="text-center text-[12.5px] text-muted">
+          Want to sell too? You can do it any time after you sign up.
+        </p>
 
         <p className="text-center text-sm text-muted">
           Already have an account?{' '}
