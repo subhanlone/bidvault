@@ -1,4 +1,14 @@
 {
   "//": "Advisories accepted after analysis. scripts/audit-gate.mjs fails on anything not listed here, AND fails when a listed advisory no longer appears — so an entry cannot outlive its reason. Never add an entry to silence something reachable; fix that at the root.",
-  "accepted": []
+  "accepted": [
+    {
+      "id": "GHSA-g3hv-75wg-m249",
+      "package": "minimatch",
+      "severity": "moderate",
+      "acceptedOn": "2026-10-31",
+      "reason": "Not reachable here. minimatch is not in the production dependency tree (`npm ls minimatch --omit=dev` is empty, and the shipped bundle is built by vite from src) and no file in src, e2e or scripts imports it. It is present only through the lint toolchain: eslint, @eslint/config-array and typescript-eslint's typescript-estree. The flaw (CVE-2026-118764, CVSS 6.9, availability only) needs an attacker to supply the glob pattern, and with optimizationLevel 2 or higher it makes minimatch generate many pattern entries that a second phase compares pairwise. In this repo the only patterns minimatch ever sees are the ones in eslint.config.js and the typescript-eslint options inside it, written by a developer, and it runs on a developer machine or in CI, never in a browser or on a request. An attacker able to edit those already has code execution.",
+      "whyNotFixed": "The fix is minimatch 11.0.1, but no released version of the toolchain accepts it. On 2026-10-31 the latest eslint (10.14.0) depends on minimatch ^10.2.6, the latest @eslint/config-array (0.23.5) on ^10.2.4 and the latest @typescript-eslint/typescript-estree (8.72.1) on ^10.2.2, so upgrading them does not help and `npm audit fix` changes nothing. `npm audit fix --force` proposes only a downgrade of the lint toolchain to older majors (typescript-eslint 8.67.0 to 8.14.0 and @eslint/js to 9.39.5, with minimatch 3.1.5), not an upgrade to 11.0.1. An npm override would force a major version of minimatch under packages that pin ^10, which this project does not do.",
+      "tracking": "https://github.com/advisories/GHSA-g3hv-75wg-m249 . Remove this entry when eslint, @eslint/config-array and typescript-estree all depend on minimatch 11.0.1 or later (their dependency ranges are in https://github.com/eslint/eslint/blob/main/package.json); the gate fails when the advisory stops appearing, which is the reminder."
+    }
+  ]
 }
