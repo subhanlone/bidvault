@@ -4,9 +4,11 @@ import { Bell, Check } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { useNotifications } from '../../queries/notifications';
 import type { AppNotification } from '../../types/api';
+import { readMode, type Mode } from '../../utils/account';
 
 // Best-effort landing page when a notification is clicked.
-function targetFor(n: AppNotification, role: string | undefined): string | null {
+// `mode` is the side of the app the person is on: one account can be both bidder and seller.
+function targetFor(n: AppNotification, mode: Mode): string | null {
   switch (n.type) {
     case 'BID_OUTBID':
       return '/buyer/my-bids';
@@ -15,7 +17,7 @@ function targetFor(n: AppNotification, role: string | undefined): string | null 
     // Goes to both parties, and each has their own place for it: the bidder's My Bids, the
     // seller's item under Unsold. A buyer-only route would bounce the seller to their dashboard.
     case 'RESERVE_NOT_MET':
-      return role === 'SELLER' ? '/seller/items?tab=unsold' : '/buyer/my-bids';
+      return mode === 'selling' ? '/seller/items?tab=unsold' : '/buyer/my-bids';
     // An approved listing is now live; a rejected one waits under Rejected / Removed with its reason.
     case 'LISTING_APPROVED':
       return '/seller/items?tab=live';
@@ -64,7 +66,7 @@ export default function NotificationBell({ iconClass = 'text-white/70 hover:text
 
   const handleClick = (n: AppNotification) => {
     if (!n.isRead) void markRead(n.id);
-    const to = targetFor(n, user?.role);
+    const to = targetFor(n, user ? readMode(user) : 'buying');
     setOpen(false);
     if (to) navigate(to);
   };

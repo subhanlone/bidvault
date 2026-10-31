@@ -69,6 +69,11 @@ export default defineConfig({
       name: 'public',
       testMatch: ['**/landing.spec.ts', '**/auth.spec.ts'],
     },
+    // Creates its own throwaway account on the local backend, so it needs no saved sign-in.
+    {
+      name: 'account',
+      testMatch: '**/account.spec.ts',
+    },
     {
       name: 'buyer',
       testMatch: '**/buyer.spec.ts',

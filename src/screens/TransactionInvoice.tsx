@@ -4,6 +4,7 @@ import { ArrowLeft, Receipt, XCircle, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../context/auth';
 import { SellerNavbar, BuyerNavbar } from '../components/ui';
 import { api } from '../services/api';
+import { readMode } from '../utils/account';
 import { dateLong, pkr } from '../utils/format';
 import LoadingStatus from '../components/ui/LoadingStatus';
 import type { Invoice } from '../types/openapi';
@@ -35,7 +36,8 @@ export default function TransactionInvoice() {
       .finally(() => setLoading(false));
   }, [transactionId]);
 
-  const Navbar = user?.role === 'SELLER' ? SellerNavbar : BuyerNavbar;
+  // The invoice is shared by both sides; show the navbar of the side the person was last on.
+  const Navbar = user && readMode(user) === 'selling' ? SellerNavbar : BuyerNavbar;
 
   return (
     <div className="min-h-screen bg-bg">

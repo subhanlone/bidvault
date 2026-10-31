@@ -1,18 +1,13 @@
 ﻿import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/auth';
 import { BidVaultLogo } from '../components/ui';
+import { homePath } from '../utils/account';
 
 export default function NotFound() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const homeLink = user?.role === 'ADMIN'
-    ? '/admin/dashboard'
-    : user?.role === 'SELLER'
-    ? '/seller/dashboard'
-    : user?.role === 'BUYER'
-    ? '/buyer/browse'
-    : '/';
+  const homeLink = user ? homePath(user) : '/';
 
   return (
     <main className="min-h-screen bg-navy flex flex-col items-center justify-center px-4 relative overflow-hidden">

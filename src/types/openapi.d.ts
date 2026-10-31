@@ -94,6 +94,8 @@ export type Auction = {
   sellerRating: number | null;
   sellerSales: number | null;
   sellerMemberSince: string;
+  sellerCity: string | null;
+  sellerProvince: string | null;
   startPrice: number;
   currentBid: number;
   minIncrement: number;
@@ -174,6 +176,16 @@ export type Earnings = {
   }[];
 };
 
+export type EnrollSellerRequest = {
+  acceptTerms: true;
+  termsVersion: string;
+  confirmAdult: true;
+  city: string;
+  province: "Punjab" | "Sindh" | "Khyber Pakhtunkhwa" | "Balochistan" | "Islamabad Capital Territory" | "Gilgit-Baltistan" | "Azad Jammu and Kashmir";
+  phone?: string;
+  bio?: string;
+};
+
 export type ErrorResponse = {
   success: false;
   error: string;
@@ -213,6 +225,7 @@ export type Invoice = {
   buyerEmail: string;
   sellerName: string;
   sellerEmail: string;
+  sellerPhone?: string;
   amount: number;
   status: TransactionStatus;
   paymentReference?: string;
@@ -393,6 +406,7 @@ export type PublicBid = {
 export type PublicSettings = {
   maintenanceMode: boolean;
   supportEmail: string;
+  sellerTermsVersion: string;
 };
 
 export type RaiseDisputeRequest = {
@@ -417,7 +431,7 @@ export type RegisterRequest = {
    * 8-128 characters. Additionally scored with zxcvbn and rejected below score 2, which refuses common passwords, keyboard walks and dictionary words regardless of length.
    */
   password: string;
-  role: "BUYER" | "SELLER";
+  role?: "BUYER" | "SELLER";
 };
 
 export type Registration = {
@@ -647,6 +661,8 @@ export type User = {
   email: string;
   role: UserRole;
   isEmailVerified: boolean;
+  isSeller: boolean;
+  sellerSince: string | null;
   createdAt: string;
 };
 
@@ -686,6 +702,7 @@ export type WonTransaction = {
   auctionEmoji: string;
   auctionImageUrl: string;
   sellerName: string;
+  sellerPhone?: string;
   finalAmount: number;
   status: TransactionStatus;
   lastPaymentError?: string;
@@ -815,6 +832,9 @@ export interface PostEndpoints {
     sellerReply: string;
     sellerReplyAt: string;
   };
+  "/seller/enroll": {
+    user: User;
+  };
   "/watchlist/{auctionId}": WatchToggle;
 }
 
@@ -875,6 +895,7 @@ export interface PostRequests {
   "/payments/{transactionId}/pay": PayTransactionRequest;
   "/reviews": CreateReviewRequest;
   "/reviews/{reviewId}/reply": ReplyToReviewRequest;
+  "/seller/enroll": EnrollSellerRequest;
 }
 
 /** The body each documented PUT expects. */

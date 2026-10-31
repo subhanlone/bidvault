@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Check } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { useToast } from '../../context/toast';
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
 import { pkrCompact } from '../../utils/format';
+import { homePath, safeReturnPath } from '../../utils/account';
+import type { User } from '../../types/api';
 // Signing in only identifies an existing account, so this is the permissive rule —
 // a stricter check here could refuse an address the user actually registered with.
 import { isLookupEmail, EMAIL_INVALID_MESSAGE } from '../../utils/validation';
@@ -13,6 +15,7 @@ import { isLookupEmail, EMAIL_INVALID_MESSAGE } from '../../utils/validation';
 
 export default function LoginScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, login } = useAuth();
   const { showToast } = useToast();
 
@@ -32,12 +35,18 @@ export default function LoginScreen() {
   ]);
 
   // LG-02: redirect already-logged-in users to their role dashboard
+  // Where to go once signed in: the page that sent the person here (ProtectedRoute leaves it in
+  // router state, never in the address), or the home of whichever side they were last on.
+  const returnTo = safeReturnPath((location.state as { from?: unknown } | null)?.from);
+  const destination = useCallback(
+    (u: User) => (u.role === 'ADMIN' ? homePath(u) : returnTo ?? homePath(u)),
+    [returnTo],
+  );
+
   useEffect(() => {
     if (!user) return;
-    if (user.role === 'ADMIN')       navigate('/admin/dashboard',  { replace: true });
-    else if (user.role === 'SELLER') navigate('/seller/dashboard', { replace: true });
-    else                             navigate('/buyer/browse',     { replace: true });
-  }, [user, navigate]);
+    navigate(destination(user), { replace: true });
+  }, [user, navigate, destination]);
 
   // LG-04: replace hardcoded stats with live API data
   useEffect(() => {
@@ -73,9 +82,7 @@ export default function LoginScreen() {
     setLoading(false);
     if (result.success && result.user) {
       showToast({ type: 'success', title: `Welcome back, ${result.user.name.split(' ')[0]}!`, message: 'You are now signed in.' });
-      if (result.user.role === 'ADMIN')       navigate('/admin/dashboard');
-      else if (result.user.role === 'SELLER') navigate('/seller/dashboard');
-      else                                    navigate('/buyer/browse');
+      navigate(destination(result.user), { replace: true });
     } else if (result.code === 'EMAIL_NOT_VERIFIED') {
       navigate('/email-verification', { state: { email, autoResend: true } });
     } else {

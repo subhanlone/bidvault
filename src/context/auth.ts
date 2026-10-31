@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { User, RegisterRequest, LoginRequest } from '../types/api';
+import type { User, RegisterRequest, LoginRequest, EnrollSellerRequest } from '../types/api';
 
 // The context object, its type and the hook live apart from the provider component: a file that
 // exports components and also non-components cannot be hot-reloaded in place (react-refresh), so
@@ -20,6 +20,8 @@ export interface AuthContextType {
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   deleteAccount: (password: string) => Promise<{ success: boolean; error?: string }>;
   updateUser: (u: User) => void;
+  /** Becomes a seller (POST /seller/enroll). On success the user on screen is the updated one. */
+  becomeSeller: (data: EnrollSellerRequest) => Promise<{ success: boolean; error?: string; details?: Record<string, string[]> }>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
