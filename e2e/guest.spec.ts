@@ -245,6 +245,17 @@ test.describe('Home hero', () => {
     expect(box?.y ?? Infinity, 'Ending soon starts above the fold').toBeLessThan(600);
   });
 
+  test('keeps its colour effects: a red and a green glow over a faint grid, hidden from screen readers', async ({ page }) => {
+    await page.goto('/');
+    const hero = page.getByRole('heading', { level: 1 }).locator('xpath=ancestor::section[1]');
+    await expect(hero).toBeVisible();
+    const layers = hero.locator(':scope > [aria-hidden="true"]');
+    await expect(layers).toHaveCount(3);
+    const backgrounds = await layers.evaluateAll((els) => els.map((el) => getComputedStyle(el).backgroundImage + '|' + getComputedStyle(el).backgroundColor));
+    expect(backgrounds.some((b) => b.includes('linear-gradient')), 'the grid').toBe(true);
+    expect(backgrounds.filter((b) => b.includes('rgb(208, 2, 27)') || b.includes('208, 2, 27')).length, 'the red glow').toBeGreaterThanOrEqual(1);
+  });
+
   test('on a phone the search keeps its size and the page does not scroll sideways', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');

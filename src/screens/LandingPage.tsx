@@ -323,8 +323,15 @@ export default function LandingPage() {
       <main aria-label="BidVault marketing content">
 
       {/* Hero: one line of what this is, and the search. */}
-      <section className="bg-navy">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-9 pb-11 flex flex-col gap-5">
+      <section className="bg-navy relative overflow-hidden">
+        <div aria-hidden="true" className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+        <div aria-hidden="true" className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-primary opacity-[0.07] rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
+        <div aria-hidden="true" className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] bg-success-dark opacity-[0.06] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
+
+        <div className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-9 pb-11 flex flex-col gap-5">
           <h1 className="font-extrabold text-[28px] sm:text-[34px] lg:text-[38px] text-white leading-[1.15] tracking-[-0.025em] max-w-[680px]">
             Bid on what you want, from sellers across Pakistan.
           </h1>
