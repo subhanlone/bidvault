@@ -39,7 +39,7 @@ export default function ModeSwitch({ side, onNavigate, className = '' }: ModeSwi
     label = 'Switch to selling';
     target = 'selling';
   } else {
-    to = '/buyer/browse';
+    to = '/browse';
     label = 'Switch to buying';
     target = 'buying';
   }

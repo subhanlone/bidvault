@@ -5,6 +5,7 @@ import { useAuth } from '../../context/auth';
 import { useToast } from '../../context/toast';
 import { AuthLayout, Button } from '../../components/ui';
 import { OTP_WINDOW_SECONDS, RESEND_COOLDOWN_SECONDS, deadlineFrom, secsUntil } from '../../config/otp';
+import { safeReturnPath } from '../../utils/account';
 
 function fmtTime(s: number) {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
@@ -17,9 +18,12 @@ export default function EmailVerificationScreen() {
   const { verifyEmail, resendVerification } = useAuth();
   const { showToast }   = useToast();
 
-  const state = location.state as { email?: string; verificationCode?: string; codeExpiresAt?: string; autoResend?: boolean } | null;
+  const state = location.state as { email?: string; verificationCode?: string; codeExpiresAt?: string; autoResend?: boolean; from?: unknown } | null;
   const email: string = state?.email ?? '';
   const autoResend: boolean = state?.autoResend ?? false;
+  // Where this person was headed when they registered or tried to sign in; handed on to sign-in.
+  const returnTo = safeReturnPath(state?.from);
+  const returnState = returnTo ? { from: returnTo } : undefined;
   // Held in state, not read straight from location.state. Navigation state is captured once, so
   // after a resend the hint kept showing the original code while the server had issued a new one
   // — following it produced "Invalid or expired verification code". Dev-only, but it actively
@@ -124,7 +128,7 @@ export default function EmailVerificationScreen() {
     setLoading(false);
     if (result.success) {
       showToast({ type: 'success', title: 'Email Verified!', message: 'Your account is now active. Please sign in.' });
-      navigate('/login');
+      navigate('/login', { state: returnState });
     } else {
       const msg = result.error || 'The code is incorrect or expired.';
       showToast({ type: 'error', title: 'Invalid Code', message: msg });
@@ -203,7 +207,7 @@ export default function EmailVerificationScreen() {
               {codeState === 'sent' ? `Code expires in ${fmtTime(codeExpiry)}` : codeState === 'sending' ? 'Sending your code…' : 'No code was sent. Press Resend Code to try again.'}
             </p>
           </div>
-          <Link to="/register" className="text-xs font-bold text-primary hover:underline flex-shrink-0">Change</Link>
+          <Link to="/register" state={returnState} className="text-xs font-bold text-primary hover:underline flex-shrink-0">Change</Link>
         </div>
 
         {/* OTP inputs */}

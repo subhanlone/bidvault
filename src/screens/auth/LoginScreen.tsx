@@ -38,6 +38,8 @@ export default function LoginScreen() {
   // Where to go once signed in: the page that sent the person here (ProtectedRoute leaves it in
   // router state, never in the address), or the home of whichever side they were last on.
   const returnTo = safeReturnPath((location.state as { from?: unknown } | null)?.from);
+  // Carried on to registration and e-mail verification, so a new account ends up where this started.
+  const returnState = returnTo ? { from: returnTo } : undefined;
   const destination = useCallback(
     (u: User) => (u.role === 'ADMIN' ? homePath(u) : returnTo ?? homePath(u)),
     [returnTo],
@@ -84,7 +86,7 @@ export default function LoginScreen() {
       showToast({ type: 'success', title: `Welcome back, ${result.user.name.split(' ')[0]}!`, message: 'You are now signed in.' });
       navigate(destination(result.user), { replace: true });
     } else if (result.code === 'EMAIL_NOT_VERIFIED') {
-      navigate('/email-verification', { state: { email, autoResend: true } });
+      navigate('/email-verification', { state: { email, autoResend: true, from: returnTo ?? undefined } });
     } else {
       setPasswordError(result.error || 'Invalid credentials.');
       showToast({ type: 'error', title: 'Sign In Failed', message: result.error || 'Invalid credentials.' });
@@ -117,7 +119,7 @@ export default function LoginScreen() {
           <h2 className="text-2xl font-extrabold text-navy">Sign in to BidVault</h2>
           <p className="text-sm text-muted mt-1">
             Don't have an account?{' '}
-            <Link to="/register" className="font-bold text-primary hover:underline">Create one free</Link>
+            <Link to="/register" state={returnState} className="font-bold text-primary hover:underline">Create one free</Link>
           </p>
         </div>
 
@@ -172,7 +174,7 @@ export default function LoginScreen() {
 
         <p className="text-center text-sm text-muted">
           New to BidVault?{' '}
-          <Link to="/register" className="font-bold text-primary hover:underline">Create an account</Link>
+          <Link to="/register" state={returnState} className="font-bold text-primary hover:underline">Create an account</Link>
         </p>
       </form>
     </AuthLayout>

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getSocket } from '../services/socket';
-import { applyBidToCache, applyAuctionCancelledToCache } from './auctions';
+import { applyBidToCache, applyAuctionCancelledToCache, applyPriceToCache } from './auctions';
 import { keys } from './keys';
 
 /**
@@ -43,7 +43,14 @@ export function RealtimeBridge() {
       });
     }
 
-    // B4/C4: fires for anyone subscribed to this auction's room (BuyerLiveBidding,
+    // D10: what a guest's socket is told instead of the bid. Numbers only, so the price and the
+    // count on the page move without the page ever learning who bid. Signed-in sockets get
+    // `bid:placed` and do not receive this.
+    function onAuctionPrice(payload: { auctionId: string; currentBid: number; bidCount: number }) {
+      applyPriceToCache(queryClient, payload.auctionId, payload);
+    }
+
+    // B4/C4: fires for anyone subscribed to this auction's room (the auction page,
     // AdminAuctionMonitor) whichever path cancelled it -- seller withdrawal or admin takedown.
     function onAuctionCancelled(payload: { auctionId: string }) {
       applyAuctionCancelledToCache(queryClient, payload.auctionId);
@@ -61,10 +68,12 @@ export function RealtimeBridge() {
     }
 
     socket.on('bid:placed', onBidPlaced);
+    socket.on('auction:price', onAuctionPrice);
     socket.on('auction:cancelled', onAuctionCancelled);
     socket.on('bid:received', onBidReceived);
     return () => {
       socket.off('bid:placed', onBidPlaced);
+      socket.off('auction:price', onAuctionPrice);
       socket.off('auction:cancelled', onAuctionCancelled);
       socket.off('bid:received', onBidReceived);
     };

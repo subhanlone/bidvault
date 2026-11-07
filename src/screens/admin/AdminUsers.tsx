@@ -125,7 +125,7 @@ export default function AdminUsers() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
-  // Debounced for the same reason BuyerBrowseAuctions debounces its server-side search: each
+  // Debounced for the same reason BrowseAuctions debounces its server-side search: each
   // keystroke would otherwise start a fresh paginated query.
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useEffect(() => {

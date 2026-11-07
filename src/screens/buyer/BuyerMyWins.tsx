@@ -179,7 +179,7 @@ export default function BuyerMyWins() {
             <Trophy size={48} strokeWidth={1.2} className="text-placeholder mx-auto mb-4" />
             <p className="font-bold text-[16px] text-navy mb-1">No wins yet</p>
             <p className="text-[13px] text-muted mb-5">Win an auction to see your transactions here.</p>
-            <Button onClick={() => navigate('/buyer/browse')}>
+            <Button onClick={() => navigate('/browse')}>
               Browse Auctions
             </Button>
           </div>

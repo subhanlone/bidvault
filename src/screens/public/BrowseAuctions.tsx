@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Heart, Check } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { flattenPages, useActiveAuctions, useWatchlistToggle } from '../../queries/auctions';
 import { useInfiniteScrollTrigger } from '../../hooks/useInfiniteScrollTrigger';
 import { useTimer } from '../../hooks/useTimer';
-import { BuyerNavbar, AuctionThumbnail, ErrorState } from '../../components/ui';
+import { SiteNavbar, AuctionThumbnail, ErrorState } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import type { Auction } from '../../types/api';
-import { conditionLabel, count, pkr } from '../../utils/format';
+import { conditionLabel, count, locatedIn, pkr, weekdayTime } from '../../utils/format';
+import { useSignInLink } from '../../hooks/useSignInLink';
+import { BROWSE_CATEGORIES } from '../../config/categories';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 import { useNow } from '../../hooks/useNow';
 
-// Kept in sync with SellerCreateListingStep1.tsx CATEGORIES
-const CATEGORIES = ['All', 'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion', 'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles'];
+const CATEGORIES: string[] = ['All', ...BROWSE_CATEGORIES];
 
 const SORT_OPTIONS = [
   { value: 'endingSoon', label: 'Ending Soon' },
@@ -60,21 +61,24 @@ function AuctionCardSkeleton() {
   );
 }
 
-function AuctionCard({ auction }: { auction: Auction }) {
+function AuctionCard({ auction, isGuest }: { auction: Auction; isGuest: boolean }) {
   const navigate = useNavigate();
   const timer = useTimer(auction.endTime);
+  const signIn = useSignInLink();
   const { toggle, isWatched } = useWatchlistToggle();
   const watched = isWatched(auction.auctionId);
   const isEndingSoon = timer.hours === 0 && timer.minutes < 60 && !timer.isExpired;
   const isFinalMinutes = timer.hours === 0 && timer.minutes < 5 && !timer.isExpired;
+  const place = locatedIn(auction.sellerCity, auction.sellerProvince);
+  const open = () => navigate(`/auctions/${auction.auctionId}`);
+  const heartClass = 'absolute top-3 right-3 rounded-full w-[30px] h-[30px] flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1';
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    // The whole card is clickable for a mouse; the title link and the button inside are what a
+    // keyboard or a screen reader use, so the card itself is not a second, nested "button".
+    <article
       className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer group"
-      onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
+      onClick={open}
     >
       <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-navy">
         <AuctionThumbnail
@@ -97,23 +101,44 @@ function AuctionCard({ auction }: { auction: Auction }) {
             </span>
           ) : null}
         </span>
-        <button
-          onClick={e => { e.stopPropagation(); toggle(auction.auctionId); }}
-          // Named after its auction: all three cards previously exposed the identical name, so a
-          // screen reader announced "Add to watchlist" three times with nothing to tell them apart.
-          aria-label={`${watched ? 'Remove' : 'Add'} ${auction.title} ${watched ? 'from' : 'to'} watchlist`}
-          aria-pressed={watched}
-          className={`absolute top-3 right-3 rounded-full w-[30px] h-[30px] flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${watched ? 'bg-primary text-white' : 'bg-surface/80 text-muted hover:text-primary'}`}
-        >
-          <Heart size={14} className={watched ? 'text-white' : 'text-muted'} fill={watched ? 'currentColor' : 'none'} />
-        </button>
+        {isGuest ? (
+          <Link
+            {...signIn}
+            onClick={e => e.stopPropagation()}
+            aria-label={`Sign in to watch ${auction.title}`}
+            className={`${heartClass} bg-surface/80 text-muted hover:text-primary`}
+          >
+            <Heart size={14} className="text-muted" />
+          </Link>
+        ) : (
+          <button
+            onClick={e => { e.stopPropagation(); toggle(auction.auctionId); }}
+            // Named after its auction: all three cards previously exposed the identical name, so a
+            // screen reader announced "Add to watchlist" three times with nothing to tell them apart.
+            aria-label={`${watched ? 'Remove' : 'Add'} ${auction.title} ${watched ? 'from' : 'to'} watchlist`}
+            aria-pressed={watched}
+            className={`${heartClass} ${watched ? 'bg-primary text-white' : 'bg-surface/80 text-muted hover:text-primary'}`}
+          >
+            <Heart size={14} className={watched ? 'text-white' : 'text-muted'} fill={watched ? 'currentColor' : 'none'} />
+          </button>
+        )}
       </div>
       <div className="p-4">
         <div className="flex items-center gap-1.5 mb-2">
           <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
           <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{conditionLabel(auction.condition)}</span>
         </div>
-        <h3 className="font-bold text-[13px] text-navy leading-[19px] mb-3 line-clamp-2">{auction.title}</h3>
+        <h3 className="font-bold text-[13px] text-navy leading-[19px] mb-1 line-clamp-2">
+          <Link to={`/auctions/${auction.auctionId}`} onClick={e => e.stopPropagation()} className="text-navy no-underline hover:underline">
+            {auction.title}
+          </Link>
+        </h3>
+        <p className="text-[11px] text-muted mb-0.5">
+          {auction.sellerName} · {auction.sellerRating ? `${auction.sellerRating}★` : 'No ratings yet'}
+          {auction.sellerSales ? ` · ${count(auction.sellerSales, 'sale')}` : ''}
+        </p>
+        {place && <p className="text-[11px] text-muted mb-0.5">Located in {place}</p>}
+        <p className="text-[11px] text-muted mb-3">Ends {weekdayTime(auction.endTime)}</p>
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] text-muted mb-[2px]">Current bid</p>
@@ -128,21 +153,41 @@ function AuctionCard({ auction }: { auction: Auction }) {
           <Button
             size="sm"
             variant={timer.isExpired ? 'outline' : 'primary'}
-            aria-label={`${timer.isExpired ? 'View result for' : 'Bid on'} ${auction.title}`}
-            onClick={e => { e.stopPropagation(); navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
+            aria-label={`${timer.isExpired ? 'View result for' : isGuest ? 'View' : 'Bid on'} ${auction.title}`}
+            onClick={e => { e.stopPropagation(); open(); }}
           >
-            {timer.isExpired ? 'View Result' : 'Bid Now'}
+            {timer.isExpired ? 'View Result' : isGuest ? 'View' : 'Bid Now'}
           </Button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
-export default function BuyerBrowseAuctions() {
-  const { user, logout } = useAuth();
-  const [search, setSearch]             = useState('');
-  const [category, setCategory]         = useState('All');
+/**
+ * Open to everyone. The home page's search box and category tiles link here with `?search=` and
+ * `?category=`; they set the filters the screen starts with. The screen remounts when that part of
+ * the address changes, so following a second such link replaces the first one's filters.
+ */
+export default function BrowseAuctions() {
+  const [params] = useSearchParams();
+  const fromAddress = params.get('category');
+  return (
+    <BrowseScreen
+      key={params.toString()}
+      initialSearch={params.get('search')?.trim() ?? ''}
+      initialCategory={fromAddress && CATEGORIES.includes(fromAddress) ? fromAddress : 'All'}
+    />
+  );
+}
+
+function BrowseScreen({ initialSearch, initialCategory }: { initialSearch: string; initialCategory: string }) {
+  const { user, isLoading } = useAuth();
+  const signIn = useSignInLink();
+  // Someone whose session is still being restored is not shown guest prompts.
+  const isGuest = !user && !isLoading;
+  const [search, setSearch]             = useState(initialSearch);
+  const [category, setCategory]         = useState(initialCategory);
   const [showEndingSoon, setShowEndingSoon] = useState(false);
   const [minPrice, setMinPrice]         = useState('');
   const [maxPrice, setMaxPrice]         = useState('');
@@ -153,7 +198,7 @@ export default function BuyerBrowseAuctions() {
   // query rather than a re-filter of pages already in the cache — so a match on a page not yet
   // loaded is never missed. Debouncing search keeps that from firing on every keystroke, which
   // a purely client-side filter never had to worry about.
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
     return () => clearTimeout(t);
@@ -221,7 +266,7 @@ export default function BuyerBrowseAuctions() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <BuyerNavbar userName={user?.name} onLogout={logout} />
+      <SiteNavbar />
 
       <div className="flex">
         {/* Desktop sidebar */}
@@ -349,6 +394,17 @@ export default function BuyerBrowseAuctions() {
             </div>
           )}
 
+          {isGuest && (
+            <div role="note" className="bg-navy text-white rounded-md px-4 py-3 mb-5 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[13px] leading-[19px]">
+                You are browsing as a guest. Anyone can look; sign in to bid or watch an item.
+              </p>
+              <Link {...signIn} className="text-[13px] font-semibold text-white border border-white/40 hover:border-white rounded-lg px-3 py-1.5 transition-colors no-underline">
+                Sign in
+              </Link>
+            </div>
+          )}
+
           {/* Desktop title + search + sort */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
@@ -399,7 +455,7 @@ export default function BuyerBrowseAuctions() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sorted.map(a => <AuctionCard key={a.auctionId} auction={a} />)}
+                {sorted.map(a => <AuctionCard key={a.auctionId} auction={a} isGuest={isGuest} />)}
               </div>
               {hasNextPage && (
                 <div ref={sentinelRef} className="flex items-center justify-center py-8">

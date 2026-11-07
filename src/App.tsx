@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RealtimeBridge } from './queries/RealtimeBridge';
@@ -39,10 +39,12 @@ const SellerListingSubmitted = lazy(() => import('./screens/seller/SellerListing
 const SellerProfile = lazy(() => import('./screens/seller/SellerProfile'));
 const BecomeSeller = lazy(() => import('./screens/seller/BecomeSeller'));
 
-const BuyerBrowseAuctions = lazy(() => import('./screens/buyer/BuyerBrowseAuctions'));
+// Open to anyone, signed in or not.
+const BrowseAuctions = lazy(() => import('./screens/public/BrowseAuctions'));
+const AuctionPage = lazy(() => import('./screens/public/AuctionPage'));
+
 const BuyerMyBids = lazy(() => import('./screens/buyer/BuyerMyBids'));
 const BuyerWatchlist = lazy(() => import('./screens/buyer/BuyerWatchlist'));
-const BuyerLiveBidding = lazy(() => import('./screens/buyer/BuyerLiveBidding'));
 const BuyerAuctionWon = lazy(() => import('./screens/buyer/BuyerAuctionWon'));
 const BuyerMyWins = lazy(() => import('./screens/buyer/BuyerMyWins'));
 const BuyerProfile = lazy(() => import('./screens/buyer/BuyerProfile'));
@@ -77,7 +79,7 @@ export default function App() {
                 <RealtimeBridge />
                 <ToastContainer />
                 {/* Layout convention: page content max-width is max-w-5xl (1024px) for most screens. */}
-                {/* BuyerLiveBidding uses max-w-[1100px] due to two-column layout. Do not change these per-screen. */}
+                {/* AuctionPage uses max-w-[1100px] due to two-column layout. Do not change these per-screen. */}
                 <Suspense
                   fallback={
                     <div className="min-h-screen bg-bg flex items-center justify-center">
@@ -162,9 +164,6 @@ export default function App() {
                         <SellerMyItems />
                       </ProtectedRoute>
                     } />
-                    {/* My Listings and My Sales became My Items; old links and bookmarks land there. */}
-                    <Route path="/seller/listings" element={<Navigate to="/seller/items" replace />} />
-                    <Route path="/seller/sales" element={<Navigate to="/seller/items" replace />} />
                     <Route path="/seller/listings/:listingId/edit" element={
                       <ProtectedRoute allowedRoles={['SELLER']}>
                         <SellerEditListing />
@@ -196,12 +195,11 @@ export default function App() {
                       </ProtectedRoute>
                     } />
 
+                    {/* Public: anyone can look; bidding and watching ask for an account on the page itself. */}
+                    <Route path="/browse" element={<BrowseAuctions />} />
+                    <Route path="/auctions/:auctionId" element={<AuctionPage />} />
+
                     {/* Buyer routes */}
-                    <Route path="/buyer/browse" element={
-                      <ProtectedRoute allowedRoles={['BUYER']}>
-                        <BuyerBrowseAuctions />
-                      </ProtectedRoute>
-                    } />
                     <Route path="/buyer/my-bids" element={
                       <ProtectedRoute allowedRoles={['BUYER']}>
                         <BuyerMyBids />
@@ -212,19 +210,11 @@ export default function App() {
                         <BuyerWatchlist />
                       </ProtectedRoute>
                     } />
-                    <Route path="/buyer/live-bidding/:auctionId" element={
-                      <ProtectedRoute allowedRoles={['BUYER', 'ADMIN']}>
-                        <BuyerLiveBidding />
-                      </ProtectedRoute>
-                    } />
-
                     <Route path="/buyer/auction-won/:auctionId" element={
                       <ProtectedRoute allowedRoles={['BUYER']}>
                         <BuyerAuctionWon />
                       </ProtectedRoute>
                     } />
-                    {/* The old address carried the outcome in navigation state; without an id there is nothing to show. */}
-                    <Route path="/buyer/auction-won" element={<Navigate to="/buyer/browse" replace />} />
                     <Route path="/buyer/my-wins" element={
                       <ProtectedRoute allowedRoles={['BUYER']}>
                         <BuyerMyWins />

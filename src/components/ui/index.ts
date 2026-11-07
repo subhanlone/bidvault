@@ -7,6 +7,8 @@ export { default as StatCard } from './StatCard';
 export { default as BidVaultLogo } from './BidVaultLogo';
 export { default as SellerNavbar } from './SellerNavbar';
 export { default as BuyerNavbar } from './BuyerNavbar';
+export { default as PublicNavbar } from './PublicNavbar';
+export { default as SiteNavbar } from './SiteNavbar';
 export { default as AdminLayout } from './AdminLayout';
 export { default as AuthLayout } from './AuthLayout';
 export { default as AuctionThumbnail } from './AuctionThumbnail';
