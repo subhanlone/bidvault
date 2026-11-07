@@ -577,6 +577,18 @@ export type SellerItemsSummary = {
   };
 };
 
+export type SellerProfile = {
+  id: string;
+  displayName: string;
+  memberSince: string;
+  city: string | null;
+  province: string | null;
+  bio: string | null;
+  itemsSold: number;
+  rating: number | null;
+  ratingCount: number;
+};
+
 export type SellerReviews = {
   sellerId: string;
   average: number | null;
@@ -590,6 +602,8 @@ export type SellerReviews = {
     sellerReply?: string;
     sellerReplyAt?: string;
     buyerName: string;
+    itemTitle: string;
+    verifiedPurchase: boolean;
   })[];
 };
 
@@ -764,6 +778,7 @@ export interface GetEndpoints {
   "/reviews/seller/{sellerId}": SellerReviews;
   "/seller/items": PaginatedSellerItems;
   "/seller/items/summary": SellerItemsSummary;
+  "/sellers/{sellerId}": SellerProfile;
   "/settings": PlatformSettings;
   "/settings/public": PublicSettings;
   "/stats": PlatformStats;
