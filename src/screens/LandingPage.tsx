@@ -11,6 +11,8 @@ import { conditionLabel, count, locatedIn, pkr } from '../utils/format';
 import LoadingStatus from '../components/ui/LoadingStatus';
 import { BROWSE_CATEGORIES } from '../config/categories';
 import { useSignInLink } from '../hooks/useSignInLink';
+import { useAuctionFacets } from '../queries/auctions';
+import { NO_FILTERS } from '../utils/browseParams';
 
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -116,6 +118,10 @@ export default function LandingPage() {
   const signIn = useSignInLink();
   // Someone whose session is still being restored is not shown the guest banner.
   const isGuest = !user && !isLoading;
+  // How many live auctions each category has, from the counts the browse filters use. Nothing is
+  // shown beside a tile until they arrive (or if they cannot): a missing number is not zero.
+  const facets = useAuctionFacets(NO_FILTERS);
+  const liveByCategory = facets.data ? new Map(facets.data.categories.map((c) => [c.name, c.count])) : null;
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'buyers' | 'sellers'>('buyers');
   const onTabKeys = useTabKeys(['buyers', 'sellers'] as const, activeTab, setActiveTab);
@@ -343,7 +349,7 @@ export default function LandingPage() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name"
+              placeholder="Search by name, or by item number"
               className="min-w-0 sm:flex-1 h-[50px] px-[18px] rounded-t-[10px] sm:rounded-tr-none sm:rounded-l-[10px] bg-surface text-[15px] text-navy outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
             <label htmlFor="home-category" className="sr-only">Category</label>
@@ -452,6 +458,9 @@ export default function LandingPage() {
                   className="block bg-bg border border-border-light rounded-lg px-4 py-4 font-bold text-[14px] text-navy no-underline hover:border-primary hover:text-primary transition-colors"
                 >
                   {name}
+                  {liveByCategory && (
+                    <span className="block mt-1 font-medium text-[12px] text-muted">{liveByCategory.get(name) ?? 0} live</span>
+                  )}
                 </Link>
               </li>
             ))}

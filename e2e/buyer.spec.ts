@@ -8,8 +8,7 @@ test.describe('Buyer — Browse Auctions', () => {
 
   test('search input is visible and functional', async ({ page }) => {
     await page.goto('/browse');
-    // Desktop search (hidden md:block) — use the one in the main content area
-    const search = page.getByPlaceholder('Search auctions…').last();
+    const search = page.getByPlaceholder('Search by name, or by item number');
     await expect(search).toBeVisible();
     await search.fill('iphone');
     await expect(search).toHaveValue('iphone');

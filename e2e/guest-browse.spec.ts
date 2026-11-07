@@ -11,7 +11,7 @@ import { test, expect, type Page } from '@playwright/test';
  *   Beta Camera   Electronics & Gadgets  Used       PKR  8,000  2 bids  BV-2026-B200000002
  *   Gamma Desk    Home & Furniture       Used       PKR 30,000  4 bids  BV-2026-B200000003
  *   Delta Lamp    Home & Furniture       New        PKR 12,000  0 bids  BV-2026-B200000004
- *   Epsilon Book  Books & Education      Like new   PKR  5,000  1 bid   BV-2026-B200000005
+ *   Epsilon Book  Books & Education      Like New   PKR  5,000  1 bid   BV-2026-B200000005
  *   Zeta Bike     Sports & Fitness       Used       PKR 25,000  0 bids  BV-2026-B200000006
  */
 
@@ -79,7 +79,7 @@ test.describe('Filters with counts', () => {
     const choices: { name: string; rows: number }[] = [
       { name: 'Home & Furniture', rows: 2 },
       { name: 'Used', rows: 3 },
-      { name: 'Like new', rows: 1 },
+      { name: 'Like New', rows: 1 },
       { name: 'Under PKR 5,000', rows: 1 },
       { name: 'PKR 5,000 to 25,000', rows: 4 },
       { name: 'Over PKR 25,000', rows: 1 },
@@ -109,7 +109,7 @@ test.describe('Filters with counts', () => {
   test('two conditions together widen the result', async ({ page }) => {
     await page.goto(BROWSE);
     await rail(page).getByLabel(/^New \(/).check();
-    await rail(page).getByLabel(/^Like new \(/).check();
+    await rail(page).getByLabel(/^Like New \(/).check();
     await expect(rows(page)).toHaveCount(3);
     await expect(page).toHaveURL(/condition=NEW/);
     await expect(page).toHaveURL(/condition=LIKE_NEW/);
@@ -213,9 +213,10 @@ test.describe('Search', () => {
 
   test('words typed in the box are kept in the address', async ({ page }) => {
     await page.goto('/browse');
-    await page.getByLabel('Search auctions').fill('Browse Spec Camera');
-    await expect(rows(page)).toHaveCount(2);
-    await expect(page).toHaveURL(/search=Browse\+Spec\+Camera|search=Browse%20Spec%20Camera/);
+    await page.getByLabel('Search auctions').fill('Spec Beta Camera');
+    await expect(rows(page)).toHaveCount(1);
+    await expect(rows(page).getByRole('heading')).toHaveText(TITLES.beta);
+    await expect(page).toHaveURL(/search=Spec\+Beta\+Camera|search=Spec%20Beta%20Camera/);
   });
 
   test('a search with no match says so and offers to clear the filters', async ({ page }) => {

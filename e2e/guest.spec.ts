@@ -62,7 +62,7 @@ test.describe('Browse', () => {
   });
 
   test('a guest card says View, not Bid Now', async ({ page }) => {
-    await page.goto('/browse');
+    await page.goto('/browse?view=grid');
     await expect(page.getByRole('button', { name: `View ${LIVE}` })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Bid on / })).toHaveCount(0);
   });
