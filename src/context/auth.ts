@@ -2,9 +2,8 @@ import { createContext, useContext } from 'react';
 import type { User, RegisterRequest, LoginRequest, EnrollSellerRequest } from '../types/api';
 
 // The context object, its type and the hook live apart from the provider component: a file that
-// exports components and also non-components cannot be hot-reloaded in place (react-refresh), so
-// every edit to the provider reloaded the whole page and lost its state. The provider is
-// AuthContext.tsx.
+// exports components and non-components cannot be hot-reloaded in place (react-refresh). The
+// provider is AuthContext.tsx.
 export interface AuthContextType {
   user: User | null;
   /** True while a session that may exist is being restored on startup. Protected routes wait for it. */

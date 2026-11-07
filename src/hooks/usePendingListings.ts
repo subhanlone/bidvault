@@ -10,7 +10,7 @@ export interface BulkApproveResult {
   failures: { listingId: string; error: string }[];
 }
 
-/** Running total while approveAll loops over more than one batch — see BV-049. */
+/** Running total while approveAll loops over more than one batch. */
 export interface BulkApproveProgress {
   approved: number;
   failed: number;
@@ -22,10 +22,9 @@ export interface BulkApproveProgress {
  */
 export type PendingStatus = 'loading' | 'ready' | 'error';
 
-// Walks every cursor page (BV-029): the review queue does prev/next navigation and "X of Y" counts
-// across the whole set, and the sidebar/dashboard badges need the true count, so a partial list
-// would be a wrong one. A pending queue is small enough that draining it costs nothing worth
-// trading that away for.
+// Walks every cursor page: the review queue does prev/next and "X of Y" across the whole set, and
+// the badges need the true count, so a partial list would be wrong. A pending queue is small enough
+// that this costs little.
 async function fetchAllPending(): Promise<Listing[]> {
   const all: Listing[] = [];
   let cursor: string | null = null;
@@ -42,17 +41,10 @@ async function fetchAllPending(): Promise<Listing[]> {
 const NONE: Listing[] = [];
 
 /**
- * The pending-review queue, shared by every screen that shows it.
- *
- * This used to be plain component state, so the sidebar badge, the dashboard and each review screen
- * each held and fetched their own copy: four requests for one list, and a "Try again" that
- * succeeded on the page left the sidebar's own copy in its error state (no badge) until the next
- * navigation. One query means one request, and a change made anywhere -- a retry that works, an
- * approval, a rejection -- is seen everywhere at once.
- *
- * A failed load is `error`, never an empty list: every screen used to draw the emptied list as
- * "All caught up!". Whatever the cache held is not known to be current either, so the screens show
- * the error instead of rows.
+ * The pending-review queue, shared by every screen that shows it: one query means one request, and
+ * a change made anywhere (a retry that works, an approval, a rejection) is seen everywhere at once.
+ * A failed load is `error`, never an empty list (that would be drawn as "All caught up!"), and what
+ * the cache held is not known to be current either, so screens show the error instead of rows.
  */
 export function usePendingListings() {
   const queryClient = useQueryClient();
@@ -93,10 +85,9 @@ export function usePendingListings() {
     removeFromQueue(listingId);
   };
 
-  // BV-049: one call approves at most 50 (the backend's own cap, to keep any single request
-  // bounded); this loops calls until the server reports nothing PENDING left, so the caller
-  // never has to think about batch size, and a genuinely large backlog no longer risks a
-  // request timeout cutting the run off partway through with no way to tell how far it got.
+  // One call approves at most 50 (the backend's cap, to keep a request bounded); this loops until
+  // the server reports nothing PENDING left, so the caller never thinks about batch size and a
+  // large backlog cannot time out partway with no way to tell how far it got.
   const approveAll = async (onProgress?: (progress: BulkApproveProgress) => void): Promise<BulkApproveResult> => {
     let approved = 0;
     let failed = 0;

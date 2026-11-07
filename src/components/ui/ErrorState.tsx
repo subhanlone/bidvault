@@ -13,12 +13,10 @@ interface ErrorStateProps {
 }
 
 /**
- * The one way a screen says "this failed to load".
- *
- * A failed request must never be drawn as an empty list or a zero: "No bids yet" asserts the
- * buyer has placed none, "All caught up" tells an admin the review queue is clear. Both are
- * claims about the data, and a failure is exactly when the data is unknown. Screens render this
- * instead of their empty state, with a way to try again that does not reload the whole page.
+ * The one way a screen says "this failed to load". A failed request must never be drawn as an empty
+ * list or a zero ("No bids yet" and "All caught up" are claims about the data, and a failure is
+ * when the data is unknown). Screens render this instead of their empty state, with a retry that
+ * does not reload the page.
  */
 export default function ErrorState({
   title,

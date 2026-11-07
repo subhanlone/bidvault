@@ -1,13 +1,11 @@
-// Mirrors backend/src/config/otp.ts. Kept in sync manually — the two repos deploy separately, so
-// this cannot be imported across the boundary.
-//
-// Used only for display copy ("valid for N seconds") and as a fallback deadline when a response
-// didn't carry one. The live countdown must always be driven by the `codeExpiresAt` timestamp the
-// server returns, never by this constant, or the timer drifts ahead of the real expiry.
+// Mirrors backend/src/config/otp.ts, kept in sync by hand because the two repos deploy separately.
+// Used only for display copy ("valid for N seconds") and as a fallback deadline. The live countdown
+// must be driven by the `codeExpiresAt` the server returns, never by this constant, or it drifts
+// from the real expiry.
 export const OTP_WINDOW_SECONDS = 90;
 
-// How long before the user may request a new code. Deliberately shorter than the window above —
-// these were both 60s and easy to conflate, but the code now outlives the cooldown.
+// How long before the user may request a new code. Deliberately shorter than the code's validity
+// window, so the two are not conflated.
 export const RESEND_COOLDOWN_SECONDS = 60;
 
 /** Absolute deadline (epoch ms) from a server `codeExpiresAt`, falling back to the nominal window. */

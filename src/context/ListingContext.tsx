@@ -3,10 +3,8 @@ import type { ListingDraft } from '../types';
 import { useAuth } from './auth';
 import { ListingContext, type LimitFieldErrors } from './listing';
 
-// One draft per account. The draft holds the seller's reserve price, and one key for everyone
-// meant that whoever signed in next on the same tab was handed the previous seller's half-written
-// listing. Keyed by user id, each account gets its own back when it signs in again -- and never
-// sees another's.
+// One draft per account. The draft holds the seller's reserve price, so it is keyed by user id:
+// each account gets its own draft back when it signs in again and never sees another's.
 const LEGACY_DRAFT_KEY = 'bidvault_listing_draft_v1';
 const draftKey = (userId: string) => `${LEGACY_DRAFT_KEY}:${userId}`;
 
@@ -37,7 +35,7 @@ export function ListingProvider({ children }: { children: React.ReactNode }) {
 function ListingStore({ userId, children }: { userId: string | null; children: React.ReactNode }) {
   const [draft, setDraft] = useState<ListingDraft>(() => {
     try {
-      // The old un-keyed entry cannot be attributed to anyone, so it is dropped, not adopted.
+      // An un-keyed entry cannot be attributed to anyone, so it is dropped, not adopted.
       sessionStorage.removeItem(LEGACY_DRAFT_KEY);
       if (!userId) return { ...DEFAULT_DRAFT };
       const stored = sessionStorage.getItem(draftKey(userId));

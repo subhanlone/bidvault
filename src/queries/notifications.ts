@@ -4,18 +4,14 @@ import type { AppNotification } from '../types/api';
 import { useAuth } from '../context/auth';
 import { keys } from './keys';
 
-/** How often to re-check while a tab is open. Unchanged from the hand-rolled setInterval. */
+/** How often to re-check while a tab is open. */
 const POLL_MS = 45_000;
 
 /**
- * Notifications, replacing NotificationProvider.
- *
- * The provider held a `setInterval`, a manual `active` flag to avoid setting state after
- * unmount, a microtask to clear on logout without a synchronous setState in the effect body,
- * and two optimistic updaters — 70 lines of bookkeeping around one polled GET. `refetchInterval`
- * and two mutations cover all of it. `enabled: false` only stops fetching: a disabled query still
- * returns whatever the cache holds, so what empties the list on logout is AuthProvider clearing
- * the query cache when the signed-in identity changes, not this flag.
+ * Notifications, polled with `refetchInterval`, plus two mutations. `enabled: false` only stops
+ * fetching: a disabled query still returns whatever the cache holds, so what empties the list on
+ * logout is AuthProvider clearing the query cache when the signed-in identity changes, not this
+ * flag.
  */
 export function useNotifications() {
   const { user } = useAuth();

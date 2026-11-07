@@ -1,21 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * Modal dialog behaviour: Escape to close, focus trapped inside, focus restored on close,
- * and background scroll locked.
- *
- * None of the four dialogs actually shipped in the app had any of this — a repo-wide search for
- * an Escape or keydown handler returned nothing. A keyboard user could Tab straight out of an
- * open dialog into the page behind it, and had no way to dismiss one without finding the close
- * button. The unused `ui/Modal.tsx` component was the only place that had even partial handling,
- * which is presumably why it went unnoticed: it is dead code and no screen imports it.
- *
- * `open` is explicit rather than inferred from mounting. Two of the four dialogs are rendered
- * inline inside a screen that stays mounted, so keying the behaviour off mount would trap focus
- * the moment the page loaded. Components that only exist while open simply pass `true`.
- *
- * Attach the returned ref to the dialog container, and give that container `tabIndex={-1}` so it
- * can hold focus itself when it contains nothing focusable.
+ * Modal dialog behaviour: Escape to close, focus trapped inside, focus restored on close, and
+ * background scroll locked. `open` is explicit rather than inferred from mounting, because some
+ * dialogs are rendered inline in a screen that stays mounted (keying off mount would trap focus as
+ * soon as the page loaded); components that only exist while open pass `true`. Attach the returned
+ * ref to the dialog container and give it `tabIndex={-1}` so it can hold focus when it contains
+ * nothing focusable.
  */
 
 const FOCUSABLE_SELECTOR = [

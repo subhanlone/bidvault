@@ -38,14 +38,11 @@ export default function BuyerProfile() {
   const [currentPwError, setCurrentPwError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // NEW-11: an auction is "won" only when the worker created an AuctionTransaction for you,
-  // which it does only once the reserve is met. This screen used to derive wins itself, as
-  // "closed auctions where my highest bid equals currentBid", which counts an under-reserve
-  // auction as a win — the same auction My Bids correctly labels "nothing to pay". Read the
-  // authoritative list instead, the one My Wins renders from.
-  // Kept as the won auctions themselves, not just a count: the bid list below labels a bid
-  // "Won", and the only truthful source for that is this same list. `null` means the request
-  // has not resolved (or failed), which is why the tile shows an em dash rather than 0.
+  // An auction is "won" only when the worker created an AuctionTransaction for you, which it does
+  // only once the reserve is met, so wins come from the authoritative list (the one My Wins renders
+  // from), not from bids. Kept as the won auctions themselves, not a count: the bid list below
+  // labels a bid "Won", and this list is the only truthful source for that. `null` means the
+  // request has not resolved (or failed), so the tile shows an em dash rather than 0.
   const [wins, setWins] = useState<WonTransaction[] | null>(null);
   const [winsFailed, setWinsFailed] = useState(false);
   const winCount = wins?.length ?? null;
@@ -82,9 +79,6 @@ export default function BuyerProfile() {
     });
   };
 
-  // /auctions/mine/bids is already scoped to this buyer, so the buyerId filter these two
-  // lines used to carry is gone. It was needed because the old shared record held every bid
-  // on every auction the session had opened, mine and everyone else's.
   const myBids = myBidRows;
   const highestPerAuction = new Map<string, number>();
   for (const bid of myBidRows) {
@@ -202,10 +196,6 @@ export default function BuyerProfile() {
                     { label: 'Full Name', value: user?.name ?? '—' },
                     { label: 'Email Address', value: user?.email ?? '—' },
                     { label: 'Account Type', value: 'Buyer' },
-                    // A "User ID" row showing the raw 25-char CUID was removed: it means nothing
-                    // to a buyer, is never needed for support (the email identifies the account),
-                    // and advertises the internal id scheme for no benefit. "Member since" is
-                    // already shown in the header above, so nothing replaces it here.
                   ].map(row => (
                     <div key={row.label} className="flex items-start justify-between gap-4">
                       <span className="text-[12px] text-muted font-medium shrink-0 w-[130px]">{row.label}</span>
@@ -248,8 +238,7 @@ export default function BuyerProfile() {
                 ) : (
                   <div className="flex flex-col divide-y divide-bg">
                     {myBids.slice(0, 5).map(bid => {
-                      // Attached to the row by /auctions/mine/bids, so there is nothing to look up
-                      // and nothing that can miss — the old lookup searched the ACTIVE list only.
+                      // Attached to the row by /auctions/mine/bids, so there is nothing to look up.
                       const auction = bid.auction;
                       return (
                         <button
@@ -411,10 +400,8 @@ export default function BuyerProfile() {
                               setShowPwForm(false); setNewPw(''); setCurrentPw(''); setPwError(''); setCurrentPwError('');
                               showToast({ type: 'success', title: 'Password Changed', message: 'Your password has been updated.' });
                             } else {
-                              // Route the failure to the field actually at fault. Everything used
-                              // to land on pwError, which is bound to New Password — so a wrong
-                              // current password put the red border and the message on the one
-                              // field that was fine, leaving the offending input unstyled.
+                              // Route the failure to the field actually at fault (a wrong current
+                              // password marks the current-password field, not New Password).
                               const message = result.error || 'Failed to change password.';
                               if (/current password/i.test(message)) setCurrentPwError(message);
                               else setPwError(message);

@@ -11,8 +11,8 @@ import type { ItemCondition } from '../../types/api';
 import type { ListingCategory } from '../../types';
 import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
 
-// BV-015: kept as a literal-typed array (not Object.keys(CATEGORY_FIELDS)) so a category typo
-// here fails the build instead of silently rendering an <option> the server would now reject.
+// Kept as a literal-typed array (not Object.keys(CATEGORY_FIELDS)) so a category typo fails the
+// build instead of rendering an <option> the server would reject.
 const CATEGORIES: ListingCategory[] = [
   'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion',
   'Books & Education', 'Home & Furniture', 'Sports & Fitness', 'Art & Collectibles',
@@ -26,8 +26,7 @@ const CONDITIONS: { value: ItemCondition; label: string }[] = [
 // the signature route's hourly budget. Cloudinary's Upload API has no per-request size cap, so
 // nothing server-side enforces this and the backend deliberately does not publish it as policy.
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-// Derived, not retyped: the hint under the dropzone read "Max 10 MB" while the check below
-// rejected anything over 5 MB, so a 7 MB photo was refused by a rule the screen never stated.
+// Derived, not retyped, so the hint under the dropzone always states the limit that is enforced.
 const MAX_IMAGE_LABEL = `${MAX_IMAGE_BYTES / (1024 * 1024)} MB`;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
@@ -85,9 +84,9 @@ export default function SellerCreateListingStep1() {
       formData.append('folder', sig.folder);
       formData.append('format', sig.format);
       formData.append('public_id', sig.publicId);
-      // Only what the backend signed, and nothing else. Cloudinary rebuilds the signature from
-      // the parameters it recognises, so an extra field here makes every upload 401 — sending
-      // `max_file_size`, which is not an Upload API parameter, did exactly that.
+      // Only what the backend signed, and nothing else: Cloudinary rebuilds the signature from the
+      // parameters it recognises, so an extra field (such as `max_file_size`, which is not an
+      // Upload API parameter) makes every upload 401.
       formData.append('allowed_formats', sig.allowedFormats);
 
       const resp = await fetch(

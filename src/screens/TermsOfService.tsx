@@ -4,7 +4,7 @@ import { Gavel } from 'lucide-react';
 const SECTIONS = [
   {
     title: '1. Acceptance of Terms',
-    body: `By creating an account or using BidVault in any way, you agree to these Terms of Service. If you do not agree, do not use the platform. These terms apply to all users — Buyers, Sellers, and Administrators — and govern all interactions on BidVault.`,
+    body: `By creating an account or using BidVault in any way, you agree to these Terms of Service. If you do not agree, do not use the platform. These terms apply to everyone who uses BidVault. One account can both buy and sell, and the seller terms you accept when you become a seller apply in addition to these.`,
   },
   {
     title: '2. Account Registration',
@@ -12,11 +12,11 @@ const SECTIONS = [
   },
   {
     title: '3. Buyer Responsibilities',
-    body: `Placing a bid is a binding commitment to purchase if you win. Buyers must not place bids they do not intend to honor. BidVault is not responsible for the quality, condition, or accuracy of item descriptions — buyers are encouraged to review listing details carefully before bidding. Payment and delivery arrangements are made directly between winning buyers and sellers.`,
+    body: `Placing a bid is a binding commitment to purchase if you win. Buyers must not place bids they do not intend to honor. BidVault is not responsible for the quality, condition, or accuracy of item descriptions — buyers are encouraged to review listing details carefully before bidding. You pay on BidVault after you win; once the seller ships, you confirm that the item arrived or raise a dispute within the confirmation window.`,
   },
   {
     title: '4. Seller Responsibilities',
-    body: `Sellers must maintain accurate account information and may be subject to admin review before listing privileges are granted. All listings must accurately describe the item, including its condition. Sellers may not list prohibited items (counterfeit goods, stolen property, weapons, restricted items). Sellers are responsible for honoring transactions when a listing receives winning bids. BidVault may remove listings and ban sellers who violate these rules.`,
+    body: `Anyone can become a seller by accepting the seller terms; BidVault may later pause selling on an account that breaks these rules. Sellers must maintain accurate account information. All listings must accurately describe the item, including its condition. Sellers may not list prohibited items (counterfeit goods, stolen property, weapons, restricted items). Sellers are responsible for honoring transactions when a listing receives winning bids. BidVault may remove listings and ban sellers who violate these rules.`,
   },
   {
     title: '5. Admin Review and Approval',
@@ -36,7 +36,7 @@ const SECTIONS = [
   },
   {
     title: '9. Dispute Resolution',
-    body: `Disputes between buyers and sellers are to be resolved between the parties. BidVault may, at its discretion, provide dispute mediation but is not obligated to do so. All disputes related to these terms are subject to the laws of Pakistan and the jurisdiction of courts in Islamabad.`,
+    body: `A buyer who has a problem with an item can raise a dispute on BidVault, the seller can respond, and an administrator decides. Other disagreements between buyers and sellers are to be resolved between the parties. All disputes related to these terms are subject to the laws of Pakistan and the jurisdiction of courts in Islamabad.`,
   },
   {
     title: '10. Changes to Terms',
@@ -70,7 +70,7 @@ export default function TermsOfService() {
         <div className="mb-10">
           <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">Legal</p>
           <h1 className="font-extrabold text-[28px] sm:text-[36px] text-navy tracking-[-0.5px] mb-3">Terms of Service</h1>
-          <p className="text-[14px] text-muted">Last updated: May 2026 · Effective for all BidVault users</p>
+          <p className="text-[14px] text-muted">Last updated: November 2026 · Effective for all BidVault users</p>
           <div className="mt-4 bg-primary-surface border border-[rgba(208,2,27,0.2)] rounded-md px-4 py-3">
             <p className="text-[13px] text-secondary leading-[1.6]">
               <span className="font-bold">Please read these terms carefully.</span> By registering an account or using BidVault, you enter into a binding agreement with these Terms of Service. These terms define your rights and obligations as a platform user.
@@ -115,8 +115,7 @@ export default function TermsOfService() {
           <p className="font-bold text-[14px] text-white mb-1">Questions about these terms?</p>
           <p className="text-[13px] text-[rgba(255,255,255,0.55)]">
             Contact us at{' '}
-            <a href="mailto:legal@bidvault.com" className="text-primary font-bold hover:underline">legal@bidvault.com</a>.
-            For urgent matters, use the support form on the platform.
+            <a href="mailto:support@bidvault.tech" className="text-primary font-bold hover:underline">support@bidvault.tech</a>.
           </p>
         </div>
 

@@ -8,9 +8,8 @@ interface AuctionThumbnailProps {
   iconSize?: number;
 }
 
-// Shared missing/broken-image handling for auction thumbnails. Several buyer screens
-// used to render a bare <img> with no fallback (broken-image icon) or an onError that
-// just hid the image (blank box) — this gives every screen the same placeholder.
+// Shared missing/broken-image handling for auction thumbnails: every screen shows the same
+// placeholder.
 export default function AuctionThumbnail({ src, alt, className = 'w-full h-full object-cover', iconSize = 22 }: AuctionThumbnailProps) {
   const [failed, setFailed] = useState(false);
 

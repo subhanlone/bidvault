@@ -33,10 +33,10 @@ const EMPTY_FORM: FormState = {
 };
 
 /**
- * An on/off switch. Declared here, at module level, not inside AdminSettings: a component declared
- * inside another is a new component on every render, so React threw the button away and built a
- * fresh one each time a setting changed, and the keyboard focus went with it. It also has to say
- * what it is: a `switch` with a name and its state, where it used to be an unnamed button.
+ * An on/off switch. Declared at module level, not inside AdminSettings: a component declared inside
+ * another is a new component on every render, so React would rebuild the button each time a setting
+ * changed and the keyboard focus would go with it. It also says what it is: a `switch` with a name
+ * and its state.
  */
 function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: () => void }) {
   return (
@@ -56,8 +56,8 @@ function Toggle({ label, value, onChange }: { label: string; value: boolean; onC
 export default function AdminSettings() {
   const { user, logout, changePassword } = useAuth();
   const { showToast } = useToast();
-  // 'error' keeps the form off the screen entirely. It used to render the blank defaults with Save
-  // enabled, so an admin could type over the real settings without ever having seen them.
+  // 'error' keeps the form off the screen entirely, so an admin cannot type over real settings they
+  // never saw.
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const loading = loadState === 'loading';
   const [isSaving, setIsSaving] = useState(false);
@@ -165,10 +165,10 @@ export default function AdminSettings() {
                 <span className="font-extrabold text-[22px] text-white">{user?.name?.[0] ?? 'A'}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-[15px] text-navy">{user?.name ?? 'Admin BidVault'}</p>
-                <p className="text-[12px] text-muted">{user?.email ?? 'admin@bidvault.com'}</p>
+                <p className="font-bold text-[15px] text-navy">{user?.name}</p>
+                <p className="text-[12px] text-muted">{user?.email}</p>
                 <span className="inline-flex items-center mt-1 bg-primary-surface border border-[rgba(208,2,27,0.2)] font-bold text-[10px] text-primary px-2 py-[2px] rounded-full">
-                  Super Admin
+                  Administrator
                 </span>
               </div>
             </div>

@@ -1,37 +1,22 @@
 /**
- * Shared display formatting.
- *
- * Before this module there was no `src/utils` and no `src/lib` at all — 82 inline formatting
- * calls were spread across 23 files, including three different ad-hoc ways to render
- * ItemCondition and two byte-identical copies of the same compact-currency function. That is
- * what produced `LIKE_NEW` on the buyer's most-visited screens, `PKR 2500K`, and `1 bids`.
- *
- * Anything user-visible that needs a decision about *how* it reads belongs here.
+ * Shared display formatting. Anything user-visible that needs a decision about how it reads
+ * (currency, dates, counts, enum labels) belongs here, not inline.
  */
 
 import type { ItemCondition } from '../types/api';
 
 /**
- * Pinned so output does not follow the viewer's browser locale. Currency was previously
- * formatted with a bare `toLocaleString()` while dates passed 'en-PK' explicitly, so a visitor
- * with a German browser saw "PKR 2.500.000" next to Pakistani-formatted dates.
+ * Pinned so output does not follow the viewer's browser locale (a German browser would otherwise
+ * show "PKR 2.500.000").
  */
 const LOCALE = 'en-PK';
-
-/* ── Currency ─────────────────────────────────────────────────────────────── */
 
 /** Full precision: `PKR 2,500,000`. The default — use this unless space is genuinely tight. */
 export function pkr(amount: number): string {
   return `PKR ${amount.toLocaleString(LOCALE)}`;
 }
 
-/**
- * Abbreviated for narrow columns and stat tiles: `PKR 2.5M`, `PKR 42K`, `PKR 900`.
- *
- * Replaces `PKR ${(n / 1000).toFixed(0)}K`, which divided by a thousand unconditionally and so
- * rendered PKR 2,500,000 as "PKR 2500K" — technically true, unreadable, and inconsistent with
- * the same figure shown in full elsewhere on the same screen.
- */
+/** Abbreviated for narrow columns and stat tiles: `PKR 2.5M`, `PKR 42K`, `PKR 900`. */
 export function pkrCompact(amount: number): string {
   if (Math.abs(amount) >= 1_000_000) {
     const millions = amount / 1_000_000;
@@ -42,8 +27,6 @@ export function pkrCompact(amount: number): string {
   return `PKR ${amount.toLocaleString(LOCALE)}`;
 }
 
-/* ── Enums ────────────────────────────────────────────────────────────────── */
-
 const CONDITION_LABELS: Record<string, string> = {
   NEW: 'New',
   LIKE_NEW: 'Like New',
@@ -51,23 +34,15 @@ const CONDITION_LABELS: Record<string, string> = {
 };
 
 /**
- * `LIKE_NEW` → `Like New`. Six screens rendered the raw enum, including Browse and Live
- * Bidding, so an item advertised as "Like New" on the landing page became "LIKE_NEW" one
- * click later. Falls back to the raw value rather than an empty string, so an unrecognised
- * condition is visibly wrong instead of silently blank.
+ * `LIKE_NEW` → `Like New`. Falls back to the raw value rather than an empty string, so an
+ * unrecognised condition is visibly wrong instead of silently blank.
  */
 export function conditionLabel(condition: ItemCondition | string | null | undefined): string {
   if (!condition) return '—';
   return CONDITION_LABELS[condition] ?? condition;
 }
 
-/* ── Counting ─────────────────────────────────────────────────────────────── */
-
-/**
- * `1 bid` / `2 bids`. The app said "1 bids" on live bidding and the admin monitor, and
- * "4 rating · 1 sales" on the seller card — the two screens buyers look at most.
- * Pass an explicit plural for irregular words.
- */
+/** `1 bid` / `2 bids`. Pass an explicit plural for irregular words. */
 export function count(n: number, singular: string, pluralForm?: string): string {
   const word = n === 1 ? singular : (pluralForm ?? `${singular}s`);
   return `${n.toLocaleString(LOCALE)} ${word}`;
@@ -78,8 +53,6 @@ export function locatedIn(city: string | null | undefined, province: string | nu
   const parts = [city, province].filter((part): part is string => Boolean(part && part.trim()));
   return parts.length > 0 ? parts.join(', ') : null;
 }
-
-/* ── Dates ────────────────────────────────────────────────────────────────── */
 
 const toDate = (value: string | Date): Date => (value instanceof Date ? value : new Date(value));
 
@@ -130,8 +103,6 @@ export function dateTimeLong(value: string | Date): string {
   const time = d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
   return `${day} at ${time}`;
 }
-
-/* ── Relative time ────────────────────────────────────────────────────────── */
 
 /**
  * `just now` / `12 min ago` / `3 h ago` / `2 d ago`. `now` is passed in, not read here: a screen

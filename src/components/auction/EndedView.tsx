@@ -9,10 +9,10 @@ const linkButton =
   'inline-flex items-center justify-center rounded-sm px-4 py-2.5 font-bold text-[13px] no-underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1';
 
 /**
- * What the page says once an auction is over, whoever is looking. It keeps the auction's own address
- * and says exactly what happened: a sale, a highest bid that did not reach the reserve, no bids, or a
- * withdrawal. An auction that closed under its reserve was not a sale, so it never shows a "final
- * price", and the cancel reason belongs to the people who had bid and is not on this public page.
+ * What the page says once an auction is over, whoever is looking: a sale, a highest bid under the
+ * reserve, no bids, or a withdrawal. An auction that closed under its reserve was not a sale, so it
+ * never shows a "final price", and the cancel reason is for the people who had bid, not for this
+ * public page.
  */
 export default function EndedView({
   auction, outcome, viewerWon,

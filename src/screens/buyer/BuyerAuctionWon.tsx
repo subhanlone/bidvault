@@ -15,9 +15,9 @@ const TIMEOUT_MS = 60_000;
 const SLOW_POLL_MS = 10_000;
 
 /**
- * The outcome is worked out here, from the server's answer for whoever is signed in right now --
- * not handed over in navigation state. History state outlives a sign-out: after switching accounts,
- * Back used to show the previous buyer's "You Won!" to the next one.
+ * The outcome is worked out here from the server's answer for whoever is signed in now, not handed
+ * over in navigation state: history state outlives a sign-out, so Back could show the previous
+ * buyer's "You Won!" to the next one.
  */
 export default function BuyerAuctionWon() {
   const { auctionId } = useParams<{ auctionId: string }>();
@@ -92,11 +92,11 @@ function Outcome({ auction, won, reserveNotMet }: OutcomeProps) {
   const { user, logout } = useAuth();
   const auctionId = auction.auctionId;
 
-  // BV-048: the client declares this win the instant its own countdown hits zero, but the
-  // worker settles the auction independently and can be seconds (or, after a missed job and
-  // the reconciliation sweep, minutes) behind. Navigating here is still good UX -- the reserve
-  // outcome really is a settled fact once bidding has stopped -- but nothing backs "won" with
-  // an AuctionTransaction until the worker actually runs. Poll for it rather than assume it.
+  // The client declares this win the instant its own countdown hits zero, but the worker settles
+  // the auction independently and can be seconds (or, after a missed job, minutes) behind.
+  // Navigating here is still right, since the reserve outcome is settled once bidding stops, but
+  // nothing backs "won" with an AuctionTransaction until the worker runs, so poll for it rather
+  // than assume it.
   const [confirmed, setConfirmed] = useState(false);
   const confirming = won && !confirmed;
   const [confirmTimedOut, setConfirmTimedOut] = useState(false);
@@ -121,10 +121,10 @@ function Outcome({ auction, won, reserveNotMet }: OutcomeProps) {
       }
       if (cancelled) return;
       elapsedRef.current += POLL_MS;
-      // Caught live: the timeout is a UI signal ("this is slower than usual"), not a reason to
-      // stop looking -- the reconciliation sweep can take several minutes to catch a job the
-      // scheduler lost, and the transaction is still worth detecting whenever it actually
-      // lands. Past the timeout this backs off to a slower interval rather than giving up.
+      // The timeout is a UI signal ("this is slower than usual"), not a reason to stop looking: the
+      // reconciliation sweep can take minutes to catch a lost job and the transaction is worth
+      // detecting whenever it lands. Past the timeout this backs off to a slower interval rather
+      // than giving up.
       const timedOut = elapsedRef.current >= TIMEOUT_MS;
       if (timedOut) setConfirmTimedOut(true);
       setTimeout(poll, timedOut ? SLOW_POLL_MS : POLL_MS);

@@ -1,18 +1,8 @@
 /**
- * Query keys, arranged as a hierarchy rather than a flat list of strings.
- *
- * The shape matters more than it looks. Every cache entry that holds an auction — the live
- * list, a single auction, the watchlist, the auctions embedded in my bids — sits under
- * `['auctions', …]`. That lets one call
- *
- *     queryClient.setQueriesData({ queryKey: keys.auctions.all }, fold)
- *
- * update every copy at once.
- *
- * That is the fix for NEW-18, which was the same auction showing two different prices in one
- * session because `applyBid` folded the new bid into `auctions` but not into
- * `watchlistAuctions`. The hand-rolled version needed one fold per array and got it wrong;
- * here there is nowhere for a copy to hide.
+ * Query keys, arranged as a hierarchy rather than a flat list of strings. Every cache entry that
+ * holds an auction (the live list, a single auction, the watchlist, the auctions embedded in my
+ * bids) sits under `['auctions', …]`, so one call, queryClient.setQueriesData({ queryKey:
+ * keys.auctions.all }, fold), updates every copy at once and no copy can show a stale price.
  */
 export const keys = {
   auctions: {
@@ -42,8 +32,10 @@ export const keys = {
     summary: ['sellerItems', 'summary'] as const,
   },
   admin: {
-    /** GET /admin/users — cursor-paginated, unbounded, so this stays keyed per search term
-     * like auctions.active rather than drained (see queries/auctions.ts's useDrainedPages doc). */
+    /**
+     * GET /admin/users: cursor-paginated and unbounded, so keyed per search term like
+     * auctions.active rather than drained.
+     */
     users: (search: string) => ['admin', 'users', { search }] as const,
     /** GET /listings/pending, every page -- the review queue the sidebar badge, the dashboard and the
      * review screens all read, so a change made on one is seen by the others. */

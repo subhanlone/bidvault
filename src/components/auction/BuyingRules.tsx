@@ -1,9 +1,8 @@
 import { locatedIn } from '../../utils/format';
 
 /**
- * "Buying on BidVault": the rules a bidder agrees to, in plain words, before they sign in. It states
- * the rules without hour figures for now; the payment and confirmation windows are admin settings and
- * are quoted here once the API publishes them (nothing is hard-coded in the meantime).
+ * The rules a bidder agrees to, in plain words, shown before they sign in. The payment and
+ * confirmation windows are admin settings and are not quoted here yet (nothing is hard-coded).
  */
 export default function BuyingRules({ city, province }: { city: string | null; province: string | null }) {
   const place = locatedIn(city, province);

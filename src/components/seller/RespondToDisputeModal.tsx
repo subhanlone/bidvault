@@ -18,9 +18,8 @@ interface Props {
 
 /**
  * The seller's one response to a buyer's dispute. It is final once sent, so the dialog says so
- * before the button does. The three-day window is advice, not a rule: an admin reads the response
- * if there is one and may decide after the date with or without it, so the wording never calls
- * the date a deadline.
+ * before the button does. The three-day window is advice, not a rule (an admin may decide after it,
+ * with or without a response), so the wording never calls the date a deadline.
  */
 export default function RespondToDisputeModal({ item, onSubmit, onClose }: Props) {
   const [response, setResponse] = useState('');

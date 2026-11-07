@@ -1,20 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * Fires `onIntersect` when a sentinel element scrolls into view — the trigger for BV-029's one
- * genuinely lazy-loaded screen, Browse Auctions.
- *
- * Every other paginated list in this app (My Bids, Watchlist, My Items, the admin Listing
- * Review queue, dashboard/sidebar stats) shows an exact count or aggregate derived from the
- * whole set, so those all drain every page up front via `useDrainedPages` instead of loading
- * lazily — see its doc comment in queries/auctions.ts. Browse Auctions is the one public,
- * unbounded catalog with no such aggregate, so it is the one screen where "only fetch what's
- * about to be seen" is worth the added complexity of this hook.
- *
- * A ref-callback returning the sentinel element, not a fixed DOM query: the sentinel only
- * exists once the list has rendered at least once, and an IntersectionObserver attached to
- * `null` observes nothing silently rather than erroring, which made an early version of this
- * look like "infinite scroll doesn't fire" instead of "the ref was empty."
+ * Fires `onIntersect` when a sentinel element scrolls into view: the trigger for Browse Auctions,
+ * the one lazily loaded list. Every other paginated list shows an exact count derived from the
+ * whole set, so those drain every page via `useDrainedPages` (see queries/auctions.ts).
+ * A ref-callback returning the sentinel rather than a fixed DOM query: the sentinel only exists
+ * once the list has rendered, and an IntersectionObserver attached to `null` observes nothing
+ * without erroring.
  */
 export function useInfiniteScrollTrigger(onIntersect: () => void, enabled: boolean) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);

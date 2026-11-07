@@ -258,7 +258,7 @@ export default function SellerProfile() {
                 </div>
               </div>
 
-              {/* Earnings (BV-047 payout replaced by a local ledger — see PAYMENT-GATEWAY-MIGRATION.md) */}
+              {/* Earnings: a local ledger (there is no external payout processor). */}
               <div className="bg-surface border border-border-light rounded-md overflow-hidden">
                 <div className="px-5 py-4 border-b border-border-light">
                   <h2 className="font-bold text-[14px] text-navy">Earnings</h2>

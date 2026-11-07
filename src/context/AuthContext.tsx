@@ -1,10 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-// All three come straight from the contract. RegisterRequest and LoginRequest replaced a
-// hand-written pair that used to sit in types/index.ts alongside copies of every other wire
-// shape — and unlike those, this pair was never even covered by the guard that compared them,
-// so nothing had ever checked it. The old RegisterData typed `role` as UserRole, which
-// includes ADMIN: a value POST /auth/register has never accepted.
+// These request types come straight from the contract.
 import type { User, RegisterRequest, LoginRequest, EnrollSellerRequest } from '../types/api';
 import {
   api,
@@ -26,14 +22,12 @@ import { AuthContext } from './auth';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
 
-  // Everything in the query cache was fetched as whoever was signed in: My Bids, the watchlist,
-  // notifications, and the public bid feed too (it masks every bidder except the caller). Its keys
-  // do not carry a user id and entries live for minutes after their screen unmounts, so without
-  // this the next person to sign in on the same tab was shown the previous one's data until it
-  // happened to refetch. A fetch still in flight for the old identity needs no separate
-  // cancellation: clear() detaches its query from the cache, so the late response is written to
-  // that detached query and never reaches the fresh one (checked with a response held back 5 s
-  // across a sign-out and a sign-in as someone else).
+  // Everything in the query cache was fetched as whoever was signed in (My Bids, the watchlist,
+  // notifications, the bid list). Its keys carry no user id and entries outlive their screen, so
+  // the cache is cleared whenever the identity changes; otherwise the next person to sign in on the
+  // same tab would see the previous one's data. A fetch still in flight for the old identity needs
+  // no cancellation: clear() detaches its query, so the late response never reaches the fresh
+  // cache.
   const dropCachedData = useCallback(() => {
     queryClient.clear();
   }, [queryClient]);
@@ -133,8 +127,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('storage', onStorage);
   }, [becomeAnonymous, restore]);
 
-  // api.ts clears its token when a refresh is refused but cannot touch this state, so without this
-  // the UI kept showing the signed-in user (and the old socket stayed connected) until a reload.
+  // api.ts clears its token when a refresh is refused but cannot touch this state, so the UI is
+  // signed out here (and the socket closed) instead of keeping the signed-in user until a reload.
   useEffect(() => onSessionExpired(() => becomeAnonymous(false)), [becomeAnonymous]);
 
   // A refresh came back as a different account than the one on screen, which means another tab
@@ -173,8 +167,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (data: LoginRequest, remember = true) => {
     try {
-      // `remember` is the server's to honour now: it decides whether the cookie it sets outlives the
-      // browser session. The refresh token in the response body is deliberately not kept anywhere.
+      // `remember` is the server's to honour: it decides whether the cookie outlives the browser
+      // session. The refresh token in the response body is deliberately not kept anywhere.
       const result = await api.post('/auth/login', { ...data, remember });
       setAccessToken(result.accessToken);
       adopt(result.user);
@@ -224,11 +218,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
     try {
-      // Changing a password revokes every session the account has, this one included, so the
-      // server issues a replacement pair with the confirmation, and sets the replacement cookie.
-      // Keeping the new access token is what keeps the user signed in: ignore it and the next
-      // silent refresh -- minutes later, mid-task -- would sign them out of the device they just
-      // used to change it. Their own successful action logs them out.
+      // Changing a password revokes every session the account has, this one included, so the server
+      // issues a replacement pair with the confirmation. Keeping the new access token keeps the
+      // user signed in; ignoring it would sign them out of this device at the next silent refresh.
       const session = await api.post('/auth/change-password', { currentPassword, newPassword });
       setAccessToken(session.accessToken);
       return { success: true };
@@ -239,9 +231,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const deleteAccount = async (password: string) => {
     try {
-      // BV-018: the account is anonymised server-side, which already revokes every refresh
-      // token and clears the cookie -- becoming anonymous here just makes the app reflect that
-      // immediately instead of waiting for the next failed refresh.
+      // The account is anonymised server-side, which already revokes every refresh token and clears
+      // the cookie; becoming anonymous here makes the app reflect that at once.
       await api.post('/auth/delete-account', { password });
       becomeAnonymous(true);
       return { success: true };

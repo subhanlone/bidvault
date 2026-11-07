@@ -53,12 +53,9 @@ const TransactionInvoice = lazy(() => import('./screens/TransactionInvoice'));
 
 
 /**
- * One client for the app's lifetime.
- *
- * staleTime 30s: auction data changes constantly, but not so fast that every remount should
- * refetch — the socket bridge pushes the changes that matter. retry 1 rather than the default
- * 3, because a failed read here is shown to the user immediately (BUG-16's lesson: a screen
- * must be able to say "couldn't load", which it cannot do while still retrying).
+ * One client for the app's lifetime. staleTime 30s: the socket bridge pushes the changes that
+ * matter, so a remount need not refetch. retry 1 rather than 3, because a failed read is shown to
+ * the user at once and a screen cannot say "couldn't load" while it is still retrying.
  */
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,8 +75,8 @@ export default function App() {
               <ToastProvider>
                 <RealtimeBridge />
                 <ToastContainer />
-                {/* Layout convention: page content max-width is max-w-5xl (1024px) for most screens. */}
-                {/* AuctionPage uses max-w-[1100px] due to two-column layout. Do not change these per-screen. */}
+                {/* Page content is max-w-5xl (1024px) on most screens; AuctionPage uses
+                   max-w-[1100px] for its two columns. Do not change these per screen. */}
                 <Suspense
                   fallback={
                     <div className="min-h-screen bg-bg flex items-center justify-center">

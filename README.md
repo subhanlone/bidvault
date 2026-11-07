@@ -15,7 +15,7 @@ Vercel.
 | Build | Vite 8 (`@vitejs/plugin-react`) |
 | Routing | React Router 7.15 — every route is lazy-loaded behind `<Suspense>` |
 | Styling | Tailwind CSS v4.3 via `@tailwindcss/vite` |
-| State | React Context — five providers, no external state library |
+| State | TanStack Query for everything the server owns; React Context only for the signed-in user, the listing draft and toasts |
 | Realtime | `socket.io-client` |
 | Payments | self-built dummy gateway — no external processor |
 | Icons | `lucide-react` |
@@ -34,27 +34,30 @@ for `tailwind.config.js` — creating one would not be picked up.
 ```
 src/
   screens/      LandingPage, Privacy, Terms, NotFound, Maintenance, TransactionInvoice
-    auth/       4 screens
-    buyer/      7 screens
-    seller/     6 screens
-    admin/      7 screens
+    public/     browse and the auction page (open to everyone)
+    auth/       sign in, register, verify e-mail, forgot password
+    buyer/      my bids, my wins, watchlist, profile, the result of an auction
+    seller/     dashboard, My Items, the listing wizard, become a seller, profile
+    admin/      dashboard, listing review, live auctions, users, transactions, settings
   components/
     ui/         shared primitives, layouts, navbars, modals
+    auction/    the pieces of the auction page (bid panel, bid list, seller card, result)
+    seller/     the pieces of My Items
     ProtectedRoute.tsx, ToastContainer.tsx
-  context/      Auth, Auction, Listing, Notification, Toast
-  services/     api.ts (fetch wrapper), socket.ts
-  hooks/        useDialog, useTimer, usePendingListings
-  config/       categoryFields.ts, otp.ts
-  utils/        format.ts — currency, dates, counts
-  types/        shared TypeScript types
+  context/      Auth, Listing (the draft), Toast
+  queries/      TanStack Query hooks and keys, plus RealtimeBridge (socket events into the cache)
+  services/     api.ts (typed fetch wrapper), socket.ts
+  hooks/        shared hooks (useDialog, useTimer, useSignInLink, ...)
+  config/       categories.ts, categoryFields.ts, otp.ts
+  utils/        format.ts (currency, dates, counts), account.ts, validation.ts, ...
+  types/        api.ts (generated API types, re-exported) and app-only types
 ```
 
 Two conventions worth knowing before editing:
 
 - **Format through `utils/format.ts`.** Currency, dates and counts all have a
   helper there and the locale is pinned to `en-PK`. Inline
-  `toLocaleString` calls drift apart; there used to be four different
-  currency formatters.
+  `toLocaleString` calls drift apart.
 - **Dialogs use `useDialog`.** It handles Escape, the focus trap, focus
   restore and the scroll lock. A modal that rolls its own will get these
   wrong.
@@ -71,11 +74,8 @@ cp .env.example .env.local   # then fill it in
 npm run dev
 ```
 
-`.env.local`:
-
-```
-VITE_API_URL=http://localhost:4000
-```
+`.env.local` needs `VITE_API_URL`, the API base URL including `/api/v1`.
+`.env.example` says why the API has to be on the same site as the page.
 
 ## Scripts
 
@@ -85,8 +85,9 @@ VITE_API_URL=http://localhost:4000
 | `npm run build` | `tsc -b && vite build` — this is the typecheck too |
 | `npm run lint` | ESLint |
 | `npm run preview` | serve the production build |
-| `npm run test:e2e` | Playwright (needs a running backend) |
-| `npm run test:visual` | visual snapshots |
+| `npm run audit:gate` | fails on any npm advisory that is not in `audit-allowlist.json` |
+| `npm run test:e2e` | Playwright (needs a running backend); `:ui` opens the runner |
+| `npm run test:visual` | visual snapshots; `:update` rewrites them |
 
 Verify changes with `npm run build` and `npm run lint`. A bare
 `tsc --noEmit` passes even when things are broken, because the root

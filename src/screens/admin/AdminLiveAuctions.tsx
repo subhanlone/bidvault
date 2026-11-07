@@ -29,8 +29,8 @@ function AuctionRow({ auction }: { auction: Auction }) {
     void queryClient.invalidateQueries({ queryKey: keys.auctions.active });
   }
 
-  // C3, Phase 7: pulls the listing for cause (counterfeit, stolen, prohibited, misdescribed) --
-  // cancels this auction underneath via the same service the Cancel button above uses.
+  // Pulls the listing for cause (counterfeit, stolen, prohibited, misdescribed): cancels this
+  // auction underneath via the same service the Cancel button above uses.
   async function handleTakedown(reason: string) {
     await api.post(`/admin/listings/${auction.listingId}/takedown`, { reason });
     setTakingDown(false);
@@ -162,7 +162,7 @@ export default function AdminLiveAuctions() {
   // then, and after a failure, they show a dash and the table says why instead of "No active auctions".
   const known = !activeQuery.isError && !activeQuery.isPending && !activeQuery.hasNextPage && !activeQuery.isFetchingNextPage;
 
-  // AL-01: filter to ACTIVE only for table rendering
+  // Filter to ACTIVE only for table rendering.
   const now = useNow(30_000);
   const active = auctions.filter(a => a.status === 'ACTIVE');
   const endingSoon = active.filter(a => {
@@ -217,9 +217,7 @@ export default function AdminLiveAuctions() {
 
           <div className="bg-surface border border-border-light rounded-md">
             <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-border-light">
-              {/* AL-01: header count uses active.length */}
               <h2 className="font-bold text-[14px] text-navy">Active Auctions{known ? ` (${active.length})` : ''}</h2>
-              {/* AL-03: accurate label */}
               <span className="hidden sm:block font-bold text-[11px] text-muted">Updates via socket events</span>
             </div>
 
@@ -228,7 +226,6 @@ export default function AdminLiveAuctions() {
             </div>
 
             <div className="flex flex-col">
-              {/* AL-01: render active.map, not auctions.map */}
               {activeQuery.isError ? (
                 <ErrorState
                   title="Could not load the live auctions"

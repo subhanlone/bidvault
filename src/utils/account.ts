@@ -1,10 +1,10 @@
 import type { User } from '../types/api';
 
 /**
- * One account buys and sells (B5). Which side of the app a person is on is "mode", and it is only
- * ever a convenience: what they are allowed to do is `user.isSeller`, decided by the server on
- * every request. The last mode is remembered per user in this browser so the next sign-in opens
- * where they left off; storage that is missing or blocked just means the default.
+ * One account buys and sells. Which side of the app a person is on is "mode", only ever a
+ * convenience: what they may do is `user.isSeller`, decided by the server on every request. The
+ * last mode is remembered per user in this browser so the next sign-in opens there; missing or
+ * blocked storage just means the default.
  */
 export type Mode = 'buying' | 'selling';
 
@@ -23,8 +23,8 @@ export function readMode(user: User): Mode {
   } catch {
     // Storage unavailable: fall through to the default.
   }
-  // Accounts that were sellers before accounts were merged keep opening on the seller side until
-  // they choose otherwise. `role` is the legacy spelling and is only read here, for that default.
+  // Accounts whose role is the legacy SELLER keep opening on the seller side until they choose
+  // otherwise; `role` is only read here, for that default.
   return user.role === 'SELLER' ? 'selling' : 'buying';
 }
 

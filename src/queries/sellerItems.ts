@@ -4,19 +4,17 @@ import type { PaginatedSellerItems, SellerItemTab } from '../types/api';
 import { keys } from './keys';
 
 /**
- * The seller's My Items screen: the list (one tab at a time) and the tab counts.
- *
- * Every action a row offers is an existing endpoint, wrapped below as a mutation that invalidates
- * everything under `keys.sellerItems.all`: an action moves an item from one tab to another, so the
- * list being shown, the other tabs and the badges all have to be re-read, not just one of them.
+ * The seller's My Items screen: the list (one tab at a time) and the tab counts. Every action a row
+ * offers is an existing endpoint wrapped as a mutation that invalidates everything under
+ * `keys.sellerItems.all`: an action moves an item between tabs, so the list, the other tabs and the
+ * badges all have to be re-read.
  */
 
 /**
  * How often a tab is re-read while it is open: a live auction and a sale waiting to ship change
- * under you. Review and sold change without the seller doing anything too -- an admin approves an
- * item, a buyer pays, a package is confirmed -- and nothing else tells this screen, so they are
- * re-read as well, less often. Unsold and closed only change by the seller's own actions, which
- * invalidate everything below.
+ * under you, and review and sold change without the seller doing anything (an admin approves, a
+ * buyer pays), so those are re-read less often. Unsold and closed only change by the seller's own
+ * actions, which invalidate everything below.
  */
 const REFRESH_MS: Partial<Record<SellerItemTab, number>> = { live: 20_000, action: 20_000, review: 30_000, sold: 30_000 };
 

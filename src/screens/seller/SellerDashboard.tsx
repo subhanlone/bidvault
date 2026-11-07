@@ -19,10 +19,10 @@ function StatCardSkeleton() {
   );
 }
 
-// The two requests are independent, so each can fail alone. Which one did is kept (not one generic
-// "something failed"): every figure and panel needs to know whether *its* data is missing, because
-// a 0 or an empty list drawn from a failed request is a claim about the seller's account. The item
-// counts come from the My Items summary, which is its own query below.
+// The two requests are independent, so each can fail alone and which one did is kept: every figure
+// and panel needs to know whether *its* data is missing, because a 0 or an empty list drawn from a
+// failed request is a claim about the seller's account. Item counts come from the My Items summary,
+// its own query below.
 const loadDashboard = (userId: string) =>
   Promise.allSettled([
     api.get('/payments/seller-stats'),
@@ -41,8 +41,8 @@ export default function SellerDashboard() {
   const [failed, setFailed] = useState({ stats: false, reviews: false });
   const [replyingTo, setReplyingTo] = useState<SellerReview | null>(null);
 
-  // C6, Phase 7: a one-shot reply, submitted through the same reason-prompt shape the cancel
-  // actions use — one required text field, nothing more.
+  // A one-shot reply, submitted through the same reason-prompt shape the cancel actions use: one
+  // required text field.
   async function handleReply(reply: string) {
     if (!replyingTo) return;
     const updated = await api.post(`/reviews/${replyingTo.reviewId}/reply`, { reply });
@@ -80,8 +80,8 @@ export default function SellerDashboard() {
     void loadDashboard(userId).then(applyResult);
   }
 
-  // The server decides which tab each item is in, so "live" here is an auction that is actually
-  // running, not a listing that was once approved (A1, Phase 6), and nothing is counted twice.
+  // The server decides which tab each item is in, so "live" is an auction that is actually running,
+  // not a listing that was once approved, and nothing is counted twice.
   const counts = summary.data;
   const total = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : 0;
   const countsLoading = summary.isLoading;

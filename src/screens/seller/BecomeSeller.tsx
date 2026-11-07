@@ -24,9 +24,9 @@ const BIO_MAX = 280;
 type Field = 'city' | 'province' | 'phone' | 'bio' | 'terms' | 'adult';
 
 /**
- * Turning a buying account into a selling one. Instant: there is no approval step, the safeguards
- * are the terms accepted here, the details given, and (soon) a monthly limit for new sellers.
- * What is asked for is only what the public pages and fulfilment use -- no ID number, no bank.
+ * Turning a buying account into a selling one. Instant: there is no approval step; the safeguards
+ * are the terms accepted here and the details given. What is asked for is only what the public
+ * pages and fulfilment use (no ID number, no bank).
  */
 export default function BecomeSeller() {
   const { user, logout, becomeSeller } = useAuth();

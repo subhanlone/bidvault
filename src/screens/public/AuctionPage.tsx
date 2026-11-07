@@ -26,8 +26,8 @@ const RESULT_POLL_MS = 5_000;
 /**
  * One auction, for everyone. A visitor without an account sees the price, the bid count, the end
  * time, who is selling and the buying rules; the list of bids, bidding and watching ask for an
- * account (D10). Once the auction is over the same address says what happened (sold, not sold, no
- * bids, cancelled).
+ * account. Once the auction is over the same address says what happened (sold, not sold, no bids,
+ * cancelled).
  */
 export default function AuctionPage() {
   const { auctionId } = useParams<{ auctionId: string }>();
@@ -41,8 +41,8 @@ export default function AuctionPage() {
   // shown neither "Sign in to bid" nor a bid form, so a signed-in person never sees a sign-in prompt.
   const viewer: Viewer = user ? 'member' : isLoading ? 'pending' : 'guest';
 
-  // Fetched, not looked up. GET /auctions/{id} answers for any status, so a closed auction opened
-  // on a cold load is a page, not "Auction not found" (NEW-17).
+  // Fetched, not looked up: GET /auctions/{id} answers for any status, so a closed auction opened
+  // on a cold load is a page, not "Auction not found".
   const { data: auction, isPending, isError, error, isFetching, refetch } = useAuctionDetail(auctionId);
   const { data: bids = [] } = useBids(auctionId, viewer === 'member');
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
@@ -76,7 +76,7 @@ export default function AuctionPage() {
     return () => clearInterval(id);
   }, [waitingForResult, refetch]);
 
-  // ── Loading skeleton ─────────────────────────────────────────────────────────
+  // Loading skeleton
   if (isPending) {
     return (
       <div className="min-h-screen bg-bg">
@@ -95,9 +95,8 @@ export default function AuctionPage() {
     );
   }
 
-  // ── Could not load ────────────────────────────────────────────────────────────
-  // Only 404 means "no such auction". With data already on screen a failed background refetch
-  // changes nothing -- the page keeps what it has.
+  // Could not load: only a 404 means "no such auction". With data already on screen a failed
+  // background refetch changes nothing; the page keeps what it has.
   if (isError && !auction && !(error instanceof ApiError && error.status === 404)) {
     return (
       <div className="min-h-screen bg-bg">
@@ -109,8 +108,7 @@ export default function AuctionPage() {
     );
   }
 
-  // ── Not found ────────────────────────────────────────────────────────────────
-  // The header stays, so a mistyped or stale link still has somewhere to go from here.
+  // Not found: the header stays, so a mistyped or stale link still has somewhere to go.
   if (!auction || !outcome) {
     return (
       <div className="min-h-screen bg-bg">
@@ -132,7 +130,7 @@ export default function AuctionPage() {
     );
   }
 
-  // ── Derived values ───────────────────────────────────────────────────────────
+  // Derived values
   const isLive = outcome === 'live';
   const watched = isWatched(auction.auctionId);
   const isFinalCountdown = isLive && timer.totalSeconds > 0 && timer.totalSeconds <= 60;
@@ -150,7 +148,7 @@ export default function AuctionPage() {
     <div className="min-h-screen bg-bg">
       <SiteNavbar />
 
-      {/* ── Final countdown banner (slides in when ≤ 60s) ── */}
+      {/* Final countdown banner (last 60 seconds) */}
       {isFinalCountdown && (
         <div className="bg-primary px-4 sm:px-8 py-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -182,7 +180,7 @@ export default function AuctionPage() {
 
       <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col md:grid md:grid-cols-[1fr_320px] gap-5">
 
-        {/* ── LEFT column ─────────────────────────────────────────────────── */}
+        {/* Left column */}
         <div className="flex flex-col gap-4 order-last md:order-first">
 
           <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1 text-[12px] text-muted flex-wrap">
@@ -258,7 +256,7 @@ export default function AuctionPage() {
           <BidHistory key={auction.auctionId} auctionId={auction.auctionId} bidCount={auction.bidCount} viewer={viewer} />
         </div>
 
-        {/* ── RIGHT column — the clock and the bid panel, or the result ─────── */}
+        {/* Right column: the clock and the bid panel, or the result */}
         <div className="flex flex-col gap-4 order-first md:order-last">
           <Link to="/browse" className="font-semibold text-[13px] text-muted hover:text-primary transition-colors flex items-center gap-1">
             ← Back to Auctions

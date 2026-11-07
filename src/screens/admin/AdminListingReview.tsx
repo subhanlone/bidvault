@@ -13,20 +13,19 @@ import Textarea from '../../components/ui/Textarea';
 import { getCategoryFields } from '../../config/categoryFields';
 import { conditionLabel, dateMedium, dateShort, pkr, pkrCompact } from '../../utils/format';
 
-// Notes are private to the admin who wrote them: keyed by admin id as well as listing id, so a
-// second admin on the same browser neither reads nor overwrites them, and an admin gets their own
-// back after signing in again.
+// Notes are private to the admin who wrote them: keyed by admin id and listing id, so a second
+// admin on the same browser neither reads nor overwrites them.
 const NOTES_PREFIX = 'admin_review_notes_';
 const NOTES_KEY = (adminId: string, listingId: string) => `${NOTES_PREFIX}${adminId}_${listingId}`;
 
-/** Notes saved before they were keyed by admin cannot be attributed to anyone, so they are dropped. */
+/** Notes saved without an admin id cannot be attributed to anyone, so they are dropped. */
 function dropLegacyNotes(): void {
   try {
     const legacy: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      // New keys are `<prefix><adminId>_<listingId>`; the old ones were `<prefix><listingId>` with
-      // no second underscore-separated id (ids are cuids, which contain no underscores).
+      // Keys are `<prefix><adminId>_<listingId>`; a key without the second id is an unattributed
+      // entry (ids are cuids, which contain no underscores).
       if (key?.startsWith(NOTES_PREFIX) && !key.slice(NOTES_PREFIX.length).includes('_')) legacy.push(key);
     }
     legacy.forEach(k => localStorage.removeItem(k));
@@ -39,10 +38,8 @@ function readNotes(adminId: string, listingId: string): string {
 
 /**
  * The admin's private notes for one listing. It reads its saved text once, when it is created, and
- * the parent gives it a `key` made of both ids: a different listing or a different admin is a
- * different component, which starts from its own storage entry. That replaces an effect that copied
- * storage into state after every id change (a render with the previous listing's notes, then a
- * second one with the right ones).
+ * the parent gives it a `key` made of both ids, so a different listing or admin is a different
+ * component that starts from its own storage entry.
  */
 function ReviewNotes({ adminId, listingId }: { adminId: string; listingId: string }) {
   const [notes, setNotes] = useState(() => readNotes(adminId, listingId));
@@ -84,11 +81,11 @@ export default function AdminListingReview() {
   const prevListing = currentIndex > 0 ? pendingListings[currentIndex - 1] : null;
   const nextListing = currentIndex < pendingListings.length - 1 ? pendingListings[currentIndex + 1] : null;
 
-  // AR-03: persisted notes live in <ReviewNotes>; only the unattributable legacy entries are cleared here.
+  // Persisted notes live in <ReviewNotes>; only the unattributable entries are cleared here.
   useEffect(() => { dropLegacyNotes(); }, []);
 
-  // AR-04: only removes from UI on success (hook throws on API failure)
-  // AR-05: delay navigate 800ms so toast is visible
+  // Only removes from the UI on success (the hook throws on an API failure); navigation is delayed
+  // 800ms so the toast is visible.
   const handleApprove = async () => {
     if (!listing) return;
     setLoading(true);
@@ -129,7 +126,7 @@ export default function AdminListingReview() {
   };
 
   if (!listing) {
-    // suppress "not found" flash during the 800ms navigate delay after approve/reject
+    // Suppress the "not found" flash during the 800ms navigate delay after approve/reject.
     if (navigating) return null;
     // "Not found" is only true once the queue has actually loaded. Before that, or after a failed
     // load, the listing is missing because the list is -- not because someone already reviewed it.
@@ -290,7 +287,7 @@ export default function AdminListingReview() {
                 </div>
               </div>
 
-              {/* AR-01: Honest price summary — no fake confidence */}
+              {/* Price summary */}
               <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
                 <h3 className="font-bold text-[14px] text-navy mb-3">Price Summary</h3>
                 <div className="flex items-end gap-2 mb-3">
@@ -310,7 +307,7 @@ export default function AdminListingReview() {
             </div>
           </div>
 
-          {/* RIGHT — Admin Decision */}
+          {/* Right column: admin decision */}
           <div className="flex flex-col gap-4 sm:gap-5">
             <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
               <h3 className="font-bold text-[14px] text-navy mb-4">Admin Decision</h3>
@@ -351,7 +348,7 @@ export default function AdminListingReview() {
                 </div>
               )}
 
-              {/* AR-02: Real mailto button */}
+              {/* Contact the seller */}
               <button
                 type="button"
                 onClick={() => {
@@ -367,7 +364,7 @@ export default function AdminListingReview() {
                 <p className="font-bold text-[12px] text-primary">Request More Info from Seller</p>
               </button>
 
-              {/* AR-03: Notes saved to localStorage */}
+              {/* Notes (saved to localStorage) */}
               {adminId && listingId && <ReviewNotes key={`${adminId}:${listingId}`} adminId={adminId} listingId={listingId} />}
             </div>
 

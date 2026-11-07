@@ -11,7 +11,7 @@ interface Props {
   auctionTitle: string;
   onSuccess: () => void;
   onClose: () => void;
-  /** C6, Phase 7: presence switches this into edit mode — PATCH instead of POST, pre-filled. */
+  /** Presence switches this into edit mode: PATCH instead of POST, pre-filled. */
   editing?: { reviewId: string; stars: number; comment?: string };
 }
 

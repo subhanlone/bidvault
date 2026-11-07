@@ -83,9 +83,8 @@ export default function BuyerWatchlist() {
   const { toggle, watched: watchlistAuctions, loading, isError, isRefetching, refetch } = useWatchlistToggle();
 
   const now = useNow(5_000);
-  // NEW-12: read the rows /watchlist returned. This used to intersect the watched ids with
-  // `auctions`, which only ever holds ACTIVE auctions — so a watched auction disappeared the
-  // moment it closed, and "Clear Ended" could never appear.
+  // Read the rows /watchlist returned, so a watched auction stays after it closes and "Clear Ended"
+  // can appear.
   const watched = watchlistAuctions;
   const endedWatched = watched.filter(a => new Date(a.endTime).getTime() <= now);
   const activeCount = watched.length - endedWatched.length;
@@ -125,8 +124,8 @@ export default function BuyerWatchlist() {
           )}
         </div>
 
-        {/* Error first, then loading: before this the list read as empty in both states, so a failed
-            or still-running request said "Your watchlist is empty". */}
+        {/* Error first, then loading, then empty: a failed or still-running request must not say
+           "Your watchlist is empty". */}
         {isError ? (
           <ErrorState title="Could not load your watchlist" onRetry={refetch} retrying={isRefetching} />
         ) : loading ? (

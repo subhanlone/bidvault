@@ -1,13 +1,9 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 /**
- * B5, PR 2: one account buys and sells.
- *
- * A fresh account is created through the API of the local development backend (the dev server
- * returns the e-mail code in the register response, which production never does), then everything
- * a person does with it is done through the screens. Nothing here signs in to a deployment:
- * playwright.config.ts refuses a production BASE_URL, and the API address is checked below too.
- *
+ * One account buys and sells: a fresh account is created through the local development backend's
+ * API (it returns the e-mail code, which production never does) and everything else is done through
+ * the screens. Local backend only.
  * Serial on purpose: the tests walk one account from "just registered" to "seller and back", and
  * the login limiter allows only so many sign-ins per quarter hour.
  */
@@ -131,8 +127,8 @@ test.describe('Becoming a seller', () => {
 
   test('switching sides works, and the side last used is where the person starts next', async ({ page }) => {
     await signIn(page);
-    // Nothing remembered in a fresh browser, and this account was not a seller before accounts were
-    // merged, so it starts on the buying side and is offered the switch.
+    // Nothing is remembered in a fresh browser, so a new account starts on the buying side and is
+    // offered the switch.
     await expect(page).toHaveURL(/\/browse$/);
     await expect(page.getByRole('link', { name: 'Switch to selling' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Sell', exact: true })).toHaveCount(0);
@@ -158,7 +154,6 @@ test.describe('Becoming a seller', () => {
     await page.getByRole('button', { name: 'Open menu' }).click();
     await page.getByRole('link', { name: 'Switch to selling' }).click();
     await expect(page).toHaveURL(/seller\/dashboard/);
-    // The menu closes after the switch.
     await expect(page.getByRole('button', { name: 'Open menu' })).toBeVisible();
     await page.getByRole('button', { name: 'Open menu' }).click();
     await expect(page.getByRole('link', { name: 'Switch to buying' })).toBeVisible();

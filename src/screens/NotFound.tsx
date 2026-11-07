@@ -23,8 +23,8 @@ export default function NotFound() {
 
       <div className="relative z-10 text-center max-w-[560px] mx-auto">
         {/* Brand */}
-        {/* Was a hand-rolled copy of the logo using text-primary on navy (2.92:1). Using the
-            shared component means it picks up the accessible tint like every other navbar. */}
+        {/* The shared logo component carries the accessible tint (the brand red alone is only
+           2.92:1 on navy). */}
         <Link to="/" className="inline-flex items-center gap-2 mb-12 opacity-70 hover:opacity-100 transition-opacity">
           <BidVaultLogo size="md" to="" />
         </Link>
