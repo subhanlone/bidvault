@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RealtimeBridge } from './queries/RealtimeBridge';
@@ -164,9 +164,6 @@ export default function App() {
                         <SellerMyItems />
                       </ProtectedRoute>
                     } />
-                    {/* My Listings and My Sales became My Items; old links and bookmarks land there. */}
-                    <Route path="/seller/listings" element={<Navigate to="/seller/items" replace />} />
-                    <Route path="/seller/sales" element={<Navigate to="/seller/items" replace />} />
                     <Route path="/seller/listings/:listingId/edit" element={
                       <ProtectedRoute allowedRoles={['SELLER']}>
                         <SellerEditListing />
@@ -218,8 +215,6 @@ export default function App() {
                         <BuyerAuctionWon />
                       </ProtectedRoute>
                     } />
-                    {/* The old address carried the outcome in navigation state; without an id there is nothing to show. */}
-                    <Route path="/buyer/auction-won" element={<Navigate to="/browse" replace />} />
                     <Route path="/buyer/my-wins" element={
                       <ProtectedRoute allowedRoles={['BUYER']}>
                         <BuyerMyWins />

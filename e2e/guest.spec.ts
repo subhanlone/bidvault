@@ -350,11 +350,13 @@ test.describe('Addresses', () => {
     await expect(page.getByRole('link', { name: 'Browse live auctions' })).toBeVisible();
   });
 
-  // The two screens moved to /browse and /auctions/:id and their old addresses were removed, not
-  // redirected: nothing links to them any more, so they are ordinary unknown addresses.
-  test('/buyer/browse and /buyer/live-bidding/:id no longer exist', async ({ page, request }) => {
+  // Old addresses were removed, not redirected: nothing links to them any more, so they are
+  // ordinary unknown addresses. Browse and the auction page moved to /browse and /auctions/:id; My
+  // Listings and My Sales became My Items; the result screen always has an auction id.
+  test('the old addresses no longer exist', async ({ page, request }) => {
     const id = await auctionIdOf(request, 'ACTIVE', LIVE);
-    for (const path of ['/buyer/browse', `/buyer/live-bidding/${id}`]) {
+    const gone = ['/buyer/browse', `/buyer/live-bidding/${id}`, '/seller/listings', '/seller/sales', '/buyer/auction-won'];
+    for (const path of gone) {
       await page.goto(path);
       await expect(page.getByRole('heading', { name: 'Lost the Auction?' })).toBeVisible();
       expect(new URL(page.url()).pathname, 'the address is not rewritten').toBe(path);
