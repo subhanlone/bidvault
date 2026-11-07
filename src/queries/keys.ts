@@ -21,6 +21,12 @@ export const keys = {
     /** GET /auctions/mine/bids */
     mine: ['bids', 'mine'] as const,
   },
+  /**
+   * GET /auctions/facets: the counts beside the browse filters. Outside `['auctions', …]` on
+   * purpose: a socket price update folds every cache entry under that prefix, and counts are not
+   * auctions.
+   */
+  auctionFacets: (query: string) => ['auctionFacets', query] as const,
   /** GET /settings/public. */
   publicSettings: ['publicSettings'] as const,
   notifications: ['notifications'] as const,

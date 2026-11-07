@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient, type UseInfiniteQueryResult } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient, type UseInfiniteQueryResult } from '@tanstack/react-query';
 import { api } from '../services/api';
 import type { Auction, PublicBid, PaginatedAuctions, PaginatedBidsWithAuction } from '../types/api';
 import { keys } from './keys';
 import { useAuth } from '../context/auth';
+import { apiQuery, NO_FILTERS, type BrowseParams } from '../utils/browseParams';
 
 /**
  * Auction data as queries. Each hook is a thin wrapper over the typed client
@@ -41,24 +42,48 @@ export function useDrainedPages<T>(
 }
 
 /**
- * The live list. `category`/`search` are server-side filters and part of the query key, so changing
- * either starts a fresh paginated query rather than filtering pages already cached; a match on page
- * 4 is never missed because pages 1-3 loaded first.
+ * The live list as the browse screen asks for it: the words, category, price range, conditions,
+ * bids filter and sort are all server-side and part of the query key, so changing any of them
+ * starts a fresh paginated query rather than re-filtering pages already cached; a match on page 4
+ * is never missed because pages 1-3 loaded first. While the next query loads, the previous rows
+ * stay (`isPlaceholderData`) instead of the screen blanking at every click.
  */
-export function useActiveAuctions(params?: { category?: string; search?: string }) {
-  const category = params?.category?.trim();
-  const search = params?.search?.trim();
+export function useAuctionList(params: BrowseParams) {
+  const query = apiQuery(params).toString();
   return useInfiniteQuery({
-    queryKey: [...keys.auctions.active, { category, search }] as const,
+    queryKey: [...keys.auctions.active, query] as const,
     queryFn: ({ pageParam }) => {
-      const qs = new URLSearchParams({ status: 'ACTIVE' });
-      if (category) qs.set('category', category);
-      if (search) qs.set('search', search);
+      const qs = new URLSearchParams(query);
       if (pageParam) qs.set('cursor', pageParam);
       return api.get(`/auctions?${qs.toString()}`);
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage: PaginatedAuctions) => lastPage.nextCursor ?? undefined,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** The live list narrowed by words and category only, for the screens that need no more. */
+export function useActiveAuctions(params?: { category?: string; search?: string }) {
+  return useAuctionList({
+    ...NO_FILTERS,
+    category: params?.category?.trim() ?? '',
+    search: params?.search?.trim() ?? '',
+  });
+}
+
+/**
+ * How many live auctions each browse filter choice would give, for the same filters as the list.
+ * Counts are for reading, not for acting on, so a count from a moment ago is fine (`staleTime`);
+ * the previous counts stay up while the new ones load, so numbers do not flicker at every click.
+ */
+export function useAuctionFacets(params: BrowseParams) {
+  const query = apiQuery(params, true).toString();
+  return useQuery({
+    queryKey: keys.auctionFacets(query),
+    queryFn: () => api.get(`/auctions/facets?${query}`),
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
   });
 }
 

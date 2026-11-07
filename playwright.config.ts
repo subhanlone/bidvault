@@ -70,7 +70,7 @@ export default defineConfig({
     // throwaway account on the local backend, like the account project.
     {
       name: 'guest',
-      testMatch: '**/guest.spec.ts',
+      testMatch: '**/guest*.spec.ts',
     },
     {
       name: 'buyer',

@@ -11,6 +11,7 @@ export type {
   Bid,
   PublicBid,
   BidWithAuction,
+  AuctionFacets,
   PaginatedAuctions,
   PaginatedBids,
   PaginatedBidsWithAuction,

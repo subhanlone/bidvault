@@ -1,393 +1,128 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, Heart, Check } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '../../context/auth';
-import { flattenPages, useActiveAuctions, useWatchlistToggle } from '../../queries/auctions';
+import { flattenPages, useAuctionFacets, useAuctionList } from '../../queries/auctions';
 import { useInfiniteScrollTrigger } from '../../hooks/useInfiniteScrollTrigger';
-import { useTimer } from '../../hooks/useTimer';
-import { SiteNavbar, AuctionThumbnail, ErrorState } from '../../components/ui';
-import Button from '../../components/ui/Button';
-import type { Auction } from '../../types/api';
-import { conditionLabel, count, locatedIn, pkr, weekdayTime } from '../../utils/format';
-import { useSignInLink } from '../../hooks/useSignInLink';
-import { BROWSE_CATEGORIES } from '../../config/categories';
-import LoadingStatus from '../../components/ui/LoadingStatus';
 import { useNow } from '../../hooks/useNow';
+import { useSignInLink } from '../../hooks/useSignInLink';
+import { SiteNavbar, ErrorState } from '../../components/ui';
+import Button from '../../components/ui/Button';
+import LoadingStatus from '../../components/ui/LoadingStatus';
+import FilterRail from '../../components/browse/FilterRail';
+import ResultCard, { ResultCardSkeleton } from '../../components/browse/ResultCard';
+import ResultRow, { ResultRowSkeleton } from '../../components/browse/ResultRow';
+import SortMenu from '../../components/browse/SortMenu';
+import ViewToggle from '../../components/browse/ViewToggle';
+import { count } from '../../utils/format';
+import {
+  hasFilters,
+  readBrowseParams,
+  writeBrowseParams,
+  type BrowseParams,
+  type BrowseView,
+} from '../../utils/browseParams';
 
-const CATEGORIES: string[] = ['All', ...BROWSE_CATEGORIES];
-
-const SORT_OPTIONS = [
-  { value: 'endingSoon', label: 'Ending Soon' },
-  { value: 'newlyListed', label: 'Newly Listed' },
-  { value: 'priceLow', label: 'Price: Low to High' },
-  { value: 'priceHigh', label: 'Price: High to Low' },
-  { value: 'mostBids', label: 'Most Bids' },
-] as const;
-type SortBy = typeof SORT_OPTIONS[number]['value'];
-
-const FilterCheckbox = ({ checked, onClick, label }: { checked: boolean; onClick: () => void; label: string }) => (
-  <label className="flex items-center gap-2.5 cursor-pointer group">
-    <span className="relative flex">
-      <input type="checkbox" checked={checked} onChange={onClick} className="sr-only peer" />
-      <span className={`w-[14px] h-[14px] rounded-xs border-2 flex items-center justify-center transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2 ${checked ? 'bg-primary border-primary' : 'border-border-strong group-hover:border-primary/50'}`}>
-        {checked && <Check size={9} strokeWidth={3} className="text-white" />}
-      </span>
-    </span>
-    <span className="text-sm text-body">{label}</span>
-  </label>
-);
-
-function AuctionCardSkeleton() {
-  return (
-    <div className="bg-surface border border-border-light rounded-md overflow-hidden">
-      <div className="h-[160px] sm:h-[180px] bg-border-light animate-pulse" />
-      <div className="p-4">
-        <div className="flex gap-1.5 mb-2">
-          <div className="h-[18px] w-20 bg-border-light rounded-full animate-pulse" />
-          <div className="h-[18px] w-14 bg-border-light rounded-full animate-pulse" />
-        </div>
-        <div className="h-4 bg-border-light rounded animate-pulse mb-1.5" />
-        <div className="h-4 w-3/4 bg-border-light rounded animate-pulse mb-4" />
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="h-3 w-16 bg-border-light rounded animate-pulse mb-1" />
-            <div className="h-5 w-28 bg-border-light rounded animate-pulse" />
-            <div className="h-3 w-12 bg-border-light rounded animate-pulse mt-1" />
-          </div>
-          <div className="h-8 w-20 bg-border-light rounded-lg animate-pulse" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AuctionCard({ auction, isGuest }: { auction: Auction; isGuest: boolean }) {
-  const navigate = useNavigate();
-  const timer = useTimer(auction.endTime);
-  const signIn = useSignInLink();
-  const { toggle, isWatched } = useWatchlistToggle();
-  const watched = isWatched(auction.auctionId);
-  const isEndingSoon = timer.hours === 0 && timer.minutes < 60 && !timer.isExpired;
-  const isFinalMinutes = timer.hours === 0 && timer.minutes < 5 && !timer.isExpired;
-  const place = locatedIn(auction.sellerCity, auction.sellerProvince);
-  const open = () => navigate(`/auctions/${auction.auctionId}`);
-  const heartClass = 'absolute top-3 right-3 rounded-full w-[30px] h-[30px] flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1';
-
-  return (
-    // The whole card is clickable for a mouse; the title link and the button inside are what a
-    // keyboard or a screen reader use, so the card itself is not a second, nested "button".
-    <article
-      className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-lg transition-shadow duration-200 cursor-pointer group"
-      onClick={open}
-    >
-      <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-navy">
-        <AuctionThumbnail
-          src={auction.imageUrl}
-          alt={auction.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          iconSize={28}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(11,31,58,0.35)] to-transparent" />
-        <span className={`absolute bottom-3 left-3 font-bold text-[11px] px-2 py-1 rounded-md flex items-center gap-2 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-surface/15 backdrop-blur-sm text-white'}`}>
-          <span>{timer.isExpired ? 'Closed' : timer.display}</span>
-          {isFinalMinutes ? (
-            <span className="inline-flex items-center gap-1 text-primary text-[9px] font-bold uppercase tracking-[0.3px]">
-              <span className="size-2 rounded-full bg-primary animate-countdown-pulse" />
-              Ending
-            </span>
-          ) : isEndingSoon ? (
-            <span className="inline-flex items-center rounded-full bg-warning-bg text-warning px-2 py-[2px] text-[9px] font-bold">
-              Ending Soon
-            </span>
-          ) : null}
-        </span>
-        {isGuest ? (
-          <Link
-            {...signIn}
-            onClick={e => e.stopPropagation()}
-            aria-label={`Sign in to watch ${auction.title}`}
-            className={`${heartClass} bg-surface/80 text-muted hover:text-primary`}
-          >
-            <Heart size={14} className="text-muted" />
-          </Link>
-        ) : (
-          <button
-            onClick={e => { e.stopPropagation(); toggle(auction.auctionId); }}
-            // Named after its auction, so a screen reader can tell the cards' buttons apart.
-            aria-label={`${watched ? 'Remove' : 'Add'} ${auction.title} ${watched ? 'from' : 'to'} watchlist`}
-            aria-pressed={watched}
-            className={`${heartClass} ${watched ? 'bg-primary text-white' : 'bg-surface/80 text-muted hover:text-primary'}`}
-          >
-            <Heart size={14} className={watched ? 'text-white' : 'text-muted'} fill={watched ? 'currentColor' : 'none'} />
-          </button>
-        )}
-      </div>
-      <div className="p-4">
-        <div className="flex items-center gap-1.5 mb-2">
-          <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
-          <span className="bg-surface-raised font-medium text-[10px] text-muted px-2 py-[3px] rounded-full">{conditionLabel(auction.condition)}</span>
-        </div>
-        <h3 className="font-bold text-[13px] text-navy leading-[19px] mb-1 line-clamp-2">
-          <Link to={`/auctions/${auction.auctionId}`} onClick={e => e.stopPropagation()} className="text-navy no-underline hover:underline">
-            {auction.title}
-          </Link>
-        </h3>
-        <p className="text-[11px] text-muted mb-0.5">
-          {auction.sellerName} · {auction.sellerRating ? `${auction.sellerRating}★` : 'No ratings yet'}
-          {auction.sellerSales ? ` · ${count(auction.sellerSales, 'sale')}` : ''}
-        </p>
-        {place && <p className="text-[11px] text-muted mb-0.5">Located in {place}</p>}
-        <p className="text-[11px] text-muted mb-3">Ends {weekdayTime(auction.endTime)}</p>
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-[10px] text-muted mb-[2px]">Current bid</p>
-            <p className="font-extrabold text-[17px] text-primary leading-none">{pkr(auction.currentBid)}</p>
-            <p className="text-[10px] text-placeholder mt-1">
-              {count(auction.bidCount, 'bid')}{auction.watcherCount > 0 ? ` · ${auction.watcherCount} watching` : ''}
-            </p>
-          </div>
-          {/* An auction stays in the ACTIVE list until the worker closes it, which can lag endTime
-             by up to the 5-minute reconcile interval; until then the card shows "Closed" and
-             offers the result instead of a live "Bid Now". */}
-          <Button
-            size="sm"
-            variant={timer.isExpired ? 'outline' : 'primary'}
-            aria-label={`${timer.isExpired ? 'View result for' : isGuest ? 'View' : 'Bid on'} ${auction.title}`}
-            onClick={e => { e.stopPropagation(); open(); }}
-          >
-            {timer.isExpired ? 'View Result' : isGuest ? 'View' : 'Bid Now'}
-          </Button>
-        </div>
-      </div>
-    </article>
-  );
-}
+const CLEARED: Partial<BrowseParams> = { category: '', minPrice: null, maxPrice: null, conditions: [], withBids: false };
 
 /**
- * Open to everyone. The home page's search box and category tiles link here with `?search=` and
- * `?category=`; they set the filters the screen starts with. The screen remounts when that part of
- * the address changes, so following a second such link replaces the first one's filters.
+ * Open to everyone. Every choice on this screen lives in the address (`search`, `category`, `sort`,
+ * `minPrice`, `maxPrice`, `condition`, `withBids`, `view`), so a result page can be shared, a
+ * reload keeps it and Back undoes one choice. The home page's search box and category tiles link
+ * here with the same names. Sorting, the price range and every filter are the server's: the rows
+ * shown are the ones it returned, in its order.
  */
 export default function BrowseAuctions() {
-  const [params] = useSearchParams();
-  const fromAddress = params.get('category');
-  return (
-    <BrowseScreen
-      key={params.toString()}
-      initialSearch={params.get('search')?.trim() ?? ''}
-      initialCategory={fromAddress && CATEGORIES.includes(fromAddress) ? fromAddress : 'All'}
-    />
-  );
-}
-
-function BrowseScreen({ initialSearch, initialCategory }: { initialSearch: string; initialCategory: string }) {
   const { user, isLoading } = useAuth();
   const signIn = useSignInLink();
   // Someone whose session is still being restored is not shown guest prompts.
   const isGuest = !user && !isLoading;
-  const [search, setSearch]             = useState(initialSearch);
-  const [category, setCategory]         = useState(initialCategory);
-  const [showEndingSoon, setShowEndingSoon] = useState(false);
-  const [minPrice, setMinPrice]         = useState('');
-  const [maxPrice, setMaxPrice]         = useState('');
-  const [sortBy, setSortBy]             = useState<SortBy>('endingSoon');
-  const [sidebarOpen, setSidebarOpen]   = useState(false);
 
-  // Debounced: category/search are server-side filters, each a fresh paginated query rather than a
-  // re-filter of cached pages, so a match on a page not yet loaded is never missed; debouncing
-  // keeps typing from firing a query per keystroke.
-  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlState = useMemo(() => readBrowseParams(searchParams), [searchParams]);
+  // What is on screen is held here and written to the address alongside, not read back from it: a
+  // navigation lands a moment after the click, and a checkbox that waits for it flips back and
+  // forth. Back, forward or a link change the address from outside, and then the address wins.
+  const [state, setState] = useState(urlState);
+  const [seenUrl, setSeenUrl] = useState(urlState);
+  if (seenUrl !== urlState) {
+    setSeenUrl(urlState);
+    setState(urlState);
+  }
+  const { params, view } = state;
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const now = useNow(30_000);
+
+  /** A discrete choice adds a step to the history; a typed one replaces the current step. */
+  const update = (patch: Partial<BrowseParams>, how: 'push' | 'replace' = 'push', nextView: BrowseView = view) => {
+    const next = { params: { ...params, ...patch }, view: nextView };
+    setState(next);
+    setSearchParams(writeBrowseParams(next.params, next.view), { replace: how === 'replace' });
+  };
+  // The search box sends after a pause, so what it sends must be read at that moment, not when the
+  // key was pressed.
+  const updateRef = useRef(update);
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
-    return () => clearTimeout(t);
-  }, [search]);
+    updateRef.current = update;
+  });
 
-  const {
-    data, isPending, isError: auctionsError, isFetching, refetch, hasNextPage, isFetchingNextPage, fetchNextPage,
-  } = useActiveAuctions({ category: category === 'All' ? undefined : category, search: debouncedSearch });
-  const auctions = flattenPages(data);
+  const [searchText, setSearchText] = useState(params.search);
+  // Back, or a link, changes the words from outside: the box follows them.
+  const [seenSearch, setSeenSearch] = useState(params.search);
+  if (seenSearch !== params.search) {
+    setSeenSearch(params.search);
+    if (searchText.trim() !== params.search) setSearchText(params.search);
+  }
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
+  const typeSearch = (text: string) => {
+    setSearchText(text);
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => updateRef.current({ search: text.trim() }, 'replace'), 350);
+  };
+
+  const list = useAuctionList(params);
+  const facets = useAuctionFacets(params);
+  // This screen is the live auctions: filter on the status the server reported, so one cancelled
+  // while the page is open leaves the list at once.
+  const auctions = flattenPages(list.data).filter((a) => a.status === 'ACTIVE');
   // isPending rather than a success flag: a screen must tell "nothing to show" from "could not
   // load", and never assert the first while the second is still possible.
-  const auctionsLoaded = !isPending;
-
-  // Price range, "ending soon" and sort run client-side over the pages loaded so far (the backend
-  // has no parameter for them yet). The sentinel below keeps "so far" growing.
+  const loaded = !list.isPending;
   const sentinelRef = useInfiniteScrollTrigger(
-    () => { void fetchNextPage(); },
-    hasNextPage === true && !isFetchingNextPage,
+    () => { void list.fetchNextPage(); },
+    list.hasNextPage && !list.isFetchingNextPage,
   );
 
-  const clearAll = () => {
-    setCategory('All'); setShowEndingSoon(false); setSearch(''); setMinPrice(''); setMaxPrice('');
+  // Cursor pages carry no total, so the total is read from the counts: the conditions partition
+  // whatever the other filters leave, and the ones chosen are the ones the list shows.
+  const total = facets.data
+    ? facets.data.conditions
+        .filter((c) => params.conditions.length === 0 || params.conditions.includes(c.value))
+        .reduce((sum, c) => sum + c.count, 0)
+    : null;
+  const heading =
+    total === null ? 'Live auctions' : params.search ? `${count(total, 'result')} for "${params.search}"` : count(total, 'live auction');
+
+  const clearFilters = () => update(CLEARED);
+  const clearSearch = () => {
+    setSearchText('');
+    update({ search: '' });
   };
-
-  const handlePriceChange = (setter: (v: string) => void) => (value: string) => {
-    if (value.trim() === '') { setter(''); return; }
-    const num = Math.max(0, Math.floor(Number(value) || 0));
-    setter(String(num));
-  };
-
-  const now = useNow(30_000);
-  const min = minPrice.trim() === '' ? null : Number(minPrice);
-  const max = maxPrice.trim() === '' ? null : Number(maxPrice);
-  const priceRangeInvalid = min !== null && max !== null && min > max;
-  const filtered = auctions.filter(a => {
-    // This screen is "Live Auctions": filter on the status the server reported, so a closed auction
-    // never appears under the live heading. search/category are applied server-side (see
-    // useActiveAuctions), not repeated here.
-    if (a.status !== 'ACTIVE') return false;
-    if (showEndingSoon) {
-      const msLeft = new Date(a.endTime).getTime() - now;  // live time, not a mount snapshot
-      if (msLeft <= 0 || msLeft > 3_600_000) return false;
-    }
-    if (!priceRangeInvalid) {
-      if (min !== null && a.currentBid < min) return false;
-      if (max !== null && a.currentBid > max) return false;
-    }
-    return true;
-  });
-
-  const sorted = [...filtered].sort((a, b) => {
-    switch (sortBy) {
-      case 'priceLow':    return a.currentBid - b.currentBid;
-      case 'priceHigh':   return b.currentBid - a.currentBid;
-      case 'mostBids':    return b.bidCount - a.bidCount;
-      case 'newlyListed': return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
-      case 'endingSoon':
-      default:            return new Date(a.endTime).getTime() - new Date(b.endTime).getTime();
-    }
-  });
+  const rail = <FilterRail params={params} facets={facets.data} onChange={update} onClear={clearFilters} />;
+  const skeletons = Array.from({ length: 6 }, (_, i) => (view === 'grid' ? <ResultCardSkeleton key={i} /> : <ResultRowSkeleton key={i} />));
+  const resultsClass = view === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' : 'flex flex-col gap-3.5';
 
   return (
     <div className="min-h-screen bg-bg">
       <SiteNavbar />
 
       <div className="flex">
-        {/* Desktop sidebar */}
-        <aside aria-label="Auction filters" className="hidden md:block bg-surface border-r border-border-light w-[220px] shrink-0 sticky top-14 self-start max-h-[calc(100vh-56px)] overflow-y-auto p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-[13px] text-navy flex items-center gap-1.5">
-              <SlidersHorizontal size={13} strokeWidth={2.5} /> Filters
-            </h2>
-            <button onClick={clearAll} className="text-[11px] text-primary font-bold hover:underline cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
-              Clear All
-            </button>
-          </div>
-          <div className="mb-5">
-            <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Category</p>
-            <div className="flex flex-col gap-2">
-              {CATEGORIES.map(c => (
-                <FilterCheckbox key={c} checked={category === c} onClick={() => setCategory(c)} label={c} />
-              ))}
-            </div>
-          </div>
-          <div className="mb-5">
-            <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Price Range (PKR)</p>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={1}
-                aria-label="Minimum price in PKR" placeholder="Min"
-                value={minPrice}
-                onChange={e => handlePriceChange(setMinPrice)(e.target.value)}
-                className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              />
-              <span className="text-[11px] text-placeholder">–</span>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={1}
-                aria-label="Maximum price in PKR" placeholder="Max"
-                value={maxPrice}
-                onChange={e => handlePriceChange(setMaxPrice)(e.target.value)}
-                className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              />
-            </div>
-            {priceRangeInvalid && (
-              <p className="text-[10px] text-error mt-1.5">Min price is greater than max — showing all prices.</p>
-            )}
-          </div>
-          <div>
-            <p className="font-bold text-[11px] text-placeholder tracking-wide uppercase mb-3">Status</p>
-            <FilterCheckbox checked={showEndingSoon} onClick={() => setShowEndingSoon(p => !p)} label="Ending Soon" />
-          </div>
+        <aside aria-label="Auction filters" className="hidden md:block bg-surface border-r border-border-light w-[240px] shrink-0 sticky top-14 self-start max-h-[calc(100vh-56px)] overflow-y-auto p-5">
+          {rail}
         </aside>
 
         <main className="flex-1 p-4 sm:p-6 min-w-0">
-          {/* Mobile search + filter */}
-          <div className="md:hidden flex gap-2 mb-4">
-            <div className="relative flex-1">
-              <input
-                className="bg-surface border border-border-medium h-[42px] pl-[38px] pr-4 rounded-lg text-[13px] w-full outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow"
-                aria-label="Search auctions by title" placeholder="Search auctions…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-              <Search size={16} className="absolute left-3 top-[13px] text-placeholder" />
-            </div>
-            <button
-              onClick={() => setSidebarOpen(o => !o)}
-              className="bg-surface border border-border-medium h-[42px] px-3 rounded-lg flex items-center gap-2 font-semibold text-[13px] text-secondary shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <SlidersHorizontal size={15} strokeWidth={2} /> Filters
-            </button>
-          </div>
-
-          {/* Mobile filter panel */}
-          {sidebarOpen && (
-            <div className="md:hidden bg-surface border border-border-light rounded-md p-4 mb-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-bold text-[13px] text-navy">Filters</h2>
-                <button onClick={clearAll} className="text-[11px] text-primary font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">Clear All</button>
-              </div>
-              <p id="mobile-category-label" className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Category</p>
-              <div role="group" aria-labelledby="mobile-category-label" className="flex flex-wrap gap-2 mb-3">
-                {CATEGORIES.map(c => (
-                  <button
-                    key={c}
-                    type="button"
-                    aria-pressed={category === c}
-                    onClick={() => setCategory(c)}
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${category === c ? 'bg-primary text-white border-primary' : 'bg-surface text-muted border-border-light'}`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-              <p className="font-bold text-[11px] text-placeholder uppercase tracking-wide mb-2">Price Range (PKR)</p>
-              <div className="flex items-center gap-2 mb-1">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  step={1}
-                  aria-label="Minimum price in PKR" placeholder="Min"
-                  value={minPrice}
-                  onChange={e => handlePriceChange(setMinPrice)(e.target.value)}
-                  className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                />
-                <span className="text-[11px] text-placeholder">–</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  step={1}
-                  aria-label="Maximum price in PKR" placeholder="Max"
-                  value={maxPrice}
-                  onChange={e => handlePriceChange(setMaxPrice)(e.target.value)}
-                  className="w-full bg-bg border border-border-light rounded-sm px-2 py-1.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                />
-              </div>
-              {priceRangeInvalid && (
-                <p className="text-[10px] text-error mb-2">Min price is greater than max — showing all prices.</p>
-              )}
-              <FilterCheckbox checked={showEndingSoon} onClick={() => setShowEndingSoon(p => !p)} label="Ending Soon" />
-            </div>
-          )}
-
           {isGuest && (
             <div role="note" className="bg-navy text-white rounded-md px-4 py-3 mb-5 flex flex-wrap items-center justify-between gap-3">
               <p className="text-[13px] leading-[19px]">
@@ -399,63 +134,78 @@ function BrowseScreen({ initialSearch, initialCategory }: { initialSearch: strin
             </div>
           )}
 
-          {/* Desktop title + search + sort */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-            <div>
-              <h1 className="font-extrabold text-[20px] sm:text-[22px] text-navy">Live Auctions</h1>
-              <p className="text-[12px] sm:text-[13px] text-muted">
-                {sorted.length} auction{sorted.length !== 1 ? 's' : ''} {hasNextPage ? 'loaded — scroll for more' : 'found'}
-              </p>
+          <form
+            role="search"
+            onSubmit={(e) => { e.preventDefault(); clearTimeout(searchTimer.current); update({ search: searchText.trim() }, 'replace'); }}
+            className="flex gap-2 mb-4"
+          >
+            <div className="relative flex-1 max-w-[560px]">
+              <input
+                type="search"
+                className="bg-surface border border-border-medium h-[42px] pl-[38px] pr-4 rounded-lg text-[14px] w-full outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow"
+                aria-label="Search auctions" placeholder="Search by name, or by item number"
+                value={searchText}
+                onChange={(e) => typeSearch(e.target.value)}
+              />
+              <Search size={16} aria-hidden="true" className="absolute left-3 top-[13px] text-placeholder" />
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value as SortBy)}
-                aria-label="Sort auctions by"
-                className="bg-surface border border-border-medium h-[40px] px-3 rounded-lg text-[13px] text-secondary outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
-              >
-                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              <div className="relative hidden md:block">
-                <input
-                  className="bg-surface border border-border-medium h-[40px] pl-[38px] pr-4 rounded-lg text-[13px] text-secondary w-[240px] outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-shadow"
-                  aria-label="Search auctions by title" placeholder="Search auctions…"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-                <Search size={16} className="absolute left-3 top-[12px] text-placeholder" />
-              </div>
+            <button
+              type="button"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((o) => !o)}
+              className="md:hidden bg-surface border border-border-medium h-[42px] px-3 rounded-lg flex items-center gap-2 font-semibold text-[13px] text-secondary shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <SlidersHorizontal size={15} strokeWidth={2} aria-hidden="true" /> Filters
+            </button>
+          </form>
+
+          {filtersOpen && (
+            <section aria-label="Auction filters" className="md:hidden bg-surface border border-border-light rounded-md p-4 mb-4 shadow-sm">
+              {rail}
+            </section>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-4">
+            <h1 className="font-extrabold text-[20px] sm:text-[22px] tracking-[-0.02em] text-navy m-0">{heading}</h1>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <SortMenu value={params.sort} onChange={(sort) => update({ sort })} />
+              <ViewToggle value={view} onChange={(next) => update({}, 'push', next)} />
             </div>
           </div>
 
-          {!auctionsLoaded ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {!loaded ? (
+            <div className={resultsClass}>
               <LoadingStatus label="Loading auctions" />
-              {Array.from({ length: 6 }).map((_, i) => <AuctionCardSkeleton key={i} />)}
+              {skeletons}
             </div>
-          ) : auctionsError ? (
-            <ErrorState title="Could not load auctions" onRetry={() => { void refetch(); }} retrying={isFetching} />
-          ) : sorted.length === 0 ? (
+          ) : list.isError ? (
+            <ErrorState title="Could not load auctions" onRetry={() => { void list.refetch(); }} retrying={list.isFetching} />
+          ) : auctions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="bg-surface-raised rounded-full p-5">
-                <Search size={40} strokeWidth={1.3} className="text-placeholder" />
+                <Search size={40} strokeWidth={1.3} className="text-placeholder" aria-hidden="true" />
               </div>
               <p className="font-bold text-[16px] text-secondary">No auctions found</p>
               <p className="text-[13px] text-muted">Try adjusting your search or filters</p>
-              <Button variant="ghost" onClick={clearAll} className="mt-1">
-                Clear filters
+              <Button variant="ghost" onClick={hasFilters(params) ? clearFilters : clearSearch} className="mt-1">
+                {hasFilters(params) ? 'Clear filters' : 'Clear search'}
               </Button>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sorted.map(a => <AuctionCard key={a.auctionId} auction={a} isGuest={isGuest} />)}
+              {/* The previous results stay up, dimmed, while a new choice loads. */}
+              <div aria-busy={list.isPlaceholderData} className={`${resultsClass} transition-opacity ${list.isPlaceholderData ? 'opacity-60' : ''}`}>
+                {auctions.map((a) =>
+                  view === 'grid'
+                    ? <ResultCard key={a.auctionId} auction={a} isGuest={isGuest} />
+                    : <ResultRow key={a.auctionId} auction={a} isGuest={isGuest} now={now} />,
+                )}
               </div>
-              {hasNextPage && (
+              {list.hasNextPage && (
                 <div ref={sentinelRef} className="flex items-center justify-center py-8">
                   <LoadingStatus label="Loading more auctions" />
                   <div className="grid grid-cols-3 gap-1.5" aria-hidden="true">
-                    {[0, 1, 2].map(i => (
+                    {[0, 1, 2].map((i) => (
                       <span key={i} className="size-[6px] rounded-full bg-primary/40 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
                     ))}
                   </div>
