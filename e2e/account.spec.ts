@@ -82,7 +82,7 @@ test.describe('Register', () => {
 test.describe('A new account', () => {
   test('lands on browse, sees a Sell link and no switch', async ({ page }) => {
     await signIn(page);
-    await expect(page).toHaveURL(/buyer\/browse/);
+    await expect(page).toHaveURL(/\/browse$/);
     await expect(page.getByRole('link', { name: 'Sell', exact: true })).toBeVisible();
     // The Sell link is rendered, so the navbar is too: a missing switch now means it is not there.
     await expect(page.getByText('Switch to selling')).toHaveCount(0);
@@ -90,7 +90,7 @@ test.describe('A new account', () => {
 
   test('is sent to Become a seller from any seller screen', async ({ page }) => {
     await signIn(page);
-    await expect(page).toHaveURL(/buyer\/browse/);
+    await expect(page).toHaveURL(/\/browse$/);
     for (const path of ['/seller/dashboard', '/seller/items', '/seller/create-listing/step-1']) {
       await page.goto(path);
       await expect(page).toHaveURL(/become-a-seller/);
@@ -133,7 +133,7 @@ test.describe('Becoming a seller', () => {
     await signIn(page);
     // Nothing remembered in a fresh browser, and this account was not a seller before accounts were
     // merged, so it starts on the buying side and is offered the switch.
-    await expect(page).toHaveURL(/buyer\/browse/);
+    await expect(page).toHaveURL(/\/browse$/);
     await expect(page.getByRole('link', { name: 'Switch to selling' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Sell', exact: true })).toHaveCount(0);
 
@@ -146,15 +146,15 @@ test.describe('Becoming a seller', () => {
     await expect(page).toHaveURL(/seller\/dashboard/);
 
     await page.getByRole('link', { name: 'Switch to buying' }).click();
-    await expect(page).toHaveURL(/buyer\/browse/);
+    await expect(page).toHaveURL(/\/browse$/);
     await page.goto('/login');
-    await expect(page).toHaveURL(/buyer\/browse/);
+    await expect(page).toHaveURL(/\/browse$/);
   });
 
   test('the mobile menu carries the switch too', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
     await signIn(page);
-    await expect(page).toHaveURL(/buyer\/browse/);
+    await expect(page).toHaveURL(/\/browse$/);
     await page.getByRole('button', { name: 'Open menu' }).click();
     await page.getByRole('link', { name: 'Switch to selling' }).click();
     await expect(page).toHaveURL(/seller\/dashboard/);
@@ -172,7 +172,7 @@ test.describe('Becoming a seller', () => {
 
   test('a seller can use the buyer screens too', async ({ page }) => {
     await signIn(page);
-    for (const path of ['/buyer/browse', '/buyer/my-bids', '/buyer/watchlist', '/buyer/my-wins']) {
+    for (const path of ['/browse', '/buyer/my-bids', '/buyer/watchlist', '/buyer/my-wins']) {
       await page.goto(path);
       await expect(page).toHaveURL(new RegExp(path.replace(/\//g, '\\/')));
     }
@@ -196,6 +196,7 @@ test.describe('Signing in returns to the page that asked for it', () => {
   test('a protected link is not followed to another site', async ({ page }) => {
     await page.goto('/login?next=https://evil.example/steal');
     await signIn(page);
-    await expect(page).toHaveURL(/localhost:5173\/(buyer|seller)\//);
+    // Signed in, the person lands on their own home (browse, or the seller side), never on the other site.
+    await expect(page).toHaveURL(/localhost:5173\/(browse|seller\/)/);
   });
 });

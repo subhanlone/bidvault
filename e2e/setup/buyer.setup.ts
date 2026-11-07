@@ -8,6 +8,6 @@ setup('authenticate as buyer', async ({ page }) => {
   await page.getByPlaceholder(/email/i).fill(EMAIL);
   await page.getByPlaceholder(/password/i).fill(PASSWORD);
   await page.getByRole('button', { name: /sign in|log in/i }).click();
-  await expect(page).toHaveURL(/buyer\/browse/);
+  await expect(page).toHaveURL(/\/browse$/);
   await page.context().storageState({ path: 'e2e/.auth/buyer.json' });
 });

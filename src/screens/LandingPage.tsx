@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer, Search } from 'lucide-react';
 import { useTimer } from '../hooks/useTimer';
 import { useTabKeys } from '../hooks/useTabKeys';
 import type { Auction } from '../types/api';
 import { Button, AuctionThumbnail } from '../components/ui';
 import { api } from '../services/api';
 import { useAuth } from '../context/auth';
-import { conditionLabel, count, pkr } from '../utils/format';
+import { conditionLabel, count, locatedIn, pkr } from '../utils/format';
 import LoadingStatus from '../components/ui/LoadingStatus';
+import { BROWSE_CATEGORIES } from '../config/categories';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function scrollToSection(id: string) {
@@ -27,22 +28,18 @@ function formatCurrency(n: number): string {
   return pkr(n);
 }
 
-// ─── Featured auction card with live timer ───────────────────────────────────
-function FeaturedCard({ auction }: { auction: Auction }) {
+// ─── Ending-soon card with live timer ────────────────────────────────────────
+function EndingSoonCard({ auction }: { auction: Auction }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const timer = useTimer(auction.endTime);
-
-  function handleBidNow() {
-    if (user) {
-      navigate(`/buyer/live-bidding/${auction.auctionId}`);
-    } else {
-      navigate('/login');
-    }
-  }
+  const open = () => navigate(`/auctions/${auction.auctionId}`);
 
   return (
-    <div className="bg-surface border border-border-light rounded-lg overflow-hidden hover:shadow-[0_8px_32px_rgba(11,31,58,0.12)] hover:-translate-y-1 transition-all duration-200 flex flex-col">
+    <article
+      onClick={open}
+      className="bg-surface border border-border-light rounded-lg overflow-hidden hover:shadow-[0_8px_32px_rgba(11,31,58,0.12)] hover:-translate-y-1 transition-all duration-200 flex flex-col cursor-pointer"
+    >
       <div className="h-[160px] sm:h-[180px] relative overflow-hidden bg-navy">
         <AuctionThumbnail
           src={auction.imageUrl}
@@ -51,7 +48,7 @@ function FeaturedCard({ auction }: { auction: Auction }) {
           iconSize={28}
         />
         <span className={`absolute top-3 right-3 font-bold text-[11px] px-2 py-1 rounded-sm flex items-center gap-1 ${timer.totalSeconds < 3600 ? 'bg-primary text-white' : 'bg-[rgba(11,31,58,0.7)] text-white'}`}>
-          <Clock size={10} strokeWidth={2.5} /> {timer.display}
+          <Clock size={10} strokeWidth={2.5} aria-hidden="true" /> {timer.display}
         </span>
       </div>
       <div className="p-4 flex flex-col flex-1">
@@ -61,8 +58,15 @@ function FeaturedCard({ auction }: { auction: Auction }) {
             {conditionLabel(auction.condition)}
           </span>
         </div>
-        <h3 className="font-bold text-[14px] text-navy mb-3 leading-[20px] line-clamp-2">{auction.title}</h3>
-        <div className="flex items-end justify-between mt-auto">
+        <h3 className="font-bold text-[14px] text-navy mb-1 leading-[20px] line-clamp-2">
+          <Link to={`/auctions/${auction.auctionId}`} onClick={(e) => e.stopPropagation()} className="text-navy no-underline hover:underline">
+            {auction.title}
+          </Link>
+        </h3>
+        {locatedIn(auction.sellerCity, auction.sellerProvince) && (
+          <p className="text-[11px] text-muted mb-3">{locatedIn(auction.sellerCity, auction.sellerProvince)}</p>
+        )}
+        <div className="flex items-end justify-between mt-auto pt-2">
           <div>
             <p className="text-[11px] text-muted mb-[2px]">Current Bid</p>
             <p className="font-extrabold text-[20px] text-primary leading-none">{pkr(auction.currentBid)}</p>
@@ -71,14 +75,15 @@ function FeaturedCard({ auction }: { auction: Auction }) {
           <Button
             variant="primary"
             size="sm"
-            onClick={handleBidNow}
+            aria-label={`${user ? 'Bid on' : 'View'} ${auction.title}`}
+            onClick={(e) => { e.stopPropagation(); open(); }}
             className="text-[13px]"
           >
-            Bid Now
+            {user ? 'Bid Now' : 'View'}
           </Button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -109,6 +114,7 @@ function SkeletonCard() {
 // ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'buyers' | 'sellers'>('buyers');
@@ -120,13 +126,19 @@ export default function LandingPage() {
   const [featuredFailed, setFeaturedFailed] = useState(false);
   const [liveStats, setLiveStats] = useState<{ userCount: number; activeAuctionCount: number; transactionTotal: number; listingCount: number; completedSalesCount: number } | null>(null);
   const [supportEmail, setSupportEmail] = useState('support@bidvault.tech');
+  const [query, setQuery] = useState('');
+  const [searchCategory, setSearchCategory] = useState('');
 
   useEffect(() => {
-    api.get('/auctions?status=ACTIVE&limit=3').then(data => {
+    api.get('/auctions?status=ACTIVE&limit=4').then(data => {
       setFeatured(data.items);
       setFeaturedFailed(false);
     }).catch(() => setFeaturedFailed(true)).finally(() => setFeaturedLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (location.hash === '#how-it-works') scrollToSection('how-it-works');
+  }, [location.hash]);
 
   useEffect(() => {
     api.get('/settings/public')
@@ -209,13 +221,19 @@ export default function LandingPage() {
   ];
 
   const navLinks: Array<{ label: string; action: () => void }> = [
-    { label: 'Browse Auctions', action: () => scrollToSection('featured') },
+    { label: 'Browse Auctions', action: () => navigate('/browse') },
     { label: 'How It Works', action: () => scrollToSection('how-it-works') },
     { label: 'About', action: () => scrollToSection('why-bidvault') },
   ];
 
-  function handleViewAllAuctions() {
-    navigate(user ? '/buyer/browse' : '/login');
+  // Browsing is open to everyone, so this goes to the search page rather than being gated behind sign-in.
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (query.trim()) params.set('search', query.trim());
+    if (searchCategory) params.set('category', searchCategory);
+    const qs = params.toString();
+    navigate(qs ? `/browse?${qs}` : '/browse');
   }
 
   return (
@@ -347,6 +365,31 @@ export default function LandingPage() {
               Bid on verified items, sell with transparent listings, and experience real-time auctions — all in one secure platform built for Pakistan.
             </p>
 
+            <form role="search" onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-0 mb-6 max-w-[620px] mx-auto lg:mx-0">
+              <label htmlFor="home-search" className="sr-only">Search auctions</label>
+              <input
+                id="home-search"
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name"
+                className="flex-1 min-w-0 h-[50px] px-4 rounded-t-md sm:rounded-tr-none sm:rounded-l-md bg-surface text-[15px] text-navy outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              />
+              <label htmlFor="home-category" className="sr-only">Category</label>
+              <select
+                id="home-category"
+                value={searchCategory}
+                onChange={(e) => setSearchCategory(e.target.value)}
+                className="h-[50px] px-3 bg-surface border-t sm:border-t-0 sm:border-l border-border-light text-[14px] text-navy outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <option value="">All categories</option>
+                {BROWSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <Button type="submit" variant="primary" size="lg" className="h-[50px] rounded-t-none sm:rounded-r-md sm:rounded-l-none px-6">
+                <Search size={16} aria-hidden="true" /> Search
+              </Button>
+            </form>
+
             <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
               <Button
                 variant="primary"
@@ -373,31 +416,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── STATS BAR ───────────────────────────────────────────────────────── */}
-      <section className="bg-surface border-b border-border-light">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4">
-            {stats.map((s, i) => (
-              <div
-                key={s.label}
-                className={`text-center py-4 px-4 sm:px-6
-                  ${i % 2 === 0 ? 'border-r border-border-light' : ''}
-                  ${i < stats.length - 1 ? 'lg:border-r lg:border-border-light' : ''}
-                `}
-              >
-                <div className="flex justify-center mb-3">{s.icon}</div>
-                {/* Every tile is live data now, so none is exempt from the loading pulse.
-                    The old exemption existed only because one value was hardcoded. */}
-                <p className={`font-extrabold text-[22px] sm:text-[28px] text-navy leading-none tracking-[-0.5px] ${!liveStats ? 'animate-pulse' : ''}`}>
-                  {s.value}
-                </p>
-                <p className="text-[12px] sm:text-[13px] text-muted mt-1.5 font-medium">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── FEATURED AUCTIONS ───────────────────────────────────────────────── */}
       <section id="featured" className="bg-bg py-14 sm:py-16 lg:py-20">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -408,33 +426,30 @@ export default function LandingPage() {
               <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">
                 {hasLiveAuctions ? 'Live Right Now' : 'Featured'}
               </p>
-              <h2 className="font-extrabold text-[26px] sm:text-[32px] text-navy leading-tight">Featured Auctions</h2>
+              <h2 className="font-extrabold text-[26px] sm:text-[32px] text-navy leading-tight">Ending soon</h2>
               <p className="text-[14px] text-muted mt-1">
                 {hasLiveAuctions
                   ? 'Verified items, live bidding, real countdowns'
                   : 'Every listing is admin-reviewed before it goes live'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleViewAllAuctions}
-              className="font-bold text-[14px] text-primary hover:underline flex items-center gap-1 shrink-0"
-            >
-              View All Auctions
-            </button>
+            <Link to="/browse" className="font-bold text-[14px] text-primary hover:underline flex items-center gap-1 shrink-0">
+              See all
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {featuredLoading ? (
               <>
                 <LoadingStatus label="Loading featured auctions" />
                 <SkeletonCard />
                 <SkeletonCard />
                 <SkeletonCard />
+                <SkeletonCard />
               </>
             ) : featured.length > 0 ? (
               featured.map(auction => (
-                <FeaturedCard key={auction.auctionId} auction={auction} />
+                <EndingSoonCard key={auction.auctionId} auction={auction} />
               ))
             ) : (
               <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
@@ -460,6 +475,50 @@ export default function LandingPage() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SHOP BY CATEGORY ────────────────────────────────────────────────── */}
+      <section aria-labelledby="shop-by-category" className="bg-surface py-12 sm:py-14 border-b border-border-light">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 id="shop-by-category" className="font-extrabold text-[22px] sm:text-[26px] text-navy mb-6">Shop by category</h2>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 list-none m-0 p-0">
+            {BROWSE_CATEGORIES.map((name) => (
+              <li key={name}>
+                <Link
+                  to={`/browse?category=${encodeURIComponent(name)}`}
+                  className="block bg-bg border border-border-light rounded-lg px-4 py-4 font-bold text-[14px] text-navy no-underline hover:border-primary hover:text-primary transition-colors"
+                >
+                  {name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── STATS BAR ───────────────────────────────────────────────────────── */}
+      <section className="bg-surface border-b border-border-light">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4">
+            {stats.map((s, i) => (
+              <div
+                key={s.label}
+                className={`text-center py-4 px-4 sm:px-6
+                  ${i % 2 === 0 ? 'border-r border-border-light' : ''}
+                  ${i < stats.length - 1 ? 'lg:border-r lg:border-border-light' : ''}
+                `}
+              >
+                <div className="flex justify-center mb-3">{s.icon}</div>
+                {/* Every tile is live data now, so none is exempt from the loading pulse.
+                    The old exemption existed only because one value was hardcoded. */}
+                <p className={`font-extrabold text-[22px] sm:text-[28px] text-navy leading-none tracking-[-0.5px] ${!liveStats ? 'animate-pulse' : ''}`}>
+                  {s.value}
+                </p>
+                <p className="text-[12px] sm:text-[13px] text-muted mt-1.5 font-medium">{s.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -619,7 +678,7 @@ export default function LandingPage() {
             <div>
               <p className="font-bold text-[12px] text-[rgba(255,255,255,0.5)] uppercase tracking-[1px] mb-4">Platform</p>
               <div className="flex flex-col gap-2.5">
-                <button type="button" onClick={() => scrollToSection('featured')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Browse Auctions</button>
+                <Link to="/browse" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors no-underline">Browse Auctions</Link>
                 <button type="button" onClick={() => navigate(user ? '/become-a-seller' : '/register')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">Sell an Item</button>
                 <button type="button" onClick={() => scrollToSection('how-it-works')} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white text-left transition-colors">How It Works</button>
               </div>

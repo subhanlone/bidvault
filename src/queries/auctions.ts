@@ -33,7 +33,7 @@ export function flattenPages<T>(data: InfiniteData<{ items: T[]; nextCursor: str
  * report one is to have actually fetched every page; these lists are all scoped to one seller,
  * one buyer, or the admin's own queue, so "every page" stays small.
  *
- * `BuyerBrowseAuctions` is the one screen in this app that does NOT use this — a public
+ * `BrowseAuctions` is the one screen in this app that does NOT use this — a public
  * catalog has no aggregate that depends on having loaded all of it, so it stays genuinely
  * incremental (`useInfiniteScrollTrigger`, fetch-on-scroll) instead.
  */
@@ -84,7 +84,7 @@ export function useActiveAuctions(params?: { category?: string; search?: string 
  *
  * This is what retires NEW-17. `getAuction()` used to search the ACTIVE list and fall back to
  * the watchlist rows, so a closed watched auction — present in neither on a cold load —
- * resolved to undefined and the live-bidding screen rendered "Auction not found". Asking the
+ * resolved to undefined and the auction page rendered "Auction not found". Asking the
  * server removes the question: GET /auctions/{id} is authoritative whatever the status.
  */
 export function useAuctionDetail(auctionId: string | undefined) {
@@ -109,14 +109,18 @@ export function useWatchlist(enabled = true) {
 
 /**
  * Bid history for one auction. Not one of BV-029's five infinite-scroll screens — this feeds
- * BuyerLiveBidding's recent-bids panel, which only ever shows the newest handful — so this
+ * the auction page's recent-bids panel, which only ever shows the newest handful — so this
  * stays a single bounded page rather than `useInfiniteQuery`.
+ *
+ * The list is for signed-in members (D10): the server answers 401 to a guest. A guest's page
+ * therefore passes `enabled = false` and never asks; a signed-in person whose access token has
+ * just expired is not a guest, and the API client's silent refresh retries the 401.
  */
-export function useBids(auctionId: string | undefined) {
+export function useBids(auctionId: string | undefined, enabled = true) {
   return useQuery({
     queryKey: keys.bids.forAuction(auctionId ?? ''),
     queryFn: () => api.get(`/auctions/${auctionId}/bids`),
-    enabled: Boolean(auctionId),
+    enabled: Boolean(auctionId) && enabled,
     select: (data) => data.items,
   });
 }
@@ -231,8 +235,25 @@ function foldEveryAuctionCacheEntry(
 }
 
 /**
+ * The live price and bid count a guest's socket receives (`auction:price`). A guest is told
+ * numbers only: no bid entry, no bidder. Idempotent and never walks backwards, like
+ * applyBidToCache, since a broadcast can arrive after a fresher fetch.
+ */
+export function applyPriceToCache(
+  queryClient: QueryClient,
+  auctionId: string,
+  update: { currentBid: number; bidCount: number },
+) {
+  foldEveryAuctionCacheEntry(queryClient, auctionId, (a) => ({
+    ...a,
+    currentBid: Math.max(a.currentBid, update.currentBid),
+    bidCount: Math.max(a.bidCount, update.bidCount),
+  }));
+}
+
+/**
  * B4/C4's real-time cancellation notice (LIFECYCLE-IMPLEMENTATION-PLAN.md) — reaches every
- * cached copy of the cancelled auction the same way a new bid does, so BuyerLiveBidding's
+ * cached copy of the cancelled auction the same way a new bid does, so the auction page's
  * "Non-ACTIVE auction guard" and AdminAuctionMonitor's status line update immediately for
  * anyone with the page open, without a refetch.
  */
@@ -255,7 +276,7 @@ export function usePlaceBid() {
       //
       // BV-039: the POST response itself still carries the caller's own full identity (it's
       // their own action), but the shared bids cache is the masked, isMine-flagged shape now —
-      // 'You' rather than the real name, consistent with how BuyerLiveBidding already renders
+      // 'You' rather than the real name, consistent with how the bid list already renders
       // any row with isMine set.
       applyBidToCache(queryClient, auctionId, {
         bidId: bid.bidId,

@@ -18,7 +18,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
     <div className="bg-surface border border-border-light rounded-md overflow-hidden hover:shadow-md transition-all duration-200 group flex flex-col">
       <div
         className="h-[160px] relative overflow-hidden bg-navy cursor-pointer"
-        onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
+        onClick={() => navigate(`/auctions/${auction.auctionId}`)}
       >
         <AuctionThumbnail
           src={auction.imageUrl}
@@ -36,7 +36,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
         </button>
       </div>
 
-      <div className="p-4 flex flex-col flex-1 cursor-pointer" onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}>
+      <div className="p-4 flex flex-col flex-1 cursor-pointer" onClick={() => navigate(`/auctions/${auction.auctionId}`)}>
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="bg-surface-raised font-medium text-[11px] text-muted px-2 py-[3px] rounded-full">{auction.category}</span>
           <span className={`font-bold text-[11px] px-2 py-[3px] rounded-full ${isEnded ? 'bg-bg text-muted' : timer.totalSeconds < 3600 ? 'bg-primary-surface text-primary' : 'bg-success-bg text-success-dark'}`}>
@@ -52,7 +52,7 @@ function WatchCard({ auction, onRemove }: { auction: Auction; onRemove: () => vo
           </div>
           {!isEnded && (
             <button
-              onClick={e => { e.stopPropagation(); navigate(`/buyer/live-bidding/${auction.auctionId}`); }}
+              onClick={e => { e.stopPropagation(); navigate(`/auctions/${auction.auctionId}`); }}
               className="bg-primary font-bold text-[12px] text-white px-4 py-2 rounded-sm hover:bg-primary-dark transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             >
               Bid Now
@@ -143,7 +143,7 @@ export default function BuyerWatchlist() {
             <p className="text-[13px] sm:text-[14px] text-muted mb-6 max-w-[320px]">
               Tap the heart icon on any live auction to save it here and track it easily.
             </p>
-            <Link to="/buyer/browse" className="bg-primary font-bold text-[14px] text-white px-6 py-3 rounded-sm hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1">
+            <Link to="/browse" className="bg-primary font-bold text-[14px] text-white px-6 py-3 rounded-sm hover:bg-primary-dark transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1">
               Browse Auctions 
             </Link>
           </div>

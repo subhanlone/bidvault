@@ -46,8 +46,8 @@ function ensureAccount(request: APIRequestContext): Promise<void> {
   return accountReady;
 }
 
-async function signInOnLoginPage(page: Page) {
-  await page.getByPlaceholder('you@email.com').fill(EMAIL);
+async function signInOnLoginPage(page: Page, email = EMAIL) {
+  await page.getByPlaceholder('you@email.com').fill(email);
   await page.getByPlaceholder('Your password').fill(PASSWORD);
   await page.getByRole('button', { name: /sign in|log in/i }).click();
 }
@@ -122,6 +122,35 @@ test.describe('The auction page for a guest', () => {
     await expect(page.getByRole('link', { name: 'Sign in to bid' })).toHaveCount(0);
   });
 
+  test('a new account created from "Sign in to bid" reaches the same auction after register, verification and sign-in', async ({ page, request }) => {
+    const id = await auctionIdOf(request, 'ACTIVE', LIVE);
+    const email = `newcomer-${Date.now()}@test.local`;
+    await page.goto(`/auctions/${id}`);
+    await page.getByRole('link', { name: 'Sign in to bid' }).click();
+    await page.getByRole('link', { name: 'Create one free' }).click();
+    await expect(page).toHaveURL(/\/register/);
+
+    await page.getByPlaceholder('Your full name').fill('Newcomer Probe');
+    await page.getByPlaceholder('you@email.com').fill(email);
+    await page.getByPlaceholder('Min. 8 characters').fill(PASSWORD);
+    await page.locator('label[for="terms-agree"]').click();
+    const registered = page.waitForResponse((r) => r.url().endsWith('/auth/register') && r.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    const { data } = (await (await registered).json()) as { data: { verificationCode: string } };
+
+    await expect(page).toHaveURL(/email-verification/);
+    for (const [i, digit] of [...data.verificationCode].entries()) {
+      await page.getByLabel(`Digit ${i + 1}`).fill(digit);
+    }
+    await page.getByRole('button', { name: /Verify/ }).click();
+
+    // Verified: now the sign-in, which sends the person back to the item they came for.
+    await expect(page).toHaveURL(/\/login/);
+    await signInOnLoginPage(page, email);
+    await expect(page).toHaveURL(new RegExp(`/auctions/${id}$`));
+    await expect(page.getByText('Quick Bid')).toBeVisible();
+  });
+
   test('a signed-in person whose token has just expired still gets the bid list', async ({ page, request }) => {
     await ensureAccount(request);
     const id = await auctionIdOf(request, 'ACTIVE', LIVE);
@@ -168,6 +197,115 @@ test.describe('The auction page for a guest', () => {
     await expect(page.getByRole('heading', { name: LIVE })).toBeVisible();
     await expect(page.getByText(/Item sold on/)).toBeVisible({ timeout: 20_000 });
     expect(new URL(page.url()).pathname).toBe(`/auctions/${id}`);
+  });
+});
+
+test.describe('Home', () => {
+  test('leads with Ending soon auctions that open the auction page', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Ending soon' })).toBeVisible();
+    await page.getByRole('link', { name: LIVE }).first().click();
+    await expect(page).toHaveURL(/\/auctions\/[^/]+$/);
+    await expect(page.getByRole('heading', { name: LIVE })).toBeVisible();
+  });
+
+  test('a search goes to /browse with the words and the category', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel('Search auctions').fill('Camera');
+    await page.getByLabel('Category', { exact: true }).selectOption('Electronics & Gadgets');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page).toHaveURL(/\/browse\?search=Camera&category=Electronics\+%26\+Gadgets$/);
+    await expect(page.getByRole('heading', { name: 'Guest Spec Vintage Camera' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: LIVE })).toHaveCount(0);
+  });
+
+  test('a category tile goes to /browse for that category', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('region', { name: 'Shop by category' }).getByRole('link', { name: 'Electronics & Gadgets' }).click();
+    await expect(page).toHaveURL(/\/browse\?category=Electronics%20%26%20Gadgets$/);
+    await expect(page.getByRole('heading', { name: LIVE })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Guest Spec Vintage Camera' })).toBeVisible();
+  });
+
+  test('"How it works" in the guest header lands on that section of the home page', async ({ page }) => {
+    await page.goto('/browse');
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'How it works' }).click();
+    await expect(page).toHaveURL(/\/#how-it-works$/);
+    await expect(page.locator('#how-it-works')).toBeInViewport();
+  });
+});
+
+test.describe('A signed-in member on the same page', () => {
+  test('bids through the screen, sees their own bid in the list and is told they are the highest bidder', async ({ page, request }) => {
+    await ensureAccount(request);
+    const id = await auctionIdOf(request, 'ACTIVE', 'Guest Spec Vintage Camera');
+    await page.goto('/login');
+    await signInOnLoginPage(page);
+    await page.waitForURL((url) => !url.pathname.startsWith('/login'));
+
+    await page.goto(`/auctions/${id}`);
+    await expect(page.getByRole('heading', { name: 'Bid History' })).toBeVisible();
+    // No guest prompts for someone who is signed in.
+    await expect(page.getByRole('link', { name: 'Sign in to bid' })).toHaveCount(0);
+    await expect(page.getByText(/The list of bids is for signed-in members/)).toHaveCount(0);
+
+    await page.getByRole('button', { name: /Min bid/ }).click();
+    const confirm = page.getByRole('dialog', { name: 'Confirm Your Bid' });
+    await expect(confirm).toBeVisible();
+    await confirm.getByRole('button', { name: /Confirm Bid/ }).click();
+
+    await expect(page.getByText('You are the highest bidder')).toBeVisible();
+    // The list is masked: the member's own bid reads "You", never a name or an id.
+    await expect(page.getByRole('heading', { name: 'Bid History' })).toBeVisible();
+    await expect(page.getByText('You', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Highest', { exact: true })).toBeVisible();
+  });
+});
+
+test.describe('Live updates', () => {
+  test('a guest sees the price and the count change when a member bids, without a reload, and never a bidder name', async ({ browser, request }) => {
+    await ensureAccount(request);
+    const id = await auctionIdOf(request, 'ACTIVE', 'Guest Spec Vintage Camera');
+    // Read where it stands, so the spec also passes when it is run again on the same database.
+    const before = ((await (await request.get(`${API}/auctions/${id}`)).json()) as {
+      data: { currentBid: number; bidCount: number; minIncrement: number };
+    }).data;
+    const amount = before.bidCount === 0 ? before.currentBid : before.currentBid + before.minIncrement;
+    const pkrText = (n: number) => `PKR ${n.toLocaleString('en-PK')}`;
+    const bidsText = (n: number) => `${n} ${n === 1 ? 'bid' : 'bids'}`;
+
+    const guest = await browser.newContext();
+    const guestPage = await guest.newPage();
+    const frames: string[] = [];
+    guestPage.on('websocket', (ws) => {
+      ws.on('framereceived', (f) => frames.push(typeof f.payload === 'string' ? f.payload : '[binary]'));
+    });
+    await guestPage.goto(`/auctions/${id}`);
+    await expect(guestPage.getByText(pkrText(before.currentBid)).first()).toBeVisible();
+    await expect(guestPage.getByText(bidsText(before.bidCount)).first()).toBeVisible();
+    // The socket has upgraded to a websocket (its first frame is the upgrade probe) and so has
+    // joined this auction's room before the bid is placed.
+    await expect.poll(() => frames.length, { message: 'websocket frames received' }).toBeGreaterThan(0);
+    await guestPage.waitForTimeout(500);
+
+    // A member bids through the API with their own token.
+    const login = await request.post(`${API}/auth/login`, { data: { email: EMAIL, password: PASSWORD } });
+    expect(login.ok(), 'sign in as the throwaway member').toBeTruthy();
+    const { data: session } = (await login.json()) as { data: { accessToken: string } };
+    const bid = await request.post(`${API}/auctions/${id}/bids`, {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+      data: { amount },
+    });
+    expect(bid.status(), 'the bid was accepted').toBe(201);
+
+    await expect(guestPage.getByText(pkrText(amount)).first()).toBeVisible();
+    await expect(guestPage.getByText(bidsText(before.bidCount + 1)).first()).toBeVisible();
+    // Numbers only: no bid entry, no bidder pseudonym, and not the `bid:placed` event.
+    await expect(guestPage.getByText(/Bidder \d/)).toHaveCount(0);
+    expect(frames.some((f) => f.includes('bid:placed')), 'a guest socket is never sent bid:placed').toBe(false);
+    expect(frames.some((f) => f.includes('auction:price')), 'a guest socket is sent auction:price').toBe(true);
+    expect(frames.join('\n')).not.toMatch(/Bidder \d/);
+    await guest.close();
   });
 });
 

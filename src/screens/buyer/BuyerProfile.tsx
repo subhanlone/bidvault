@@ -107,7 +107,7 @@ export default function BuyerProfile() {
   ];
 
   const quickLinks = [
-    { label: 'Browse Auctions', to: '/buyer/browse', icon: <Search size={15} className="text-muted" /> },
+    { label: 'Browse Auctions', to: '/browse', icon: <Search size={15} className="text-muted" /> },
     { label: 'My Bids', to: '/buyer/my-bids', icon: <Hammer size={15} className="text-muted" /> },
     { label: 'My Wins', to: '/buyer/my-wins', icon: <Trophy size={15} className="text-muted" /> },
     { label: 'My Watchlist', to: '/buyer/watchlist', icon: <Heart size={15} className="text-muted" /> },
@@ -243,7 +243,7 @@ export default function BuyerProfile() {
                   <div className="flex flex-col items-center justify-center py-10 text-center">
                     <Gavel size={32} strokeWidth={1.3} className="text-placeholder mb-3" />
                     <p className="font-semibold text-[13px] text-muted">No bids placed yet.</p>
-                    <Link to="/buyer/browse" className="mt-3 font-bold text-[12px] text-primary hover:underline">Browse Auctions →</Link>
+                    <Link to="/browse" className="mt-3 font-bold text-[12px] text-primary hover:underline">Browse Auctions →</Link>
                   </div>
                 ) : (
                   <div className="flex flex-col divide-y divide-bg">
@@ -255,7 +255,7 @@ export default function BuyerProfile() {
                         <button
                           key={bid.bidId}
                           className="flex items-center gap-3 px-5 py-3 hover:bg-bg transition-colors text-left w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
-                          onClick={() => auction && navigate(`/buyer/live-bidding/${auction.auctionId}`)}
+                          onClick={() => auction && navigate(`/auctions/${auction.auctionId}`)}
                           disabled={!auction}
                         >
                           <div className="bg-bg rounded-sm size-[38px] overflow-hidden shrink-0">

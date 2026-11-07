@@ -31,7 +31,7 @@ test.describe('Auth — Login', () => {
     await page.getByPlaceholder('you@email.com').fill(BUYER_EMAIL);
     await page.getByPlaceholder('Your password').fill(BUYER_PASSWORD);
     await page.getByRole('button', { name: /sign in|log in/i }).click();
-    await expect(page).toHaveURL(/buyer\/browse/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/browse$/, { timeout: 10000 });
   });
 
   test('link to register page works', async ({ page }) => {

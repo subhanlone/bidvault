@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Buyer — Browse Auctions', () => {
   test('browse page loads with heading', async ({ page }) => {
-    await page.goto('/buyer/browse');
+    await page.goto('/browse');
     await expect(page.getByRole('heading', { name: /live auctions/i })).toBeVisible();
   });
 
   test('search input is visible and functional', async ({ page }) => {
-    await page.goto('/buyer/browse');
+    await page.goto('/browse');
     // Desktop search (hidden md:block) — use the one in the main content area
     const search = page.getByPlaceholder('Search auctions…').last();
     await expect(search).toBeVisible();
@@ -16,12 +16,12 @@ test.describe('Buyer — Browse Auctions', () => {
   });
 
   test('filter sidebar shows category options', async ({ page }) => {
-    await page.goto('/buyer/browse');
+    await page.goto('/browse');
     await expect(page.getByText(/electronics/i).first()).toBeVisible();
   });
 
   test('navbar shows all buyer links', async ({ page }) => {
-    await page.goto('/buyer/browse');
+    await page.goto('/browse');
     await expect(page.getByRole('link', { name: /browse/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /my bids/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /my wins/i })).toBeVisible();
@@ -51,7 +51,7 @@ test.describe('Buyer — My Wins', () => {
       const browseBtn = page.getByRole('button', { name: /browse auctions/i });
       await expect(browseBtn).toBeVisible();
       await browseBtn.click();
-      await expect(page).toHaveURL(/buyer\/browse/);
+      await expect(page).toHaveURL(/\/browse$/);
     }
   });
 
@@ -84,10 +84,12 @@ test.describe('Buyer — Profile', () => {
 });
 
 test.describe('Buyer — Navigation guards', () => {
-  test('unauthenticated user is redirected from browse', async ({ browser }) => {
+  // Browse is open to everyone now (see guest.spec.ts); the screens that belong to an account are
+  // the ones that ask for a sign-in.
+  test('unauthenticated user is redirected from My Bids', async ({ browser }) => {
     const ctx  = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const page = await ctx.newPage();
-    await page.goto('/buyer/browse');
+    await page.goto('/buyer/my-bids');
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveURL(/login/, { timeout: 10000 });
     await ctx.close();

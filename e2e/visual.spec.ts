@@ -26,7 +26,7 @@ test.describe('Visual — Buyer pages', () => {
   test.use({ storageState: 'e2e/.auth/buyer.json' });
 
   test('browse auctions visual', async ({ page }) => {
-    await page.goto('/buyer/browse');
+    await page.goto('/browse');
     await page.waitForLoadState('networkidle');
     // Wait for skeletons to resolve
     await page.waitForTimeout(1500);

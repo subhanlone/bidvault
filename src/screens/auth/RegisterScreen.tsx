@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { useToast } from '../../context/toast';
 import { AuthLayout, Button, Input } from '../../components/ui';
 import { api } from '../../services/api';
 import { isStrictEmail, EMAIL_INVALID_MESSAGE } from '../../utils/validation';
-import { homePath } from '../../utils/account';
+import { homePath, safeReturnPath } from '../../utils/account';
 
 const PW_CONFIG = [
   { width: '0%',   label: '',       labelClass: 'text-muted',   barClass: 'bg-border' },
@@ -30,7 +30,11 @@ const NAME_REGEX = /^[\p{L}\s'-]+$/u;
 
 export default function RegisterScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, register } = useAuth();
+  // The page that sent this person here (router state only); signing in brings them back to it.
+  const returnTo = safeReturnPath((location.state as { from?: unknown } | null)?.from);
+  const returnState = returnTo ? { from: returnTo } : undefined;
   const { showToast } = useToast();
 
   const [name, setName]         = useState('');
@@ -51,8 +55,8 @@ export default function RegisterScreen() {
   // RG-02: redirect already-logged-in users to their role dashboard
   useEffect(() => {
     if (!user) return;
-    navigate(homePath(user), { replace: true });
-  }, [user, navigate]);
+    navigate(returnTo ?? homePath(user), { replace: true });
+  }, [user, navigate, returnTo]);
 
   // RG-03: replace hardcoded stats with live API data
   useEffect(() => {
@@ -95,7 +99,7 @@ export default function RegisterScreen() {
     setLoading(false);
     if (result.success) {
       showToast({ type: 'success', title: 'Account Created!', message: 'Check your email for a verification code.' });
-      navigate('/email-verification', { state: { email, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt } });
+      navigate('/email-verification', { state: { email, verificationCode: result.verificationCode, codeExpiresAt: result.codeExpiresAt, from: returnTo ?? undefined } });
     } else {
       showToast({ type: 'error', title: 'Registration Failed', message: result.error || 'Something went wrong.' });
     }
@@ -128,7 +132,7 @@ export default function RegisterScreen() {
           <h2 className="text-2xl font-extrabold text-navy">Create your account</h2>
           <p className="text-sm text-muted mt-1">
             Already have an account?{' '}
-            <Link to="/login" className="font-bold text-primary hover:underline">Sign in here</Link>
+            <Link to="/login" state={returnState} className="font-bold text-primary hover:underline">Sign in here</Link>
           </p>
         </div>
 
@@ -225,7 +229,7 @@ export default function RegisterScreen() {
 
         <p className="text-center text-sm text-muted">
           Already have an account?{' '}
-          <Link to="/login" className="font-bold text-primary hover:underline">Sign in</Link>
+          <Link to="/login" state={returnState} className="font-bold text-primary hover:underline">Sign in</Link>
         </p>
       </form>
     </AuthLayout>

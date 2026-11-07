@@ -73,6 +73,12 @@ export function count(n: number, singular: string, pluralForm?: string): string 
   return `${n.toLocaleString(LOCALE)} ${word}`;
 }
 
+/** `Lahore, Punjab`, or just the part that is known; null when the seller gave neither. */
+export function locatedIn(city: string | null | undefined, province: string | null | undefined): string | null {
+  const parts = [city, province].filter((part): part is string => Boolean(part && part.trim()));
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
 /* ── Dates ────────────────────────────────────────────────────────────────── */
 
 const toDate = (value: string | Date): Date => (value instanceof Date ? value : new Date(value));
@@ -110,6 +116,19 @@ export function timeShort(value: string | Date): string {
 /** `8 Aug, 02:15` — when both the day and the time matter. */
 export function dateTimeShort(value: string | Date): string {
   return `${dateShort(value)}, ${timeShort(value)}`;
+}
+
+/** `Tue, 9:42 pm` — when an auction ends, beside its countdown. */
+export function weekdayTime(value: string | Date): string {
+  return toDate(value).toLocaleString(LOCALE, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+}
+
+/** `Tue, 4 Nov at 9:42 pm` — the moment an auction ended. */
+export function dateTimeLong(value: string | Date): string {
+  const d = toDate(value);
+  const day = d.toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short' });
+  const time = d.toLocaleTimeString(LOCALE, { hour: 'numeric', minute: '2-digit' });
+  return `${day} at ${time}`;
 }
 
 /* ── Relative time ────────────────────────────────────────────────────────── */

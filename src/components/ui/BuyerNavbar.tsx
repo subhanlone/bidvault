@@ -18,7 +18,7 @@ interface BuyerNavbarProps {
 }
 
 const defaultLinks: NavLink[] = [
-  { label: 'Browse Auctions', to: '/buyer/browse' },
+  { label: 'Browse Auctions', to: '/browse' },
   { label: 'My Bids', to: '/buyer/my-bids' },
   { label: 'My Wins', to: '/buyer/my-wins' },
   { label: 'Watchlist', to: '/buyer/watchlist' },
@@ -35,7 +35,7 @@ export default function BuyerNavbar({ links = defaultLinks, userName = 'Buyer', 
 
   return (
     <nav aria-label="Buyer navigation" className="sticky top-0 z-20 h-14 bg-navy flex items-center px-6 gap-8 relative">
-      <BidVaultLogo size="sm" to="/buyer/browse" />
+      <BidVaultLogo size="sm" to="/browse" />
       <ul className="hidden md:flex items-center gap-6 flex-1 list-none m-0 p-0">
         {links.map(link => {
           const isActive = pathname === link.to || pathname.startsWith(link.to + '/');

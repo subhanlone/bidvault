@@ -102,7 +102,7 @@ function BidCard({ entry }: { entry: BidEntry }) {
 
           {!isEnded && (
             <button
-              onClick={() => navigate(`/buyer/live-bidding/${auction.auctionId}`)}
+              onClick={() => navigate(`/auctions/${auction.auctionId}`)}
               className={`font-bold text-[12px] px-3 sm:px-4 py-[7px] sm:py-2 rounded-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                 status === 'outbid'
                   ? 'bg-primary text-white hover:bg-primary-dark'
@@ -217,7 +217,7 @@ export default function BuyerMyBids() {
             <p className="text-[13px] sm:text-[14px] text-muted mb-6 max-w-[300px]">
               You haven't placed any bids yet. Browse live auctions and start bidding!
             </p>
-            <Button variant="ghost" onClick={() => navigate('/buyer/browse')}>
+            <Button variant="ghost" onClick={() => navigate('/browse')}>
               Browse Auctions →
             </Button>
           </div>

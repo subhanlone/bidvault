@@ -54,7 +54,7 @@ function Result({ auction, bids }: { auction: Auction; bids: PublicBid[] }) {
 
   // Not over yet (or never went ahead): the live screen is where this auction is shown.
   if (auction.status === 'CANCELLED' || (auction.status === 'ACTIVE' && !timer.isExpired)) {
-    return <Navigate to={`/buyer/live-bidding/${auction.auctionId}`} replace />;
+    return <Navigate to={`/auctions/${auction.auctionId}`} replace />;
   }
 
   // Being the top bidder is not enough to have won: if the seller set a reserve and bidding
@@ -212,7 +212,7 @@ function Outcome({ auction, won, reserveNotMet }: OutcomeProps) {
                 <Button
                   variant="outline"
                   className="flex-1 rounded-sm"
-                  onClick={() => navigate('/buyer/browse')}
+                  onClick={() => navigate('/browse')}
                 >
                   Browse More
                 </Button>
@@ -241,7 +241,7 @@ function Outcome({ auction, won, reserveNotMet }: OutcomeProps) {
               <Button variant="outline" className="rounded-sm" onClick={() => navigate('/buyer/my-bids')}>
                 View My Bids
               </Button>
-              <Button className="rounded-sm" onClick={() => navigate('/buyer/browse')}>
+              <Button className="rounded-sm" onClick={() => navigate('/browse')}>
                 Find Another Auction
               </Button>
             </div>
@@ -268,7 +268,7 @@ function Outcome({ auction, won, reserveNotMet }: OutcomeProps) {
               </Button>
               <Button
                 className="rounded-sm"
-                onClick={() => navigate('/buyer/browse')}
+                onClick={() => navigate('/browse')}
               >
                 Find Another Auction
               </Button>

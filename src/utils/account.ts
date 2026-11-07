@@ -39,7 +39,7 @@ export function writeMode(user: User, mode: Mode): void {
 /** Where a signed-in user starts. */
 export function homePath(user: User): string {
   if (user.role === 'ADMIN') return '/admin/dashboard';
-  return readMode(user) === 'selling' ? '/seller/dashboard' : '/buyer/browse';
+  return readMode(user) === 'selling' ? '/seller/dashboard' : '/browse';
 }
 
 /**
