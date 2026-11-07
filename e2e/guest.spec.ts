@@ -350,14 +350,14 @@ test.describe('Addresses', () => {
     await expect(page.getByRole('link', { name: 'Browse live auctions' })).toBeVisible();
   });
 
-  test('/buyer/browse and /buyer/live-bidding/:id redirect to /browse and /auctions/:id', async ({ page, request }) => {
-    await page.goto('/buyer/browse');
-    await expect(page).toHaveURL(/\/browse$/);
-    await expect(page.getByRole('heading', { name: 'Live Auctions' })).toBeVisible();
-
+  // The two screens moved to /browse and /auctions/:id and their old addresses were removed, not
+  // redirected: nothing links to them any more, so they are ordinary unknown addresses.
+  test('/buyer/browse and /buyer/live-bidding/:id no longer exist', async ({ page, request }) => {
     const id = await auctionIdOf(request, 'ACTIVE', LIVE);
-    await page.goto(`/buyer/live-bidding/${id}`);
-    await expect(page).toHaveURL(new RegExp(`/auctions/${id}$`));
-    await expect(page.getByRole('heading', { name: LIVE })).toBeVisible();
+    for (const path of ['/buyer/browse', `/buyer/live-bidding/${id}`]) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', { name: 'Lost the Auction?' })).toBeVisible();
+      expect(new URL(page.url()).pathname, 'the address is not rewritten').toBe(path);
+    }
   });
 });

@@ -42,7 +42,6 @@ const BecomeSeller = lazy(() => import('./screens/seller/BecomeSeller'));
 // Open to anyone, signed in or not.
 const BrowseAuctions = lazy(() => import('./screens/public/BrowseAuctions'));
 const AuctionPage = lazy(() => import('./screens/public/AuctionPage'));
-const LegacyAuctionRedirect = lazy(() => import('./screens/public/LegacyAuctionRedirect'));
 
 const BuyerMyBids = lazy(() => import('./screens/buyer/BuyerMyBids'));
 const BuyerWatchlist = lazy(() => import('./screens/buyer/BuyerWatchlist'));
@@ -202,9 +201,6 @@ export default function App() {
                     {/* Public: anyone can look; bidding and watching ask for an account on the page itself. */}
                     <Route path="/browse" element={<BrowseAuctions />} />
                     <Route path="/auctions/:auctionId" element={<AuctionPage />} />
-                    {/* The old addresses of those two screens; bookmarks and e-mailed links keep working. */}
-                    <Route path="/buyer/browse" element={<Navigate to="/browse" replace />} />
-                    <Route path="/buyer/live-bidding/:auctionId" element={<LegacyAuctionRedirect />} />
 
                     {/* Buyer routes */}
                     <Route path="/buyer/my-bids" element={
