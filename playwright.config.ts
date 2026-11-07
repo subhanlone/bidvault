@@ -74,6 +74,12 @@ export default defineConfig({
       name: 'account',
       testMatch: '**/account.spec.ts',
     },
+    // A visitor with no account: no saved sign-in. The few specs that sign in create their own
+    // throwaway account on the local backend, like the account project.
+    {
+      name: 'guest',
+      testMatch: '**/guest.spec.ts',
+    },
     {
       name: 'buyer',
       testMatch: '**/buyer.spec.ts',
