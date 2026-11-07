@@ -14,8 +14,7 @@ interface Props {
 }
 
 function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: Props) {
-  // Each label is tied to its field by id: a bare <label> next to a field names nothing, so the
-  // checkout fields had no accessible name at all, only a placeholder.
+  // Each label is tied to its field by id: a bare <label> next to a field names nothing.
   const fieldId = useId();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,8 +27,8 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    // BV-047: the platform previously held no delivery contact data at all — the seller has
-    // nowhere to send the item without this, so it's required before payment starts.
+    // Delivery contact details are required before payment starts: the seller has nowhere to send
+    // the item without them.
     if (deliveryAddress.trim().length < 10) {
       setError('Enter a delivery address the seller can ship to (at least 10 characters).');
       return;

@@ -5,18 +5,11 @@ import { applyBidToCache, applyAuctionCancelledToCache, applyPriceToCache } from
 import { keys } from './keys';
 
 /**
- * Feeds Socket.IO events into the query cache. Mounted once, renders nothing.
- *
- * `setQueryData` rather than `invalidateQueries`, which is what TanStack recommends when the
- * event carries the data — and `bid:placed` carries the whole bid, so refetching would be a
- * round-trip to learn something already in hand. Live bidding is the one screen where that
- * latency is the product.
- *
- * This replaces the listener that used to live inside AuctionProvider behind a
- * `socketSetupRef` guard, which existed because the effect could run twice under StrictMode
- * and attach two listeners — a duplicate listener being one of the suspected causes of the
- * bid double-count. The dedupe now lives in the cache updater instead, so a second listener
- * would be harmless rather than a bug.
+ * Feeds Socket.IO events into the query cache. Mounted once, renders nothing. `setQueryData` rather
+ * than `invalidateQueries`, because the event carries the data (`bid:placed` carries the whole
+ * bid), so a refetch would be a round-trip to learn what is already in hand; live bidding is where
+ * that latency is the product. The cache updaters are idempotent, so a duplicate listener would be
+ * harmless.
  */
 export function RealtimeBridge() {
   const queryClient = useQueryClient();
@@ -26,10 +19,9 @@ export function RealtimeBridge() {
 
     function onBidPlaced(payload: {
       auctionId: string;
-      // BV-039: masked server-side, same as GET /:auctionId/bids -- no buyerId, buyerName is a
-      // pseudonym. This handler can't know whether the bid was the current viewer's own; if it
-      // was, usePlaceBid's onSuccess (which does know) upgrades this entry, in either arrival
-      // order -- see applyBidToCache.
+      // Masked server-side, like GET /:auctionId/bids: no buyerId, buyerName is a pseudonym. This
+      // handler cannot know whether the bid was the viewer's own; if it was, usePlaceBid's
+      // onSuccess (which does) upgrades the entry, in either arrival order (see applyBidToCache).
       bid: { bidId: string; amount: number; buyerName: string; timestamp: string };
     }) {
       const { auctionId, bid } = payload;
@@ -43,24 +35,24 @@ export function RealtimeBridge() {
       });
     }
 
-    // D10: what a guest's socket is told instead of the bid. Numbers only, so the price and the
-    // count on the page move without the page ever learning who bid. Signed-in sockets get
-    // `bid:placed` and do not receive this.
+    // What a guest's socket is told instead of the bid: numbers only, so the price and the count
+    // move without the page learning who bid. Signed-in sockets get `bid:placed` and do not receive
+    // this.
     function onAuctionPrice(payload: { auctionId: string; currentBid: number; bidCount: number }) {
       applyPriceToCache(queryClient, payload.auctionId, payload);
     }
 
-    // B4/C4: fires for anyone subscribed to this auction's room (the auction page,
-    // AdminAuctionMonitor) whichever path cancelled it -- seller withdrawal or admin takedown.
+    // Fires for anyone subscribed to this auction's room (the auction page, AdminAuctionMonitor),
+    // whichever path cancelled it: seller withdrawal or admin takedown.
     function onAuctionCancelled(payload: { auctionId: string }) {
       applyAuctionCancelledToCache(queryClient, payload.auctionId);
     }
 
-    // B3: sent to a seller's own room when someone bids on one of their auctions. It carries
-    // only numbers, and the notification text, the My Items rows and the masked bidder names are
-    // the server's to word and derive, so this refetches them instead of patching the cache.
-    // Without it they would wait for the next poll. The bids list needs it too: the seller is
-    // not in the auction's own room, so `bid:placed` never reaches an expanded row's list.
+    // Sent to a seller's own room when someone bids on one of their auctions. It carries only
+    // numbers; the notification text, the My Items rows and the masked bidder names are the
+    // server's to word, so this refetches them instead of patching the cache. The bids list needs
+    // it too: the seller is not in the auction's own room, so `bid:placed` never reaches an
+    // expanded row.
     function onBidReceived(payload: { auctionId: string }) {
       void queryClient.invalidateQueries({ queryKey: keys.notifications });
       void queryClient.invalidateQueries({ queryKey: keys.sellerItems.all });

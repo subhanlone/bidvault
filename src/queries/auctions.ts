@@ -6,17 +6,11 @@ import { keys } from './keys';
 import { useAuth } from '../context/auth';
 
 /**
- * Auction data, as queries rather than a hand-rolled cache.
- *
- * Each hook is a thin wrapper over the typed client — `api.get('/auctions')` already knows its
- * own response type, so nothing here re-declares a shape. That is why no generator was
- * adopted: orval and kubb emit these, but they would emit 43 of them, cost 134 and 207
- * packages, and replace an emitter that already works.
- *
- * BV-029: the three list endpoints below (`/auctions`, `/watchlist`, `/auctions/mine/bids`)
- * are cursor-paginated server-side now, so they are `useInfiniteQuery` here — `.data.pages`
- * is an array of `{items, nextCursor}`, flattened by the small helper below wherever a screen
- * wants "everything loaded so far" as one list.
+ * Auction data as queries. Each hook is a thin wrapper over the typed client
+ * (`api.get('/auctions')` already knows its response type), so nothing here re-declares a shape.
+ * The three list endpoints (`/auctions`, `/watchlist`, `/auctions/mine/bids`) are cursor-paginated,
+ * so they are `useInfiniteQuery`: `.data.pages` is an array of `{items, nextCursor}`, flattened by
+ * the helper below.
  */
 
 /** `data.pages.flatMap(p => p.items)` — every screen that reads a paginated list wants this. */
@@ -25,42 +19,31 @@ export function flattenPages<T>(data: InfiniteData<{ items: T[]; nextCursor: str
 }
 
 /**
- * Walks an infinite query to completion and returns the flattened, complete list.
- *
- * For screens that show an exact figure derived from "every row" — a count, a sum, a
- * highest-bid, a tab badge, prev/next through the full queue — rather than a list a person
- * scrolls through. Cursor pagination deliberately returns no total, so the only honest way to
- * report one is to have actually fetched every page; these lists are all scoped to one seller,
- * one buyer, or the admin's own queue, so "every page" stays small.
- *
- * `BrowseAuctions` is the one screen in this app that does NOT use this — a public
- * catalog has no aggregate that depends on having loaded all of it, so it stays genuinely
- * incremental (`useInfiniteScrollTrigger`, fetch-on-scroll) instead.
+ * Walks an infinite query to completion and returns the flattened, complete list. For screens that
+ * show an exact figure derived from every row (a count, a sum, a tab badge, prev/next through the
+ * full queue): cursor pagination returns no total, so the only honest way to report one is to fetch
+ * every page. These lists are scoped to one seller, one buyer or the admin's queue, so "every page"
+ * stays small. BrowseAuctions does not use this: a public catalog has no aggregate to compute, so
+ * it stays incremental (`useInfiniteScrollTrigger`).
  */
 export function useDrainedPages<T>(
   query: UseInfiniteQueryResult<InfiniteData<{ items: T[]; nextCursor: string | null }>>,
 ): T[] {
   const { data, hasNextPage, isFetchingNextPage, isError, fetchNextPage } = query;
   useEffect(() => {
-    // Not while the query is in an error state. A page that fails leaves hasNextPage true and
-    // isFetchingNextPage false -- exactly the condition this effect fires on -- so without the
-    // guard a failing page was requested again the moment it failed, about twice a second for as
-    // long as the screen stayed open, and the screen sat on its loading skeleton throughout.
-    // The screen offers "Try again" (refetch), which clears the error and lets this resume.
+    // Not while the query is in an error state: a failed page leaves hasNextPage true and
+    // isFetchingNextPage false, which is exactly when this effect fires, so without the guard it
+    // would request the failing page again and again. The screen's "Try again" (refetch) clears the
+    // error and lets this resume.
     if (hasNextPage && !isFetchingNextPage && !isError) void fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, isError, fetchNextPage]);
   return flattenPages(data);
 }
 
-// ---- reads --------------------------------------------------------------------------------
-
 /**
- * The live list. Every screen that says "auctions" means this one.
- *
- * `category`/`search` are server-side filters (the backend already supports both) and are
- * part of the query key on purpose — changing either starts a fresh paginated query rather
- * than filtering pages already in the cache, so a match on page 4 is never missed just
- * because pages 1-3 loaded first.
+ * The live list. `category`/`search` are server-side filters and part of the query key, so changing
+ * either starts a fresh paginated query rather than filtering pages already cached; a match on page
+ * 4 is never missed because pages 1-3 loaded first.
  */
 export function useActiveAuctions(params?: { category?: string; search?: string }) {
   const category = params?.category?.trim();
@@ -80,12 +63,8 @@ export function useActiveAuctions(params?: { category?: string; search?: string 
 }
 
 /**
- * One auction, fetched directly rather than looked up in a list.
- *
- * This is what retires NEW-17. `getAuction()` used to search the ACTIVE list and fall back to
- * the watchlist rows, so a closed watched auction — present in neither on a cold load —
- * resolved to undefined and the auction page rendered "Auction not found". Asking the
- * server removes the question: GET /auctions/{id} is authoritative whatever the status.
+ * One auction, fetched directly rather than looked up in a list: GET /auctions/{id} is
+ * authoritative whatever the status, so a closed auction opened on a cold load still has a page.
  */
 export function useAuctionDetail(auctionId: string | undefined) {
   return useQuery({
@@ -108,13 +87,10 @@ export function useWatchlist(enabled = true) {
 }
 
 /**
- * Bid history for one auction. Not one of BV-029's five infinite-scroll screens — this feeds
- * the auction page's recent-bids panel, which only ever shows the newest handful — so this
- * stays a single bounded page rather than `useInfiniteQuery`.
- *
- * The list is for signed-in members (D10): the server answers 401 to a guest. A guest's page
- * therefore passes `enabled = false` and never asks; a signed-in person whose access token has
- * just expired is not a guest, and the API client's silent refresh retries the 401.
+ * Bid history for one auction: a single bounded page (the auction page only shows the newest
+ * handful), not `useInfiniteQuery`. The list is for signed-in members: the server answers 401 to a
+ * guest, so a guest's page passes `enabled = false` and never asks. A signed-in person whose access
+ * token has just expired is not a guest; the API client's silent refresh retries the 401.
  */
 export function useBids(auctionId: string | undefined, enabled = true) {
   return useQuery({
@@ -137,28 +113,14 @@ export function useMyBids(enabled = true) {
   });
 }
 
-// ---- the fold -----------------------------------------------------------------------------
-
 /**
- * Applies one bid to every cached copy of the auction it belongs to, and to that auction's
- * bid list.
- *
- * Called from two places that both race to deliver the same bid: the mutation below, and the
- * socket bridge. They no longer need to coordinate, because both are idempotent by
- * construction — the bid list updater checks membership in the cached value it was handed,
- * synchronously, inside the update.
- *
- * That check used to live in a `useRef<Set<string>>` maintained by hand (NEW-13). The ref
- * existed because reading from React state would let two applications in the same tick both
- * pass. Reading from the cache has no such gap, so the ref is gone and the race is no longer
- * expressible.
- *
- * `Math.max` on the price, not assignment: a broadcast arriving out of order must never walk
- * it backwards.
- *
- * BV-029: `useActiveAuctions`/`useWatchlist` cache entries are now `InfiniteData` (a `.pages`
- * array of `{items, nextCursor}`), not a plain array — folded page by page, item by item.
- * `useAuctionDetail`'s single-object cache entry is unaffected and still folds directly.
+ * Applies one bid to every cached copy of the auction it belongs to, and to that auction's bid
+ * list. Called from both the mutation and the socket bridge, which race to deliver the same bid;
+ * both are idempotent because the bid list updater checks membership in the cached value it is
+ * handed, inside the update.
+ * `Math.max` on the price, not assignment: a broadcast arriving out of order must never walk it
+ * backwards. The list caches are `InfiniteData`, folded page by page, item by item; the
+ * single-auction entry folds directly.
  */
 export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid: PublicBid) {
   let isNewBid = false;
@@ -172,10 +134,10 @@ export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid
         isNewBid = true;
         return { ...old, items: [bid, ...old.items] };
       }
-      // BV-039: the masked bid:placed broadcast and this client's own mutation response (which
-      // knows isMine for certain) can arrive in either order over two different connections --
-      // if this write knows it's the caller's own and the cached row doesn't yet, upgrade it in
-      // place rather than discard it as a duplicate.
+      // The masked bid:placed broadcast and this client's own mutation response (which knows isMine
+      // for certain) can arrive in either order over two connections: if this write knows the bid
+      // is the caller's own and the cached row does not yet, upgrade it in place rather than
+      // discard it as a duplicate.
       if (bid.isMine && !old.items[idx].isMine) {
         const items = [...old.items];
         items[idx] = bid;
@@ -199,10 +161,9 @@ function isAuction(item: unknown): item is Auction {
 }
 
 /**
- * Applies `fold` to every cached copy of one auction — the live list, its own detail entry, the
- * watchlist, my-bids' embedded auctions — wherever it appears. Factored out of applyBidToCache
- * so a second socket event (auction:cancelled) can reuse the exact same "every auction-shaped
- * cache entry" traversal rather than a second, easily-drifting copy of it.
+ * Applies `fold` to every cached copy of one auction (the live list, its detail entry, the
+ * watchlist, my-bids' embedded auctions). Shared by every socket event that changes an auction, so
+ * there is one traversal and no second copy to drift.
  */
 function foldEveryAuctionCacheEntry(
   queryClient: QueryClient,
@@ -252,16 +213,12 @@ export function applyPriceToCache(
 }
 
 /**
- * B4/C4's real-time cancellation notice (LIFECYCLE-IMPLEMENTATION-PLAN.md) — reaches every
- * cached copy of the cancelled auction the same way a new bid does, so the auction page's
- * "Non-ACTIVE auction guard" and AdminAuctionMonitor's status line update immediately for
- * anyone with the page open, without a refetch.
+ * Reaches every cached copy of the cancelled auction the same way a new bid does, so the auction
+ * page and AdminAuctionMonitor update at once for anyone with the page open, without a refetch.
  */
 export function applyAuctionCancelledToCache(queryClient: QueryClient, auctionId: string) {
   foldEveryAuctionCacheEntry(queryClient, auctionId, (a) => ({ ...a, status: 'CANCELLED' }));
 }
-
-// ---- writes -------------------------------------------------------------------------------
 
 export function usePlaceBid() {
   const queryClient = useQueryClient();
@@ -270,14 +227,10 @@ export function usePlaceBid() {
     mutationFn: ({ auctionId, amount }: { auctionId: string; amount: number }) =>
       api.post(`/auctions/${auctionId}/bids`, { amount }),
     onSuccess: (bid, { auctionId }) => {
-      // Applied here as well as from the socket because the broadcast is not guaranteed — if
-      // the socket is down this is the only path that updates the UI. Whichever arrives first
-      // wins; the other is a no-op.
-      //
-      // BV-039: the POST response itself still carries the caller's own full identity (it's
-      // their own action), but the shared bids cache is the masked, isMine-flagged shape now —
-      // 'You' rather than the real name, consistent with how the bid list already renders
-      // any row with isMine set.
+      // Applied here as well as from the socket, because the broadcast is not guaranteed: if the
+      // socket is down this is the only path that updates the UI. Whichever arrives first wins; the
+      // other is a no-op. The POST response carries the caller's own full identity, but the shared
+      // bids cache holds the masked, isMine-flagged shape, so the row reads 'You'.
       applyBidToCache(queryClient, auctionId, {
         bidId: bid.bidId,
         auctionId: bid.auctionId,
@@ -291,17 +244,10 @@ export function usePlaceBid() {
 }
 
 /**
- * Add or remove a watch, optimistically.
- *
- * `onMutate` writes the change and returns the previous value; `onError` puts it back;
- * `onSettled` refetches so the server has the last word. That is TanStack's documented
- * optimistic pattern, and it replaces a hand-written version that had to remember the removed
- * row itself in order to restore it.
- *
- * BV-029: the watchlist cache is `InfiniteData` now — an add always goes on the front of the
- * first page (a newly-watched auction is the most recent by definition, and the first page is
- * always loaded once the hook has run), and a remove is filtered out of whichever page holds
- * it.
+ * Add or remove a watch, optimistically: `onMutate` writes the change and returns the previous
+ * value, `onError` puts it back, `onSettled` refetches so the server has the last word. An add goes
+ * on the front of the first page (a newly watched auction is the most recent, and the first page is
+ * always loaded once the hook has run); a remove is filtered out of whichever page holds it.
  */
 export function useToggleWatchlist() {
   const queryClient = useQueryClient();
@@ -347,19 +293,11 @@ export function useToggleWatchlist() {
 }
 
 /**
- * The ergonomics the old context exposed — `toggle(id)` and `isWatched(id)` — over the query
- * cache. Kept because five call sites use that shape and it reads better than threading the
- * mutation's arguments through each of them.
- *
- * Watched state is derived from the cached watchlist rather than a separate array of ids. The
- * old context kept both, and NEW-12 was exactly what happens when they disagree: the profile
- * counted an auction from the id list that the watchlist page could not render.
- *
- * BV-029: `isWatched` only knows about pages the watchlist query has actually loaded — for a
- * buyer with more watched auctions than fit on one page, an auction on a page that has not
- * been fetched yet reads as "not watched" until the Watchlist screen (or this hook) has
- * scrolled far enough to load it. `useWatchlist` requests a generous page size for exactly
- * this reason: the common case (most buyers watch a handful of auctions) never notices.
+ * `toggle(id)` and `isWatched(id)` over the query cache, because five call sites use that shape.
+ * Watched state is derived from the cached watchlist rather than a separate array of ids, so the
+ * two cannot disagree. `isWatched` only knows pages the watchlist query has loaded, so an auction
+ * on an unfetched page reads as "not watched" until it loads; `useWatchlist` requests a generous
+ * page size so the common case never notices.
  */
 export function useWatchlistToggle() {
   const { user } = useAuth();

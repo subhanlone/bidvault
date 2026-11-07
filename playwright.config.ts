@@ -3,21 +3,14 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.test' });
 
 /**
- * Default to the local dev server, not a deployment.
- *
- * This previously fell back to a production hostname, and .env.test.example pointed at a
- * Vercel deployment too — and there is only one backend and one database behind any deployed
- * frontend. So `npm run test:e2e` on a fresh checkout signed three real accounts in and fired
- * a deliberate wrong-password login (auth.spec.ts) at production. Harmless while nothing
- * rate-limits, and an account lockout the moment something does.
- *
- * A deployed target is still reachable — it just has to be asked for by name.
+ * Default to the local dev server, not a deployment: the specs sign real accounts in and submit a
+ * deliberate wrong password, and one backend and database sit behind every deployed frontend. A
+ * deployed target has to be asked for by name.
  */
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5173';
 
-// Mirrors backend/tests/setup.ts: refuse a target that is not obviously disposable unless
-// the operator says so in the command. The backend suite has had this guard since the
-// shared-Redis incident; the browser suite never did.
+// Mirrors backend/tests/setup.ts: refuse a target that is not obviously disposable unless the
+// operator says so in the command.
 const PRODUCTION_HOSTS = /(vercel\.app|railway\.app|bidvault\.tech)/;
 if (PRODUCTION_HOSTS.test(BASE_URL) && process.env.ALLOW_PRODUCTION_E2E !== '1') {
   throw new Error(
@@ -64,7 +57,6 @@ export default defineConfig({
     { name: 'setup-admin',  testMatch: '**/setup/admin.setup.ts' },
     { name: 'setup-seller', testMatch: '**/setup/seller.setup.ts' },
 
-    // Tests run after setup
     {
       name: 'public',
       testMatch: ['**/landing.spec.ts', '**/auth.spec.ts'],

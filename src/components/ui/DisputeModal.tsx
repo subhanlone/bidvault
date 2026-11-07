@@ -12,8 +12,8 @@ interface Props {
   onClose: () => void;
 }
 
-// BV-047: a buyer's alternative to confirming receipt during the SHIPPED window — holds the
-// seller's payout for admin review instead of releasing it automatically.
+// A buyer's alternative to confirming receipt during the SHIPPED window: holds the seller's payout
+// for admin review instead of releasing it automatically.
 export default function DisputeModal({ transactionId, auctionTitle, onSuccess, onClose }: Props) {
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);

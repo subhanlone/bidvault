@@ -45,8 +45,8 @@ export default function AdminAnalytics() {
 
   useEffect(() => { void loadAnalytics(); }, [loadAnalytics]);
 
-  // No data and not loading means the request failed. The charts below would draw that as a flat
-  // zero-revenue year, so the whole body is replaced by the error instead of a small banner above them.
+  // No data and not loading means the request failed. The charts would draw that as a flat
+  // zero-revenue year, so the whole body is replaced by the error.
   const failed = !loading && !analyticsData;
 
   const allMonths = analyticsData?.monthlyRevenue ?? [];

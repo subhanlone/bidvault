@@ -24,10 +24,9 @@ export default function EmailVerificationScreen() {
   // Where this person was headed when they registered or tried to sign in; handed on to sign-in.
   const returnTo = safeReturnPath(state?.from);
   const returnState = returnTo ? { from: returnTo } : undefined;
-  // Held in state, not read straight from location.state. Navigation state is captured once, so
-  // after a resend the hint kept showing the original code while the server had issued a new one
-  // — following it produced "Invalid or expired verification code". Dev-only, but it actively
-  // misled during local testing and demos.
+  // Held in state, not read straight from location.state: navigation state is captured once, so
+  // after a resend the hint would keep showing the original code while the server had issued a new
+  // one. Dev-only.
   const [verificationCode, setVerificationCode] = useState<string | undefined>(state?.verificationCode);
   const [otp, setOtp]             = useState(['', '', '', '', '', '']);
   const [loading, setLoading]     = useState(false);
@@ -42,7 +41,7 @@ export default function EmailVerificationScreen() {
   const [resending, setResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // EV-01: guard — no email means user navigated directly, not from registration
+  // Guard: no email means the person navigated here directly, not from registration.
   useEffect(() => {
     if (!email) navigate('/register', { replace: true });
   }, [email, navigate]);
@@ -58,8 +57,7 @@ export default function EmailVerificationScreen() {
     autoResendSent.current = true;
     showToast({ type: 'info', title: 'Email Not Verified', message: 'Please verify your email to sign in. Sending you a new code…' });
     // resendVerification answers { success: false } rather than throwing, so that is the branch to
-    // handle. The toast above used to say the code had been sent before anyone knew, and a failure
-    // here left it saying so.
+    // handle.
     void resendVerification(email).then(r => {
       if (r.success) {
         setExpiresAt(deadlineFrom(r.codeExpiresAt));
@@ -167,7 +165,7 @@ export default function EmailVerificationScreen() {
         'Your account is 100% secure',
       ]}
       stats={[
-        // A dash unless a code really was sent: this tile counted down for a code that never existed.
+        // A dash unless a code really was sent.
         { value: codeState === 'sent' ? fmtTime(codeExpiry) : '—', label: 'Code Expires' },
         { value: '6',                 label: 'Digit Code'   },
         { value: '100%',              label: 'Secure'        },

@@ -13,8 +13,7 @@ const FALLBACK_END_TIME = new Date(Date.now() + 3_600_000).toISOString();
 
 export default function AdminAuctionMonitor() {
   const { auctionId } = useParams<{ auctionId: string }>();
-  // Fetched directly rather than looked up in the ACTIVE list. That lookup is what made a
-  // closed auction unopenable (NEW-17); GET /auctions/{id} answers for any status.
+  // Fetched directly: GET /auctions/{id} answers for any status, so a closed auction can be opened.
   const { data: auction, isPending: auctionsPending, isError, error, isFetching, refetch } = useAuctionDetail(auctionId);
   const { data: auctionBids = [], isError: bidsFailed, refetch: refetchBids } = useBids(auctionId);
   const auctionsLoaded = !auctionsPending;

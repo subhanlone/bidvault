@@ -26,14 +26,13 @@ interface WinTransaction {
   // than moving to FAILED so a decline is retryable — this is the explanation that goes with
   // that PENDING state instead of a separate terminal one.
   lastPaymentError?: string;
-  // BV-047: present once the seller has shipped. reviewDeadlineAt is the confirm-or-dispute
-  // deadline, computed server-side so this screen never needs reviewTimeoutHours itself.
+  // Present once the seller has shipped. reviewDeadlineAt is the confirm-or-dispute deadline,
+  // computed server-side so this screen never needs reviewTimeoutHours.
   shippedAt?: string;
   reviewDeadlineAt?: string;
   disputeReason?: string;
   createdAt: string;
   reviewed: boolean;
-  // C6, Phase 7.
   reviewId?: string;
   reviewStars?: number;
   reviewComment?: string;
@@ -323,9 +322,9 @@ export default function BuyerMyWins() {
                           <p className="text-[12px] text-success font-semibold text-center mb-2">
                             ✓ You rated this seller
                           </p>
-                          {/* C6, Phase 7: edit/delete within reviewEditWindowHours -- the server
-                              is the source of truth for the deadline, so both buttons are always
-                              shown and a 409 past the window just surfaces as an error message. */}
+                          {/* Edit/delete within reviewEditWindowHours: the server is the source of
+                             truth for the deadline, so both buttons are always shown and a 409
+                             past the window surfaces as an error message. */}
                           <div className="grid grid-cols-2 gap-2">
                             <Button
                               variant="outline"

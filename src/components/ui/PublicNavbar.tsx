@@ -28,11 +28,10 @@ const registerClass =
   'text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg px-3 py-1.5 transition-colors no-underline';
 
 /**
- * The header for someone who is not signed in. Browse is open to everyone; Sign in and Register
- * remember the page they were pressed on, so signing in brings the person back to it.
- *
- * `minimal` is the header while a returning visitor's session is still being restored: just the
- * logo, so a signed-in person is not shown "Sign in" for a moment.
+ * The header for someone who is not signed in. Sign in and Register remember the page they were
+ * pressed on, so signing in brings the person back. `minimal` is the header while a returning
+ * visitor's session is restored: just the logo, so a signed-in person is not shown "Sign in" for a
+ * moment.
  */
 export default function PublicNavbar({ minimal = false }: { minimal?: boolean }) {
   const { pathname } = useLocation();

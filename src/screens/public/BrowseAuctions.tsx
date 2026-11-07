@@ -113,8 +113,7 @@ function AuctionCard({ auction, isGuest }: { auction: Auction; isGuest: boolean 
         ) : (
           <button
             onClick={e => { e.stopPropagation(); toggle(auction.auctionId); }}
-            // Named after its auction: all three cards previously exposed the identical name, so a
-            // screen reader announced "Add to watchlist" three times with nothing to tell them apart.
+            // Named after its auction, so a screen reader can tell the cards' buttons apart.
             aria-label={`${watched ? 'Remove' : 'Add'} ${auction.title} ${watched ? 'from' : 'to'} watchlist`}
             aria-pressed={watched}
             className={`${heartClass} ${watched ? 'bg-primary text-white' : 'bg-surface/80 text-muted hover:text-primary'}`}
@@ -147,9 +146,9 @@ function AuctionCard({ auction, isGuest }: { auction: Auction; isGuest: boolean 
               {count(auction.bidCount, 'bid')}{auction.watcherCount > 0 ? ` · ${auction.watcherCount} watching` : ''}
             </p>
           </div>
-          {/* An auction stays in the ACTIVE list until the worker closes it, which can lag
-              endTime by up to the 5-minute reconcile interval. During that window the card
-              showed a "Closed" badge and a live "Bid Now" button at the same time. */}
+          {/* An auction stays in the ACTIVE list until the worker closes it, which can lag endTime
+             by up to the 5-minute reconcile interval; until then the card shows "Closed" and
+             offers the result instead of a live "Bid Now". */}
           <Button
             size="sm"
             variant={timer.isExpired ? 'outline' : 'primary'}
@@ -194,10 +193,9 @@ function BrowseScreen({ initialSearch, initialCategory }: { initialSearch: strin
   const [sortBy, setSortBy]             = useState<SortBy>('endingSoon');
   const [sidebarOpen, setSidebarOpen]   = useState(false);
 
-  // Debounced: category/search are server-side filters now (BV-029), each a fresh paginated
-  // query rather than a re-filter of pages already in the cache — so a match on a page not yet
-  // loaded is never missed. Debouncing search keeps that from firing on every keystroke, which
-  // a purely client-side filter never had to worry about.
+  // Debounced: category/search are server-side filters, each a fresh paginated query rather than a
+  // re-filter of cached pages, so a match on a page not yet loaded is never missed; debouncing
+  // keeps typing from firing a query per keystroke.
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
@@ -208,14 +206,12 @@ function BrowseScreen({ initialSearch, initialCategory }: { initialSearch: strin
     data, isPending, isError: auctionsError, isFetching, refetch, hasNextPage, isFetchingNextPage, fetchNextPage,
   } = useActiveAuctions({ category: category === 'All' ? undefined : category, search: debouncedSearch });
   const auctions = flattenPages(data);
-  // isPending rather than a success flag: BUG-16's lesson is that a screen must be able to
-  // tell "nothing to show" from "could not load", and never assert the first while the
-  // second is still possible.
+  // isPending rather than a success flag: a screen must tell "nothing to show" from "could not
+  // load", and never assert the first while the second is still possible.
   const auctionsLoaded = !isPending;
 
-  // Price range, "ending soon", and sort all still run client-side, over whatever pages have
-  // loaded so far — the backend has no query param for any of them, and adding one is out of
-  // scope for a pagination change. The sentinel below is what keeps "so far" growing.
+  // Price range, "ending soon" and sort run client-side over the pages loaded so far (the backend
+  // has no parameter for them yet). The sentinel below keeps "so far" growing.
   const sentinelRef = useInfiniteScrollTrigger(
     () => { void fetchNextPage(); },
     hasNextPage === true && !isFetchingNextPage,
@@ -236,14 +232,12 @@ function BrowseScreen({ initialSearch, initialCategory }: { initialSearch: strin
   const max = maxPrice.trim() === '' ? null : Number(maxPrice);
   const priceRangeInvalid = min !== null && max !== null && min > max;
   const filtered = auctions.filter(a => {
-    // This screen is "Live Auctions". The context list is seeded from ?status=ACTIVE, but
-    // fetchMyBids merges in the closed auctions a buyer has bid on, so visiting My Bids and
-    // then coming here used to surface them under the live heading. Filter on the status the
-    // server reported rather than trusting how the list was populated.
-    // search/category are applied server-side (see useActiveAuctions above) — not repeated here.
+    // This screen is "Live Auctions": filter on the status the server reported, so a closed auction
+    // never appears under the live heading. search/category are applied server-side (see
+    // useActiveAuctions), not repeated here.
     if (a.status !== 'ACTIVE') return false;
     if (showEndingSoon) {
-      const msLeft = new Date(a.endTime).getTime() - now;  // BA-01: live time, not mount snapshot
+      const msLeft = new Date(a.endTime).getTime() - now;  // live time, not a mount snapshot
       if (msLeft <= 0 || msLeft > 3_600_000) return false;
     }
     if (!priceRangeInvalid) {

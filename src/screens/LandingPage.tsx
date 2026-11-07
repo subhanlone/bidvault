@@ -11,7 +11,6 @@ import { conditionLabel, count, locatedIn, pkr } from '../utils/format';
 import LoadingStatus from '../components/ui/LoadingStatus';
 import { BROWSE_CATEGORIES } from '../config/categories';
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -28,7 +27,6 @@ function formatCurrency(n: number): string {
   return pkr(n);
 }
 
-// ─── Ending-soon card with live timer ────────────────────────────────────────
 function EndingSoonCard({ auction }: { auction: Auction }) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -87,7 +85,6 @@ function EndingSoonCard({ auction }: { auction: Auction }) {
   );
 }
 
-// ─── Loading skeleton card ────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
     <div className="bg-surface border border-border-light rounded-lg overflow-hidden flex flex-col animate-pulse">
@@ -111,7 +108,6 @@ function SkeletonCard() {
   );
 }
 
-// ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -121,8 +117,8 @@ export default function LandingPage() {
   const onTabKeys = useTabKeys(['buyers', 'sellers'] as const, activeTab, setActiveTab);
   const [featured, setFeatured] = useState<Auction[]>([]);
   const [featuredLoading, setFeaturedLoading] = useState(true);
-  // Swallowing the error left `featured` empty, which renders as "No Live Auctions Right Now" —
-  // stating there are none when we simply failed to ask. Distinguish the two.
+  // An empty `featured` after a failed request must not read as "No Live Auctions Right Now", so
+  // the two are tracked separately.
   const [featuredFailed, setFeaturedFailed] = useState(false);
   const [liveStats, setLiveStats] = useState<{ userCount: number; activeAuctionCount: number; transactionTotal: number; listingCount: number; completedSalesCount: number } | null>(null);
   const [supportEmail, setSupportEmail] = useState('support@bidvault.tech');
@@ -152,10 +148,9 @@ export default function LandingPage() {
       .catch(() => {});
   }, []);
 
-  // Drives every "it's live!" claim on the page. Keyed off the same `featured` list that renders
-  // the section below, so the headings and the empty state can never contradict each other —
-  // which is exactly what happened when those labels were hardcoded. While still loading we
-  // assume nothing, so the page never briefly asserts liveness it can't back up.
+  // Drives every "it's live!" claim on the page, keyed off the same `featured` list that renders
+  // the section, so the headings and the empty state cannot contradict each other. While loading
+  // nothing is assumed.
   const hasLiveAuctions = !featuredLoading && !featuredFailed && featured.length > 0;
 
   const stats = [
@@ -175,9 +170,7 @@ export default function LandingPage() {
       icon: <Banknote size={28} strokeWidth={1.6} className="text-success-dark" />,
     },
     {
-      // Was a hardcoded "4.9 / 5 Buyer Satisfaction". Nothing computed it, and the seller
-      // ratings actually in the database include 1-star — so the claim was not merely
-      // unsourced, it was contradicted by our own data. Every tile here is now a real count.
+      // Every tile is a real count.
       value: liveStats ? `${formatCount(liveStats.listingCount)}` : '—',
       label: 'Items Listed',
       icon: <Star size={28} strokeWidth={1.6} className="text-gold" fill="currentColor" />,
@@ -239,7 +232,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-surface">
 
-      {/* ── NAV ─────────────────────────────────────────────────────────────── */}
+      {/* Nav */}
       <nav className="sticky top-0 z-50 bg-navy border-b border-[rgba(255,255,255,0.08)]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[64px]">
@@ -325,7 +318,7 @@ export default function LandingPage() {
 
       <main aria-label="BidVault marketing content">
 
-      {/* ── HERO ────────────────────────────────────────────────────────────── */}
+      {/* Hero */}
       <section className="bg-navy relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]" style={{
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
@@ -337,9 +330,8 @@ export default function LandingPage() {
         <div className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28">
           <div className="max-w-[720px] mx-auto text-center lg:text-left lg:mx-0">
 
-            {/* Gated on there actually being live auctions. This badge was hardcoded, so a
-                visitor could read "Live Auctions Running Now" directly above a stat tile
-                reading "0 Active Auctions" and an empty state saying there were none. */}
+            {/* Gated on there being live auctions, so the badge never sits above a "0 Active
+               Auctions" tile. */}
             <div className="inline-flex items-center gap-2 bg-[rgba(208,2,27,0.15)] border border-[rgba(208,2,27,0.3)] rounded-full px-4 py-1.5 mb-6">
               {hasLiveAuctions ? (
                 <>
@@ -416,13 +408,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── FEATURED AUCTIONS ───────────────────────────────────────────────── */}
+      {/* Ending soon */}
       <section id="featured" className="bg-bg py-14 sm:py-16 lg:py-20">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
             <div>
-              {/* Both the eyebrow and the subtitle were hardcoded to claim live bidding, and
-                  wrapped the (correct) "No Live Auctions Right Now" empty state below. */}
+              {/* The eyebrow and the subtitle only claim live bidding when there are live auctions. */}
               <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">
                 {hasLiveAuctions ? 'Live Right Now' : 'Featured'}
               </p>
@@ -456,8 +447,8 @@ export default function LandingPage() {
                 <div className="bg-surface-raised rounded-full size-16 flex items-center justify-center mb-4">
                   <Gavel size={28} strokeWidth={1.5} className="text-muted" />
                 </div>
-                {/* "None right now" and "we couldn't check" are different claims and were
-                    previously rendered identically, because the fetch error was swallowed. */}
+                {/* "None right now" and "we couldn't check" are different claims and are rendered
+                   differently. */}
                 <h3 className="font-bold text-[16px] text-navy mb-1">
                   {featuredFailed ? "Couldn't load auctions" : 'No Live Auctions Right Now'}
                 </h3>
@@ -479,7 +470,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── SHOP BY CATEGORY ────────────────────────────────────────────────── */}
+      {/* Shop by category */}
       <section aria-labelledby="shop-by-category" className="bg-surface py-12 sm:py-14 border-b border-border-light">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <h2 id="shop-by-category" className="font-extrabold text-[22px] sm:text-[26px] text-navy mb-6">Shop by category</h2>
@@ -498,7 +489,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── STATS BAR ───────────────────────────────────────────────────────── */}
+      {/* Stats */}
       <section className="bg-surface border-b border-border-light">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 lg:grid-cols-4">
@@ -511,8 +502,7 @@ export default function LandingPage() {
                 `}
               >
                 <div className="flex justify-center mb-3">{s.icon}</div>
-                {/* Every tile is live data now, so none is exempt from the loading pulse.
-                    The old exemption existed only because one value was hardcoded. */}
+                {/* Every tile is live data, so every tile gets the loading pulse. */}
                 <p className={`font-extrabold text-[22px] sm:text-[28px] text-navy leading-none tracking-[-0.5px] ${!liveStats ? 'animate-pulse' : ''}`}>
                   {s.value}
                 </p>
@@ -523,7 +513,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ────────────────────────────────────────────────────── */}
+      {/* How it works */}
       <section id="how-it-works" className="bg-surface py-14 sm:py-16 lg:py-20">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-10">
@@ -570,7 +560,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── WHY BIDVAULT ────────────────────────────────────────────────────── */}
+      {/* Why BidVault */}
       <section id="why-bidvault" className="bg-bg py-14 sm:py-16 lg:py-20">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
@@ -599,7 +589,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── TRUST STRIP ─────────────────────────────────────────────────────── */}
+      {/* Trust strip */}
       <section className="bg-surface border-y border-border-light py-10">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
@@ -615,7 +605,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA BANNER ──────────────────────────────────────────────────────── */}
+      {/* Call to action */}
       <section className="bg-navy relative overflow-hidden py-14 sm:py-16 lg:py-20">
         <div className="absolute inset-0 opacity-[0.04]" style={{
           backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
@@ -655,7 +645,7 @@ export default function LandingPage() {
 
       </main>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
+      {/* Footer */}
       <footer className="bg-navy-deep py-10 sm:py-12">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">

@@ -2,20 +2,10 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { BidVaultLogo } from './ui';
 
 /**
- * Catches render errors so one broken component does not blank the whole app.
- *
- * Until this existed, any error thrown during render — a null dereference in a screen, a
- * malformed response reaching a `.map()` — unmounted the entire React tree and left a white
- * page with nothing on it and no way back. That is a bad failure anywhere; on a project that
- * gets demonstrated live it is the worst one available.
- *
- * A class component on purpose: componentDidCatch and getDerivedStateFromError have no hook
- * equivalent, and React still has no function-component API for this.
- *
- * Deliberately NOT a replacement for handling errors where they happen. Screens that fetch
- * already distinguish "empty" from "failed" and say so — see BUG-16 and UX-12/13, which were
- * exactly the opposite mistake. This is the net under all of that, for the errors nobody
- * predicted.
+ * Catches render errors so one broken component does not blank the whole app. A class component on
+ * purpose: componentDidCatch and getDerivedStateFromError have no hook equivalent.
+ * Not a replacement for handling errors where they happen (screens that fetch already tell "empty"
+ * from "failed"); this is the net for the errors nobody predicted.
  */
 
 interface Props {
@@ -36,8 +26,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // The one place in the app that knows a render died. Console for now; this is the hook a
-    // reporter would attach to.
+    // The one place that knows a render died: it logs to the console, and is where an error
+    // reporter would attach.
     console.error(
       `[error-boundary]${this.props.area ? ` ${this.props.area}:` : ''}`,
       error,

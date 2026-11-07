@@ -51,9 +51,9 @@ function BidCard({ entry }: { entry: BidEntry }) {
   const { auction, myHighestBid, isWinning } = entry;
 
   // Being the top bidder is not the same as having won: an auction that closes below the seller's
-  // reserve is unsold, and no transaction exists to pay for. reserveMet is a live comparison while
-  // the auction is open, so the verdict is already correct in the window between endTime passing
-  // and the worker recording it — bidding has stopped, so the top bid is final.
+  // reserve is unsold and has no transaction to pay for. reserveMet is a live comparison while the
+  // auction is open, so the verdict is already right between endTime passing and the worker
+  // recording it.
   const status =
     !isEnded                     ? (isWinning ? 'winning' : 'outbid')
     : !isWinning                 ? 'lost'
@@ -138,11 +138,8 @@ export default function BuyerMyBids() {
 
   const now = useNow(5_000);
 
-  // GET /auctions/mine/bids returns each bid with its auction attached, and is already scoped
-  // to the signed-in buyer. Both of those used to be the caller's problem: this screen read a
-  // shared record holding every bid for every auction anyone had opened, filtered it by
-  // buyerId, and then looked the auction up in the ACTIVE list — silently dropping any bid on
-  // an auction that had since closed.
+  // GET /auctions/mine/bids returns each bid with its auction attached and is already scoped to the
+  // signed-in buyer, so no filtering or lookup is needed here.
   const myBidEntries: BidEntry[] = Object.values(
     myBidRows.reduce<Record<string, BidEntry>>((acc, { auction, ...bid }) => {
       const seen = acc[auction.auctionId];

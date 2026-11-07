@@ -9,10 +9,9 @@ interface Props {
 }
 
 /**
- * Who may open a screen. `BUYER` means any signed-in account that is not an admin (everyone can
- * buy), `SELLER` means an account that is a seller (`user.isSeller`, from the server), `ADMIN`
- * means an admin. The token's role claim is not consulted: a person who becomes a seller, or stops
- * being one, changes what they can open on the next page load.
+ * Who may open a screen. `BUYER` is any signed-in non-admin account, `SELLER` an account with
+ * `user.isSeller` (from the server), `ADMIN` an admin. The token's role claim is not consulted, so
+ * becoming a seller changes what opens on the next page load.
  */
 export default function ProtectedRoute({ children, allowedRoles }: Props) {
   const { user, isLoading } = useAuth();

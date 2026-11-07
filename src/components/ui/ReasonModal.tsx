@@ -18,9 +18,8 @@ interface Props {
 }
 
 /**
- * Phase 6: the reason-prompt shape DisputeModal established, generalised for the seller and
- * admin auction-cancel actions — both need one required reason and nothing else, so one
- * component takes the API call as a callback rather than being duplicated per caller.
+ * The reason-prompt shape of DisputeModal, generalised for the seller and admin auction-cancel
+ * actions: both need one required reason, so one component takes the API call as a callback.
  */
 export default function ReasonModal({ title, subject, description, submitLabel, fieldLabel, placeholder, onSubmit, onClose }: Props) {
   const [reason, setReason] = useState('');

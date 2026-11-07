@@ -12,10 +12,9 @@ interface ModeSwitchProps {
 }
 
 /**
- * One account buys and sells, so the two navbars each carry the way across to the other side:
- * a seller sees "Switch to buying" / "Switch to selling", anyone else sees "Sell", which leads to
- * Become a seller. It also records which side the person is on, so the next sign-in opens there.
- * Not shown to an admin, who has neither side.
+ * One account buys and sells, so each navbar carries the way across: a seller sees "Switch to
+ * buying" / "Switch to selling", anyone else sees "Sell" (which leads to Become a seller). It also
+ * records the side the person is on, so the next sign-in opens there. Not shown to an admin.
  */
 export default function ModeSwitch({ side, onNavigate, className = '' }: ModeSwitchProps) {
   const { user } = useAuth();

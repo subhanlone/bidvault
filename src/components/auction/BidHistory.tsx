@@ -8,8 +8,8 @@ import { count, pkr, timeShort } from '../../utils/format';
 export type Viewer = 'member' | 'guest' | 'pending';
 
 /**
- * The list of bids. It is for signed-in members (D10): a guest is told how many bids there are and
- * is offered the sign-in, and no request for the list is made. Remount it per auction (`key`).
+ * The list of bids is for signed-in members: a guest is told how many bids there are and is offered
+ * the sign-in, and no request is made. Remount it per auction (`key`).
  */
 export default function BidHistory({ auctionId, bidCount, viewer }: { auctionId: string; bidCount: number; viewer: Viewer }) {
   const signIn = useSignInLink();

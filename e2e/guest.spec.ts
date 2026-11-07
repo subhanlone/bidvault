@@ -1,14 +1,10 @@
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 /**
- * Guest browsing: anyone can look at BidVault, live or ended, without an account. Bidding,
- * watching and the list of bids need one, and signing in returns to the page that asked.
- *
- * Runs against a LOCAL backend whose database holds the seeded auctions below (the seed is a
- * script that fills the *_test database; see the pull request). Nothing here touches a
- * deployment: playwright.config.ts refuses a production BASE_URL and the API address is checked.
- *
- * The seeded auctions are found through the public API by title, so no ids are hard-coded.
+ * Guest browsing: anyone can look at BidVault, live or ended; bidding, watching and the list of
+ * bids need an account, and signing in returns to the page that asked.
+ * Runs against a LOCAL backend whose *_test database holds the seeded auctions, which are found
+ * through the public API by title.
  */
 
 const API = process.env.VITE_API_URL ?? 'http://localhost:4000/api/v1';
@@ -117,7 +113,6 @@ test.describe('The auction page for a guest', () => {
     await expect(page).toHaveURL(/\/login/);
     await signInOnLoginPage(page);
     await expect(page).toHaveURL(new RegExp(`/auctions/${id}$`));
-    // The bid panel replaces the sign-in prompt.
     await expect(page.getByText('Quick Bid')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Sign in to bid' })).toHaveCount(0);
   });
@@ -245,7 +240,6 @@ test.describe('A signed-in member on the same page', () => {
 
     await page.goto(`/auctions/${id}`);
     await expect(page.getByRole('heading', { name: 'Bid History' })).toBeVisible();
-    // No guest prompts for someone who is signed in.
     await expect(page.getByRole('link', { name: 'Sign in to bid' })).toHaveCount(0);
     await expect(page.getByText(/The list of bids is for signed-in members/)).toHaveCount(0);
 
@@ -339,7 +333,6 @@ test.describe('Live updates', () => {
     await expect.poll(() => frames.length, { message: 'websocket frames received' }).toBeGreaterThan(0);
     await guestPage.waitForTimeout(500);
 
-    // A member bids through the API with their own token.
     const login = await request.post(`${API}/auth/login`, { data: { email: EMAIL, password: PASSWORD } });
     expect(login.ok(), 'sign in as the throwaway member').toBeTruthy();
     const { data: session } = (await login.json()) as { data: { accessToken: string } };
@@ -401,9 +394,8 @@ test.describe('Addresses', () => {
     await expect(page.getByRole('link', { name: 'Browse live auctions' })).toBeVisible();
   });
 
-  // Old addresses were removed, not redirected: nothing links to them any more, so they are
-  // ordinary unknown addresses. Browse and the auction page moved to /browse and /auctions/:id; My
-  // Listings and My Sales became My Items; the result screen always has an auction id.
+  // Removed, not redirected: nothing links to these addresses any more, so they are ordinary
+  // unknown addresses.
   test('the old addresses no longer exist', async ({ page, request }) => {
     const id = await auctionIdOf(request, 'ACTIVE', LIVE);
     const gone = ['/buyer/browse', `/buyer/live-bidding/${id}`, '/seller/listings', '/seller/sales', '/buyer/auction-won'];

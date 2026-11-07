@@ -26,15 +26,12 @@ export default function LoginScreen() {
   const [loading, setLoading]     = useState(false);
   const [emailError, setEmailError]       = useState('');
   const [passwordError, setPasswordError] = useState('');
-  // "Uptime 99.9%" was hardcoded and nothing in the stack measures uptime; "Bid Volume" was
-  // labelling the completed-sales total, which is not bid volume. All three are real now.
   const [panelStats, setPanelStats] = useState([
     { value: '—', label: 'Live Now'   },
     { value: '—', label: 'Total Sales' },
     { value: '—', label: 'Items Sold' },
   ]);
 
-  // LG-02: redirect already-logged-in users to their role dashboard
   // Where to go once signed in: the page that sent the person here (ProtectedRoute leaves it in
   // router state, never in the address), or the home of whichever side they were last on.
   const returnTo = safeReturnPath((location.state as { from?: unknown } | null)?.from);
@@ -50,7 +47,7 @@ export default function LoginScreen() {
     navigate(destination(user), { replace: true });
   }, [user, navigate, destination]);
 
-  // LG-04: replace hardcoded stats with live API data
+  // Live platform stats for the side panel.
   useEffect(() => {
     api.get('/stats')
       .then(d => setPanelStats([
@@ -77,7 +74,7 @@ export default function LoginScreen() {
       setPasswordError('Password is required');
       invalid++;
     }
-    // LG-06: drop the redundant toast — inline errors under each field are enough
+    // No toast here: the inline errors under each field are enough.
     if (invalid > 0) return;
     setLoading(true);
     const result = await login({ email, password }, remember);
@@ -151,7 +148,8 @@ export default function LoginScreen() {
         />
 
         <div className="flex items-center justify-between">
-          {/* LG-03/05: checkbox wired to session storage; visual driven by React state (not broken peer-checked CSS) */}
+          {/* The checkbox is wired to session storage; its visual is driven by React state rather
+             than peer-checked CSS. */}
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               id="remember"

@@ -44,21 +44,19 @@ export default function RegisterScreen() {
   const [agree, setAgree]       = useState(false);
   const [loading, setLoading]   = useState(false);
   const [errors, setErrors]     = useState<Record<string, string>>({});
-  // "Satisfaction 99%" was hardcoded with nothing behind it. "Active Users" was total user
-  // rows — the same number the landing page correctly calls "Registered Users".
   const [panelStats, setPanelStats] = useState([
     { value: '—', label: 'Registered Users' },
     { value: '—', label: 'Active Auctions' },
     { value: '—', label: 'Items Listed' },
   ]);
 
-  // RG-02: redirect already-logged-in users to their role dashboard
+  // Already signed in: go to the page that sent them here, or home.
   useEffect(() => {
     if (!user) return;
     navigate(returnTo ?? homePath(user), { replace: true });
   }, [user, navigate, returnTo]);
 
-  // RG-03: replace hardcoded stats with live API data
+  // Live platform stats for the side panel.
   useEffect(() => {
     api.get('/stats')
       .then(d => setPanelStats([
@@ -189,7 +187,7 @@ export default function RegisterScreen() {
           )}
         </div>
 
-        {/* Terms — RG-04: real <input type="checkbox"> for screen-reader semantics */}
+        {/* Terms: a real <input type="checkbox"> for screen-reader semantics. */}
         <div>
           <div className="flex gap-2.5 items-start">
             <input

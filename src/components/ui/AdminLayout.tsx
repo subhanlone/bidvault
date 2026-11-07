@@ -12,18 +12,16 @@ interface AdminLayoutProps {
   /** Label of the active sidebar item — see navItems in AdminSidebar.tsx. */
   active: string;
   /**
-   * Render-prop so each screen keeps its own header/hamburger/notification-bell
-   * placement instead of a separate shared strip — a shared strip read as an
-   * empty bar with one orphaned icon, especially on mobile.
+   * Render-prop so each screen keeps its own header, hamburger and notification-bell placement
+   * instead of a shared strip.
    */
   children: (props: AdminLayoutRenderProps) => React.ReactNode;
 }
 
 /**
- * Shared chrome for every admin screen: sidebar (desktop, collapsible +
- * persisted; mobile, drawer). Everything else — header, mobile menu trigger,
- * notification bell — stays with each screen so it renders inline with that
- * screen's own title/actions, not as a disconnected strip above them.
+ * Shared chrome for every admin screen: the sidebar (collapsible and persisted on desktop, a drawer
+ * on mobile). The header, menu trigger and bell stay with each screen, inline with its own title
+ * and actions.
  */
 export default function AdminLayout({ active, children }: AdminLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);

@@ -4,10 +4,9 @@ import type { PaginatedAdminUsers } from '../types/api';
 import { keys } from './keys';
 
 /**
- * The admin User Management directory (GET /admin/users) — cursor-paginated and unbounded,
- * same shape as useActiveAuctions in queries/auctions.ts. `search` is a server-side filter
- * (matches name OR email), so it's part of the query key: changing it starts a fresh
- * paginated query rather than filtering pages already in the cache.
+ * The admin User Management directory (GET /admin/users): cursor-paginated, same shape as
+ * useActiveAuctions. `search` is a server-side filter (name or email) and part of the query key, so
+ * changing it starts a fresh paginated query.
  */
 export function useAdminUsers(search: string) {
   return useInfiniteQuery({

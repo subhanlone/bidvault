@@ -23,8 +23,8 @@ interface PlatformStats {
 }
 
 /**
- * Lifetime figures. The auction context only ever holds ACTIVE auctions, so anything derived
- * from it is scoped to what is live right now — which is wrong for a KPI labelled "Total".
+ * Lifetime figures, from the API: anything derived from the live auction list would only describe
+ * what is live right now, which is wrong for a KPI labelled "Total".
  */
 interface Analytics {
   totalBids: number;
@@ -60,8 +60,8 @@ export default function AdminDashboardOverview() {
   const [loading, setLoading] = useState(true);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  // Both fetches used to swallow failures, so a broken request rendered as "Total Bids 0" —
-  // indistinguishable from a genuinely empty platform, on the screen an admin trusts most.
+  // A failed request must not render as "Total Bids 0", which is indistinguishable from a genuinely
+  // empty platform; the screen says it failed.
   const [statsFailed, setStatsFailed] = useState(false);
 
   const loadStats = useCallback(() =>
@@ -79,7 +79,7 @@ export default function AdminDashboardOverview() {
     void loadStats();
   };
 
-  // AD-07: live-update the pending queue when a seller submits a new listing
+  // Live-update the pending queue when a seller submits a new listing.
   useEffect(() => {
     const socket = connectSocket();
     const onSubmitted = (data: { listingId: string; title: string }) => {
@@ -104,9 +104,9 @@ export default function AdminDashboardOverview() {
   // zero-height bars, which renders as a blank white box rather than an empty state.
   const hasBidActivity = chartBars.some(c => c > 0);
 
-  // Category breakdown comes from /admin/analytics, which counts every listing ever. Deriving
-  // it from the auction context would only describe what happens to be live right now.
-  // Top 4 plus an aggregated "Other" so the bars still sum to the whole.
+  // The category breakdown comes from /admin/analytics, which counts every listing ever (the live
+  // list would only describe what is live now). Top 4 plus an aggregated "Other", so the bars sum
+  // to the whole.
   const breakdown = analytics?.categoryBreakdown ?? [];
   const topCategories = breakdown.slice(0, 4).map((c, i) => ({
     label: c.name,
@@ -155,8 +155,10 @@ export default function AdminDashboardOverview() {
             {loading ? (
               <><LoadingStatus label="Loading dashboard statistics" />{Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)}</>
             ) : statsFailed ? (
-              /* Rendering 0 and dashes on a failed request is indistinguishable from a genuinely
-                 empty platform. Say which it is rather than let the admin guess. */
+              /*
+               * Zeros and dashes on a failed request look like a genuinely empty platform, so the
+               * screen says which it is.
+               */
               <div role="alert" className="col-span-2 md:col-span-4 bg-error-bg border border-error-border rounded-md px-4 py-3">
                 <p className="font-bold text-[13px] text-error">Platform statistics could not be loaded</p>
                 <p className="text-[12px] text-error mt-0.5">
@@ -186,10 +188,9 @@ export default function AdminDashboardOverview() {
                   <span className="text-[11px] text-muted">Live</span>
                 </div>
               </div>
-              {/* items-stretch, not items-end. With items-end the bar wrappers shrink to their
-                  content height — zero — and the bars' percentage heights then resolve against a
-                  zero-height parent, so every bar rendered at 0px and the chart was permanently
-                  blank whatever the bid counts. Each wrapper anchors its own bar with justify-end. */}
+              {/* items-stretch, not items-end: with items-end the bar wrappers shrink to zero
+                 height and the bars' percentage heights resolve against nothing, so every bar
+                 would be 0px. Each wrapper anchors its own bar with justify-end. */}
               <div className="flex items-stretch gap-[3px] h-[100px]">
                 {!activeKnown ? (
                   <div className="flex-1 flex items-center justify-center">
@@ -224,9 +225,8 @@ export default function AdminDashboardOverview() {
                 <div className="flex flex-col gap-3">
                   {categoryStats.map(c => (
                     <div key={c.label} className="flex items-center gap-3">
-                      {/* Full category name, CSS-truncated to fit. Previously cut at the "&" in
-                          JS, so "Sports & Fitness" read as "Sports" and disagreed with every
-                          other screen — including the seller's own category picker. */}
+                      {/* Full category name, CSS-truncated to fit, so it matches every other
+                         screen. */}
                       <span title={c.label} className="font-medium text-[12px] text-tertiary w-[72px] sm:w-[80px] truncate">{c.label}</span>
                       <div className="flex-1 bg-bg rounded-full h-[6px]">
                         <div className="h-full rounded-full" style={{ width: `${c.pct}%`, background: c.color }} />
@@ -250,9 +250,9 @@ export default function AdminDashboardOverview() {
                   {!activeKnown ? '—' : active.length > 0 ? `${active.length} Active` : 'None Active'}
                 </span>
               </div>
-              {/* Only on a completed load: after a failed refetch the cache can still hold rows, and
-                  listing them here while "Bid Activity" beside it says the auctions could not load
-                  contradicts the page. */}
+              {/* Only on a completed load: after a failed refetch the cache can still hold rows,
+                 and listing them while "Bid Activity" says the auctions could not load would
+                 contradict the page. */}
               {activeKnown && topAuctions.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {topAuctions.map((a, i) => (

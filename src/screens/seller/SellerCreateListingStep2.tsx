@@ -11,8 +11,8 @@ import { pkr } from '../../utils/format';
 
 const DURATIONS = [3, 5, 7, 14];
 const MAX_PRICE = 100_000_000;
-// The server accepts durationDays 1–30. The presets only ever offered four of those, with no way
-// to enter anything else, so a seller could not run a 1-day or a 30-day auction at all.
+// The server accepts durationDays 1–30; the presets offer a few of them and a custom value covers
+// the rest.
 const MIN_DURATION = 1;
 const MAX_DURATION = 30;
 
@@ -25,11 +25,9 @@ export default function SellerCreateListingStep2() {
   const [minIncrementError, setMinIncrementError] = useState(fieldErrors.minIncrement ?? '');
   const [reservePriceError, setReservePriceError] = useState('');
   const [durationError, setDurationError] = useState('');
-  // The platform's two price rules, as the admin has them set right now. `null` means not known --
-  // loading, or the request failed -- and then there is nothing to check against and nothing to
-  // say: the checks below are skipped and the server, which enforces them on submit, decides. A
-  // stored copy of the numbers is not an answer: the admin can change them, and a stale copy both
-  // refused valid prices and accepted invalid ones.
+  // The platform's two price rules, as the admin has them set right now. `null` means not known
+  // (loading, or the request failed): then nothing is checked here and the server, which enforces
+  // them on submit, decides. A stored copy is not an answer, because the admin can change them.
   const [limits, setLimits] = useState<{ minListingPrice: number; maxBidIncrement: number } | null>(null);
   const [limitsFailed, setLimitsFailed] = useState(false);
   const [customDuration, setCustomDuration] = useState(!DURATIONS.includes(draft.duration));
@@ -68,7 +66,7 @@ export default function SellerCreateListingStep2() {
     else if (!Number.isInteger(draft.minIncrement)) { setMinIncrementError('Minimum increment must be a whole number'); invalidCount += 1; }
     else if (limits && draft.minIncrement > limits.maxBidIncrement) { setMinIncrementError(`Minimum increment cannot exceed ${pkr(limits.maxBidIncrement)}`); invalidCount += 1; }
     // An increment larger than the asking price means the first legal bid more than doubles it,
-    // which is almost never intended — PKR 500 start with a PKR 1,000 increment was accepted.
+    // which is almost never intended.
     else if (draft.startingPrice > 0 && draft.minIncrement > draft.startingPrice) {
       setMinIncrementError(`Increment can't exceed the ${pkr(draft.startingPrice)} starting price — the first bid would be ${pkr(draft.startingPrice + draft.minIncrement)}`);
       invalidCount += 1;
@@ -172,8 +170,6 @@ export default function SellerCreateListingStep2() {
                           {d}d
                         </button>
                       ))}
-                      {/* The four presets covered only part of the 1–30 days the server accepts,
-                          so short and long auctions were simply unreachable from the UI. */}
                       <button
                         type="button"
                         aria-pressed={customDuration}

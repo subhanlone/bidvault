@@ -40,10 +40,9 @@ export default function SellerCreateListingStep3() {
       showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and set a valid starting price.' });
       return;
     }
-    // Step 1 requires both of these, but /seller/create-listing/step-3 is a routable URL with
-    // no draft guard — which is why every other field is re-checked here. These two were
-    // missed, and an empty condition or category reaches the server as a 400 the seller sees
-    // only as "Please try again". Surfaced by typing the request body: draft.condition is
+    // Step 1 requires both of these, but /seller/create-listing/step-3 is a routable URL with no
+    // draft guard, so every field is re-checked here. An empty condition or category would reach
+    // the server as a 400 the seller sees only as "Please try again"; draft.condition is
     // `ItemCondition | ''` and the contract accepts no empty string.
     if (!draft.condition) {
       showToast({ type: 'error', title: 'Missing Info', message: 'Please go back and choose the item condition.' });

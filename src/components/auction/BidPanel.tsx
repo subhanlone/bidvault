@@ -150,7 +150,7 @@ export function PendingBidPanel() {
 
 /**
  * The signed-in person's side: the price with what their bids mean, quick bids, a custom amount and
- * the confirmation. A seller sees a notice instead on their own auction, because the server refuses
+ * the confirmation. On their own auction a seller sees a notice instead, because the server refuses
  * a bid on your own item.
  */
 export default function MemberBidPanel({
@@ -170,8 +170,8 @@ export default function MemberBidPanel({
   const confirmDialogRef = useDialog<HTMLDivElement>(pendingBidAmount !== null, () => setPendingBidAmount(null));
 
   const isOwnAuction = user.userId === auction.sellerId;
-  // BV-013: the first bid is allowed at the advertised starting price itself (matching eBay's
-  // convention) -- currentBid only needs clearing by a full increment once a bid actually exists.
+  // The first bid is allowed at the starting price itself (as eBay does); the price only has to be
+  // cleared by a full increment once a bid exists.
   const noBidsYet = auction.bidCount === 0;
   const minNext = noBidsYet ? auction.currentBid : auction.currentBid + auction.minIncrement;
   const myBids = bids.filter((b) => b.isMine);

@@ -38,12 +38,10 @@ interface FormState {
 }
 
 /**
- * A2, Phase 6: a rejected listing previously offered nothing beyond its rejection reason —
- * fixing it meant retyping a brand new submission. One page rather than reusing the 3-step
- * create wizard: the wizard's step-to-step state lives in ListingContext for a fresh draft with
- * no server round trip yet, and threading "editing an existing REJECTED row" through that
- * context would touch all three step screens for a flow this small. Same fields, same
- * validation, same category-attribute config — just PATCH instead of POST at the end.
+ * One page rather than reusing the 3-step create wizard: the wizard's step-to-step state lives in
+ * ListingContext for a fresh draft with no server round trip yet, and threading "editing an
+ * existing REJECTED row" through it would touch all three steps for a small flow. Same fields,
+ * validation and category-attribute config; PATCH instead of POST at the end.
  */
 export default function SellerEditListing() {
   const refreshSellerItems = useRefreshSellerItems();
@@ -69,8 +67,8 @@ export default function SellerEditListing() {
     let cancelled = false;
     (async () => {
       try {
-        // No single-listing GET route exists for a seller — /listings/mine is small enough at
-        // this project's scale to walk in full, same as the Dashboard once did.
+        // No single-listing GET route exists for a seller; /listings/mine is small enough to walk
+        // in full.
         const all = await fetchAllMyListings();
 
         const listing = all.find(l => l.listingId === listingId);

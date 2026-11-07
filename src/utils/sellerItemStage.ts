@@ -166,8 +166,6 @@ export function stageView(item: SellerItem, now: number): StageView {
   }
 }
 
-// ---- actions --------------------------------------------------------------------------------
-
 /**
  * Wording and weight of each action. The key order is the priority order on a row: the first
  * action an item has is its main button, drawn filled when `filled` is set; the second sits beside
@@ -214,8 +212,6 @@ export function listAgainDraft(item: SellerItem): ListingDraft {
     attributes: listing.attributes ?? {},
   };
 }
-
-// ---- details panel --------------------------------------------------------------------------
 
 /** The "Details" list in the expanded row. */
 export function detailFacts(item: SellerItem): Fact[] {

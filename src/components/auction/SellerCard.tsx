@@ -13,8 +13,8 @@ type Reviews = { average: number | null; count: number; reviews: SellerReview[] 
 
 /**
  * Who is selling: name, rating, sales, member since and where they are (city and province, never an
- * address). The reviews are public and load when asked for. Remount it per auction (`key`) so the
- * open/closed state does not follow the visitor to the next item.
+ * address). Reviews are public and load on request. Remount it per auction (`key`) so the open
+ * state does not follow the visitor to the next item.
  */
 export default function SellerCard({ auction }: { auction: SellerFields }) {
   const [open, setOpen] = useState(false);

@@ -1,19 +1,9 @@
-// Fails the build on any npm advisory that has not been explicitly, deliberately accepted.
-//
-//   npm run audit:gate
-//
-// Two failure modes, and the second is the point:
-//
-//   1. An advisory appears that audit-allowlist.json does not mention  -> fail.
-//   2. An entry in audit-allowlist.json no longer matches any advisory -> fail.
-//
-// (2) is what stops an accepted exception outliving its reason. When upstream ships the
-// fix, this build breaks and tells you to delete the entry, rather than leaving a stale
-// "we looked at this once" note in the repo forever.
-//
-// Plain .mjs with no dependencies so both repos run the identical file — the frontend has
-// no TypeScript runner for scripts, and adding one to check dependencies would be its own
-// small joke.
+// Fails the build on any npm advisory that has not been explicitly accepted (npm run audit:gate).
+// Two failure modes:
+// 1. An advisory that audit-allowlist.json does not mention.
+// 2. An allowlist entry that no longer matches any advisory. This stops an accepted exception
+// outliving its reason: the build breaks when upstream ships the fix and says to delete the entry.
+// Plain .mjs with no dependencies, so both repos run the identical file.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';

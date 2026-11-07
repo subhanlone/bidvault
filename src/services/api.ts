@@ -10,7 +10,7 @@ import type {
 } from '../types/openapi';
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
-/** Where both tokens used to be kept, before they moved out of web storage. Read once to migrate. */
+/** Where sessions from before the cookie kept both tokens; read once to migrate them. */
 const LEGACY_STORAGE_KEY = 'bidvault_auth_v1';
 
 /** Field -> messages, as produced by the backend's z.flattenError().fieldErrors. */
@@ -31,17 +31,12 @@ export class ApiError extends Error {
 }
 
 /**
- * The message a user should actually read.
- *
- * A validation failure answers with a constant top-level `error` -- "Validation error" -- and puts
- * the part that says what to change in `details`. Reading only `error` therefore shows every
- * validation failure as the same unactionable sentence: a rejected password, an over-long
- * description and a third emoji are indistinguishable, and nothing on screen says which field is
- * at fault. Preferring the field messages is what makes "Choose a less common password" reach the
- * person who has to choose one.
- *
- * Joined rather than shown per-field because callers render a single string; the field name is
- * left out because the message is displayed against the input that produced it.
+ * The message a user should actually read. A validation failure answers with a constant top-level
+ * `error` ("Validation error") and puts what to change in `details`, so reading only `error` would
+ * show every validation failure as the same sentence. Preferring the field messages is what lets
+ * "Choose a less common password" reach the person who has to choose one. Joined into one string
+ * because callers render one string; field names are left out because the message is shown against
+ * the input that produced it.
  */
 function readableError(error: string | undefined, details: ValidationDetails | undefined): string {
   const fieldMessages = Object.values(details ?? {})
@@ -52,12 +47,9 @@ function readableError(error: string | undefined, details: ValidationDetails | u
   return error ?? 'Request failed';
 }
 
-// ── Session state ────────────────────────────────────────────────────────────────────
-//
-// Nothing here is a credential that script can keep. The refresh token lives in an HttpOnly
-// cookie the browser attaches by itself (see the backend's refresh-cookie.ts), so this module never
-// sees it; the access token lives in this variable and nowhere else -- not in web storage, which
-// is what OWASP says credentials must stay out of, because one XSS reads all of it.
+// Session state. Nothing here is a credential that script can keep: the refresh token lives in an
+// HttpOnly cookie the browser attaches itself (this module never sees it), and the access token
+// lives in this variable and nowhere else, not in web storage, because one XSS reads all of it.
 
 let accessToken: string | null = null;
 
@@ -70,13 +62,11 @@ export function setAccessToken(token: string | null): void {
 }
 
 /**
- * Who this tab believes is signed in. Set by the tab that signs in, read by every tab.
- *
- * A hint, not a credential: it says "there is probably a session for this user", which saves an
- * anonymous visitor a refresh round trip on every page load, and -- because a `storage` event
- * reaches every *other* tab of the origin when it changes -- it is how a sign-in or sign-out in one
- * tab reaches the rest. Whether the session really exists is always decided by the cookie and the
- * server, never by this.
+ * Who this tab believes is signed in, set by the tab that signs in and read by every tab. A hint,
+ * not a credential: it saves an anonymous visitor a refresh round trip on every page load, and
+ * because a `storage` event reaches every other tab when it changes, it is how a sign-in or
+ * sign-out in one tab reaches the rest. Whether the session really exists is decided by the cookie
+ * and the server, never by this.
  */
 const SESSION_HINT_KEY = 'bidvault_session_v2';
 
@@ -105,13 +95,13 @@ export function isSessionHintEvent(event: StorageEvent): boolean {
 }
 
 // Sessions created before the cookie existed still hold both tokens in web storage. They are moved
-// onto the cookie once (the old refresh token goes to the server in a request body, which answers
-// with the cookie) and the stored copies are deleted, so nobody has to sign in again.
+// onto the cookie once (the stored refresh token goes to the server in a request body, which
+// answers with the cookie) and the stored copies are deleted, so nobody has to sign in again.
 interface LegacySession { refreshToken: string }
 
 function readLegacySession(): LegacySession | null {
   try {
-    // sessionStorage took priority in the old code (a login with "keep me signed in" unticked).
+    // sessionStorage took priority (a login with "keep me signed in" unticked).
     const raw = sessionStorage.getItem(LEGACY_STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { refreshToken?: unknown };
@@ -133,9 +123,9 @@ export function hasLegacySession(): boolean {
 }
 
 // Which user the UI is showing, so a token that belongs to someone else is never used on their
-// behalf. The cookie is shared by every tab, memory is not: if another tab switched accounts, this
-// tab's next refresh would come back as the *new* account while the screen still shows the old
-// one, and every action from here would silently run as someone the user is not looking at.
+// behalf. The cookie is shared by every tab and memory is not: if another tab switched accounts,
+// this tab's next refresh would come back as the new account while the screen still shows the old
+// one.
 let expectedUserId: string | null = null;
 
 export function setExpectedUserId(userId: string | null): void {
@@ -155,12 +145,9 @@ function tokenSubject(token: string): string | null {
 
 /**
  * How a refresh ended. "The server said no" and "we never got an answer" must not be confused: the
- * first means the session is over, the second says nothing about it. Treating both as a dead
- * session signed people out for a dropped Wi-Fi connection or a deploy in progress, with a
- * perfectly good session still waiting on the server.
- *
- * `identity-changed` is the third kind of failure: the server answered with a session, but it
- * belongs to a different account than the one this tab is showing.
+ * first means the session is over, the second says nothing about it (a dropped connection or a
+ * deploy in progress must not sign people out). `identity-changed` is the third kind: the server
+ * answered with a session that belongs to a different account than the one this tab shows.
  */
 type RefreshOutcome =
   | { kind: 'refreshed'; accessToken: string }
@@ -232,12 +219,11 @@ export async function getFreshAccessToken(): Promise<FreshAccessToken> {
 const REFRESH_LOCK = 'bidvault-auth-refresh';
 
 // Attempts per refresh, how long each may take, and the pause between them. The server answers a
-// repeat of a token it spent moments ago with the successor it already issued (see its
-// REFRESH_REUSE_INTERVAL_SECONDS, 10 s by default), which is what makes retrying safe when a
-// response was lost after the server had already processed the request. The whole sequence --
-// the last attempt starts at most 2 x (3 s + 1 s) = 8 s after the first -- therefore has to fit
-// inside that interval. The timeout also keeps a hung request from holding the lock, and with it
-// every other tab's refresh.
+// repeat of a token it spent moments ago with the successor it already issued
+// (REFRESH_REUSE_INTERVAL_SECONDS, 10 s by default), which makes retrying safe when a response was
+// lost, so the whole sequence (the last attempt starts at most 2 x (3 s + 1 s) = 8 s after the
+// first) has to fit inside that interval. The timeout also keeps a hung request from holding the
+// lock, and with it every other tab's refresh.
 const REFRESH_ATTEMPTS = 3;
 const REFRESH_ATTEMPT_TIMEOUT_MS = 3_000;
 const REFRESH_RETRY_DELAY_MS = 1_000;
@@ -324,11 +310,9 @@ export async function restoreSession(): Promise<RestoreResult> {
   return { kind: 'anonymous' };
 }
 
-// This module cannot reach React state, so it announces a dead session instead of trying to
-// react to it. AuthContext owns the user state and subscribes here; once it drops to anonymous,
-// <ProtectedRoute> sends the visitor to /login on a route that needs a session and leaves public
-// pages (landing, legal, auth screens) alone. A route list kept in this file instead silently
-// missed any protected screen that was not on it.
+// This module cannot reach React state, so it announces a dead session instead of reacting to it.
+// AuthContext owns the user state and subscribes here; once it drops to anonymous, <ProtectedRoute>
+// sends the visitor to /login on a route that needs a session and leaves public pages alone.
 type Listener = () => void;
 const sessionExpiredListeners = new Set<Listener>();
 const identityChangedListeners = new Set<Listener>();
@@ -395,9 +379,7 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
     resp = await fetch(`${BASE_URL}${path}`, { ...options, headers, credentials: 'include' });
   }
 
-  // 204 has no body by definition -- calling .json() on one throws, and nothing in this
-  // contract sends one today, but a proxy or a future endpoint could. Treat it as an empty
-  // success rather than reaching the parse below at all.
+  // 204 has no body, and calling .json() on one throws, so treat it as an empty success.
   if (resp.status === 204) return undefined as T;
 
   let body: {
@@ -410,9 +392,8 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   try {
     body = await resp.json();
   } catch {
-    // A gateway timeout, a proxy's HTML error page, a truncated connection -- anything that
-    // isn't the JSON this contract always sends threw a raw SyntaxError here before, which
-    // no caller catching ApiError ever saw and no user ever read a sensible message for.
+    // Anything that is not the JSON this contract always sends (a gateway timeout, a proxy's HTML
+    // error page, a truncated connection) becomes an ApiError rather than a raw SyntaxError.
     throw new ApiError(resp.status, 'The server returned an unreadable response. Please try again.');
   }
 
@@ -440,19 +421,13 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   return body.data as T;
 }
 
-// ── Typed endpoints ──────────────────────────────────────────────────────────────────
-//
-// The URL now decides the response type. Before this, every call passed its own type
-// argument — `api.get<Auction[]>('/watchlist')` — which is an assertion, not a check: the
-// server was returning a five-field subset and TypeScript had no opinion, because the
-// assertion *was* the contract. These maps come from openapi.json, so the URL is checked
-// against the routes that exist and the response type is read from the same spec the
+// Typed endpoints. The URL decides the response type: these maps come from openapi.json, so the URL
+// is checked against the routes that exist and the response type is read from the same spec the
 // server validates with.
-//
-// Known limitation: a path parameter is matched as `${string}`, which also matches a
-// slash. So an over-deep URL under a real prefix (`/auctions/a/b/c`) satisfies the
-// parameter type, then resolves to `never` and errors wherever the result is used, rather
-// than at the call. Typos in a static path, and every undocumented path, are caught here.
+// Known limitation: a path parameter is matched as `${string}`, which also matches a slash, so an
+// over-deep URL under a real prefix (`/auctions/a/b/c`) satisfies the parameter type, then resolves
+// to `never` and errors where the result is used rather than at the call. Typos in a static path
+// and every undocumented path are caught here.
 
 /** Drop a query string: '/auctions?status=ACTIVE' -> '/auctions'. */
 type Base<U extends string> = U extends `${infer B}?${string}` ? B : U;
@@ -490,20 +465,15 @@ type Pattern<K extends string> =
 type Url<M> = Pattern<keyof M & string> | `${Pattern<keyof M & string>}?${string}`;
 
 /**
- * The body documented for `U` — the same lookup as `ResponseOf`, against the request maps
- * instead of the response ones. Resolves to `never` for the seven mutating routes the
- * contract gives no body (approve, approve-all, read, read-all, watchlist add,
- * upload-signature, the Stripe webhook).
+ * The body documented for `U`: the same lookup as `ResponseOf`, against the request maps. Resolves
+ * to `never` for the mutating routes the contract gives no body.
  */
 type BodyOf<U extends string, M> = ResponseOf<U, M>;
 
 /**
- * `[body]` when the contract documents one, `[]` when it does not.
- *
- * A rest parameter rather than `body?:` so the two cases are distinguishable: a route with
- * a documented body cannot be called without one, and a route without cannot be handed a
- * stray object. `body?: unknown` — what this was — accepted both mistakes silently, which
- * is the same shape of hole the URL argument had before the response maps landed.
+ * `[body]` when the contract documents one, `[]` when it does not. A rest parameter rather than
+ * `body?:` so the two cases are distinguishable: a route with a documented body cannot be called
+ * without one, and a route without one cannot be handed a stray object.
  */
 type BodyArgs<U extends string, M> = [BodyOf<U, M>] extends [never]
   ? []

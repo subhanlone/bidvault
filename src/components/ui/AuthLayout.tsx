@@ -19,9 +19,8 @@ export default function AuthLayout({ headline, subtext, bullets, stats, children
         <div className="relative z-10 flex flex-col h-full">
           <BidVaultLogo size="lg" to="/" />
           <div className="flex-1 flex flex-col justify-center mt-12">
-            {/* The panel this sits in is `hidden lg:flex`, so below 1024px this heading does not
-                render at all and the page was left with no h1. Kept as the h1 on large
-                screens; AuthLayout consumers carry their own visible h1 for small ones. */}
+            {/* This panel is `hidden lg:flex`, so below 1024px the heading does not render;
+               consumers carry their own visible h1 for small screens. */}
             <h1 className="text-3xl font-bold text-white leading-tight mb-4">{headline}</h1>
             {subtext && <p className="text-white/60 text-sm leading-relaxed mb-8">{subtext}</p>}
             {bullets && (
@@ -51,7 +50,6 @@ export default function AuthLayout({ headline, subtext, bullets, stats, children
       </div>
 
       {/* Right panel */}
-      {/* TODO: Add preconnect for Google Fonts in index.html for performance. */}
       <main className="flex-1 bg-surface flex flex-col">
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="w-full max-w-[480px] mx-auto">
