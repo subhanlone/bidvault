@@ -111,6 +111,22 @@ export type Auction = {
   attributes?: CategoryAttributes;
 };
 
+export type AuctionFacets = {
+  categories: {
+    name: string;
+    count: number;
+  }[];
+  conditions: {
+    value: ItemCondition;
+    count: number;
+  }[];
+  priceBands: ({
+    id: "under-5000" | "5000-25000" | "over-25000";
+    count: number;
+  })[];
+  withBids: number;
+};
+
 export type AuctionStatus = "ACTIVE" | "CLOSED" | "CANCELLED";
 
 export type Bid = {
@@ -726,6 +742,7 @@ export interface GetEndpoints {
   "/admin/transactions": AdminTransaction[];
   "/admin/users": PaginatedAdminUsers;
   "/auctions": PaginatedAuctions;
+  "/auctions/facets": AuctionFacets;
   "/auctions/mine": PaginatedAuctions;
   "/auctions/mine/bids": PaginatedBidsWithAuction;
   "/auctions/{auctionId}": Auction;
