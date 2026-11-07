@@ -204,20 +204,20 @@ export default function LandingPage() {
       accent: 'var(--color-success-dark)',
       iconBg: 'rgba(26,122,74,0.08)',
       title: 'Transparent Bidding',
-      desc: 'Full bid history visible to all participants — see every bid, every amount, and every timestamp in real time.',
+      desc: 'Every auction shows its live price and bid count to everyone. Signed-in bidders also see the full bid list, with bidder names masked.',
     },
   ];
 
   const buyerSteps = [
-    { step: '01', title: 'Browse & Discover', desc: 'Search thousands of live auctions across Electronics, Vehicles, Fashion, and more. Filter by price, time left, or category.' },
+    { step: '01', title: 'Browse & Discover', desc: 'Search live auctions across Electronics, Vehicles, Fashion, and more. Filter by price, time left, or category.' },
     { step: '02', title: 'Place Your Bid', desc: 'Enter your amount, review the binding commitment, and confirm. Watch the live bid feed update in real-time.' },
-    { step: '03', title: 'Win & Connect', desc: 'If you win, the seller contacts you within 24 hours to arrange payment and delivery. Simple.' },
+    { step: '03', title: 'Win & Receive', desc: 'Pay on BidVault after you win. The seller ships your item and you confirm that it arrived.' },
   ];
 
   const sellerSteps = [
-    { step: '01', title: 'Create Your Account', desc: 'Register as a seller and set up your profile. Verify your email to get started.' },
+    { step: '01', title: 'Create Your Account', desc: 'Sign up and verify your email, then choose Become a seller: accept the seller terms and give your city.' },
     { step: '02', title: 'Create a Listing', desc: 'Upload photos and describe your item in detail. Set your own starting price for the auction.' },
-    { step: '03', title: 'Go Live & Earn', desc: 'After admin approval, your auction goes live to thousands of active buyers. Watch bids roll in.' },
+    { step: '03', title: 'Go Live & Earn', desc: 'After admin approval, your auction goes live for every buyer on BidVault. Watch bids roll in.' },
   ];
 
   const navLinks: Array<{ label: string; action: () => void }> = [
@@ -603,7 +603,7 @@ export default function LandingPage() {
       <section className="bg-surface border-y border-border-light py-10">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-            <p className="font-bold text-[13px] text-muted uppercase tracking-[1px]">Trusted by buyers and sellers across Pakistan</p>
+            <p className="font-bold text-[13px] text-muted uppercase tracking-[1px]">Buy and sell with people across Pakistan</p>
             <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 sm:gap-6">
               {['Karachi', 'Lahore', 'Islamabad', 'Peshawar', 'Quetta', 'Faisalabad'].map(city => (
                 <span key={city} className="font-semibold text-[13px] text-placeholder flex items-center gap-1">

@@ -55,7 +55,7 @@ function AnonymizeUserModal({ target, onClose, onDone }: {
         </p>
         <Input
           label="Reason"
-          placeholder="e.g. Requested via privacy@bidvault.com ticket #42"
+          placeholder="e.g. Requested by the account owner by e-mail"
           value={reason}
           onChange={e => setReason(e.target.value)}
           maxLength={500}
@@ -90,7 +90,7 @@ function UserRow({ user, onSuspend, onDelete, onReinstate, reinstating }: {
     <div className="flex items-center justify-between gap-3 p-3">
       <div className="min-w-0">
         <p className="font-semibold text-[13px] text-secondary truncate">
-          {user.name} <span className="font-normal text-muted">· {user.role}</span>
+          {user.name}{user.role === 'ADMIN' && <span className="font-normal text-muted"> · Administrator</span>}
           {user.status === 'SUSPENDED' && (
             <span className="ml-2 font-bold text-[10px] text-error bg-error-bg border border-error-border rounded-full px-2 py-0.5 align-middle">Suspended</span>
           )}

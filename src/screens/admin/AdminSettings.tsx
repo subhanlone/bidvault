@@ -165,10 +165,10 @@ export default function AdminSettings() {
                 <span className="font-extrabold text-[22px] text-white">{user?.name?.[0] ?? 'A'}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-[15px] text-navy">{user?.name ?? 'Admin BidVault'}</p>
-                <p className="text-[12px] text-muted">{user?.email ?? 'admin@bidvault.com'}</p>
+                <p className="font-bold text-[15px] text-navy">{user?.name}</p>
+                <p className="text-[12px] text-muted">{user?.email}</p>
                 <span className="inline-flex items-center mt-1 bg-primary-surface border border-[rgba(208,2,27,0.2)] font-bold text-[10px] text-primary px-2 py-[2px] rounded-full">
-                  Super Admin
+                  Administrator
                 </span>
               </div>
             </div>

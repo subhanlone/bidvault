@@ -98,9 +98,9 @@ export default function LoginScreen() {
       headline="Your auctions are waiting for you"
       subtext="Sign in to continue bidding, manage your listings, or access your admin controls — all in one place."
       bullets={[
-        'Role-based dashboard — Buyer / Seller / Admin',
-        'JWT secured session with auto-refresh',
-        'Real-time bid updates via Socket.io',
+        'One account to bid and to sell',
+        'Live prices and bid updates',
+        'Every listing is reviewed before it goes live',
       ]}
       stats={panelStats}
     >

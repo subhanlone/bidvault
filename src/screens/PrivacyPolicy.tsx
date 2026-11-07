@@ -4,7 +4,7 @@ import { Gavel } from 'lucide-react';
 const SECTIONS = [
   {
     title: '1. Information We Collect',
-    body: `When you create an account on BidVault, we collect personal information including your full name, email address, and selected account role (Buyer or Seller). We also collect usage data such as bids placed, listings created, auction participation history, and device/browser metadata for security and fraud prevention.`,
+    body: `When you create an account on BidVault, we collect personal information including your full name and email address. If you become a seller we also collect the city and province you give (shown on your auctions as the item's location), an optional phone number (shown only to a buyer who has paid for your item), an optional short bio, and the time you confirmed that you are 18 or older and accepted the seller terms. When you pay for an item we collect the delivery address and phone number you enter, which are shared with that item's seller so they can ship it. We also collect usage data such as bids placed, listings created, auction participation history, and device/browser metadata for security and fraud prevention.`,
   },
   {
     title: '2. How We Use Your Information',
@@ -28,7 +28,7 @@ const SECTIONS = [
   },
   {
     title: '7. Your Rights',
-    body: `You have the right to access, correct, or request deletion of your personal data. To exercise these rights, contact us at privacy@bidvault.com. We will respond within 14 business days. Note that deleting your account will forfeit any active bids or pending listings.`,
+    body: `You have the right to access, correct, or request deletion of your personal data. To exercise these rights, contact us at support@bidvault.tech. We will respond within 14 business days. Note that deleting your account will forfeit any active bids or pending listings.`,
   },
   {
     title: '8. Changes to This Policy',
@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
         <div className="mb-10">
           <p className="font-bold text-[12px] text-primary uppercase tracking-[1.5px] mb-2">Legal</p>
           <h1 className="font-extrabold text-[28px] sm:text-[36px] text-navy tracking-[-0.5px] mb-3">Privacy Policy</h1>
-          <p className="text-[14px] text-muted">Last updated: May 2026 · Effective for all BidVault users</p>
+          <p className="text-[14px] text-muted">Last updated: November 2026 · Effective for all BidVault users</p>
           <div className="mt-4 bg-bg border border-border-light rounded-md px-4 py-3">
             <p className="text-[13px] text-tertiary leading-[1.6]">
               BidVault ("we", "us", "our") is committed to protecting your privacy. This policy explains what information we collect, how we use it, and your rights regarding your personal data. By using BidVault, you agree to this policy.
@@ -84,8 +84,8 @@ export default function PrivacyPolicy() {
         <div className="mt-10 bg-navy rounded-md px-5 py-5">
           <p className="font-bold text-[14px] text-white mb-1">Questions about this policy?</p>
           <p className="text-[13px] text-[rgba(255,255,255,0.55)]">
-            Contact our privacy team at{' '}
-            <a href="mailto:privacy@bidvault.com" className="text-primary font-bold hover:underline">privacy@bidvault.com</a>.
+            Contact us at{' '}
+            <a href="mailto:support@bidvault.tech" className="text-primary font-bold hover:underline">support@bidvault.tech</a>.
             We respond within 14 business days.
           </p>
         </div>

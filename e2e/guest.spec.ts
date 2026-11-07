@@ -262,6 +262,57 @@ test.describe('A signed-in member on the same page', () => {
   });
 });
 
+// What the public pages say about the product has to be what the product does (one account buys and
+// sells, the bid list is for members, payment is on BidVault, the contact address is the real one).
+test.describe('Public text matches the product', () => {
+  test('the home page makes no claim the product contradicts', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'How BidVault Works' })).toBeVisible();
+    const body = page.locator('body');
+    await expect(body).not.toContainText('Full bid history visible to all participants');
+    await expect(body).not.toContainText('contacts you within 24 hours');
+    await expect(body).not.toContainText('Register as a seller');
+    await expect(body).not.toContainText(/thousands of/i);
+    await expect(body).not.toContainText('Trusted by buyers and sellers');
+    await expect(page.getByText(/Signed-in bidders also see the full bid list/)).toBeVisible();
+  });
+
+  test('the sign-in page tells people what they get, not how it is built', async ({ page }) => {
+    await page.goto('/login');
+    await expect(page.getByRole('heading', { name: 'Sign in to BidVault' })).toBeVisible();
+    const body = page.locator('body');
+    await expect(body).not.toContainText('Role-based dashboard');
+    await expect(body).not.toContainText('JWT');
+    await expect(body).not.toContainText('Socket.io');
+    await expect(page.getByText('One account to bid and to sell')).toBeVisible();
+  });
+
+  test('the privacy policy describes one account, the seller details and the real contact address', async ({ page }) => {
+    await page.goto('/privacy');
+    await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
+    const body = page.locator('body');
+    await expect(body).not.toContainText('selected account role');
+    await expect(body).not.toContainText('bidvault.com');
+    await expect(body).not.toContainText('May 2026');
+    await expect(body).toContainText('Last updated: November 2026');
+    await expect(body).toContainText('city and province');
+    await expect(body).toContainText('delivery address');
+    await expect(page.getByRole('link', { name: 'support@bidvault.tech' }).first()).toBeVisible();
+  });
+
+  test('the terms describe instant selling, payment on BidVault and the real contact address', async ({ page }) => {
+    await page.goto('/terms');
+    await expect(page.getByRole('heading', { name: 'Terms of Service' })).toBeVisible();
+    const body = page.locator('body');
+    await expect(body).not.toContainText('bidvault.com');
+    await expect(body).not.toContainText('May 2026');
+    await expect(body).not.toContainText('arrangements are made directly between');
+    await expect(body).not.toContainText('before listing privileges are granted');
+    await expect(body).toContainText('Last updated: November 2026');
+    await expect(page.getByRole('link', { name: 'support@bidvault.tech' }).first()).toBeVisible();
+  });
+});
+
 test.describe('Live updates', () => {
   test('a guest sees the price and the count change when a member bids, without a reload, and never a bidder name', async ({ browser, request }) => {
     await ensureAccount(request);
