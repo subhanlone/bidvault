@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer, Search } from 'lucide-react';
+import { Clock, Gavel, Users, Banknote, Star, MapPin, Lock, Zap, BarChart2, Hammer } from 'lucide-react';
 import { useTimer } from '../hooks/useTimer';
 import { useTabKeys } from '../hooks/useTabKeys';
 import type { Auction } from '../types/api';
@@ -10,6 +10,7 @@ import { useAuth } from '../context/auth';
 import { conditionLabel, count, locatedIn, pkr } from '../utils/format';
 import LoadingStatus from '../components/ui/LoadingStatus';
 import { BROWSE_CATEGORIES } from '../config/categories';
+import { useSignInLink } from '../hooks/useSignInLink';
 
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -111,7 +112,10 @@ function SkeletonCard() {
 export default function LandingPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  const signIn = useSignInLink();
+  // Someone whose session is still being restored is not shown the guest banner.
+  const isGuest = !user && !isLoading;
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'buyers' | 'sellers'>('buyers');
   const onTabKeys = useTabKeys(['buyers', 'sellers'] as const, activeTab, setActiveTab);
@@ -318,93 +322,52 @@ export default function LandingPage() {
 
       <main aria-label="BidVault marketing content">
 
-      {/* Hero */}
-      <section className="bg-navy relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }} />
-        <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-primary opacity-[0.07] rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] bg-success-dark opacity-[0.06] rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
+      {/* Hero: one line of what this is, and the search. */}
+      <section className="bg-navy">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pt-9 pb-11 flex flex-col gap-5">
+          <h1 className="font-extrabold text-[28px] sm:text-[34px] lg:text-[38px] text-white leading-[1.15] tracking-[-0.025em] max-w-[680px]">
+            Bid on what you want, from sellers across Pakistan.
+          </h1>
 
-        <div className="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-28">
-          <div className="max-w-[720px] mx-auto text-center lg:text-left lg:mx-0">
+          <form role="search" onSubmit={handleSearch} className="flex flex-col sm:flex-row max-w-[760px]">
+            <label htmlFor="home-search" className="sr-only">Search auctions</label>
+            <input
+              id="home-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name"
+              className="min-w-0 sm:flex-1 h-[50px] px-[18px] rounded-t-[10px] sm:rounded-tr-none sm:rounded-l-[10px] bg-surface text-[15px] text-navy outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+            <label htmlFor="home-category" className="sr-only">Category</label>
+            <select
+              id="home-category"
+              value={searchCategory}
+              onChange={(e) => setSearchCategory(e.target.value)}
+              className="h-[50px] px-3 bg-surface border-t sm:border-t-0 sm:border-l border-border-light text-[14px] text-navy outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <option value="">All categories</option>
+              {BROWSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <Button type="submit" variant="primary" size="lg" className="h-[50px] rounded-t-none rounded-b-[10px] sm:rounded-r-[10px] sm:rounded-l-none px-6">
+              Search
+            </Button>
+          </form>
 
-            {/* Gated on there being live auctions, so the badge never sits above a "0 Active
-               Auctions" tile. */}
-            <div className="inline-flex items-center gap-2 bg-[rgba(208,2,27,0.15)] border border-[rgba(208,2,27,0.3)] rounded-full px-4 py-1.5 mb-6">
-              {hasLiveAuctions ? (
-                <>
-                  <span className="size-[6px] rounded-full bg-primary inline-block animate-pulse" aria-hidden="true" />
-                  <span className="font-bold text-[12px] text-primary-tint">
-                    {liveStats?.activeAuctionCount
-                      ? `${liveStats.activeAuctionCount} ${liveStats.activeAuctionCount === 1 ? 'Auction' : 'Auctions'} Running Now`
-                      : 'Live Auctions Running Now'}
-                  </span>
-                </>
-              ) : (
-                <span className="font-bold text-[12px] text-primary-tint">Bid on Verified Listings</span>
-              )}
+          {isGuest && (
+            <div role="note" className="max-w-[760px] bg-white/10 border border-white/20 rounded-[10px] px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-3">
+              <p className="flex-1 min-w-[240px] text-[14px] leading-[1.5] text-white">
+                Anyone can look around.{' '}
+                <strong className="font-bold">With an account you can bid, watch items and sell your own.</strong>
+              </p>
+              <Link
+                {...signIn}
+                className="h-9 px-4 inline-flex items-center rounded-lg border border-white/45 text-[13px] font-bold text-white no-underline hover:border-white transition-colors"
+              >
+                Sign in
+              </Link>
             </div>
-
-            <h1 className="font-extrabold text-[36px] sm:text-[48px] lg:text-[60px] text-white leading-[1.1] tracking-[-1.5px] mb-5">
-              Pakistan's Smartest<br />
-              <span className="text-primary">Real-Time</span> Auction<br />
-              Platform
-            </h1>
-
-            <p className="text-[15px] sm:text-[17px] text-[rgba(255,255,255,0.65)] leading-[1.7] mb-8 max-w-[560px] mx-auto lg:mx-0">
-              Bid on verified items, sell with transparent listings, and experience real-time auctions — all in one secure platform built for Pakistan.
-            </p>
-
-            <form role="search" onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-0 mb-6 max-w-[620px] mx-auto lg:mx-0">
-              <label htmlFor="home-search" className="sr-only">Search auctions</label>
-              <input
-                id="home-search"
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name"
-                className="flex-1 min-w-0 h-[50px] px-4 rounded-t-md sm:rounded-tr-none sm:rounded-l-md bg-surface text-[15px] text-navy outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              />
-              <label htmlFor="home-category" className="sr-only">Category</label>
-              <select
-                id="home-category"
-                value={searchCategory}
-                onChange={(e) => setSearchCategory(e.target.value)}
-                className="h-[50px] px-3 bg-surface border-t sm:border-t-0 sm:border-l border-border-light text-[14px] text-navy outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <option value="">All categories</option>
-                {BROWSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <Button type="submit" variant="primary" size="lg" className="h-[50px] rounded-t-none sm:rounded-r-md sm:rounded-l-none px-6">
-                <Search size={16} aria-hidden="true" /> Search
-              </Button>
-            </form>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => navigate('/register')}
-                className="w-full sm:w-auto px-8 shadow-[0_8px_24px_rgba(208,2,27,0.35)]"
-              >
-                Start Bidding
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => navigate(user ? '/become-a-seller' : '/register')}
-                className="w-full sm:w-auto bg-transparent border-white/25 text-white hover:border-white hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
-              >
-                Sell Your Items
-              </Button>
-            </div>
-
-            <p className="mt-4 text-[12px] text-[rgba(255,255,255,0.35)]">
-              Join · Create listings · Place bids · Win auctions · Buy & sell with confidence
-            </p>
-          </div>
+          )}
         </div>
       </section>
 

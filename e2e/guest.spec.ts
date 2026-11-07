@@ -226,6 +226,58 @@ test.describe('The auction page for a guest', () => {
   });
 });
 
+test.describe('Home hero', () => {
+  test('is one short headline and a search, and the auctions start on the first screen', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const h1 = page.getByRole('heading', { level: 1 });
+    await expect(h1).toHaveText('Bid on what you want, from sellers across Pakistan.');
+    expect(await h1.evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 'a compact headline').toBeLessThanOrEqual(40);
+    await expect(page.getByRole('search').getByRole('button', { name: 'Search' })).toBeVisible();
+    // The old marketing hero is gone.
+    await expect(page.getByText("Pakistan's Smartest")).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Start Bidding' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Sell Your Items' })).toHaveCount(0);
+    // The first screen already shows what is for sale.
+    const ending = page.getByRole('heading', { name: 'Ending soon' });
+    await expect(ending).toBeVisible();
+    const box = await ending.boundingBox();
+    expect(box?.y ?? Infinity, 'Ending soon starts above the fold').toBeLessThan(600);
+  });
+
+  test('on a phone the search keeps its size and the page does not scroll sideways', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    const field = page.getByLabel('Search auctions');
+    await expect(field).toBeVisible();
+    const box = await field.boundingBox();
+    expect(box?.height ?? 0, 'the field is not squashed').toBeGreaterThanOrEqual(48);
+    expect(box?.width ?? 0, 'the field spans the width').toBeGreaterThan(300);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), 'no sideways scroll').toBe(false);
+  });
+
+  test('tells a guest that anyone can look around and offers the sign-in', async ({ page }) => {
+    await page.goto('/');
+    const note = page.getByRole('note');
+    await expect(note).toContainText('Anyone can look around.');
+    await expect(note).toContainText('With an account you can bid, watch items and sell your own.');
+    await note.getByRole('link', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  test('shows a signed-in person no sign-in banner', async ({ page, request }) => {
+    await ensureAccount(request);
+    await page.goto('/login');
+    await signInOnLoginPage(page);
+    await page.waitForURL((url) => !url.pathname.startsWith('/login'));
+    await page.goto('/');
+    // The session is restored once the cards offer to bid instead of view.
+    await expect(page.getByRole('button', { name: /^Bid on / }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('note')).toHaveCount(0);
+  });
+});
+
 test.describe('Home', () => {
   test('leads with Ending soon auctions that open the auction page', async ({ page }) => {
     await page.goto('/');
