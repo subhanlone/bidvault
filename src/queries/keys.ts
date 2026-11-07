@@ -21,6 +21,8 @@ export const keys = {
     /** GET /auctions/mine/bids */
     mine: ['bids', 'mine'] as const,
   },
+  /** GET /settings/public. */
+  publicSettings: ['publicSettings'] as const,
   notifications: ['notifications'] as const,
   sellerItems: {
     /** Every seller-items cache entry; one invalidation after any action on an item refreshes the

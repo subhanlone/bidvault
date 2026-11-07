@@ -84,6 +84,7 @@ export type Approval = {
 export type Auction = {
   auctionId: string;
   listingId: string;
+  listingCode: string;
   title: string;
   category: string;
   condition: ItemCondition;
@@ -407,6 +408,8 @@ export type PublicSettings = {
   maintenanceMode: boolean;
   supportEmail: string;
   sellerTermsVersion: string;
+  paymentDeadlineHours: number;
+  reviewTimeoutHours: number;
 };
 
 export type RaiseDisputeRequest = {

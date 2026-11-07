@@ -138,6 +138,7 @@ export default function AuctionPage() {
   const specifics: { label: string; value: string }[] = [
     { label: 'Condition', value: conditionLabel(auction.condition) },
     { label: 'Category', value: auction.category },
+    { label: 'Item number', value: auction.listingCode },
     ...getCategoryFields(auction.category).flatMap((field) => {
       const value = auction.attributes?.[field.key];
       return value === undefined || value === '' ? [] : [{ label: field.label, value: String(value) }];

@@ -96,6 +96,37 @@ test.describe('The auction page for a guest', () => {
     await expect(page.getByText('25,000')).toHaveCount(0);
   });
 
+  test('shows the item number, the same code the listing carries', async ({ page, request }) => {
+    const id = await auctionIdOf(request, 'ACTIVE', LIVE);
+    const { data } = (await (await request.get(`${API}/auctions/${id}`)).json()) as { data: { listingCode: string } };
+    expect(data.listingCode, 'the API serves the item number').toBeTruthy();
+    await page.goto(`/auctions/${id}`);
+    await expect(page.getByText('Item number', { exact: true })).toBeVisible();
+    await expect(page.getByText(data.listingCode, { exact: true })).toBeVisible();
+  });
+
+  test('quotes the admin\'s payment and confirmation windows in the buying rules', async ({ page, request }) => {
+    const id = await auctionIdOf(request, 'ACTIVE', LIVE);
+    const { data } = (await (await request.get(`${API}/settings/public`)).json()) as {
+      data: { paymentDeadlineHours: number; reviewTimeoutHours: number };
+    };
+    await page.goto(`/auctions/${id}`);
+    const rules = page.getByRole('region', { name: 'Buying on BidVault' });
+    await expect(rules).toContainText(`You pay on BidVault within ${data.paymentDeadlineHours} hours after you win.`);
+    await expect(rules).toContainText(`you have ${data.reviewTimeoutHours} hours after it ships to confirm that it arrived or raise a dispute`);
+  });
+
+  test('states the buying rules without figures when the settings cannot be read', async ({ page, request }) => {
+    const id = await auctionIdOf(request, 'ACTIVE', LIVE);
+    await page.route('**/api/v1/settings/public', (route) => route.abort());
+    await page.goto(`/auctions/${id}`);
+    const rules = page.getByRole('region', { name: 'Buying on BidVault' });
+    await expect(rules).toContainText('You pay on BidVault after you win.');
+    await expect(rules).toContainText('you confirm that it arrived.');
+    await expect(rules).not.toContainText('NaN');
+    await expect(rules).not.toContainText(/within \d/);
+  });
+
   test('says the bid list is for signed-in members, and never asks for it', async ({ page, request }) => {
     const id = await auctionIdOf(request, 'ACTIVE', LIVE);
     const asked: string[] = [];

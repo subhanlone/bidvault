@@ -1,15 +1,24 @@
-import { locatedIn } from '../../utils/format';
+import { usePublicSettings } from '../../queries/publicSettings';
+import { count, locatedIn } from '../../utils/format';
 
 /**
  * The rules a bidder agrees to, in plain words, shown before they sign in. The payment and
- * confirmation windows are admin settings and are not quoted here yet (nothing is hard-coded).
+ * confirmation windows are the admin's live settings; until they have loaded (or if they cannot be)
+ * the rules are stated without figures rather than with a guess.
  */
 export default function BuyingRules({ city, province }: { city: string | null; province: string | null }) {
+  const { data: settings } = usePublicSettings();
   const place = locatedIn(city, province);
+  const payment = settings
+    ? `You pay on BidVault within ${count(settings.paymentDeadlineHours, 'hour')} after you win.`
+    : 'You pay on BidVault after you win.';
+  const delivery = settings
+    ? `The seller ships the item, and you have ${count(settings.reviewTimeoutHours, 'hour')} after it ships to confirm that it arrived or raise a dispute.`
+    : 'The seller ships the item, and you confirm that it arrived.';
   const rows: { label: string; value: string }[] = [
     { label: 'Bids', value: 'Every bid is binding. If yours is the highest when the clock runs out, you buy the item.' },
-    { label: 'Payment', value: 'You pay on BidVault after you win.' },
-    { label: 'Delivery', value: 'The seller ships the item, and you confirm that it arrived.' },
+    { label: 'Payment', value: payment },
+    { label: 'Delivery', value: delivery },
     ...(place ? [{ label: 'Located in', value: place }] : []),
     { label: "Seller's phone", value: 'Shown to the buyer after payment, so you can arrange pickup or a courier.' },
   ];
