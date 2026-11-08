@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Menu, Receipt, ShieldAlert, X } from 'lucide-react';
+import { Menu, PackageX, Receipt, ShieldAlert, X } from 'lucide-react';
 import AdminLayout from '../../components/ui/AdminLayout';
 import NotificationBell from '../../components/ui/NotificationBell';
 import Button from '../../components/ui/Button';
 import ErrorState from '../../components/ui/ErrorState';
+import ReasonModal from '../../components/ui/ReasonModal';
 import Textarea from '../../components/ui/Textarea';
 import { useDialog } from '../../hooks/useDialog';
 import { useNow } from '../../hooks/useNow';
@@ -11,7 +12,16 @@ import { useTabKeys } from '../../hooks/useTabKeys';
 import { useToast } from '../../context/toast';
 import { api } from '../../services/api';
 import type { AdminDispute } from '../../types/api';
-import { dateMedium, pkrCompact } from '../../utils/format';
+import type { AdminTransaction } from '../../types/openapi';
+import { dateMedium, dateTimeShort, pkrCompact } from '../../utils/format';
+
+type Tab = 'pending' | 'unshipped' | 'disputes';
+const TABS: Tab[] = ['pending', 'unshipped', 'disputes'];
+const TAB_SUBTITLE: Record<Tab, string> = {
+  pending: 'Sales still awaiting payment',
+  unshipped: 'Paid sales the seller has not shipped by their ship-by time',
+  disputes: 'Buyer-reported problems awaiting review',
+};
 
 interface PendingTransaction {
   transactionId: string;
@@ -237,12 +247,17 @@ function ResolveModal({ dispute, now, checking, onClose, onResolved }: {
 
 export default function AdminTransactions() {
   const { showToast } = useToast();
-  const [tab, setTab] = useState<'pending' | 'disputes'>('pending');
-  const onTabKeys = useTabKeys(['pending', 'disputes'] as const, tab, setTab);
+  const [tab, setTab] = useState<Tab>('pending');
+  const onTabKeys = useTabKeys(TABS, tab, setTab);
   const [transactions, setTransactions] = useState<PendingTransaction[]>([]);
   const [disputes, setDisputes] = useState<AdminDispute[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [loadingDisputes, setLoadingDisputes] = useState(true);
+  // FR-02: paid sales past their ship-by time, which an admin may refund.
+  const [unshipped, setUnshipped] = useState<AdminTransaction[]>([]);
+  const [loadingUnshipped, setLoadingUnshipped] = useState(true);
+  const [unshippedError, setUnshippedError] = useState(false);
+  const [refundingTx, setRefundingTx] = useState<AdminTransaction | null>(null);
   const [voidingTx, setVoidingTx] = useState<PendingTransaction | null>(null);
   const [resolvingDispute, setResolvingDispute] = useState<AdminDispute | null>(null);
   const [checkingDispute, setCheckingDispute] = useState(false);
@@ -270,14 +285,21 @@ export default function AdminTransactions() {
       .catch(() => setDisputesError(true))
       .finally(() => setLoadingDisputes(false)), []);
 
+  const loadUnshipped = useCallback(() =>
+    api.get('/admin/transactions/unshipped')
+      .then(d => { setUnshipped(d); setUnshippedError(false); })
+      .catch(() => setUnshippedError(true))
+      .finally(() => setLoadingUnshipped(false)), []);
+
   const fetchTransactions = () => { setLoadingTransactions(true); void loadTransactions(); };
+  const fetchUnshipped = () => { setLoadingUnshipped(true); void loadUnshipped(); };
   const fetchDisputes = () => { setLoadingDisputes(true); void loadDisputes(); };
 
   // Both load on mount -- the disputes count badge needs the count regardless of which tab is
   // active, and it means switching tabs is a pure view toggle with nothing to fetch.
-  useEffect(() => { void loadTransactions(); void loadDisputes(); }, [loadTransactions, loadDisputes]);
+  useEffect(() => { void loadTransactions(); void loadUnshipped(); void loadDisputes(); }, [loadTransactions, loadUnshipped, loadDisputes]);
 
-  const loading = tab === 'pending' ? loadingTransactions : loadingDisputes;
+  const loading = tab === 'pending' ? loadingTransactions : tab === 'unshipped' ? loadingUnshipped : loadingDisputes;
 
   // The list was loaded when the page opened, and the seller can respond at any time after that.
   // Opening Resolve therefore re-reads the disputes and swaps in the current copy of this one, and
@@ -336,14 +358,14 @@ export default function AdminTransactions() {
               </button>
               <div>
                 <h1 className="font-extrabold text-[18px] sm:text-[20px] text-navy">Transactions</h1>
-                <p className="text-[12px] text-muted">{tab === 'pending' ? 'Sales still awaiting payment' : 'Buyer-reported problems awaiting review'}</p>
+                <p className="text-[12px] text-muted">{TAB_SUBTITLE[tab]}</p>
               </div>
             </div>
             <NotificationBell iconClass="text-tertiary hover:text-navy" align="right" />
           </header>
 
           <div role="tablist" aria-label="Transactions" onKeyDown={onTabKeys} className="flex items-center gap-1 px-4 sm:px-6 pt-4 border-b border-border-light bg-surface">
-            {(['pending', 'disputes'] as const).map(t => (
+            {TABS.map(t => (
               <button
                 key={t}
                 type="button"
@@ -356,7 +378,11 @@ export default function AdminTransactions() {
                 className={`px-4 py-2.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer
                   ${tab === t ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-secondary'}`}
               >
-                {t === 'pending' ? 'Awaiting Payment' : `Disputes${!loadingDisputes && !disputesError && disputes.length > 0 ? ` (${disputes.length})` : ''}`}
+                {t === 'pending'
+                  ? 'Awaiting Payment'
+                  : t === 'unshipped'
+                    ? `Not Shipped${!loadingUnshipped && !unshippedError && unshipped.length > 0 ? ` (${unshipped.length})` : ''}`
+                    : `Disputes${!loadingDisputes && !disputesError && disputes.length > 0 ? ` (${disputes.length})` : ''}`}
               </button>
             ))}
           </div>
@@ -368,6 +394,41 @@ export default function AdminTransactions() {
               <ErrorState title="Could not load the transactions" onRetry={fetchTransactions} />
             ) : tab === 'disputes' && disputesError ? (
               <ErrorState title="Could not load the disputes" onRetry={fetchDisputes} />
+            ) : tab === 'unshipped' && unshippedError ? (
+              <ErrorState title="Could not load the unshipped sales" onRetry={fetchUnshipped} />
+            ) : tab === 'unshipped' ? (
+              unshipped.length === 0 ? (
+                <div className="bg-surface border border-border-light rounded-md flex flex-col items-center justify-center py-16 px-6 text-center">
+                  <PackageX size={48} strokeWidth={1.3} className="text-success-dark mb-4" />
+                  <h2 className="font-bold text-[17px] text-navy mb-2">Nothing overdue</h2>
+                  <p className="text-[13px] text-muted">Every paid sale has been shipped, or is still inside its ship-by time.</p>
+                </div>
+              ) : (
+                <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+                  <div className="hidden sm:grid sm:grid-cols-[1fr_130px_130px_110px_140px_100px] gap-3 px-5 py-3 text-[11px] text-placeholder font-bold uppercase tracking-[0.5px] border-b border-bg">
+                    <span>Auction</span><span>Buyer</span><span>Seller</span><span>Amount</span><span>Ship by</span><span>Action</span>
+                  </div>
+                  <div className="flex flex-col divide-y divide-bg">
+                    {unshipped.map(tx => (
+                      <div key={tx.transactionId} className="grid grid-cols-1 sm:grid-cols-[1fr_130px_130px_110px_140px_100px] gap-2 sm:gap-3 sm:items-center px-5 py-4 hover:bg-surface-hover transition-colors">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[13px] text-secondary truncate">{tx.auctionTitle}</p>
+                          {tx.notShippedReportedAt && (
+                            <p className="text-[11px] text-warning truncate">Buyer reported it not sent {dateMedium(tx.notShippedReportedAt)}</p>
+                          )}
+                        </div>
+                        <p className="text-[12px] text-tertiary truncate">{tx.buyerName}</p>
+                        <p className="text-[12px] text-tertiary truncate">{tx.sellerName}</p>
+                        <p className="font-bold text-[13px] text-navy">{pkrCompact(tx.finalAmount)}</p>
+                        <p className="text-[11px] text-destructive">{tx.shipByAt ? dateTimeShort(tx.shipByAt) : '—'}</p>
+                        <Button variant="outline" size="sm" onClick={() => setRefundingTx(tx)} className="w-fit">
+                          Refund
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
             ) : tab === 'pending' ? (
               transactions.length === 0 ? (
                 <div className="bg-surface border border-border-light rounded-md flex flex-col items-center justify-center py-16 px-6 text-center">
@@ -446,6 +507,24 @@ export default function AdminTransactions() {
 
           {voidingTx && (
             <VoidModal tx={voidingTx} onClose={() => setVoidingTx(null)} onVoided={handleVoided} />
+          )}
+
+          {refundingTx && (
+            <ReasonModal
+              title="Refund buyer"
+              subject={`${refundingTx.auctionTitle} · ${pkrCompact(refundingTx.finalAmount)}`}
+              description={`Refunds ${refundingTx.buyerName} in full and ends the sale. ${refundingTx.sellerName} gets no payout. Both are told the reason. This cannot be undone.`}
+              submitLabel="Refund buyer"
+              fieldLabel="Reason (kept in the audit log, and shown to both parties)"
+              placeholder="e.g. Seller unreachable for a week after the ship-by time"
+              onSubmit={async reason => {
+                await api.post(`/admin/transactions/${refundingTx.transactionId}/refund`, { reason });
+                showToast({ type: 'success', title: 'Buyer refunded', message: `${refundingTx.auctionTitle}: the sale was refunded.` });
+                setRefundingTx(null);
+                fetchUnshipped();
+              }}
+              onClose={() => setRefundingTx(null)}
+            />
           )}
 
           {resolvingDispute && (

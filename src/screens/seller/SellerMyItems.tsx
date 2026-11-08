@@ -13,6 +13,7 @@ import {
   useCancelAuction,
   useMarkShipped,
   useOfferNextBidder,
+  useRefundSale,
   useRelist,
   useRespondToDispute,
   useSellerItems,
@@ -88,6 +89,7 @@ export default function SellerMyItems() {
   const [withdrawing, setWithdrawing] = useState<SellerItem | null>(null);
   const [cancelling, setCancelling] = useState<SellerItem | null>(null);
   const [responding, setResponding] = useState<SellerItem | null>(null);
+  const [refunding, setRefunding] = useState<SellerItem | null>(null);
 
   const itemsQuery = useSellerItems(tab, search);
   const summary = useSellerItemsSummary();
@@ -99,6 +101,7 @@ export default function SellerMyItems() {
   const offer = useOfferNextBidder();
   const relist = useRelist();
   const respond = useRespondToDispute();
+  const refund = useRefundSale();
 
   function pickTab(next: typeof tab) {
     setParams(next === 'action' ? {} : { tab: next });
@@ -147,6 +150,9 @@ export default function SellerMyItems() {
             { title: 'Marked as shipped', message: `"${item.title}" is on its way to the buyer.` }, 'Could not mark shipped');
         }
         return;
+      case 'REFUND_BUYER':
+        setRefunding(item);
+        return;
       case 'OFFER_NEXT_BIDDER':
         if (transactionId) {
           void run(item, action, () => offer.mutateAsync({ transactionId }),
@@ -182,6 +188,7 @@ export default function SellerMyItems() {
 
   const cancelAuctionId = cancelling?.auction?.auctionId;
   const respondTransactionId = responding?.sale?.transactionId;
+  const refundTransactionId = refunding?.sale?.transactionId;
   const searching = search.trim().length > 0;
   const total = summary.data ? Object.values(summary.data).reduce((a, b) => a + b, 0) : null;
 
@@ -322,6 +329,23 @@ export default function SellerMyItems() {
             setCancelling(null);
           }}
           onClose={() => setCancelling(null)}
+        />
+      )}
+
+      {refunding && refundTransactionId && (
+        <ReasonModal
+          title="Refund the buyer"
+          subject={refunding.title}
+          description="Use this if you cannot send the item. The buyer gets their money back, the sale ends, and there is no payout for it. This cannot be undone."
+          submitLabel="Refund buyer"
+          fieldLabel="Reason (the buyer sees it)"
+          placeholder="e.g. The item was damaged before I could send it"
+          onSubmit={async reason => {
+            await refund.mutateAsync({ transactionId: refundTransactionId, reason });
+            showToast({ type: 'success', title: 'Buyer refunded', message: `The sale of "${refunding.title}" was refunded.` });
+            setRefunding(null);
+          }}
+          onClose={() => setRefunding(null)}
         />
       )}
 

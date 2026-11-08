@@ -13,6 +13,8 @@ interface Props {
   submitLabel: string;
   fieldLabel: string;
   placeholder: string;
+  /** The field may be left empty (the buyer's not-shipped report: the report itself says what is wrong). */
+  optional?: boolean;
   onSubmit: (reason: string) => Promise<void>;
   onClose: () => void;
 }
@@ -21,7 +23,7 @@ interface Props {
  * The reason-prompt shape of DisputeModal, generalised for the seller and admin auction-cancel
  * actions: both need one required reason, so one component takes the API call as a callback.
  */
-export default function ReasonModal({ title, subject, description, submitLabel, fieldLabel, placeholder, onSubmit, onClose }: Props) {
+export default function ReasonModal({ title, subject, description, submitLabel, fieldLabel, placeholder, optional = false, onSubmit, onClose }: Props) {
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export default function ReasonModal({ title, subject, description, submitLabel, 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (reason.trim().length < 3) {
+    if (!optional && reason.trim().length < 3) {
       setError('Give a short reason (at least 3 characters).');
       return;
     }
@@ -84,7 +86,7 @@ export default function ReasonModal({ title, subject, description, submitLabel, 
             <p className="text-[13px] text-error bg-error-bg border border-error-border rounded-md px-3 py-2">{error}</p>
           )}
 
-          <Button type="submit" loading={loading} disabled={reason.trim().length < 3} className="w-full">
+          <Button type="submit" loading={loading} disabled={!optional && reason.trim().length < 3} className="w-full">
             {submitLabel}
           </Button>
         </form>

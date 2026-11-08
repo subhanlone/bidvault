@@ -78,6 +78,12 @@ export const useCancelAuction = () =>
 export const useMarkShipped = () =>
   useItemAction(({ transactionId }: { transactionId: string }) => api.patch(`/payments/${transactionId}/ship`));
 
+/** FR-02: a paid sale the seller cannot send, refunded before it ships. */
+export const useRefundSale = () =>
+  useItemAction(({ transactionId, reason }: { transactionId: string; reason: string }) =>
+    api.post(`/payments/${transactionId}/refund`, { reason }),
+  );
+
 export const useOfferNextBidder = () =>
   useItemAction(({ transactionId }: { transactionId: string }) =>
     api.post(`/payments/${transactionId}/offer-next-bidder`),

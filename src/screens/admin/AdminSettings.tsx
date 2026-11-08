@@ -13,6 +13,7 @@ const PLATFORM_NAME = 'BidVault';
 const MAX_LISTING_PRICE = 100_000_000;
 const MAX_BID_INCREMENT = 10_000_000;
 const MAX_REVIEW_TIMEOUT_HOURS = 720;
+const MAX_SHIP_BY_HOURS = 720;
 
 interface FormState {
   emailNotifsEnabled: boolean;
@@ -20,6 +21,7 @@ interface FormState {
   maxBidIncrement: string;
   minListingPrice: string;
   reviewTimeoutHours: string;
+  shipByHours: string;
   supportEmail: string;
 }
 
@@ -29,6 +31,7 @@ const EMPTY_FORM: FormState = {
   maxBidIncrement: '',
   minListingPrice: '',
   reviewTimeoutHours: '',
+  shipByHours: '',
   supportEmail: '',
 };
 
@@ -80,6 +83,7 @@ export default function AdminSettings() {
           maxBidIncrement: String(s.maxBidIncrement),
           minListingPrice: String(s.minListingPrice),
           reviewTimeoutHours: String(s.reviewTimeoutHours),
+          shipByHours: String(s.shipByHours),
           supportEmail: s.supportEmail,
         });
         setLoadState('ready');
@@ -96,10 +100,12 @@ export default function AdminSettings() {
     const maxBid = Number(form.maxBidIncrement);
     const minPrice = Number(form.minListingPrice);
     const reviewHrs = Number(form.reviewTimeoutHours);
+    const shipByHrs = Number(form.shipByHours);
     if (
       !Number.isInteger(maxBid) || maxBid <= 0 || maxBid > MAX_BID_INCREMENT ||
       !Number.isInteger(minPrice) || minPrice <= 0 || minPrice > MAX_LISTING_PRICE ||
-      !Number.isInteger(reviewHrs) || reviewHrs <= 0 || reviewHrs > MAX_REVIEW_TIMEOUT_HOURS
+      !Number.isInteger(reviewHrs) || reviewHrs <= 0 || reviewHrs > MAX_REVIEW_TIMEOUT_HOURS ||
+      !Number.isInteger(shipByHrs) || shipByHrs <= 0 || shipByHrs > MAX_SHIP_BY_HOURS
     ) {
       showToast({ type: 'error', title: 'Invalid Values', message: 'Numeric fields must be whole positive numbers within sensible limits.' });
       return;
@@ -116,6 +122,7 @@ export default function AdminSettings() {
         maxBidIncrement: maxBid,
         minListingPrice: minPrice,
         reviewTimeoutHours: reviewHrs,
+        shipByHours: shipByHrs,
         supportEmail: form.supportEmail.trim(),
       });
       showToast({ type: 'success', title: 'Settings Saved', message: 'Platform settings updated and applied.' });
@@ -318,6 +325,8 @@ export default function AdminSettings() {
                       { label: 'Min. Listing Price (PKR)', key: 'minListingPrice' as const, max: MAX_LISTING_PRICE },
                       { label: 'Max. Bid Increment (PKR)', key: 'maxBidIncrement' as const, max: MAX_BID_INCREMENT },
                       { label: 'Review Timeout (hours)', key: 'reviewTimeoutHours' as const, max: MAX_REVIEW_TIMEOUT_HOURS },
+                      // FR-02: from payment to "marked shipped"; after it the buyer can report the sale not sent.
+                      { label: 'Ship-by Time (hours)', key: 'shipByHours' as const, max: MAX_SHIP_BY_HOURS },
                     ] as const).map((f) => (
                       <Input
                         key={f.label}

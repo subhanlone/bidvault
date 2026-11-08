@@ -36,6 +36,9 @@ export type AdminTransaction = {
   status: TransactionStatus;
   lastPaymentError?: string;
   createdAt: string;
+  paidAt?: string;
+  shipByAt?: string;
+  notShippedReportedAt?: string;
 };
 
 export type AdminUser = {
@@ -249,6 +252,7 @@ export type Invoice = {
   deliveryAddress?: string;
   deliveryPhone?: string;
   createdAt: string;
+  shipByAt?: string;
   shippedAt?: string;
   disputeStatus?: "OPEN" | "RESOLVED_REFUNDED" | "RESOLVED_RELEASED";
   disputeReason?: string;
@@ -327,7 +331,7 @@ export type NotificationRead = {
   isRead: true;
 };
 
-export type NotificationType = "BID_OUTBID" | "AUCTION_WON" | "RESERVE_NOT_MET" | "LISTING_APPROVED" | "LISTING_REJECTED" | "NEW_REVIEW" | "ITEM_SHIPPED" | "PAYOUT_RECEIVED" | "DISPUTE_RAISED" | "DISPUTE_RESOLVED" | "AUCTION_CANCELLED" | "SECOND_CHANCE_OFFER" | "LISTING_RELISTED" | "REVIEW_REPLY" | "LISTING_REMOVED" | "BID_RECEIVED" | (string & Record<never, never>);
+export type NotificationType = "BID_OUTBID" | "AUCTION_WON" | "RESERVE_NOT_MET" | "LISTING_APPROVED" | "LISTING_REJECTED" | "NEW_REVIEW" | "ITEM_SHIPPED" | "PAYOUT_RECEIVED" | "DISPUTE_RAISED" | "DISPUTE_RESOLVED" | "AUCTION_CANCELLED" | "SECOND_CHANCE_OFFER" | "LISTING_RELISTED" | "REVIEW_REPLY" | "LISTING_REMOVED" | "BID_RECEIVED" | "NOT_SHIPPED_REPORTED" | "SALE_REFUNDED" | (string & Record<never, never>);
 
 export type OtpIssued = {
   message: string;
@@ -400,6 +404,7 @@ export type PlatformSettings = {
   reviewTimeoutHours: number;
   paymentDeadlineHours: number;
   reviewEditWindowHours: number;
+  shipByHours: number;
   supportEmail: string;
 };
 
@@ -426,6 +431,7 @@ export type PublicSettings = {
   sellerTermsVersion: string;
   paymentDeadlineHours: number;
   reviewTimeoutHours: number;
+  shipByHours: number;
 };
 
 export type RaiseDisputeRequest = {
@@ -441,6 +447,10 @@ export type RefreshRequest = {
 
 export type RefreshedTokens = {
   accessToken: string;
+};
+
+export type RefundSaleRequest = {
+  reason: string;
 };
 
 export type RegisterRequest = {
@@ -471,6 +481,10 @@ export type Rejection = {
 
 export type ReplyToReviewRequest = {
   reply: string;
+};
+
+export type ReportNotShippedRequest = {
+  note?: string;
 };
 
 export type ResendVerificationRequest = {
@@ -546,6 +560,9 @@ export type SellerItem = {
     paidAt?: string;
     shippedAt?: string;
     reviewDeadlineAt?: string;
+    shipByAt?: string;
+    notShippedReportedAt?: string;
+    autoRefundAt?: string;
     disputeReason?: string;
     disputeResponseDueAt?: string;
     disputeSellerResponse?: string;
@@ -560,7 +577,7 @@ export type SellerItem = {
   };
 };
 
-export type SellerItemAction = "WITHDRAW" | "EDIT_RESUBMIT" | "CANCEL_AUCTION" | "MARK_SHIPPED" | "RESPOND_TO_DISPUTE" | "OFFER_NEXT_BIDDER" | "RELIST" | "LIST_AGAIN" | "VIEW_INVOICE";
+export type SellerItemAction = "WITHDRAW" | "EDIT_RESUBMIT" | "CANCEL_AUCTION" | "MARK_SHIPPED" | "REFUND_BUYER" | "RESPOND_TO_DISPUTE" | "OFFER_NEXT_BIDDER" | "RELIST" | "LIST_AGAIN" | "VIEW_INVOICE";
 
 export type SellerItemStage = "UNDER_REVIEW" | "REJECTED" | "REMOVED" | "LIVE" | "AWAITING_PAYMENT" | "NEEDS_SHIPPING" | "SHIPPED" | "DELIVERED" | "DISPUTE_AWAITING_RESPONSE" | "DISPUTED" | "REFUNDED" | "PAYMENT_DEFAULTED" | "RELISTED" | "ENDED_RESERVE_NOT_MET" | "ENDED_NO_BIDS" | "CANCELLED";
 
@@ -620,6 +637,9 @@ export type SellerSale = {
   deliveryPhone?: string;
   shippedAt?: string;
   reviewDeadlineAt?: string;
+  shipByAt?: string;
+  notShippedReportedAt?: string;
+  autoRefundAt?: string;
   disputeReason?: string;
   createdAt: string;
 };
@@ -674,6 +694,7 @@ export type UpdateSettingsRequest = {
   reviewTimeoutHours?: number;
   paymentDeadlineHours?: number;
   reviewEditWindowHours?: number;
+  shipByHours?: number;
   supportEmail?: string;
 };
 
@@ -741,6 +762,9 @@ export type WonTransaction = {
   lastPaymentError?: string;
   shippedAt?: string;
   reviewDeadlineAt?: string;
+  shipByAt?: string;
+  notShippedReportedAt?: string;
+  autoRefundAt?: string;
   disputeReason?: string;
   createdAt: string;
   reviewed: boolean;
@@ -754,6 +778,7 @@ export interface GetEndpoints {
   "/admin/analytics": Analytics;
   "/admin/disputes": AdminDispute[];
   "/admin/transactions": AdminTransaction[];
+  "/admin/transactions/unshipped": AdminTransaction[];
   "/admin/users": PaginatedAdminUsers;
   "/auctions": PaginatedAuctions;
   "/auctions/facets": AuctionFacets;
@@ -798,6 +823,10 @@ export interface PostEndpoints {
   "/admin/listings/{listingId}/takedown": {
     listingId: string;
     status: "REMOVED";
+  };
+  "/admin/transactions/{transactionId}/refund": {
+    transactionId: string;
+    status: "REFUNDED";
   };
   "/admin/transactions/{transactionId}/void": {
     transactionId: string;
@@ -857,9 +886,18 @@ export interface PostEndpoints {
     status: "PENDING";
   };
   "/payments/{transactionId}/pay": PayResult;
+  "/payments/{transactionId}/refund": {
+    transactionId: string;
+    status: "REFUNDED";
+  };
   "/payments/{transactionId}/relist": {
     listingId: string;
     auctionId: string;
+  };
+  "/payments/{transactionId}/report-not-shipped": {
+    transactionId: string;
+    notShippedReportedAt: string;
+    autoRefundAt: string;
   };
   "/reviews": Review;
   "/reviews/{reviewId}/reply": {
@@ -907,6 +945,7 @@ export interface PostRequests {
   "/admin/auctions/{auctionId}/cancel": CancelAuctionRequest;
   "/admin/disputes/{disputeId}/resolve": ResolveDisputeRequest;
   "/admin/listings/{listingId}/takedown": TakedownListingRequest;
+  "/admin/transactions/{transactionId}/refund": RefundSaleRequest;
   "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
   "/admin/users/{userId}/anonymize": AnonymizeUserRequest;
   "/admin/users/{userId}/suspend": SuspendUserRequest;
@@ -928,6 +967,8 @@ export interface PostRequests {
   "/payments/{transactionId}/dispute": RaiseDisputeRequest;
   "/payments/{transactionId}/dispute/response": RespondToDisputeRequest;
   "/payments/{transactionId}/pay": PayTransactionRequest;
+  "/payments/{transactionId}/refund": RefundSaleRequest;
+  "/payments/{transactionId}/report-not-shipped": ReportNotShippedRequest;
   "/reviews": CreateReviewRequest;
   "/reviews/{reviewId}/reply": ReplyToReviewRequest;
   "/seller/enroll": EnrollSellerRequest;
