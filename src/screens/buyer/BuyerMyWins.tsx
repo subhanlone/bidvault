@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trophy, CheckCircle, Clock, XCircle, Package, Star, Truck, AlertTriangle, ShieldAlert, RotateCcw, Receipt, Pencil, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/auth';
-import { BuyerNavbar, RatingModal, DisputeModal, ErrorState } from '../../components/ui';
+import { BuyerNavbar, RatingModal, DisputeModal, ErrorState, ReasonModal } from '../../components/ui';
 import Button from '../../components/ui/Button';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { api } from '../../services/api';
+import { useNow } from '../../hooks/useNow';
 import { dateMedium, dateTimeShort, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 
@@ -30,6 +31,11 @@ interface WinTransaction {
   // computed server-side so this screen never needs reviewTimeoutHours.
   shippedAt?: string;
   reviewDeadlineAt?: string;
+  // FR-02: when the seller must have marked the paid item shipped; when the buyer reported it not
+  // shipped; and when that report is refunded automatically if the seller still has not shipped.
+  shipByAt?: string;
+  notShippedReportedAt?: string;
+  autoRefundAt?: string;
   disputeReason?: string;
   createdAt: string;
   reviewed: boolean;
@@ -48,6 +54,50 @@ const statusConfig: Record<TransactionStatus, { label: string; icon: typeof Cloc
   FAILED:    { label: 'Payment Failed',     icon: XCircle,      color: 'text-error',    bg: 'bg-error-bg border-error-border' },
   VOIDED:    { label: 'Cancelled',          icon: XCircle,      color: 'text-muted',    bg: 'bg-bg border-border-light' },
 };
+
+/**
+ * A paid sale waiting for the seller (FR-02): the ship-by time, then, once it has passed, the
+ * buyer's report, then how long the seller has before the automatic refund.
+ */
+function AwaitingShipment({ tx, now, onReport }: { tx: WinTransaction; now: number; onReport: () => void }) {
+  if (tx.notShippedReportedAt) {
+    return (
+      <div className="mt-4 bg-warning-bg border border-warning-border rounded-md px-3 py-2">
+        <p className="text-[12px] text-navy font-semibold flex items-center gap-1.5">
+          <AlertTriangle size={13} /> You reported this item as not sent
+        </p>
+        <p className="text-[11px] text-muted mt-1">
+          {tx.autoRefundAt
+            ? `If the seller has not shipped it by ${dateTimeShort(tx.autoRefundAt)}, you are refunded automatically.`
+            : 'If the seller does not ship it, you are refunded automatically.'}
+        </p>
+      </div>
+    );
+  }
+  if (tx.shipByAt && new Date(tx.shipByAt).getTime() <= now) {
+    return (
+      <div className="mt-4">
+        <p className="text-[12px] text-warning text-center mb-2">
+          The seller was due to ship this by {dateTimeShort(tx.shipByAt)} and has not marked it shipped.
+        </p>
+        <Button
+          variant="outline"
+          className="w-full text-[13px] border-error text-error hover:bg-error-bg"
+          onClick={onReport}
+        >
+          <AlertTriangle size={14} /> Report not shipped
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <p className="mt-4 text-[12px] text-info text-center">
+      {tx.shipByAt
+        ? `Payment received. The seller has until ${dateTimeShort(tx.shipByAt)} to ship your item.`
+        : 'Payment received — waiting for the seller to ship your item.'}
+    </p>
+  );
+}
 
 function WinCardSkeleton() {
   return (
@@ -80,6 +130,9 @@ export default function BuyerMyWins() {
   const [selectedTx, setSelectedTx] = useState<WinTransaction | null>(null);
   const [ratingTx, setRatingTx] = useState<WinTransaction | null>(null);
   const [disputeTx, setDisputeTx] = useState<WinTransaction | null>(null);
+  const [reportingTx, setReportingTx] = useState<WinTransaction | null>(null);
+  // A ship-by time is hours long; a minute is fresh enough for "passed" versus "not yet".
+  const now = useNow(60_000);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ txId: string; message: string } | null>(null);
   const [deletingReviewTx, setDeletingReviewTx] = useState<WinTransaction | null>(null);
@@ -248,14 +301,14 @@ export default function BuyerMyWins() {
 
                       {tx.status === 'REFUNDED' && (
                         <p className="mt-4 text-[12px] text-muted text-center">
-                          This purchase was refunded after a dispute review.
+                          {tx.disputeReason
+                            ? 'This purchase was refunded after a dispute review.'
+                            : 'This purchase was refunded because the item was not sent.'}
                         </p>
                       )}
 
                       {tx.status === 'COMPLETED' && (
-                        <p className="mt-4 text-[12px] text-info text-center">
-                          Payment received — waiting for the seller to ship your item.
-                        </p>
+                        <AwaitingShipment tx={tx} now={now} onReport={() => setReportingTx(tx)} />
                       )}
 
                       {tx.status === 'DISPUTED' && (
@@ -344,7 +397,7 @@ export default function BuyerMyWins() {
                         </div>
                       )}
 
-                      {(tx.status === 'DELIVERED' || tx.status === 'SHIPPED' || tx.status === 'DISPUTED') && (
+                      {(tx.status === 'COMPLETED' || tx.status === 'DELIVERED' || tx.status === 'SHIPPED' || tx.status === 'DISPUTED' || tx.status === 'REFUNDED') && (
                         <Link
                           to={`/transactions/${tx.transactionId}/invoice`}
                           className="mt-2 text-[12px] font-semibold text-primary hover:underline flex items-center justify-center gap-1"
@@ -405,6 +458,24 @@ export default function BuyerMyWins() {
             </div>
           </div>
         </div>
+      )}
+
+      {reportingTx && (
+        <ReasonModal
+          title="Report not shipped"
+          subject={reportingTx.auctionTitle}
+          description="The seller's ship-by time has passed. They are told at once and have 3 days to ship it or refund you; if they do neither, you are refunded automatically."
+          submitLabel="Report not shipped"
+          fieldLabel="Anything to add? (optional)"
+          placeholder="e.g. I messaged the seller and have had no reply"
+          optional
+          onSubmit={async note => {
+            await api.post(`/payments/${reportingTx.transactionId}/report-not-shipped`, note ? { note } : {});
+            setReportingTx(null);
+            await refresh();
+          }}
+          onClose={() => setReportingTx(null)}
+        />
       )}
 
       {disputeTx && (

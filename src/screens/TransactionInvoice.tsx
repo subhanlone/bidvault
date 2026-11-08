@@ -5,7 +5,7 @@ import { useAuth } from '../context/auth';
 import { SellerNavbar, BuyerNavbar } from '../components/ui';
 import { api } from '../services/api';
 import { readMode } from '../utils/account';
-import { dateLong, pkr } from '../utils/format';
+import { dateLong, dateTimeShort, pkr } from '../utils/format';
 import LoadingStatus from '../components/ui/LoadingStatus';
 import type { Invoice } from '../types/openapi';
 
@@ -101,6 +101,13 @@ export default function TransactionInvoice() {
                   <p className="text-[12px] text-muted mb-1">Delivery Address</p>
                   <p className="text-[13px] text-secondary">{invoice.deliveryAddress}</p>
                   {invoice.deliveryPhone && <p className="text-[12px] text-placeholder">{invoice.deliveryPhone}</p>}
+                </div>
+              )}
+
+              {invoice.status === 'COMPLETED' && invoice.shipByAt && (
+                <div>
+                  <p className="text-[12px] text-muted mb-1">Ship By</p>
+                  <p className="text-[13px] text-secondary">{dateTimeShort(invoice.shipByAt)}</p>
                 </div>
               )}
 

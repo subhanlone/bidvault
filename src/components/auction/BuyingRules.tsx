@@ -13,7 +13,7 @@ export default function BuyingRules({ city, province }: { city: string | null; p
     ? `You pay on BidVault within ${count(settings.paymentDeadlineHours, 'hour')} after you win.`
     : 'You pay on BidVault after you win.';
   const delivery = settings
-    ? `The seller ships the item, and you have ${count(settings.reviewTimeoutHours, 'hour')} after it ships to confirm that it arrived or raise a dispute.`
+    ? `The seller ships the item within ${count(settings.shipByHours, 'hour')} of your payment, or you can report it and are refunded if it still is not sent. Once it ships, you have ${count(settings.reviewTimeoutHours, 'hour')} to confirm that it arrived or raise a dispute.`
     : 'The seller ships the item, and you confirm that it arrived.';
   const rows: { label: string; value: string }[] = [
     { label: 'Bids', value: 'Every bid is binding. If yours is the highest when the clock runs out, you buy the item.' },

@@ -117,9 +117,31 @@ export function stageView(item: SellerItem, now: number): StageView {
     case 'AWAITING_PAYMENT':
       return view('Awaiting payment', `Waiting on ${buyer}`, 'info', 3, 3,
         { label: 'Waiting on buyer', variant: 'info' }, [soldFor, buyerFact]);
-    case 'NEEDS_SHIPPING':
-      return view('Ship this item', sale?.paidAt ? `Payment received ${timeAgo(sale.paidAt, now)}` : 'Payment received', 'primary', 4, 4,
-        { label: 'Ready to ship', variant: 'warning' }, [soldFor, buyerFact]);
+    case 'NEEDS_SHIPPING': {
+      // FR-02: the ship-by time, and what happens once it has passed and the buyer has reported it.
+      if (sale?.notShippedReportedAt) {
+        return view('Buyer reports it was not sent',
+          sale.autoRefundAt
+            ? `Ship it or refund by ${dateTimeShort(sale.autoRefundAt)}, or the buyer is refunded automatically`
+            : 'Ship it or refund the buyer',
+          'err', 4, 4,
+          { label: 'Reported', variant: 'error' },
+          [soldFor, fact('Refund on', sale.autoRefundAt ? dateMedium(sale.autoRefundAt) : '—')]);
+      }
+      const shipBy = sale?.shipByAt;
+      if (shipBy && new Date(shipBy).getTime() <= now) {
+        return view('Ship this item, it is late',
+          `The ship-by time passed ${timeAgo(shipBy, now)}. The buyer can now report it, and is refunded if you do not then ship.`,
+          'err', 4, 4,
+          { label: 'Overdue', variant: 'error' },
+          [soldFor, fact('Ship by', dateTimeShort(shipBy))]);
+      }
+      return view('Ship this item',
+        shipBy ? `Ship by ${dateTimeShort(shipBy)}` : sale?.paidAt ? `Payment received ${timeAgo(sale.paidAt, now)}` : 'Payment received',
+        'primary', 4, 4,
+        { label: 'Ready to ship', variant: 'warning' },
+        [soldFor, shipBy ? fact('Ship by', dateTimeShort(shipBy)) : buyerFact]);
+    }
     case 'SHIPPED':
       return view('Shipped', sale?.reviewDeadlineAt
         ? `Payout releases by ${dateMedium(sale.reviewDeadlineAt)} unless the buyer responds sooner`
@@ -174,6 +196,7 @@ export function stageView(item: SellerItem, now: number): StageView {
  */
 export const ACTION_META: Record<SellerItemAction, { label: string; filled: boolean }> = {
   MARK_SHIPPED: { label: 'Mark as shipped', filled: true },
+  REFUND_BUYER: { label: 'Refund buyer', filled: false },
   RESPOND_TO_DISPUTE: { label: 'Respond to dispute', filled: true },
   OFFER_NEXT_BIDDER: { label: 'Offer to next bidder', filled: true },
   EDIT_RESUBMIT: { label: 'Edit & resubmit', filled: true },
