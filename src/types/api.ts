@@ -40,6 +40,7 @@ export type {
   PaginatedAdminUsers,
   SellerProfile,
   SellerLimits,
+  AiValuation,
   ListingReport,
   AdminListingReport,
   PaginatedAdminReports,

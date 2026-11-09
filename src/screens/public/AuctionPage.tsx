@@ -14,6 +14,7 @@ import BuyingRules from '../../components/auction/BuyingRules';
 import EndedView from '../../components/auction/EndedView';
 import SellerCard from '../../components/auction/SellerCard';
 import ReportDialog from '../../components/auction/ReportDialog';
+import AiValuationPanel from '../../components/auction/AiValuationPanel';
 import { ApiError } from '../../services/api';
 import { getCategoryFields } from '../../config/categoryFields';
 import { auctionOutcome } from '../../utils/auctionOutcome';
@@ -295,6 +296,10 @@ export default function AuctionPage() {
           ) : (
             <EndedView auction={auction} outcome={outcome} viewerWon={viewerWon} />
           )}
+
+          {/* Agentic AI: a separate, labelled block (eBay's content is never mixed into BidVault's).
+              Nothing for a removed listing. */}
+          {auction.status !== 'CANCELLED' && <AiValuationPanel key={auction.auctionId} auctionId={auction.auctionId} />}
         </div>
       </main>
 

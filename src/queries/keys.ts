@@ -16,6 +16,11 @@ export const keys = {
     /** GET /auctions?sellerId=&status= — one seller's live or ended items, on their profile. */
     bySeller: (sellerId: string, status: 'ACTIVE' | 'CLOSED') => ['auctions', 'seller', sellerId, status] as const,
   },
+  /**
+   * GET /ai/valuations/{auctionId}: the AI price comparison. Outside `['auctions', …]` on purpose: a
+   * socket price update folds every entry under that prefix, and this is not an auction.
+   */
+  aiValuation: (auctionId: string) => ['aiValuation', auctionId] as const,
   sellers: {
     /** GET /sellers/{sellerId} — the public profile. */
     profile: (sellerId: string) => ['sellers', 'profile', sellerId] as const,

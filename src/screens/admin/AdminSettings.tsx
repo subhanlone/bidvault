@@ -18,6 +18,8 @@ const MAX_SHIP_BY_HOURS = 720;
 const MAX_SELLER_ITEMS = 1000;
 const MAX_SELLER_VALUE = 2_000_000_000;
 const MAX_GRADUATION_SALES = 1000;
+// Agentic AI: the backend's ceiling for the USD to PKR rate (requests.ts).
+const MAX_USD_TO_PKR = 100_000;
 
 interface FormState {
   emailNotifsEnabled: boolean;
@@ -29,6 +31,7 @@ interface FormState {
   newSellerMonthlyItems: string;
   newSellerMonthlyValue: string;
   sellerGraduationSales: string;
+  usdToPkrRate: string;
   supportEmail: string;
 }
 
@@ -42,6 +45,7 @@ const EMPTY_FORM: FormState = {
   newSellerMonthlyItems: '',
   newSellerMonthlyValue: '',
   sellerGraduationSales: '',
+  usdToPkrRate: '',
   supportEmail: '',
 };
 
@@ -97,6 +101,7 @@ export default function AdminSettings() {
           newSellerMonthlyItems: String(s.newSellerMonthlyItems),
           newSellerMonthlyValue: String(s.newSellerMonthlyValue),
           sellerGraduationSales: String(s.sellerGraduationSales),
+          usdToPkrRate: String(s.usdToPkrRate),
           supportEmail: s.supportEmail,
         });
         setLoadState('ready');
@@ -117,6 +122,7 @@ export default function AdminSettings() {
     const sellerItems = Number(form.newSellerMonthlyItems);
     const sellerValue = Number(form.newSellerMonthlyValue);
     const graduationSales = Number(form.sellerGraduationSales);
+    const usdToPkr = Number(form.usdToPkrRate);
     if (
       !Number.isInteger(maxBid) || maxBid <= 0 || maxBid > MAX_BID_INCREMENT ||
       !Number.isInteger(minPrice) || minPrice <= 0 || minPrice > MAX_LISTING_PRICE ||
@@ -125,7 +131,9 @@ export default function AdminSettings() {
       !Number.isInteger(sellerItems) || sellerItems <= 0 || sellerItems > MAX_SELLER_ITEMS ||
       !Number.isInteger(sellerValue) || sellerValue <= 0 || sellerValue > MAX_SELLER_VALUE ||
       // Zero is allowed: no completed sales needed, so no new seller has a limit.
-      !Number.isInteger(graduationSales) || graduationSales < 0 || graduationSales > MAX_GRADUATION_SALES
+      !Number.isInteger(graduationSales) || graduationSales < 0 || graduationSales > MAX_GRADUATION_SALES ||
+      // A rate, so not a whole number; never 0 or below (every estimate would be nonsense).
+      !Number.isFinite(usdToPkr) || usdToPkr <= 0 || usdToPkr > MAX_USD_TO_PKR
     ) {
       showToast({ type: 'error', title: 'Invalid Values', message: 'Numeric fields must be whole positive numbers within sensible limits.' });
       return;
@@ -146,6 +154,7 @@ export default function AdminSettings() {
         newSellerMonthlyItems: sellerItems,
         newSellerMonthlyValue: sellerValue,
         sellerGraduationSales: graduationSales,
+        usdToPkrRate: usdToPkr,
         supportEmail: form.supportEmail.trim(),
       });
       showToast({ type: 'success', title: 'Settings Saved', message: 'Platform settings updated and applied.' });
@@ -388,6 +397,25 @@ export default function AdminSettings() {
                         onChange={(e) => update(f.key, e.target.value)}
                       />
                     ))}
+                  </div>
+                </div>
+
+                {/* Agentic AI: the rate the auction page's price comparison converts eBay's USD bids with. */}
+                <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+                  <div className="px-5 py-4 border-b border-border-light">
+                    <h2 className="font-bold text-[14px] text-navy">AI Price Comparison</h2>
+                    <p className="text-[12px] text-muted mt-0.5">eBay auction bids are in US dollars; the estimate on each auction page converts them with this rate</p>
+                  </div>
+                  <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Input
+                      label="USD to PKR Rate (AI estimate)"
+                      type="number"
+                      min={0.01}
+                      max={MAX_USD_TO_PKR}
+                      step={0.01}
+                      value={form.usdToPkrRate}
+                      onChange={(e) => update('usdToPkrRate', e.target.value)}
+                    />
                   </div>
                 </div>
 
