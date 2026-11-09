@@ -7,42 +7,13 @@ import Button from '../../components/ui/Button';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { api } from '../../services/api';
 import { useNow } from '../../hooks/useNow';
+import type { TransactionStatus, WonTransaction } from '../../types/openapi';
 import { dateMedium, dateTimeShort, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 
-type TransactionStatus =
-  | 'PENDING' | 'COMPLETED' | 'FAILED' | 'VOIDED'
-  | 'SHIPPED' | 'DELIVERED' | 'DISPUTED' | 'REFUNDED';
-
-interface WinTransaction {
-  transactionId: string;
-  auctionId: string;
-  auctionTitle: string;
-  auctionEmoji: string;
-  auctionImageUrl: string;
-  sellerName: string;
-  finalAmount: number;
-  status: TransactionStatus;
-  // Why the last payment attempt failed, if one did. The transaction stays PENDING rather
-  // than moving to FAILED so a decline is retryable — this is the explanation that goes with
-  // that PENDING state instead of a separate terminal one.
-  lastPaymentError?: string;
-  // Present once the seller has shipped. reviewDeadlineAt is the confirm-or-dispute deadline,
-  // computed server-side so this screen never needs reviewTimeoutHours.
-  shippedAt?: string;
-  reviewDeadlineAt?: string;
-  // FR-02: when the seller must have marked the paid item shipped; when the buyer reported it not
-  // shipped; and when that report is refunded automatically if the seller still has not shipped.
-  shipByAt?: string;
-  notShippedReportedAt?: string;
-  autoRefundAt?: string;
-  disputeReason?: string;
-  createdAt: string;
-  reviewed: boolean;
-  reviewId?: string;
-  reviewStars?: number;
-  reviewComment?: string;
-}
+// FR-14: the generated contract type, not a hand-written copy. The copy had drifted (it lacked
+// sellerPhone, so the phone the server sends after payment was never shown).
+type WinTransaction = WonTransaction;
 
 const statusConfig: Record<TransactionStatus, { label: string; icon: typeof Clock; color: string; bg: string }> = {
   PENDING:   { label: 'Payment Pending',    icon: Clock,        color: 'text-warning',  bg: 'bg-warning-bg border-warning-border' },
@@ -252,7 +223,13 @@ export default function BuyerMyWins() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-[14px] text-navy truncate mb-1">{tx.auctionTitle}</h3>
-                      <p className="text-[12px] text-muted">Seller: {tx.sellerName}</p>
+                      <p className="text-[12px] text-muted">
+                        Seller: {tx.sellerName}
+                        {/* FR-14: sent only once this sale is paid, and only if the seller gave one. */}
+                        {tx.sellerPhone && (
+                          <> · <a href={`tel:${tx.sellerPhone}`} className="text-primary hover:underline">{tx.sellerPhone}</a></>
+                        )}
+                      </p>
                       <p className="text-[11px] text-placeholder mb-3">{dateMedium(tx.createdAt)}</p>
 
                       <div className="flex items-center justify-between gap-3 flex-wrap">

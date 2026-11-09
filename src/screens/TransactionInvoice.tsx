@@ -93,6 +93,11 @@ export default function TransactionInvoice() {
                   <p className="text-[12px] text-muted mb-1">Seller</p>
                   <p className="font-semibold text-[13px] text-secondary">{invoice.sellerName}</p>
                   <p className="text-[12px] text-placeholder break-all">{invoice.sellerEmail}</p>
+                  {invoice.sellerPhone && (
+                    <p className="text-[12px] text-placeholder">
+                      <a href={`tel:${invoice.sellerPhone}`} className="hover:underline">{invoice.sellerPhone}</a>
+                    </p>
+                  )}
                 </div>
               </div>
 

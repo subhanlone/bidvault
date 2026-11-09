@@ -20,7 +20,7 @@ export default function BuyingRules({ city, province }: { city: string | null; p
     { label: 'Payment', value: payment },
     { label: 'Delivery', value: delivery },
     ...(place ? [{ label: 'Located in', value: place }] : []),
-    { label: "Seller's phone", value: 'Shown to the buyer after payment, so you can arrange pickup or a courier.' },
+    { label: "Seller's phone", value: 'Shown to the buyer after payment, if the seller gave one, so you can arrange pickup or a courier.' },
   ];
 
   return (
