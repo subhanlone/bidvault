@@ -83,6 +83,10 @@ export default function EndedView({
           )}
           <Link to="/browse" className={`${linkButton} border border-border-medium text-secondary hover:border-primary hover:text-primary`}>Browse live auctions</Link>
         </div>
+        {/* F3, decision G: what else this seller has, live or ended. */}
+        <Link to={`/sellers/${auction.sellerId}`} className="text-[12px] font-bold text-primary hover:underline self-start">
+          Seller's other items
+        </Link>
       </div>
     </section>
   );

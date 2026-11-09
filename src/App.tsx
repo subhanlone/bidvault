@@ -27,6 +27,7 @@ const AdminListingReviews = lazy(() => import('./screens/admin/AdminListingRevie
 const AdminAnalytics = lazy(() => import('./screens/admin/AdminAnalytics'));
 const AdminTransactions = lazy(() => import('./screens/admin/AdminTransactions'));
 const AdminUsers = lazy(() => import('./screens/admin/AdminUsers'));
+const AdminReports = lazy(() => import('./screens/admin/AdminReports'));
 const AdminSettings = lazy(() => import('./screens/admin/AdminSettings'));
 
 const SellerDashboard = lazy(() => import('./screens/seller/SellerDashboard'));
@@ -42,6 +43,8 @@ const BecomeSeller = lazy(() => import('./screens/seller/BecomeSeller'));
 // Open to anyone, signed in or not.
 const BrowseAuctions = lazy(() => import('./screens/public/BrowseAuctions'));
 const AuctionPage = lazy(() => import('./screens/public/AuctionPage'));
+const PublicSellerProfile = lazy(() => import('./screens/public/SellerProfile'));
+const Rules = lazy(() => import('./screens/public/Rules'));
 
 const BuyerMyBids = lazy(() => import('./screens/buyer/BuyerMyBids'));
 const BuyerWatchlist = lazy(() => import('./screens/buyer/BuyerWatchlist'));
@@ -88,6 +91,7 @@ export default function App() {
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/rules" element={<Rules />} />
                     <Route path="/maintenance" element={<MaintenancePage />} />
 
                     {/* Public auth routes */}
@@ -135,6 +139,11 @@ export default function App() {
                     <Route path="/admin/users" element={
                       <ProtectedRoute allowedRoles={['ADMIN']}>
                         <AdminUsers />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/reports" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminReports />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/settings" element={
@@ -195,6 +204,7 @@ export default function App() {
                     {/* Public: anyone can look; bidding and watching ask for an account on the page itself. */}
                     <Route path="/browse" element={<BrowseAuctions />} />
                     <Route path="/auctions/:auctionId" element={<AuctionPage />} />
+                    <Route path="/sellers/:sellerId" element={<PublicSellerProfile />} />
 
                     {/* Buyer routes */}
                     <Route path="/buyer/my-bids" element={

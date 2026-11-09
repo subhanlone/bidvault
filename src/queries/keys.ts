@@ -13,6 +13,14 @@ export const keys = {
     detail: (auctionId: string) => ['auctions', 'detail', auctionId] as const,
     /** GET /watchlist — full auction rows, closed ones included. */
     watchlist: ['auctions', 'watchlist'] as const,
+    /** GET /auctions?sellerId=&status= — one seller's live or ended items, on their profile. */
+    bySeller: (sellerId: string, status: 'ACTIVE' | 'CLOSED') => ['auctions', 'seller', sellerId, status] as const,
+  },
+  sellers: {
+    /** GET /sellers/{sellerId} — the public profile. */
+    profile: (sellerId: string) => ['sellers', 'profile', sellerId] as const,
+    /** GET /reviews/seller/{sellerId} */
+    reviews: (sellerId: string) => ['sellers', 'reviews', sellerId] as const,
   },
   bids: {
     all: ['bids'] as const,
@@ -48,5 +56,7 @@ export const keys = {
     /** GET /listings/pending, every page -- the review queue the sidebar badge, the dashboard and the
      * review screens all read, so a change made on one is seen by the others. */
     pendingListings: ['admin', 'pendingListings'] as const,
+    /** GET /admin/reports?status= — one tab of the Reports queue (G5/F3). */
+    reports: (status: string) => ['admin', 'reports', status] as const,
   },
 } as const;

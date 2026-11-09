@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, BarChart2, Radio, Receipt, Users, Settings, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, BarChart2, Radio, Receipt, Users, Settings, Flag, X, ChevronLeft, ChevronRight, LogOut, type LucideIcon } from 'lucide-react';
 import BidVaultLogo from './BidVaultLogo';
 import { useAuth } from '../../context/auth';
 import { useActiveAuctions, useDrainedPages } from '../../queries/auctions';
 import { usePendingListings } from '../../hooks/usePendingListings';
+import { useOpenReportCount } from '../../queries/admin';
 
 interface SidebarItem {
   label: string;
@@ -17,6 +18,7 @@ const navItems: SidebarItem[] = [
   { label: 'Listing Review', to: '/admin/listing-reviews', icon: ClipboardList },
   { label: 'Analytics', to: '/admin/analytics', icon: BarChart2 },
   { label: 'Transactions', to: '/admin/transactions', icon: Receipt },
+  { label: 'Reports', to: '/admin/reports', icon: Flag },
   { label: 'Users', to: '/admin/users', icon: Users },
   { label: 'Settings', to: '/admin/settings', icon: Settings },
 ];
@@ -39,12 +41,14 @@ export function AdminSidebarContent({ active, onClose, collapsed = false, onTogg
   const pendingCount = pendingListings.length;
   const activeCount = auctions.length; // the query is scoped to ?status=ACTIVE
   const activeKnown = !activeQuery.isError && !activeQuery.isPending && !activeQuery.hasNextPage && !activeQuery.isFetchingNextPage;
+  const { data: openReports } = useOpenReportCount(user?.role === 'ADMIN');
 
   const badgeFor = (label: string): string | undefined => {
     // No badge until the number is known: while loading, or after a failed request, the lists are
     // empty because they are unknown -- and a missing badge says less than a wrong one.
     if (label === 'Listing Review') return pendingStatus === 'ready' && pendingCount > 0 ? String(pendingCount) : undefined;
     if (label === 'Live Auctions') return activeKnown && activeCount > 0 ? String(activeCount) : undefined;
+    if (label === 'Reports') return openReports;
     return undefined;
   };
 

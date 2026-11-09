@@ -670,6 +670,7 @@ export default function LandingPage() {
               <div className="flex flex-col gap-2.5">
                 <Link to="/privacy" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Privacy Policy</Link>
                 <Link to="/terms" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Terms of Service</Link>
+                <Link to="/rules" className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">What you may not sell</Link>
                 <a href={`mailto:${supportEmail}`} className="font-medium text-[13px] text-[rgba(255,255,255,0.55)] hover:text-white transition-colors">Contact Us</a>
               </div>
             </div>

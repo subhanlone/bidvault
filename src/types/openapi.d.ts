@@ -24,6 +24,23 @@ export type AdminDispute = {
   responseDueAt: string;
 };
 
+export type AdminListingReport = {
+  reportId: string;
+  auction: {
+    auctionId: string;
+    title: string;
+    listingCode: string;
+    status: AuctionStatus;
+    sellerName: string;
+  };
+  reason: ReportReason;
+  note?: string;
+  reporterName: string;
+  status: ReportStatus;
+  createdAt: string;
+  resolvedAt?: string;
+};
+
 export type AdminTransaction = {
   transactionId: string;
   auctionId: string;
@@ -291,6 +308,15 @@ export type ListingLimits = {
   maxBidIncrement: number;
 };
 
+export type ListingReport = {
+  reportId: string;
+  auctionId: string;
+  reason: ReportReason;
+  note?: string;
+  status: ReportStatus;
+  createdAt: string;
+};
+
 export type ListingStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "REMOVED";
 
 export type LoginRequest = {
@@ -339,6 +365,11 @@ export type OtpIssued = {
   resetCode?: string;
   verificationCode?: string;
   codeExpiresAt?: string;
+};
+
+export type PaginatedAdminReports = {
+  items: AdminListingReport[];
+  nextCursor: string | null;
 };
 
 export type PaginatedAdminUsers = {
@@ -484,9 +515,18 @@ export type ReplyToReviewRequest = {
   reply: string;
 };
 
+export type ReportListingRequest = {
+  reason: "PROHIBITED_ITEM" | "MISLEADING" | "COUNTERFEIT" | "OTHER";
+  note?: string;
+};
+
 export type ReportNotShippedRequest = {
   note?: string;
 };
+
+export type ReportReason = "PROHIBITED_ITEM" | "MISLEADING" | "COUNTERFEIT" | "OTHER";
+
+export type ReportStatus = "OPEN" | "ACTIONED" | "DISMISSED";
 
 export type ResendVerificationRequest = {
   email: string;
@@ -504,6 +544,10 @@ export type ResetPasswordRequest = {
 export type ResolveDisputeRequest = {
   resolution: "REFUND" | "RELEASE";
   note: string;
+};
+
+export type ResolveReportRequest = {
+  status: "ACTIONED" | "DISMISSED";
 };
 
 export type RespondToDisputeRequest = {
@@ -778,6 +822,7 @@ export type WonTransaction = {
 export interface GetEndpoints {
   "/admin/analytics": Analytics;
   "/admin/disputes": AdminDispute[];
+  "/admin/reports": PaginatedAdminReports;
   "/admin/transactions": AdminTransaction[];
   "/admin/transactions/unshipped": AdminTransaction[];
   "/admin/users": PaginatedAdminUsers;
@@ -850,6 +895,10 @@ export interface PostEndpoints {
     auctionId: string;
     status: "CANCELLED";
   };
+  "/auctions/{auctionId}/report": {
+    report: ListingReport;
+    alreadyReported: boolean;
+  };
   "/auth/change-password": PasswordChanged;
   "/auth/delete-account": {
     message: string;
@@ -919,6 +968,9 @@ export interface PutEndpoints {
 
 /** What each documented PATCH returns, unwrapped from the response envelope. */
 export interface PatchEndpoints {
+  "/admin/reports/{reportId}": {
+    report: ListingReport;
+  };
   "/auth/me/preferences": NotificationPrefs;
   "/listings/{listingId}": Listing;
   "/payments/{transactionId}/ship": {
@@ -952,6 +1004,7 @@ export interface PostRequests {
   "/admin/users/{userId}/suspend": SuspendUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
   "/auctions/{auctionId}/cancel": CancelAuctionRequest;
+  "/auctions/{auctionId}/report": ReportListingRequest;
   "/auth/change-password": ChangePasswordRequest;
   "/auth/delete-account": DeleteAccountRequest;
   "/auth/forgot-password": ForgotPasswordRequest;
@@ -982,6 +1035,7 @@ export interface PutRequests {
 
 /** The body each documented PATCH expects. */
 export interface PatchRequests {
+  "/admin/reports/{reportId}": ResolveReportRequest;
   "/auth/me/preferences": NotificationPreferences;
   "/listings/{listingId}": SubmitListingRequest;
   "/reviews/{reviewId}": UpdateReviewRequest;

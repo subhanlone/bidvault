@@ -148,7 +148,10 @@ export default function SellerCreateListingStep1() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         <div className="mb-5">
           <h1 className="text-xl font-extrabold text-navy">Create New Auction Listing</h1>
-          <p className="text-sm text-muted">Fill in the details to list your item for auction</p>
+          <p className="text-sm text-muted">
+            Fill in the details to list your item for auction. Check{' '}
+            <Link to="/rules" className="font-semibold text-primary hover:underline">What you may not sell</Link> first.
+          </p>
         </div>
 
         <StepProgress
