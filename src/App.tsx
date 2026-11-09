@@ -44,6 +44,7 @@ const BecomeSeller = lazy(() => import('./screens/seller/BecomeSeller'));
 const BrowseAuctions = lazy(() => import('./screens/public/BrowseAuctions'));
 const AuctionPage = lazy(() => import('./screens/public/AuctionPage'));
 const PublicSellerProfile = lazy(() => import('./screens/public/SellerProfile'));
+const Rules = lazy(() => import('./screens/public/Rules'));
 
 const BuyerMyBids = lazy(() => import('./screens/buyer/BuyerMyBids'));
 const BuyerWatchlist = lazy(() => import('./screens/buyer/BuyerWatchlist'));
@@ -90,6 +91,7 @@ export default function App() {
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/rules" element={<Rules />} />
                     <Route path="/maintenance" element={<MaintenancePage />} />
 
                     {/* Public auth routes */}
