@@ -68,10 +68,12 @@ test.describe('Seller profile', () => {
     await page.getByRole('link', { name: "Seller's other items" }).click();
     await expect(page).toHaveURL(new RegExp(`/sellers/${live.sellerId}$`));
 
-    await expect(page.getByRole('heading', { level: 1, name: SELLER })).toBeVisible();
-    await expect(page.getByText(/^Member since [A-Z][a-z]+ \d{4}$/)).toBeVisible();
-    await expect(page.getByText('Located in Lahore, Punjab')).toBeVisible();
-    await expect(page.getByText('I sell cameras and furniture.')).toBeVisible();
+    // The profile header: the section that holds the seller's name (each item card says where it is too).
+    const header = page.locator('section').filter({ has: page.getByRole('heading', { level: 1, name: SELLER }) });
+    await expect(header).toBeVisible();
+    await expect(header.getByText(/^Member since [A-Z][a-z]+ \d{4}$/)).toBeVisible();
+    await expect(header.getByText('Located in Lahore, Punjab')).toBeVisible();
+    await expect(header.getByText('I sell cameras and furniture.')).toBeVisible();
 
     const reviews = page.getByRole('region', { name: 'Reviews' });
     await expect(reviews.getByText('Reviewer 1')).toBeVisible();
@@ -103,14 +105,15 @@ test.describe('Seller profile', () => {
     const live = await auctionIdOf(request, 'ACTIVE', LIVE);
     await page.goto(`/sellers/${live.sellerId}`);
     const forSale = page.getByRole('region', { name: 'Items for sale' });
-    await expect(forSale.getByRole('link', { name: LIVE })).toBeVisible();
-    await expect(forSale.getByRole('link', { name: OTHER_LIVE })).toBeVisible();
+    // A card links its picture and its title to the item, so each title names two links.
+    await expect(forSale.getByRole('link', { name: LIVE }).first()).toBeVisible();
+    await expect(forSale.getByRole('link', { name: OTHER_LIVE }).first()).toBeVisible();
     const ended = page.getByRole('region', { name: 'Ended' });
     await expect(ended.getByRole('link', { name: ENDED })).toBeVisible();
     // A cancelled (removed) item is not shown as an ended one.
     await expect(page.getByText(CANCELLED)).toHaveCount(0);
 
-    await forSale.getByRole('link', { name: OTHER_LIVE }).click();
+    await forSale.getByRole('heading', { name: OTHER_LIVE }).getByRole('link').click();
     await expect(page.getByRole('heading', { level: 1, name: OTHER_LIVE })).toBeVisible();
   });
 
