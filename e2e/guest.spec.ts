@@ -108,12 +108,14 @@ test.describe('The auction page for a guest', () => {
   test('quotes the admin\'s payment and confirmation windows in the buying rules', async ({ page, request }) => {
     const id = await auctionIdOf(request, 'ACTIVE', LIVE);
     const { data } = (await (await request.get(`${API}/settings/public`)).json()) as {
-      data: { paymentDeadlineHours: number; reviewTimeoutHours: number };
+      data: { paymentDeadlineHours: number; reviewTimeoutHours: number; shipByHours: number };
     };
     await page.goto(`/auctions/${id}`);
     const rules = page.getByRole('region', { name: 'Buying on BidVault' });
     await expect(rules).toContainText(`You pay on BidVault within ${data.paymentDeadlineHours} hours after you win.`);
-    await expect(rules).toContainText(`you have ${data.reviewTimeoutHours} hours after it ships to confirm that it arrived or raise a dispute`);
+    // FR-02 (frontend #49) added the ship-by time and reworded the confirmation window.
+    await expect(rules).toContainText(`The seller ships the item within ${data.shipByHours} hours of your payment`);
+    await expect(rules).toContainText(`Once it ships, you have ${data.reviewTimeoutHours} hours to confirm that it arrived or raise a dispute.`);
   });
 
   test('states the buying rules without figures when the settings cannot be read', async ({ page, request }) => {
