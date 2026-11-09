@@ -35,7 +35,10 @@ async function auctionIdOf(request: APIRequestContext, status: 'ACTIVE' | 'CLOSE
 }
 
 const PASSWORD = `Bv!${crypto.randomUUID()}x9`;
-const EMAIL = `profile-${Date.now()}@test.local`;
+const RUN = Date.now();
+const EMAIL = `profile-${RUN}@test.local`;
+// Unique per run: the local test DB keeps reports from earlier runs of this file.
+const ADMIN_NOTE = `The photos show a different model (run ${RUN}).`;
 let accountReady: Promise<void> | null = null;
 
 function ensureAccount(request: APIRequestContext): Promise<void> {
@@ -154,7 +157,7 @@ test.describe('Report listing', () => {
     await expect(dialog.getByRole('button', { name: 'Send report' })).toBeDisabled();
     await dialog.getByRole('radio', { name: 'Counterfeit or replica' }).check();
     await dialog.getByRole('textbox').fill('The logo on the box is misspelt.');
-    await expect(dialog.getByText('31/500')).toBeVisible();
+    await expect(dialog.getByText('32/500')).toBeVisible();
     await dialog.getByRole('button', { name: 'Send report' }).click();
     await expect(dialog.getByText('Thanks. An admin will review this listing.')).toBeVisible();
     await dialog.getByRole('button', { name: 'Done' }).click();
@@ -181,22 +184,22 @@ test.describe('Report listing', () => {
     const { data } = (await login.json()) as { data: { accessToken: string } };
     const filed = await request.post(`${API}/auctions/${camera.auctionId}/report`, {
       headers: { Authorization: `Bearer ${data.accessToken}` },
-      data: { reason: 'MISLEADING', note: 'The photos show a different model.' },
+      data: { reason: 'MISLEADING', note: ADMIN_NOTE },
     });
     expect(filed.ok(), 'report through the API').toBeTruthy();
 
     await signInFirst(page, ADMIN.email, ADMIN.password);
     await page.getByRole('navigation').getByRole('link', { name: /^Reports/ }).click();
     await expect(page.getByRole('heading', { name: 'Reports' })).toBeVisible();
-    const row = page.getByRole('listitem').filter({ hasText: 'The photos show a different model.' });
+    const row = page.getByRole('listitem').filter({ hasText: ADMIN_NOTE });
     await expect(row.getByText(OTHER_LIVE)).toBeVisible();
     await expect(row.getByText('Misleading description or photos')).toBeVisible();
     await expect(row.getByText('Profile Spec Buyer')).toBeVisible();
     await row.getByRole('button', { name: 'Mark actioned' }).click();
-    await expect(page.getByRole('listitem').filter({ hasText: 'The photos show a different model.' })).toHaveCount(0);
+    await expect(page.getByRole('listitem').filter({ hasText: ADMIN_NOTE })).toHaveCount(0);
 
     await page.getByRole('tab', { name: 'Actioned' }).click();
-    await expect(page.getByRole('listitem').filter({ hasText: 'The photos show a different model.' })).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: ADMIN_NOTE })).toBeVisible();
   });
 });
 

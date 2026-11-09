@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronRight, Flame, Heart, Search } from 'lucide-react';
+import { ChevronRight, Flag, Flame, Heart, Search } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { useAuctionDetail, useBids, useWatchlistToggle } from '../../queries/auctions';
 import { useTimer } from '../../hooks/useTimer';
@@ -13,6 +13,7 @@ import MemberBidPanel, { GuestBidPanel, PendingBidPanel, TimerCard } from '../..
 import BuyingRules from '../../components/auction/BuyingRules';
 import EndedView from '../../components/auction/EndedView';
 import SellerCard from '../../components/auction/SellerCard';
+import ReportDialog from '../../components/auction/ReportDialog';
 import { ApiError } from '../../services/api';
 import { getCategoryFields } from '../../config/categoryFields';
 import { auctionOutcome } from '../../utils/auctionOutcome';
@@ -36,6 +37,7 @@ export default function AuctionPage() {
   const signIn = useSignInLink();
   const { toggle: toggleWatchlist, isWatched } = useWatchlistToggle();
   const now = useNow(30_000);
+  const [reporting, setReporting] = useState(false);
 
   // Someone whose session is still being restored is neither a guest nor a member yet: they are
   // shown neither "Sign in to bid" nor a bid form, so a signed-in person never sees a sign-in prompt.
@@ -250,6 +252,22 @@ export default function AuctionPage() {
             </dl>
 
             <SellerCard key={auction.auctionId} auction={auction} />
+
+            {/* G5/F3: anyone with an account may report a listing, except its seller and an admin
+                (who has the takedown control instead); a removed listing has nothing to report. */}
+            {auction.status !== 'CANCELLED' && (viewer === 'guest' ? (
+              <Link {...signIn} className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-muted hover:text-primary">
+                <Flag size={13} aria-hidden="true" />Sign in to report this listing
+              </Link>
+            ) : viewer === 'member' && user && !isOwnAuction && user.role !== 'ADMIN' && (
+              <button
+                type="button"
+                onClick={() => setReporting(true)}
+                className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-muted hover:text-primary cursor-pointer"
+              >
+                <Flag size={13} aria-hidden="true" />Report this listing
+              </button>
+            ))}
           </div>
 
           <BuyingRules city={auction.sellerCity} province={auction.sellerProvince} />
@@ -279,6 +297,10 @@ export default function AuctionPage() {
           )}
         </div>
       </main>
+
+      {reporting && auction && (
+        <ReportDialog auctionId={auction.auctionId} auctionTitle={auction.title} onClose={() => setReporting(false)} />
+      )}
     </div>
   );
 }

@@ -27,6 +27,7 @@ const AdminListingReviews = lazy(() => import('./screens/admin/AdminListingRevie
 const AdminAnalytics = lazy(() => import('./screens/admin/AdminAnalytics'));
 const AdminTransactions = lazy(() => import('./screens/admin/AdminTransactions'));
 const AdminUsers = lazy(() => import('./screens/admin/AdminUsers'));
+const AdminReports = lazy(() => import('./screens/admin/AdminReports'));
 const AdminSettings = lazy(() => import('./screens/admin/AdminSettings'));
 
 const SellerDashboard = lazy(() => import('./screens/seller/SellerDashboard'));
@@ -136,6 +137,11 @@ export default function App() {
                     <Route path="/admin/users" element={
                       <ProtectedRoute allowedRoles={['ADMIN']}>
                         <AdminUsers />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/reports" element={
+                      <ProtectedRoute allowedRoles={['ADMIN']}>
+                        <AdminReports />
                       </ProtectedRoute>
                     } />
                     <Route path="/admin/settings" element={
