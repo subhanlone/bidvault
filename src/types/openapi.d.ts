@@ -47,6 +47,7 @@ export type AdminUser = {
   email: string;
   role: UserRole;
   status: UserStatus;
+  deleted: boolean;
   createdAt: string;
 };
 

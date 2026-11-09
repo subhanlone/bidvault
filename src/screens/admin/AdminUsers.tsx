@@ -94,28 +94,38 @@ function UserRow({ user, onSuspend, onDelete, onReinstate, reinstating }: {
           {user.status === 'SUSPENDED' && (
             <span className="ml-2 font-bold text-[10px] text-error bg-error-bg border border-error-border rounded-full px-2 py-0.5 align-middle">Suspended</span>
           )}
+          {user.deleted && (
+            <span className="ml-2 font-bold text-[10px] text-muted bg-bg border border-border-light rounded-full px-2 py-0.5 align-middle">Deleted</span>
+          )}
         </p>
         <p className="text-[11px] text-placeholder truncate">{user.email}</p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {user.status === 'SUSPENDED' ? (
-          <Button variant="outline" size="sm" loading={reinstating} onClick={() => onReinstate(user)}>
-            Reinstate
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" onClick={() => onSuspend(user)}>
-            Suspend
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-error text-error hover:bg-error-bg"
-          onClick={() => onDelete(user)}
-        >
-          Delete
-        </Button>
-      </div>
+      {/* FR-15: a deleted account has nothing left to act on, and administrator accounts (the
+          signed-in one included) are not suspended or deleted from here; the server refuses
+          both. A suspended account can still be reinstated, whoever it is. */}
+      {!user.deleted && (
+        <div className="flex items-center gap-2 shrink-0">
+          {user.status === 'SUSPENDED' ? (
+            <Button variant="outline" size="sm" loading={reinstating} onClick={() => onReinstate(user)}>
+              Reinstate
+            </Button>
+          ) : user.role !== 'ADMIN' && (
+            <Button variant="outline" size="sm" onClick={() => onSuspend(user)}>
+              Suspend
+            </Button>
+          )}
+          {user.role !== 'ADMIN' && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-error text-error hover:bg-error-bg"
+              onClick={() => onDelete(user)}
+            >
+              Delete
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
