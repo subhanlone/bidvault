@@ -5,6 +5,7 @@ import { useAuth } from '../../context/auth';
 import { api } from '../../services/api';
 import { useSellerItemsSummary } from '../../queries/sellerItems';
 import { SellerNavbar, Button, ErrorState, StatCard, ReasonModal } from '../../components/ui';
+import LimitMeter from '../../components/seller/LimitMeter';
 import type { SellerReview } from '../../types/api';
 import { TAB_LABELS, TAB_ORDER } from '../../utils/sellerItemStage';
 import { dateShort, pkr } from '../../utils/format';
@@ -102,6 +103,8 @@ export default function SellerDashboard() {
             <span className="sm:hidden">New</span>
           </Button>
         </div>
+
+        <LimitMeter />
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {loading || countsLoading ? (

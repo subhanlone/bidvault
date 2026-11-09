@@ -8,6 +8,9 @@ import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
 import { api } from '../../services/api';
 import { pkr } from '../../utils/format';
+import { useSellerLimits } from '../../queries/sellerItems';
+import LimitNotice from '../../components/seller/LimitNotice';
+import { itemsFull, valueOverMessage } from '../../utils/sellerLimits';
 
 const DURATIONS = [3, 5, 7, 14];
 const MAX_PRICE = 100_000_000;
@@ -19,6 +22,9 @@ const MAX_DURATION = 30;
 export default function SellerCreateListingStep2() {
   const navigate = useNavigate();
   const { draft, updateDraft, fieldErrors, setFieldErrors } = useListing();
+  // B5: the monthly limit, checked again as the starting price is typed (value) on this step.
+  const { data: sellerLimits } = useSellerLimits();
+  const overLimit = itemsFull(sellerLimits) || valueOverMessage(sellerLimits, draft.startingPrice) !== null;
   const { showToast } = useToast();
   // Starts from whatever the server said when it last refused this listing on Step 3.
   const [startingPriceError, setStartingPriceError] = useState(fieldErrors.startPrice ?? '');
@@ -107,6 +113,8 @@ export default function SellerCreateListingStep2() {
           <h1 className="text-xl font-extrabold text-navy">Create New Auction Listing</h1>
           <p className="text-sm text-muted">Set your auction parameters</p>
         </div>
+
+        <LimitNotice limits={sellerLimits} startPrice={draft.startingPrice} />
 
         <StepProgress
           steps={[
@@ -319,7 +327,7 @@ export default function SellerCreateListingStep2() {
 
           <div className="flex justify-between mt-5">
             <Button variant="outline" onClick={() => navigate('/seller/create-listing/step-1')}>← Back</Button>
-            <Button type="submit" variant="primary">Next </Button>
+            <Button type="submit" variant="primary" disabled={overLimit}>Next </Button>
           </div>
         </form>
       </main>

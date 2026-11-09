@@ -39,6 +39,7 @@ export type {
   PaginatedSellerItems,
   PaginatedAdminUsers,
   SellerProfile,
+  SellerLimits,
   ListingReport,
   AdminListingReport,
   PaginatedAdminReports,

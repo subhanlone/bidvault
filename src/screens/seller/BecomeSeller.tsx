@@ -1,12 +1,13 @@
 import { useEffect, useId, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, ListPlus, Wallet, Gavel } from 'lucide-react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, ListPlus, Wallet, Gavel, PauseCircle } from 'lucide-react';
 import { useAuth } from '../../context/auth';
 import { useToast } from '../../context/toast';
 import { BuyerNavbar, Button, ErrorState, Input, Textarea } from '../../components/ui';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 import { api } from '../../services/api';
 import { homePath, writeMode } from '../../utils/account';
+import { dateMedium } from '../../utils/format';
 
 // Where a seller can be, as the contract lists them (EnrollSellerRequest['province']).
 const PROVINCES = [
@@ -63,6 +64,32 @@ export default function BecomeSeller() {
   // Someone who is already a seller has nothing to fill in. (This is also where the page lands
   // after a successful submit, once the signed-in user is updated.)
   if (user?.isSeller) return <Navigate to="/seller/dashboard" replace />;
+
+  // B5: an admin paused this account's selling. Enrolling again is refused by the server, and only an
+  // admin can restore it, so the form is not offered; the sales already made are in My Items.
+  if (user?.sellerRevokedAt) {
+    return (
+      <div className="min-h-screen bg-bg">
+        <BuyerNavbar userName={user.name} onLogout={logout} />
+        <main className="max-w-[560px] mx-auto px-4 py-12 text-center">
+          <div className="bg-warning-bg rounded-full p-5 flex justify-center mb-4 w-fit mx-auto">
+            <PauseCircle size={40} strokeWidth={1.4} className="text-warning" aria-hidden="true" />
+          </div>
+          <h1 className="font-extrabold text-[22px] text-navy mb-2">Selling is paused on your account</h1>
+          <p className="text-[14px] text-secondary leading-[22px] mb-5">
+            An administrator paused selling on {dateMedium(user.sellerRevokedAt)}. Only an administrator can restore it.
+            Sales you already made continue: ship them and answer any dispute from My Items. You can still buy as usual.
+          </p>
+          <Link
+            to="/seller/items"
+            className="inline-flex items-center justify-center rounded-sm px-5 py-2.5 font-bold text-[14px] bg-primary text-white hover:bg-primary-dark transition-colors no-underline"
+          >
+            Go to My Items
+          </Link>
+        </main>
+      </div>
+    );
+  }
 
   const clear = (key: Field) => setErrors(p => ({ ...p, [key]: undefined }));
 

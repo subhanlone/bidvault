@@ -11,6 +11,9 @@ import LoadingStatus from '../../components/ui/LoadingStatus';
 import type { ItemCondition, CategoryAttributes } from '../../types/api';
 import type { ListingCategory } from '../../types';
 import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
+import { useSellerLimits } from '../../queries/sellerItems';
+import LimitNotice from '../../components/seller/LimitNotice';
+import { itemsFull, valueOverMessage } from '../../utils/sellerLimits';
 
 const CATEGORIES: ListingCategory[] = [
   'Electronics & Gadgets', 'Vehicles', 'Clothing & Fashion',
@@ -60,6 +63,11 @@ export default function SellerEditListing() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // B5: resubmitting uses the month again (the rejected listing stopped counting), so the same limit
+  // as a new listing applies.
+  const { data: sellerLimits } = useSellerLimits();
+  const priceTyped = Number(form?.startPrice) || 0;
+  const overLimit = itemsFull(sellerLimits) || valueOverMessage(sellerLimits, priceTyped) !== null;
 
   const userId = user?.userId;
   useEffect(() => {
@@ -230,6 +238,8 @@ export default function SellerEditListing() {
         <h1 className="text-xl font-extrabold text-navy mb-1">Edit &amp; Resubmit</h1>
         <p className="text-sm text-muted mb-6">Fix what the admin flagged, then resubmit for another review.</p>
 
+        <LimitNotice limits={sellerLimits} startPrice={priceTyped} />
+
         {loading ? (
           <LoadingStatus label="Loading listing" />
         ) : loadError && loadFailed ? (
@@ -354,7 +364,7 @@ export default function SellerEditListing() {
               <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFileChange} />
             </div>
 
-            <Button type="submit" loading={submitting} disabled={uploading} className="w-full">
+            <Button type="submit" loading={submitting} disabled={uploading || overLimit} className="w-full">
               Resubmit for Review
             </Button>
           </form>

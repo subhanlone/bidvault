@@ -50,6 +50,26 @@ export function useSellerItemsSummary() {
 }
 
 /**
+ * B5: this month's selling limit and the seller's standing, from the same summary request as the
+ * tab badges (one cache entry, two views of it).
+ */
+export function useSellerLimits() {
+  return useQuery({
+    queryKey: keys.sellerItems.summary,
+    queryFn: () => api.get('/seller/items/summary'),
+    select: (data) => data.limits,
+    refetchInterval: 20_000,
+  });
+}
+
+/** D7: ask the admins for a higher limit; one a month, a repeat says so. */
+export function useRequestHigherLimit() {
+  return useMutation({
+    mutationFn: (note: string) => api.post('/seller/limit-request', note ? { note } : {}),
+  });
+}
+
+/**
  * For the writes that happen outside this file (creating a listing, resubmitting a rejected one):
  * call it after they succeed, so My Items does not show a list, or a tab count, from before.
  */
