@@ -71,6 +71,19 @@ export type AdminUser = {
   createdAt: string;
 };
 
+export type AiValuation = {
+  configured: boolean;
+  status: AiValuationStatus | null;
+  averagePricePkr: number | null;
+  listingsUsed: number | null;
+  listingsConsidered: number | null;
+  source: string | null;
+  computedAt: string | null;
+  refreshing: boolean;
+};
+
+export type AiValuationStatus = "QUEUED" | "RUNNING" | "READY" | "INSUFFICIENT_DATA" | "FAILED" | "PAUSED";
+
 export type Analytics = {
   totalRevenue: number;
   totalBids: number;
@@ -443,6 +456,7 @@ export type PlatformSettings = {
   newSellerMonthlyItems: number;
   newSellerMonthlyValue: number;
   sellerGraduationSales: number;
+  usdToPkrRate: number;
   supportEmail: string;
 };
 
@@ -782,6 +796,7 @@ export type UpdateSettingsRequest = {
   newSellerMonthlyItems?: number;
   newSellerMonthlyValue?: number;
   sellerGraduationSales?: number;
+  usdToPkrRate?: number;
   supportEmail?: string;
 };
 
@@ -869,6 +884,7 @@ export interface GetEndpoints {
   "/admin/transactions": AdminTransaction[];
   "/admin/transactions/unshipped": AdminTransaction[];
   "/admin/users": PaginatedAdminUsers;
+  "/ai/valuations/{auctionId}": AiValuation;
   "/auctions": PaginatedAuctions;
   "/auctions/facets": AuctionFacets;
   "/auctions/mine": PaginatedAuctions;
