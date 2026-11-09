@@ -10,6 +10,9 @@ import StepProgress from '../../components/ui/StepProgress';
 import type { ItemCondition } from '../../types/api';
 import type { ListingCategory } from '../../types';
 import { getCategoryFields, validateCategoryFields } from '../../config/categoryFields';
+import { useSellerLimits } from '../../queries/sellerItems';
+import LimitNotice from '../../components/seller/LimitNotice';
+import { itemsFull } from '../../utils/sellerLimits';
 
 // Kept as a literal-typed array (not Object.keys(CATEGORY_FIELDS)) so a category typo fails the
 // build instead of rendering an <option> the server would reject.
@@ -49,6 +52,9 @@ type UploadState = 'idle' | 'uploading' | 'done' | 'error';
 export default function SellerCreateListingStep1() {
   const navigate = useNavigate();
   const { draft, updateDraft } = useListing();
+  // B5: checked when the wizard opens, so a seller at the item limit learns it before the form.
+  const { data: limits } = useSellerLimits();
+  const atItemLimit = itemsFull(limits);
   const { showToast } = useToast();
   const [titleError, setTitleError] = useState('');
   const [categoryError, setCategoryError] = useState('');
@@ -153,6 +159,8 @@ export default function SellerCreateListingStep1() {
             <Link to="/rules" className="font-semibold text-primary hover:underline">What you may not sell</Link> first.
           </p>
         </div>
+
+        <LimitNotice limits={limits} />
 
         <StepProgress
           steps={[
@@ -430,7 +438,7 @@ export default function SellerCreateListingStep1() {
           <Link to="/seller/dashboard">
             <Button variant="outline" fullWidth>Cancel</Button>
           </Link>
-          <Button variant="primary" onClick={handleNext}>
+          <Button variant="primary" onClick={handleNext} disabled={atItemLimit}>
             Next
           </Button>
         </div>

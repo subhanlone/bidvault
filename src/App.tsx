@@ -166,7 +166,7 @@ export default function App() {
                       </ProtectedRoute>
                     } />
                     <Route path="/seller/items" element={
-                      <ProtectedRoute allowedRoles={['SELLER']}>
+                      <ProtectedRoute allowedRoles={['SELLER']} allowPausedSeller>
                         <SellerMyItems />
                       </ProtectedRoute>
                     } />

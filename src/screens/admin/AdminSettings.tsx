@@ -14,6 +14,10 @@ const MAX_LISTING_PRICE = 100_000_000;
 const MAX_BID_INCREMENT = 10_000_000;
 const MAX_REVIEW_TIMEOUT_HOURS = 720;
 const MAX_SHIP_BY_HOURS = 720;
+// B5: the backend's own ceilings for the new-seller numbers (requests.ts).
+const MAX_SELLER_ITEMS = 1000;
+const MAX_SELLER_VALUE = 2_000_000_000;
+const MAX_GRADUATION_SALES = 1000;
 
 interface FormState {
   emailNotifsEnabled: boolean;
@@ -22,6 +26,9 @@ interface FormState {
   minListingPrice: string;
   reviewTimeoutHours: string;
   shipByHours: string;
+  newSellerMonthlyItems: string;
+  newSellerMonthlyValue: string;
+  sellerGraduationSales: string;
   supportEmail: string;
 }
 
@@ -32,6 +39,9 @@ const EMPTY_FORM: FormState = {
   minListingPrice: '',
   reviewTimeoutHours: '',
   shipByHours: '',
+  newSellerMonthlyItems: '',
+  newSellerMonthlyValue: '',
+  sellerGraduationSales: '',
   supportEmail: '',
 };
 
@@ -84,6 +94,9 @@ export default function AdminSettings() {
           minListingPrice: String(s.minListingPrice),
           reviewTimeoutHours: String(s.reviewTimeoutHours),
           shipByHours: String(s.shipByHours),
+          newSellerMonthlyItems: String(s.newSellerMonthlyItems),
+          newSellerMonthlyValue: String(s.newSellerMonthlyValue),
+          sellerGraduationSales: String(s.sellerGraduationSales),
           supportEmail: s.supportEmail,
         });
         setLoadState('ready');
@@ -101,11 +114,18 @@ export default function AdminSettings() {
     const minPrice = Number(form.minListingPrice);
     const reviewHrs = Number(form.reviewTimeoutHours);
     const shipByHrs = Number(form.shipByHours);
+    const sellerItems = Number(form.newSellerMonthlyItems);
+    const sellerValue = Number(form.newSellerMonthlyValue);
+    const graduationSales = Number(form.sellerGraduationSales);
     if (
       !Number.isInteger(maxBid) || maxBid <= 0 || maxBid > MAX_BID_INCREMENT ||
       !Number.isInteger(minPrice) || minPrice <= 0 || minPrice > MAX_LISTING_PRICE ||
       !Number.isInteger(reviewHrs) || reviewHrs <= 0 || reviewHrs > MAX_REVIEW_TIMEOUT_HOURS ||
-      !Number.isInteger(shipByHrs) || shipByHrs <= 0 || shipByHrs > MAX_SHIP_BY_HOURS
+      !Number.isInteger(shipByHrs) || shipByHrs <= 0 || shipByHrs > MAX_SHIP_BY_HOURS ||
+      !Number.isInteger(sellerItems) || sellerItems <= 0 || sellerItems > MAX_SELLER_ITEMS ||
+      !Number.isInteger(sellerValue) || sellerValue <= 0 || sellerValue > MAX_SELLER_VALUE ||
+      // Zero is allowed: no completed sales needed, so no new seller has a limit.
+      !Number.isInteger(graduationSales) || graduationSales < 0 || graduationSales > MAX_GRADUATION_SALES
     ) {
       showToast({ type: 'error', title: 'Invalid Values', message: 'Numeric fields must be whole positive numbers within sensible limits.' });
       return;
@@ -123,6 +143,9 @@ export default function AdminSettings() {
         minListingPrice: minPrice,
         reviewTimeoutHours: reviewHrs,
         shipByHours: shipByHrs,
+        newSellerMonthlyItems: sellerItems,
+        newSellerMonthlyValue: sellerValue,
+        sellerGraduationSales: graduationSales,
         supportEmail: form.supportEmail.trim(),
       });
       showToast({ type: 'success', title: 'Settings Saved', message: 'Platform settings updated and applied.' });
@@ -333,6 +356,32 @@ export default function AdminSettings() {
                         label={f.label}
                         type="number"
                         min={1}
+                        max={f.max}
+                        step={1}
+                        value={form[f.key]}
+                        onChange={(e) => update(f.key, e.target.value)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* B5: a new seller's monthly limit, and the completed sales that lift it. */}
+                <div className="bg-surface border border-border-light rounded-md overflow-hidden">
+                  <div className="px-5 py-4 border-b border-border-light">
+                    <h2 className="font-bold text-[14px] text-navy">New Sellers</h2>
+                    <p className="text-[12px] text-muted mt-0.5">The monthly limit a new seller lists under, until enough completed sales lift it</p>
+                  </div>
+                  <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {([
+                      { label: 'New Seller Items per Month', key: 'newSellerMonthlyItems' as const, min: 1, max: MAX_SELLER_ITEMS },
+                      { label: 'New Seller Value per Month (PKR)', key: 'newSellerMonthlyValue' as const, min: 1, max: MAX_SELLER_VALUE },
+                      { label: 'Sales to Lift the Limit', key: 'sellerGraduationSales' as const, min: 0, max: MAX_GRADUATION_SALES },
+                    ] as const).map((f) => (
+                      <Input
+                        key={f.label}
+                        label={f.label}
+                        type="number"
+                        min={f.min}
                         max={f.max}
                         step={1}
                         value={form[f.key]}

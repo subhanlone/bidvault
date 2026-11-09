@@ -21,6 +21,8 @@ import {
   useWithdrawListing,
 } from '../../queries/sellerItems';
 import { SellerNavbar, Button, ErrorState, ReasonModal } from '../../components/ui';
+import LimitMeter from '../../components/seller/LimitMeter';
+import SellingPausedBanner from '../../components/seller/SellingPausedBanner';
 import LoadingStatus from '../../components/ui/LoadingStatus';
 import ItemRow from '../../components/seller/ItemRow';
 import RespondToDisputeModal from '../../components/seller/RespondToDisputeModal';
@@ -73,6 +75,7 @@ function WithdrawDialog({ item, loading, onConfirm, onClose }: {
 export default function SellerMyItems() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const paused = Boolean(user && !user.isSeller && user.sellerRevokedAt);
   const { showToast } = useToast();
   const { clearDraft, updateDraft } = useListing();
   const now = useNow(30_000);
@@ -217,9 +220,12 @@ export default function SellerMyItems() {
                 className="box-border w-[260px] max-w-full h-10 pl-9 pr-3 border border-border-strong rounded-md bg-surface text-[13px] text-navy placeholder:text-placeholder focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </label>
-            <Button size="md" onClick={() => navigate('/seller/create-listing/step-1')}>List an item</Button>
+            {!paused && <Button size="md" onClick={() => navigate('/seller/create-listing/step-1')}>List an item</Button>}
           </div>
         </div>
+
+        {/* B5: a paused seller still reaches their sales here, with the reason they cannot list. */}
+        {paused && user?.sellerRevokedAt ? <SellingPausedBanner since={user.sellerRevokedAt} /> : <LimitMeter />}
 
         <div role="tablist" aria-label="Item stage" onKeyDown={onTabKeys} className="flex gap-0.5 border-b border-border-light overflow-x-auto mb-4">
           {TAB_ORDER.map(key => {

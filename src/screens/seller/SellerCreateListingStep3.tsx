@@ -5,7 +5,9 @@ import { useAuth } from '../../context/auth';
 import { useListing } from '../../context/listing';
 import { useToast } from '../../context/toast';
 import { api, ApiError } from '../../services/api';
-import { useRefreshSellerItems } from '../../queries/sellerItems';
+import { useRefreshSellerItems, useSellerLimits } from '../../queries/sellerItems';
+import LimitNotice from '../../components/seller/LimitNotice';
+import { itemsFull, valueOverMessage } from '../../utils/sellerLimits';
 import { Button } from '../../components/ui';
 import StepProgress from '../../components/ui/StepProgress';
 import { ListingStepperHeader } from './SellerCreateListingStep1';
@@ -19,6 +21,10 @@ export default function SellerCreateListingStep3() {
   const { draft, setSubmittedListingCode, setFieldErrors } = useListing();
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // B5: the submit stays closed while the listing would break the monthly limit; the server checks
+  // once more on submit for the race (two tabs).
+  const { data: sellerLimits } = useSellerLimits();
+  const overLimit = itemsFull(sellerLimits) || valueOverMessage(sellerLimits, draft.startingPrice) !== null;
 
   const fmtPKR = (n: number) => n > 0 ? pkr(n) : '—';
 
@@ -106,6 +112,8 @@ export default function SellerCreateListingStep3() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
         <h1 className="text-xl font-extrabold text-navy mb-1">Review Your Listing</h1>
         <p className="text-sm text-muted mb-5">Check all details before submitting to admin for review.</p>
+
+        <LimitNotice limits={sellerLimits} startPrice={draft.startingPrice} />
 
         <StepProgress
           steps={[
@@ -203,7 +211,7 @@ export default function SellerCreateListingStep3() {
 
         <div className="flex flex-col sm:flex-row gap-3 sm:justify-between mt-5">
           <Button variant="outline" onClick={() => navigate('/seller/create-listing/step-2')}>← Back</Button>
-          <Button variant="primary" fullWidth loading={isSubmitting} onClick={handleSubmit} className="sm:w-auto">
+          <Button variant="primary" fullWidth loading={isSubmitting} onClick={handleSubmit} disabled={overLimit} className="sm:w-auto">
             Submit
           </Button>
         </div>

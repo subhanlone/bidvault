@@ -6,6 +6,11 @@ import { homePath } from '../utils/account';
 interface Props {
   children: React.ReactNode;
   allowedRoles: UserRole[];
+  /**
+   * B5: also let in someone whose selling an admin paused. Only for My Items: they still owe the
+   * buyers of the sales they made (shipping, disputes), and the server allows those by ownership.
+   */
+  allowPausedSeller?: boolean;
 }
 
 /**
@@ -13,7 +18,7 @@ interface Props {
  * `user.isSeller` (from the server), `ADMIN` an admin. The token's role claim is not consulted, so
  * becoming a seller changes what opens on the next page load.
  */
-export default function ProtectedRoute({ children, allowedRoles }: Props) {
+export default function ProtectedRoute({ children, allowedRoles, allowPausedSeller = false }: Props) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
@@ -34,7 +39,8 @@ export default function ProtectedRoute({ children, allowedRoles }: Props) {
   const isAdmin = user.role === 'ADMIN';
   const allowed = isAdmin
     ? allowedRoles.includes('ADMIN')
-    : allowedRoles.includes('BUYER') || (allowedRoles.includes('SELLER') && user.isSeller);
+    : allowedRoles.includes('BUYER') ||
+      (allowedRoles.includes('SELLER') && (user.isSeller || (allowPausedSeller && Boolean(user.sellerRevokedAt))));
   if (allowed) return <>{children}</>;
 
   // A buyer at a seller-only screen is asked to become a seller rather than bounced to their home.
