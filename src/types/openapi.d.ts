@@ -65,6 +65,9 @@ export type AdminUser = {
   role: UserRole;
   status: UserStatus;
   deleted: boolean;
+  sellerStatus: "NONE" | "ACTIVE" | "REVOKED";
+  sellerLimitOverrideItems: number | null;
+  sellerLimitOverrideValue: number | null;
   createdAt: string;
 };
 
@@ -358,7 +361,7 @@ export type NotificationRead = {
   isRead: true;
 };
 
-export type NotificationType = "BID_OUTBID" | "AUCTION_WON" | "RESERVE_NOT_MET" | "LISTING_APPROVED" | "LISTING_REJECTED" | "NEW_REVIEW" | "ITEM_SHIPPED" | "PAYOUT_RECEIVED" | "DISPUTE_RAISED" | "DISPUTE_RESOLVED" | "AUCTION_CANCELLED" | "SECOND_CHANCE_OFFER" | "LISTING_RELISTED" | "REVIEW_REPLY" | "LISTING_REMOVED" | "BID_RECEIVED" | "NOT_SHIPPED_REPORTED" | "SALE_REFUNDED" | (string & Record<never, never>);
+export type NotificationType = "BID_OUTBID" | "AUCTION_WON" | "RESERVE_NOT_MET" | "LISTING_APPROVED" | "LISTING_REJECTED" | "NEW_REVIEW" | "ITEM_SHIPPED" | "PAYOUT_RECEIVED" | "DISPUTE_RAISED" | "DISPUTE_RESOLVED" | "AUCTION_CANCELLED" | "SECOND_CHANCE_OFFER" | "LISTING_RELISTED" | "REVIEW_REPLY" | "LISTING_REMOVED" | "BID_RECEIVED" | "NOT_SHIPPED_REPORTED" | "SALE_REFUNDED" | "SELLER_WELCOME" | "SELLER_LIMIT_NEAR" | "SELLER_GRADUATED" | "SELLER_LIMIT_RETURNED" | "SELLER_REVOKED" | "SELLER_RESTORED" | "SELLER_LIMIT_CHANGED" | "SELLER_LIMIT_REQUESTED" | (string & Record<never, never>);
 
 export type OtpIssued = {
   message: string;
@@ -437,6 +440,9 @@ export type PlatformSettings = {
   paymentDeadlineHours: number;
   reviewEditWindowHours: number;
   shipByHours: number;
+  newSellerMonthlyItems: number;
+  newSellerMonthlyValue: number;
+  sellerGraduationSales: number;
   supportEmail: string;
 };
 
@@ -564,6 +570,11 @@ export type Review = {
   sellerReplyAt?: string;
 };
 
+export type RevokeSellerRequest = {
+  reason: string;
+  endLiveAuctions?: boolean;
+};
+
 export type SellerItem = {
   itemId: string;
   listingCode: string;
@@ -637,6 +648,29 @@ export type SellerItemsSummary = {
     unsold: number;
     closed: number;
   };
+  limits: SellerLimits;
+};
+
+export type SellerLimitRequest = {
+  note?: string;
+};
+
+export type SellerLimits = {
+  items: {
+    used: number;
+    limit: number | null;
+  };
+  value: {
+    used: number;
+    limit: number | null;
+  };
+  resetsAt: string;
+  completedSales: number;
+  salesToGraduate: number;
+  standing: "NEW" | "ESTABLISHED" | "RESTRICTED";
+  paidSales: number;
+  refunds: number;
+  refundBuyers: number;
 };
 
 export type SellerProfile = {
@@ -699,6 +733,11 @@ export type Session = {
   user: User;
 };
 
+export type SetSellerLimitRequest = {
+  items: number | null;
+  value: number | null;
+};
+
 export type SubmitListingRequest = {
   title: string;
   category: "Electronics & Gadgets" | "Vehicles" | "Clothing & Fashion" | "Books & Education" | "Home & Furniture" | "Sports & Fitness" | "Art & Collectibles";
@@ -740,6 +779,9 @@ export type UpdateSettingsRequest = {
   paymentDeadlineHours?: number;
   reviewEditWindowHours?: number;
   shipByHours?: number;
+  newSellerMonthlyItems?: number;
+  newSellerMonthlyValue?: number;
+  sellerGraduationSales?: number;
   supportEmail?: string;
 };
 
@@ -762,6 +804,7 @@ export type User = {
   isEmailVerified: boolean;
   isSeller: boolean;
   sellerSince: string | null;
+  sellerRevokedAt: string | null;
   createdAt: string;
 };
 
@@ -886,6 +929,16 @@ export interface PostEndpoints {
     userId: string;
     status: "ACTIVE";
   };
+  "/admin/users/{userId}/restore-seller": {
+    userId: string;
+    sellerStatus: "ACTIVE";
+  };
+  "/admin/users/{userId}/revoke-seller": {
+    userId: string;
+    sellerStatus: "REVOKED";
+    withdrawnListings: number;
+    cancelledAuctions: number;
+  };
   "/admin/users/{userId}/suspend": {
     userId: string;
     status: "SUSPENDED";
@@ -958,11 +1011,20 @@ export interface PostEndpoints {
   "/seller/enroll": {
     user: User;
   };
+  "/seller/limit-request": {
+    requestedAt: string;
+    alreadyRequested: boolean;
+  };
   "/watchlist/{auctionId}": WatchToggle;
 }
 
 /** What each documented PUT returns, unwrapped from the response envelope. */
 export interface PutEndpoints {
+  "/admin/users/{userId}/seller-limit": {
+    userId: string;
+    items: number | null;
+    value: number | null;
+  };
   "/settings": PlatformSettings;
 }
 
@@ -1001,6 +1063,7 @@ export interface PostRequests {
   "/admin/transactions/{transactionId}/refund": RefundSaleRequest;
   "/admin/transactions/{transactionId}/void": VoidTransactionRequest;
   "/admin/users/{userId}/anonymize": AnonymizeUserRequest;
+  "/admin/users/{userId}/revoke-seller": RevokeSellerRequest;
   "/admin/users/{userId}/suspend": SuspendUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
   "/auctions/{auctionId}/cancel": CancelAuctionRequest;
@@ -1026,10 +1089,12 @@ export interface PostRequests {
   "/reviews": CreateReviewRequest;
   "/reviews/{reviewId}/reply": ReplyToReviewRequest;
   "/seller/enroll": EnrollSellerRequest;
+  "/seller/limit-request": SellerLimitRequest;
 }
 
 /** The body each documented PUT expects. */
 export interface PutRequests {
+  "/admin/users/{userId}/seller-limit": SetSellerLimitRequest;
   "/settings": UpdateSettingsRequest;
 }
 
