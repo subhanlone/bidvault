@@ -209,7 +209,8 @@ export default function RegisterScreen() {
           onChange={e => {
             const next = e.target.value;
             setConfirmPw(next);
-            setErrors(p => ({ ...p, confirmPw: next && next !== password ? MISMATCH : '' }));
+            // No mismatch until there is a password to compare against (as on the reset page).
+            setErrors(p => ({ ...p, confirmPw: next && password && next !== password ? MISMATCH : '' }));
           }}
           leftIcon={<Lock size={16} />}
           rightIcon={

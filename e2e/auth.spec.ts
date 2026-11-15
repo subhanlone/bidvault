@@ -118,8 +118,22 @@ test.describe('Auth — Register confirm password', () => {
     await expect(page.getByText('Passwords do not match')).toBeVisible();
   });
 
-  test('a trailing space counts as a mismatch', async ({ page }) => {
+  test('a trailing space counts as a mismatch and blocks submit', async ({ page }) => {
+    const sent = watchRegister(page);
     await fillRegister(page, 'Abcdef1!x', 'Abcdef1!x ');
+    await expect(page.getByText('Passwords do not match')).toBeVisible();
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page).toHaveURL(/\/register/);
+    expect(sent).toHaveLength(0);
+  });
+
+  test('typing the confirmation before the password shows no mismatch yet', async ({ page }) => {
+    await page.goto('/register');
+    await page.getByPlaceholder('Repeat password').fill('Abcdef1!x');
+    // Nothing to compare against yet, as on the reset page.
+    await expect(page.getByText('Passwords do not match')).toHaveCount(0);
+    // Once a different password is typed, the mismatch appears.
+    await page.getByPlaceholder('Min. 8 characters').fill('Abcdef1!z');
     await expect(page.getByText('Passwords do not match')).toBeVisible();
   });
 
@@ -128,6 +142,13 @@ test.describe('Auth — Register confirm password', () => {
     await page.getByRole('button', { name: 'Show confirmed password' }).click();
     await expect(page.getByPlaceholder('Repeat password')).toHaveAttribute('type', 'text');
     await expect(page.getByPlaceholder('Min. 8 characters')).toHaveAttribute('type', 'password');
+  });
+
+  test('password toggle does not reveal the confirm field', async ({ page }) => {
+    await page.goto('/register');
+    await page.getByRole('button', { name: 'Show password', exact: true }).click();
+    await expect(page.getByPlaceholder('Min. 8 characters')).toHaveAttribute('type', 'text');
+    await expect(page.getByPlaceholder('Repeat password')).toHaveAttribute('type', 'password');
   });
 });
 
