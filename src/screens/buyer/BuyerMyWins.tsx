@@ -10,6 +10,8 @@ import { useNow } from '../../hooks/useNow';
 import type { TransactionStatus, WonTransaction } from '../../types/openapi';
 import { dateMedium, dateTimeShort, pkr } from '../../utils/format';
 import LoadingStatus from '../../components/ui/LoadingStatus';
+import RefundDetails from '../../components/payment/RefundDetails';
+import { paidWithText } from '../../utils/payment';
 
 // FR-14: the generated contract type, not a hand-written copy. The copy had drifted (it lacked
 // sellerPhone, so the phone the server sends after payment was never shown).
@@ -277,11 +279,23 @@ export default function BuyerMyWins() {
                       )}
 
                       {tx.status === 'REFUNDED' && (
-                        <p className="mt-4 text-[12px] text-muted text-center">
-                          {tx.disputeReason
-                            ? 'This purchase was refunded after a dispute review.'
-                            : 'This purchase was refunded because the item was not sent.'}
-                        </p>
+                        <>
+                          {/* A refund made before the refund record existed carries no reason: say
+                              why in the old words, then show the little that is known. */}
+                          {!tx.refund?.reason && (
+                            <p className="mt-4 text-[12px] text-muted text-center">
+                              {tx.disputeReason
+                                ? 'This purchase was refunded after a dispute review.'
+                                : 'This purchase was refunded because the item was not sent.'}
+                            </p>
+                          )}
+                          {tx.refund && (
+                            <div className="mt-4 bg-bg border border-border-light rounded-md px-3 py-2">
+                              <p className="text-[12px] font-bold text-navy mb-1">Refund details</p>
+                              <RefundDetails refund={tx.refund} />
+                            </div>
+                          )}
+                        </>
                       )}
 
                       {tx.status === 'COMPLETED' && (
@@ -372,6 +386,10 @@ export default function BuyerMyWins() {
                             </Button>
                           </div>
                         </div>
+                      )}
+
+                      {tx.payment && tx.status !== 'REFUNDED' && (
+                        <p className="mt-3 text-[12px] text-muted text-center">{paidWithText(tx.payment)}</p>
                       )}
 
                       {(tx.status === 'COMPLETED' || tx.status === 'DELIVERED' || tx.status === 'SHIPPED' || tx.status === 'DISPUTED' || tx.status === 'REFUNDED') && (

@@ -2,6 +2,7 @@ import { useBids } from '../../queries/auctions';
 import { dateTimeShort, pkr, timeAgo } from '../../utils/format';
 import { detailFacts, timeline } from '../../utils/sellerItemStage';
 import type { SellerItem } from '../../types/api';
+import RefundDetails from '../payment/RefundDetails';
 
 const HEADING = 'text-[11px] font-extrabold text-navy uppercase tracking-[0.08em] mb-2';
 
@@ -44,6 +45,13 @@ export default function ItemDetails({ item, now, id }: { item: SellerItem; now: 
             </div>
           ))}
         </dl>
+
+        {sale?.refund && (
+          <div className="mt-4 bg-surface border border-border-light rounded-md px-3 py-2">
+            <h4 className="text-[12px] font-bold text-navy mb-1">Refund</h4>
+            <RefundDetails refund={sale.refund} />
+          </div>
+        )}
 
         {sale?.disputeReason && (
           <div className="mt-4 text-[12px] bg-surface border border-border-light rounded-md px-3 py-2.5 flex flex-col gap-1.5">

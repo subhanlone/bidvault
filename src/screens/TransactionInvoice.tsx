@@ -7,6 +7,8 @@ import { api } from '../services/api';
 import { readMode } from '../utils/account';
 import { dateLong, dateTimeShort, pkr } from '../utils/format';
 import LoadingStatus from '../components/ui/LoadingStatus';
+import RefundDetails from '../components/payment/RefundDetails';
+import { paidWithText } from '../utils/payment';
 import type { Invoice } from '../types/openapi';
 
 const STATUS_LABEL: Record<Invoice['status'], string> = {
@@ -87,12 +89,12 @@ export default function TransactionInvoice() {
                 <div>
                   <p className="text-[12px] text-muted mb-1">Buyer</p>
                   <p className="font-semibold text-[13px] text-secondary">{invoice.buyerName}</p>
-                  <p className="text-[12px] text-placeholder break-all">{invoice.buyerEmail}</p>
+                  <p className="text-[12px] text-placeholder break-words">{invoice.buyerEmail}</p>
                 </div>
                 <div>
                   <p className="text-[12px] text-muted mb-1">Seller</p>
                   <p className="font-semibold text-[13px] text-secondary">{invoice.sellerName}</p>
-                  <p className="text-[12px] text-placeholder break-all">{invoice.sellerEmail}</p>
+                  <p className="text-[12px] text-placeholder break-words">{invoice.sellerEmail}</p>
                   {invoice.sellerPhone && (
                     <p className="text-[12px] text-placeholder">
                       <a href={`tel:${invoice.sellerPhone}`} className="hover:underline">{invoice.sellerPhone}</a>
@@ -133,8 +135,19 @@ export default function TransactionInvoice() {
                 <span className="font-extrabold text-[20px] text-success">{pkr(invoice.amount)}</span>
               </div>
 
+              {invoice.payment && (
+                <p className="text-[13px] text-secondary text-center">{paidWithText(invoice.payment)}</p>
+              )}
+
               {invoice.paymentReference && (
-                <p className="text-[11px] text-placeholder text-center">Payment reference: {invoice.paymentReference}</p>
+                <p className="text-[12px] text-placeholder text-center">Payment reference: {invoice.paymentReference}</p>
+              )}
+
+              {invoice.refund && (
+                <div className="bg-bg border border-border-light rounded-md px-4 py-3">
+                  <h2 className="text-[13px] font-bold text-navy mb-1">Refund</h2>
+                  <RefundDetails refund={invoice.refund} />
+                </div>
               )}
             </div>
           </div>
