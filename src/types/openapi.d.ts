@@ -56,6 +56,7 @@ export type AdminTransaction = {
   paidAt?: string;
   shipByAt?: string;
   notShippedReportedAt?: string;
+  payment?: PaymentInfo;
 };
 
 export type AdminUser = {
@@ -291,6 +292,8 @@ export type Invoice = {
   disputeStatus?: "OPEN" | "RESOLVED_REFUNDED" | "RESOLVED_RELEASED";
   disputeReason?: string;
   disputeResolutionNote?: string;
+  payment?: PaymentInfo;
+  refund?: RefundSummary;
 };
 
 export type ItemCondition = "NEW" | "LIKE_NEW" | "USED";
@@ -435,10 +438,30 @@ export type PayResult = {
 };
 
 export type PayTransactionRequest = {
+  method: "CARD";
   cardNumber: string;
   deliveryAddress: string;
   deliveryPhone: string;
+} | {
+  method: "JAZZCASH" | "EASYPAISA";
+  walletNumber: string;
+  deliveryAddress: string;
+  deliveryPhone: string;
+} | {
+  method: "BANK_TRANSFER";
+  bankReference: string;
+  deliveryAddress: string;
+  deliveryPhone: string;
 };
+
+export type PaymentInfo = {
+  method: PaymentMethod;
+  methodLabel: string;
+  accountHint?: string;
+  bankTransferReference?: string;
+};
+
+export type PaymentMethod = "CARD" | "JAZZCASH" | "EASYPAISA" | "BANK_TRANSFER";
 
 export type PlaceBidRequest = {
   amount: number;
@@ -501,9 +524,26 @@ export type RefreshedTokens = {
   accessToken: string;
 };
 
+export type RefundReason = "NOT_SHIPPED_SELLER" | "NOT_SHIPPED_ADMIN" | "NOT_SHIPPED_AUTO" | "DISPUTE_UPHELD" | "LISTING_TAKEN_DOWN";
+
 export type RefundSaleRequest = {
   reason: string;
 };
+
+export type RefundSummary = {
+  amount: number;
+  reason?: RefundReason;
+  reasonText?: string;
+  refundedBy?: RefundedBy;
+  note?: string;
+  refundedAt?: string;
+  refundReference?: string;
+  paymentReference?: string;
+  paidTo?: string;
+  expectedArrival?: string;
+};
+
+export type RefundedBy = "SELLER" | "ADMIN" | "SYSTEM";
 
 export type RegisterRequest = {
   name: string;
@@ -640,6 +680,7 @@ export type SellerItem = {
     payoutAt?: string;
     reviewStars?: number;
     nextBidderOffer: number | null;
+    refund?: RefundSummary;
   };
   relistedAs?: {
     listingId: string;
@@ -874,6 +915,8 @@ export type WonTransaction = {
   reviewId?: string;
   reviewStars?: number;
   reviewComment?: string;
+  payment?: PaymentInfo;
+  refund?: RefundSummary;
 };
 
 /** What each documented GET returns, unwrapped from the response envelope. */
