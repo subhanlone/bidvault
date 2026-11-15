@@ -42,7 +42,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
   const [walletNumber, setWalletNumber] = useState('');
   const [bankReference, setBankReference] = useState('');
 
-  const amount = `PKR ${finalAmount.toLocaleString()}`;
+  const amount = pkr(finalAmount);
   const submitLabel = !method
     ? 'Choose how to pay'
     : method === 'BANK_TRANSFER'
@@ -60,6 +60,9 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
       case 'CARD': {
         const digits = cardNumber.replace(/\D/g, '');
         if (digits.length < 12 || digits.length > 19) return { error: 'Enter a card number.' };
+        // Checked for shape only and never sent: the gateway is simulated, so any future date works.
+        if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiry)) return { error: 'Enter the card expiry as MM/YY.' };
+        if (!/^\d{3,4}$/.test(cvc)) return { error: 'Enter the 3 or 4 digit CVC.' };
         return { body: { method: 'CARD', cardNumber: digits } };
       }
       case 'JAZZCASH':
@@ -209,7 +212,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
                 </div>
               </div>
               {import.meta.env.DEV && (
-                <p className="text-[12px] text-muted">Test cards: 4242 4242 4242 4242 approves · 4000 0000 0000 0002 declines · any expiry/CVC</p>
+                <p className="text-[12px] text-muted">Test cards: 4242 4242 4242 4242 approves · 4000 0000 0000 0002 declines · any MM/YY and 3-digit CVC</p>
               )}
             </div>
           )}

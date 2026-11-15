@@ -47,7 +47,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
       )}
-      <span className={loading ? 'opacity-0 w-0 overflow-hidden' : ''}>{children}</span>
+      {/* inline-flex: an icon passed with the label sits beside it. A plain span let Tailwind's
+          `svg { display: block }` push the icon onto a line of its own, above the words. */}
+      <span className={`inline-flex items-center justify-center gap-2 ${loading ? 'opacity-0 w-0 overflow-hidden' : ''}`}>{children}</span>
     </button>
   );
 });

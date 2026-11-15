@@ -1,4 +1,5 @@
 import { test, expect, type Browser, type Page, type Route } from '@playwright/test';
+import type { WonTransaction } from '../src/types/api';
 
 /**
  * Paying by card, JazzCash, Easypaisa or bank transfer (all simulated), and a refund explained in
@@ -21,7 +22,7 @@ const PENDING = {
   transactionId: 'tx-pending-1', auctionId: 'a-1', auctionTitle: 'Sony WH-1000XM4 Headphones', auctionEmoji: '🎧',
   auctionImageUrl: '', sellerName: 'Sana Seller', finalAmount: 30_000, status: 'PENDING',
   createdAt: new Date().toISOString(), reviewed: false,
-};
+} satisfies WonTransaction;
 const REFUNDED = {
   transactionId: 'tx-refunded-1', auctionId: 'a-2', auctionTitle: 'Kindle Paperwhite', auctionEmoji: '📚',
   auctionImageUrl: '', sellerName: 'Sana Seller', finalAmount: 18_500, status: 'REFUNDED',
@@ -33,7 +34,7 @@ const REFUNDED = {
     refundReference: 'RFD-abcdefghijkl', paymentReference: 'PAY-abc123def456', paidTo: 'JazzCash 0300•••567',
     expectedArrival: 'Immediately (simulated: no real money moves)',
   },
-};
+} satisfies WonTransaction;
 
 // Refunded before the refund record existed: the server sends only the amount and payment reference.
 const LEGACY_REFUNDED = {
@@ -42,7 +43,7 @@ const LEGACY_REFUNDED = {
   createdAt: new Date().toISOString(), reviewed: false,
   payment: { method: 'CARD', methodLabel: 'Card' },
   refund: { amount: 4_000, paymentReference: 'PAY-legacy0001' },
-};
+} satisfies WonTransaction;
 
 const DELIVERY = { deliveryAddress: '12 Canal Road, Gulberg, Lahore', deliveryPhone: '0321 7654321' };
 
@@ -97,7 +98,7 @@ test.afterAll(async () => {
 
 test.describe('Pay with', () => {
   const cases = [
-    { method: 'CARD', label: 'Debit / credit card', fill: { 'Card number': '4242424242424242' }, button: 'Pay PKR 30,000 with Debit / credit card', field: { cardNumber: '4242424242424242' } },
+    { method: 'CARD', label: 'Debit / credit card', fill: { 'Card number': '4242424242424242', 'Expiry date': '1229', 'CVC': '123' }, button: 'Pay PKR 30,000 with Debit / credit card', field: { cardNumber: '4242424242424242' } },
     { method: 'JAZZCASH', label: 'JazzCash', fill: { 'JazzCash mobile number': '+92 300-1234567' }, button: 'Pay PKR 30,000 with JazzCash', field: { walletNumber: '03001234567' } },
     { method: 'EASYPAISA', label: 'Easypaisa', fill: { 'Easypaisa mobile number': '0345 1234567' }, button: 'Pay PKR 30,000 with Easypaisa', field: { walletNumber: '03451234567' } },
     { method: 'BANK_TRANSFER', label: 'Bank transfer', fill: { 'Transfer reference / transaction ID': 'FT2611110001' }, button: 'I have paid PKR 30,000', field: { bankReference: 'FT2611110001' } },
@@ -157,10 +158,61 @@ test.describe('Pay with', () => {
     expect(sent).toHaveLength(0);
   });
 
+  test('a bad expiry or CVC shows an error and sends nothing', async () => {
+    const dialog = await openPayment();
+    await dialog.getByRole('radio', { name: 'Debit / credit card' }).check();
+    await dialog.getByLabel('Card number').fill('4242424242424242');
+    await dialog.getByLabel('Expiry date').fill('1329');
+    await dialog.getByLabel('CVC').fill('123');
+    await dialog.getByRole('button', { name: 'Pay PKR 30,000 with Debit / credit card' }).click();
+    await expect(dialog.getByRole('alert')).toContainText('expiry');
+    await dialog.getByLabel('Expiry date').fill('1229');
+    await dialog.getByLabel('CVC').fill('12');
+    await dialog.getByRole('button', { name: 'Pay PKR 30,000 with Debit / credit card' }).click();
+    await expect(dialog.getByRole('alert')).toContainText('CVC');
+    expect(sent).toHaveLength(0);
+  });
+
+  test('a declined card shows why and keeps the dialog open to try again', async () => {
+    // Registered after the shared stub, so it answers first; removed at the end.
+    const declined = (route: Route) => route.fulfill({ json: { success: true, data: { transactionId: PENDING.transactionId, status: 'PENDING', lastPaymentError: 'Your card was declined.' } } });
+    await page.route('**/api/v1/payments/*/pay', declined);
+    try {
+      const dialog = await openPayment();
+      await dialog.getByRole('radio', { name: 'Debit / credit card' }).check();
+      await dialog.getByLabel('Card number').fill('4000000000000002');
+      await dialog.getByLabel('Expiry date').fill('1229');
+      await dialog.getByLabel('CVC').fill('123');
+      const pay = dialog.getByRole('button', { name: 'Pay PKR 30,000 with Debit / credit card' });
+      await pay.click();
+      await expect(dialog.getByRole('alert')).toHaveText('Your card was declined.');
+      await expect(dialog).toBeVisible();
+      await expect(pay).toBeEnabled();
+    } finally {
+      await page.unroute('**/api/v1/payments/*/pay', declined);
+    }
+  });
+
+  test('the pay button shows its icon on the same line as its words', async () => {
+    const dialog = await openPayment();
+    await dialog.getByRole('radio', { name: 'JazzCash' }).check();
+    const button = dialog.getByRole('button', { name: 'Pay PKR 30,000 with JazzCash' });
+    const icon = await button.locator('svg').first().boundingBox();
+    const box = await button.boundingBox();
+    expect(icon && box).toBeTruthy();
+    // One line: the icon sits inside the button's vertical middle, not above the text.
+    const iconMiddle = icon!.y + icon!.height / 2;
+    const buttonMiddle = box!.y + box!.height / 2;
+    expect(Math.abs(iconMiddle - buttonMiddle)).toBeLessThan(4);
+  });
+
   test('the method can be chosen with the arrow keys', async () => {
     const dialog = await openPayment();
     await expect(dialog.getByRole('radiogroup', { name: 'Pay with' })).toBeVisible();
-    await dialog.getByRole('radio', { name: 'Debit / credit card' }).check();
+    // Nothing chosen yet: Tab from the last delivery field lands on the first method.
+    await dialog.getByLabel('Delivery Phone').focus();
+    await page.keyboard.press('Tab');
+    await expect(dialog.getByRole('radio', { name: 'Debit / credit card' })).toBeFocused();
     await page.keyboard.press('ArrowDown');
     await expect(dialog.getByRole('radio', { name: 'JazzCash' })).toBeChecked();
     await expect(dialog.getByLabel('JazzCash mobile number')).toBeVisible();
@@ -170,6 +222,10 @@ test.describe('Pay with', () => {
     await page.setViewportSize({ width: 390, height: 800 });
     try {
       const dialog = await openPayment();
+      // The card row (two-column expiry and CVC) is the widest; check it, then the bank transfer.
+      await dialog.getByRole('radio', { name: 'Debit / credit card' }).check();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+      expect(await dialog.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(false);
       await dialog.getByRole('radio', { name: 'Bank transfer' }).check();
       const unnamed = await dialog.locator('input, button, textarea').evaluateAll((els) =>
         els.filter((el) => {
@@ -196,7 +252,7 @@ test.describe('A refunded sale', () => {
 
   test('My Wins shows every refund detail', async () => {
     await page.goto('/buyer/my-wins');
-    const card = page.locator('div').filter({ hasText: 'Kindle Paperwhite' }).filter({ hasText: 'Refund details' }).last();
+    const card = page.getByRole('region', { name: 'Refund details for Kindle Paperwhite' });
     for (const label of ['Amount', 'Back to', 'Why', 'Note', 'Decided by', 'Date', 'Refund ref', 'Payment ref', 'Expected']) {
       await expect(card.getByText(label, { exact: true })).toBeVisible();
     }

@@ -18,8 +18,8 @@ interface Props {
 }
 
 /**
- * The "Pay with" choice: one row per method (all simulated), nothing chosen at first. Native radio
- * inputs sharing one name, so the browser gives the keyboard behaviour (Tab into the group, arrow
+ * The "Pay with" choice: one row per method (all simulated), nothing chosen at first. A fieldset
+ * named by its legend, holding native radio inputs that share one name, so the browser gives the keyboard behaviour (Tab into the group, arrow
  * keys between methods) and screen readers announce a named group of options. Each row is at least
  * 44 px tall with its icon inline, and the chosen row opens its fields directly beneath it.
  */
@@ -28,8 +28,8 @@ export default function PayWithList({ value, onChange, children }: Props) {
   const labelId = `${name}-label`;
 
   return (
-    <div role="radiogroup" aria-labelledby={labelId} className="flex flex-col gap-2">
-      <p id={labelId} className="text-[12px] font-semibold text-navy">Pay with</p>
+    <fieldset role="radiogroup" aria-labelledby={labelId} className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
+      <legend id={labelId} className="mb-2 p-0 text-[12px] font-semibold text-navy">Pay with</legend>
       {PAYMENT_METHODS.map((method) => {
         const Icon = METHOD_ICON[method];
         const chosen = value === method;
@@ -54,6 +54,6 @@ export default function PayWithList({ value, onChange, children }: Props) {
           </div>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

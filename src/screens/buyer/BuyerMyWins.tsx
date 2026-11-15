@@ -290,10 +290,13 @@ export default function BuyerMyWins() {
                             </p>
                           )}
                           {tx.refund && (
-                            <div className="mt-4 bg-bg border border-border-light rounded-md px-3 py-2">
+                            <section
+                              aria-label={`Refund details for ${tx.auctionTitle}`}
+                              className="mt-4 bg-bg border border-border-light rounded-md px-3 py-2"
+                            >
                               <p className="text-[12px] font-bold text-navy mb-1">Refund details</p>
                               <RefundDetails refund={tx.refund} />
-                            </div>
+                            </section>
                           )}
                         </>
                       )}
