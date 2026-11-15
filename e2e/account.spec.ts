@@ -66,12 +66,15 @@ test.describe('Register', () => {
     await page.getByPlaceholder('Your full name').fill('No Role Probe');
     await page.getByPlaceholder('you@email.com').fill(`norole-${stamp}@test.local`);
     await page.getByPlaceholder('Min. 8 characters').fill(PASSWORD);
+    await page.getByPlaceholder('Repeat password').fill(PASSWORD);
     // The box itself is visually hidden; the square next to the sentence is what a person clicks.
     await page.locator('label[for="terms-agree"]').click();
     await page.getByRole('button', { name: 'Create Account' }).click();
     await expect(page).toHaveURL(/email-verification/);
     expect(bodies).toHaveLength(1);
     expect(JSON.parse(bodies[0])).not.toHaveProperty('role');
+    // The confirmation is checked in the browser and never sent.
+    expect(Object.keys(JSON.parse(bodies[0])).sort()).toEqual(['email', 'name', 'password']);
   });
 });
 

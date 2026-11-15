@@ -25,6 +25,8 @@ function pwScore(pw: string): 0 | 1 | 2 | 3 {
   return (s >= 3 ? 3 : s >= 2 ? 2 : 1) as 1 | 2 | 3;
 }
 
+const MISMATCH = 'Passwords do not match';
+
 // Letters (incl. accented), spaces, hyphens, and apostrophes only — no digits or other symbols.
 const NAME_REGEX = /^[\p{L}\s'-]+$/u;
 
@@ -41,6 +43,9 @@ export default function RegisterScreen() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
+  // Checked in the browser only; never sent to the server, which validates the password itself.
+  const [confirmPw, setConfirmPw]     = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
   const [agree, setAgree]       = useState(false);
   const [loading, setLoading]   = useState(false);
   const [errors, setErrors]     = useState<Record<string, string>>({});
@@ -84,6 +89,9 @@ export default function RegisterScreen() {
     // form accepts something register then refuses.
     else if (!isStrictEmail(email)) e.email = EMAIL_INVALID_MESSAGE;
     if (password.length < 8) e.password = 'Password must be at least 8 characters';
+    // Exact comparison, no trimming: the password is stored exactly as typed.
+    if (!confirmPw) e.confirmPw = 'Please confirm your password';
+    else if (confirmPw !== password) e.confirmPw = MISMATCH;
     if (!agree) e.agree = 'You must agree to the terms';
     return e;
   };
@@ -164,7 +172,12 @@ export default function RegisterScreen() {
             type={showPw ? 'text' : 'password'}
             placeholder="Min. 8 characters"
             value={password}
-            onChange={e => { setPassword(e.target.value); clearError('password'); }}
+            onChange={e => {
+              const next = e.target.value;
+              setPassword(next);
+              // Re-check a confirmation already typed, so editing the password cannot leave a stale match.
+              setErrors(p => ({ ...p, password: '', ...(confirmPw ? { confirmPw: next !== confirmPw ? MISMATCH : '' } : {}) }));
+            }}
             leftIcon={<Lock size={16} />}
             rightIcon={
               <button type="button" onClick={() => setShowPw(p => !p)} aria-label={showPw ? 'Hide password' : 'Show password'} className="cursor-pointer text-placeholder hover:text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
@@ -186,6 +199,28 @@ export default function RegisterScreen() {
             </div>
           )}
         </div>
+
+        {/* Confirm password: same field and toggle as the reset-password page. */}
+        <Input
+          label="Confirm password"
+          type={showConfirm ? 'text' : 'password'}
+          placeholder="Repeat password"
+          value={confirmPw}
+          onChange={e => {
+            const next = e.target.value;
+            setConfirmPw(next);
+            // No mismatch until there is a password to compare against (as on the reset page).
+            setErrors(p => ({ ...p, confirmPw: next && password && next !== password ? MISMATCH : '' }));
+          }}
+          leftIcon={<Lock size={16} />}
+          rightIcon={
+            <button type="button" onClick={() => setShowConfirm(p => !p)} aria-label={showConfirm ? 'Hide confirmed password' : 'Show confirmed password'} className="cursor-pointer text-placeholder hover:text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-sm">
+              {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          }
+          error={errors.confirmPw}
+          autoComplete="new-password"
+        />
 
         {/* Terms: a real <input type="checkbox"> for screen-reader semantics. */}
         <div>

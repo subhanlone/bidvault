@@ -161,6 +161,7 @@ test.describe('The auction page for a guest', () => {
     await page.getByPlaceholder('Your full name').fill('Newcomer Probe');
     await page.getByPlaceholder('you@email.com').fill(email);
     await page.getByPlaceholder('Min. 8 characters').fill(PASSWORD);
+    await page.getByPlaceholder('Repeat password').fill(PASSWORD);
     await page.locator('label[for="terms-agree"]').click();
     const registered = page.waitForResponse((r) => r.url().endsWith('/auth/register') && r.request().method() === 'POST');
     await page.getByRole('button', { name: 'Create Account' }).click();
