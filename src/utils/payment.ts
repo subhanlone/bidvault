@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '../types/api';
+import type { PaymentInfo, PaymentMethod } from '../types/api';
 
 /** The four ways to pay (all simulated), in the order the "Pay with" list shows them. */
 export const PAYMENT_METHODS: readonly PaymentMethod[] = ['CARD', 'JAZZCASH', 'EASYPAISA', 'BANK_TRANSFER'];
@@ -36,4 +36,16 @@ export function normalizePkMobile(raw: string): string | null {
   const digits = raw.replace(/[\s-]/g, '').replace(/^\+/, '');
   const local = digits.startsWith('92') ? `0${digits.slice(2)}` : digits;
   return /^03\d{9}$/.test(local) ? local : null;
+}
+
+/**
+ * "Paid with JazzCash 0300•••567", "Paid with Visa •••4242", "Paid by bank transfer (ref …)".
+ * The server leaves out the hint and reference for the seller, so a seller reads "Paid with JazzCash".
+ */
+export function paidWithText(payment: PaymentInfo): string {
+  if (payment.method === 'BANK_TRANSFER') {
+    return payment.bankTransferReference ? `Paid by bank transfer (ref ${payment.bankTransferReference})` : 'Paid by bank transfer';
+  }
+  if (payment.method === 'CARD') return payment.accountHint ? `Paid with ${payment.accountHint}` : 'Paid by card';
+  return payment.accountHint ? `Paid with ${payment.methodLabel} ${payment.accountHint}` : `Paid with ${payment.methodLabel}`;
 }

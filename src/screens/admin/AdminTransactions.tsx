@@ -14,6 +14,7 @@ import { api } from '../../services/api';
 import type { AdminDispute } from '../../types/api';
 import type { AdminTransaction } from '../../types/openapi';
 import { dateMedium, dateTimeShort, pkrCompact } from '../../utils/format';
+import { paidWithText } from '../../utils/payment';
 
 type Tab = 'pending' | 'unshipped' | 'disputes';
 const TABS: Tab[] = ['pending', 'unshipped', 'disputes'];
@@ -413,6 +414,9 @@ export default function AdminTransactions() {
                       <div key={tx.transactionId} className="grid grid-cols-1 sm:grid-cols-[1fr_130px_130px_110px_140px_100px] gap-2 sm:gap-3 sm:items-center px-5 py-4 hover:bg-surface-hover transition-colors">
                         <div className="min-w-0">
                           <p className="font-semibold text-[13px] text-secondary truncate">{tx.auctionTitle}</p>
+                          {tx.payment && (
+                            <p className="text-[12px] text-muted truncate">{paidWithText(tx.payment)}</p>
+                          )}
                           {tx.notShippedReportedAt && (
                             <p className="text-[11px] text-warning truncate">Buyer reported it not sent {dateMedium(tx.notShippedReportedAt)}</p>
                           )}
