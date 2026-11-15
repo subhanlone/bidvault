@@ -162,13 +162,15 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
         <PayWithList value={method} onChange={chooseMethod}>
           {method === 'CARD' && (
             <div className="flex flex-col gap-4">
+              {/* autoComplete off: the gateway is simulated, so the browser must not offer (or offer
+                  to save) a real card here. */}
               <div>
                 <label htmlFor={`${fieldId}-card`} className="text-[12px] font-semibold text-navy mb-2 block">Card number</label>
                 <input
                   id={`${fieldId}-card`}
                   type="text"
                   inputMode="numeric"
-                  autoComplete="cc-number"
+                  autoComplete="off"
                   value={cardNumber}
                   onChange={e => setCardNumber(formatCardNumber(e.target.value))}
                   maxLength={23}
@@ -183,7 +185,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
                     id={`${fieldId}-expiry`}
                     type="text"
                     inputMode="numeric"
-                    autoComplete="cc-exp"
+                    autoComplete="off"
                     value={expiry}
                     onChange={e => setExpiry(formatExpiry(e.target.value))}
                     maxLength={5}
@@ -197,7 +199,7 @@ function CheckoutForm({ transactionId, auctionTitle, finalAmount, onSuccess }: P
                     id={`${fieldId}-cvc`}
                     type="text"
                     inputMode="numeric"
-                    autoComplete="cc-csc"
+                    autoComplete="off"
                     value={cvc}
                     onChange={e => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     maxLength={4}

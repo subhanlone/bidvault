@@ -35,6 +35,15 @@ const REFUNDED = {
   },
 };
 
+// Refunded before the refund record existed: the server sends only the amount and payment reference.
+const LEGACY_REFUNDED = {
+  transactionId: 'tx-legacy-1', auctionId: 'a-3', auctionTitle: 'Nokia 3310 Classic', auctionEmoji: '📱',
+  auctionImageUrl: '', sellerName: 'Sana Seller', finalAmount: 4_000, status: 'REFUNDED',
+  createdAt: new Date().toISOString(), reviewed: false,
+  payment: { method: 'CARD', methodLabel: 'Card' },
+  refund: { amount: 4_000, paymentReference: 'PAY-legacy0001' },
+};
+
 const DELIVERY = { deliveryAddress: '12 Canal Road, Gulberg, Lahore', deliveryPhone: '0321 7654321' };
 
 let page: Page;
@@ -50,7 +59,7 @@ async function signedInPage(browser: Browser): Promise<Page> {
 
   const p = await ctx.newPage();
   await p.route('**/api/v1/payments/my-wins', (route: Route) =>
-    route.fulfill({ json: { success: true, data: [PENDING, REFUNDED] } }));
+    route.fulfill({ json: { success: true, data: [PENDING, REFUNDED, LEGACY_REFUNDED] } }));
   await p.route('**/api/v1/payments/*/pay', (route: Route) => {
     sent.push(route.request().postDataJSON() as Record<string, unknown>);
     return route.fulfill({ json: { success: true, data: { transactionId: PENDING.transactionId, status: 'COMPLETED' } } });
@@ -105,6 +114,15 @@ test.describe('Pay with', () => {
       expect(sent).toEqual([{ method: c.method, ...DELIVERY, ...c.field }]);
     });
   }
+
+  test('the card fields do not invite the browser to fill in a real saved card', async () => {
+    const dialog = await openPayment();
+    await dialog.getByRole('radio', { name: 'Debit / credit card' }).check();
+    // The gateway is simulated: a real card must not be offered by autofill, nor saved afterwards.
+    for (const label of ['Card number', 'Expiry date', 'CVC']) {
+      await expect(dialog.getByLabel(label)).toHaveAttribute('autocomplete', 'off');
+    }
+  });
 
   test('nothing is pre-filled into the wallet number', async () => {
     const dialog = await openPayment();
@@ -171,6 +189,11 @@ test.describe('Pay with', () => {
 });
 
 test.describe('A refunded sale', () => {
+  test('a refund made before the refund record still explains itself', async () => {
+    await page.goto('/buyer/my-wins');
+    await expect(page.getByText('This purchase was refunded because the item was not sent.')).toBeVisible();
+  });
+
   test('My Wins shows every refund detail', async () => {
     await page.goto('/buyer/my-wins');
     const card = page.locator('div').filter({ hasText: 'Kindle Paperwhite' }).filter({ hasText: 'Refund details' }).last();
