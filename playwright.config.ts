@@ -66,6 +66,11 @@ export default defineConfig({
       name: 'account',
       testMatch: '**/account.spec.ts',
     },
+    // Paying and refund details: its own throwaway account on the local backend, My Wins stubbed.
+    {
+      name: 'payments',
+      testMatch: '**/payment-methods.spec.ts',
+    },
     // A visitor with no account: no saved sign-in. The few specs that sign in create their own
     // throwaway account on the local backend, like the account project.
     {
