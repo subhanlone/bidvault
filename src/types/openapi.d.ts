@@ -231,6 +231,10 @@ export type Earnings = {
   }[];
 };
 
+export type EndAuctionNowRequest = {
+  expectedBid: number;
+};
+
 export type EnrollSellerRequest = {
   acceptTerms: true;
   termsVersion: string;
@@ -1007,6 +1011,12 @@ export interface PostEndpoints {
     auctionId: string;
     status: "CANCELLED";
   };
+  "/auctions/{auctionId}/end-now": {
+    auctionId: string;
+    status: "CLOSED";
+    sold: boolean;
+    finalAmount: number | null;
+  };
   "/auctions/{auctionId}/report": {
     report: ListingReport;
     alreadyReported: boolean;
@@ -1126,6 +1136,7 @@ export interface PostRequests {
   "/admin/users/{userId}/suspend": SuspendUserRequest;
   "/auctions/{auctionId}/bids": PlaceBidRequest;
   "/auctions/{auctionId}/cancel": CancelAuctionRequest;
+  "/auctions/{auctionId}/end-now": EndAuctionNowRequest;
   "/auctions/{auctionId}/report": ReportListingRequest;
   "/auth/change-password": ChangePasswordRequest;
   "/auth/delete-account": DeleteAccountRequest;

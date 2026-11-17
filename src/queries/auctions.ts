@@ -245,6 +245,25 @@ export function applyAuctionCancelledToCache(queryClient: QueryClient, auctionId
   foldEveryAuctionCacheEntry(queryClient, auctionId, (a) => ({ ...a, status: 'CANCELLED' }));
 }
 
+/**
+ * The seller ends their live auction now and the highest bidder wins (POST /auctions/{id}/end-now).
+ * `expectedBid` is the highest bid the seller confirmed; the server refuses (409) if it has moved.
+ * Everything that shows the auction, its bids, the seller's items or notices is refetched after.
+ */
+export function useEndAuctionNow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ auctionId, expectedBid }: { auctionId: string; expectedBid: number }) =>
+      api.post(`/auctions/${auctionId}/end-now`, { expectedBid }),
+    onSettled: (_data, _error, { auctionId }) => {
+      void queryClient.invalidateQueries({ queryKey: keys.auctions.all });
+      void queryClient.invalidateQueries({ queryKey: keys.bids.forAuction(auctionId) });
+      void queryClient.invalidateQueries({ queryKey: keys.sellerItems.all });
+      void queryClient.invalidateQueries({ queryKey: keys.notifications });
+    },
+  });
+}
+
 export function usePlaceBid() {
   const queryClient = useQueryClient();
 

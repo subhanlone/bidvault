@@ -224,6 +224,14 @@ export default function MemberBidPanel({
             You cannot bid on your own items.{' '}
             <Link to="/seller/items" className="font-bold text-primary hover:underline">Manage it in My Items</Link>
           </p>
+          {auction.status === 'ACTIVE' && (
+            <Link
+              to={`/seller/auctions/${auction.auctionId}/live`}
+              className="inline-block mt-2 font-bold text-[12.5px] text-primary hover:underline"
+            >
+              Open the live monitor
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bg-surface border border-border-light rounded-md p-5">

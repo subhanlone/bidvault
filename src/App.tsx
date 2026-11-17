@@ -32,6 +32,7 @@ const AdminSettings = lazy(() => import('./screens/admin/AdminSettings'));
 
 const SellerDashboard = lazy(() => import('./screens/seller/SellerDashboard'));
 const SellerMyItems = lazy(() => import('./screens/seller/SellerMyItems'));
+const SellerAuctionMonitor = lazy(() => import('./screens/seller/SellerAuctionMonitor'));
 const SellerEditListing = lazy(() => import('./screens/seller/SellerEditListing'));
 const SellerCreateListingStep1 = lazy(() => import('./screens/seller/SellerCreateListingStep1'));
 const SellerCreateListingStep2 = lazy(() => import('./screens/seller/SellerCreateListingStep2'));
@@ -168,6 +169,11 @@ export default function App() {
                     <Route path="/seller/items" element={
                       <ProtectedRoute allowedRoles={['SELLER']} allowPausedSeller>
                         <SellerMyItems />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/seller/auctions/:auctionId/live" element={
+                      <ProtectedRoute allowedRoles={['SELLER']} allowPausedSeller>
+                        <SellerAuctionMonitor />
                       </ProtectedRoute>
                     } />
                     <Route path="/seller/listings/:listingId/edit" element={
