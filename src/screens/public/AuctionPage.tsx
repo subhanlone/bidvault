@@ -51,7 +51,7 @@ export default function AuctionPage() {
   const timer = useTimer(auction?.endTime ?? FALLBACK_END_TIME);
 
   // Socket subscription — re-subscribes automatically on reconnect. A guest's socket is told the
-  // price and the count, a signed-in one the masked bid (see RealtimeBridge).
+  // price and the count, a signed-in one the bid with its bidder's name (see RealtimeBridge).
   useAuctionRoom(auctionId);
 
   const outcome = auction ? auctionOutcome(auction) : null;

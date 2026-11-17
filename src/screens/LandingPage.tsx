@@ -207,7 +207,7 @@ export default function LandingPage() {
       accent: 'var(--color-success-dark)',
       iconBg: 'rgba(26,122,74,0.08)',
       title: 'Transparent Bidding',
-      desc: 'Every auction shows its live price and bid count to everyone. Signed-in bidders also see the full bid list, with bidder names masked.',
+      desc: 'Every auction shows its live price and bid count to everyone. Signed-in members also see the full bid list: who bid, how much and when.',
     },
   ];
 

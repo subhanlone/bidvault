@@ -346,7 +346,7 @@ test.describe('A signed-in member on the same page', () => {
     await confirm.getByRole('button', { name: /Confirm Bid/ }).click();
 
     await expect(page.getByText('You are the highest bidder')).toBeVisible();
-    // The list is masked: the member's own bid reads "You", never a name or an id.
+    // The member's own bid reads "You"; other bidders are shown by name.
     await expect(page.getByRole('heading', { name: 'Bid History' })).toBeVisible();
     await expect(page.getByText('You', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Highest', { exact: true })).toBeVisible();
@@ -365,7 +365,7 @@ test.describe('Public text matches the product', () => {
     await expect(body).not.toContainText('Register as a seller');
     await expect(body).not.toContainText(/thousands of/i);
     await expect(body).not.toContainText('Trusted by buyers and sellers');
-    await expect(page.getByText(/Signed-in bidders also see the full bid list/)).toBeVisible();
+    await expect(page.getByText(/Signed-in members also see the full bid list: who bid, how much and when/)).toBeVisible();
   });
 
   test('the sign-in page tells people what they get, not how it is built', async ({ page }) => {
@@ -441,11 +441,11 @@ test.describe('Live updates', () => {
 
     await expect(guestPage.getByText(pkrText(amount)).first()).toBeVisible();
     await expect(guestPage.getByText(bidsText(before.bidCount + 1)).first()).toBeVisible();
-    // Numbers only: no bid entry, no bidder pseudonym, and not the `bid:placed` event.
-    await expect(guestPage.getByText(/Bidder \d/)).toHaveCount(0);
+    // Numbers only: no bid entry, not the bidder's name, and not the `bid:placed` event.
+    await expect(guestPage.getByText('Guest Spec Buyer')).toHaveCount(0);
     expect(frames.some((f) => f.includes('bid:placed')), 'a guest socket is never sent bid:placed').toBe(false);
     expect(frames.some((f) => f.includes('auction:price')), 'a guest socket is sent auction:price').toBe(true);
-    expect(frames.join('\n')).not.toMatch(/Bidder \d/);
+    expect(frames.join('\n')).not.toContain('Guest Spec Buyer');
     await guest.close();
   });
 });

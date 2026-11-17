@@ -65,7 +65,7 @@ async function signInFirst(page: Page, email = EMAIL, password = PASSWORD) {
 }
 
 test.describe('Seller profile', () => {
-  test('a guest opens it from the auction page: member since, city, about, items and masked reviews', async ({ page, request }) => {
+  test('a guest opens it from the auction page: member since, city, about, items and named reviews', async ({ page, request }) => {
     const live = await auctionIdOf(request, 'ACTIVE', LIVE);
     await page.goto(`/auctions/${live.auctionId}`);
     await page.getByRole('link', { name: "Seller's other items" }).click();
@@ -79,12 +79,12 @@ test.describe('Seller profile', () => {
     await expect(header.getByText('I sell cameras and furniture.')).toBeVisible();
 
     const reviews = page.getByRole('region', { name: 'Reviews' });
-    await expect(reviews.getByText('Reviewer 1')).toBeVisible();
+    // The reviewer is shown by name (since 2026-11-18), never by e-mail.
+    await expect(reviews.getByText('Test Buyer')).toBeVisible();
     await expect(reviews.getByText('Verified purchase')).toBeVisible();
     await expect(reviews.getByText('Exactly as described and well packed.')).toBeVisible();
     await expect(reviews.getByText(ENDED)).toBeVisible();
-    // The reviewer's real name is never on the page.
-    await expect(page.getByText('Test Buyer')).toHaveCount(0);
+    await expect(page.getByText('buyer@test.local')).toHaveCount(0);
   });
 
   test('"See reviews" on the auction page goes to the reviews on the profile', async ({ page, request }) => {

@@ -159,8 +159,8 @@ export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid
         isNewBid = true;
         return { ...old, items: [bid, ...old.items] };
       }
-      // The masked bid:placed broadcast and this client's own mutation response (which knows isMine
-      // for certain) can arrive in either order over two connections: if this write knows the bid
+      // The bid:placed broadcast (which cannot know isMine) and this client's own mutation response
+      // (which knows it for certain) can arrive in either order over two connections: if this write knows the bid
       // is the caller's own and the cached row does not yet, upgrade it in place rather than
       // discard it as a duplicate.
       if (bid.isMine && !old.items[idx].isMine) {
@@ -255,7 +255,7 @@ export function usePlaceBid() {
       // Applied here as well as from the socket, because the broadcast is not guaranteed: if the
       // socket is down this is the only path that updates the UI. Whichever arrives first wins; the
       // other is a no-op. The POST response carries the caller's own full identity, but the shared
-      // bids cache holds the masked, isMine-flagged shape, so the row reads 'You'.
+      // bids cache holds the feed's shape (a name, no buyerId, isMine), so the row reads 'You'.
       applyBidToCache(queryClient, auctionId, {
         bidId: bid.bidId,
         auctionId: bid.auctionId,
