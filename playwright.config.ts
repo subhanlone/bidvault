@@ -77,6 +77,11 @@ export default defineConfig({
       name: 'guest',
       testMatch: '**/guest*.spec.ts',
     },
+    // The seller's live monitor and End Now: lists its own item through a throwaway seller.
+    {
+      name: 'seller-end-now',
+      testMatch: '**/seller-end-now.spec.ts',
+    },
     {
       name: 'buyer',
       testMatch: '**/buyer.spec.ts',

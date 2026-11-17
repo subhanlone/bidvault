@@ -77,6 +77,10 @@ export default function ItemRow({ item, now, expanded, onToggle, onAction, pendi
         <div className="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end sm:justify-between xl:justify-start gap-2 w-full">
           <Badge variant={view.badge.variant} className="whitespace-nowrap">{view.badge.label}</Badge>
           <div className="flex items-center gap-2 flex-wrap">
+            {/* The live monitor: the bids as they arrive, and End Now once it can sell. */}
+            {item.stage === 'LIVE' && item.auction && (
+              <Link to={`/seller/auctions/${item.auction.auctionId}/live`} className={OUTLINE_LINK}>Watch live</Link>
+            )}
             {[...actions].reverse().map(action => {
               const meta = ACTION_META[action];
               if (action === 'VIEW_INVOICE' && item.sale) {

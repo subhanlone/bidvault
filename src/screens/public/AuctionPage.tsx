@@ -58,9 +58,16 @@ export default function AuctionPage() {
   const expired = Boolean(auction) && outcome === 'live' && timer.isExpired;
   const isOwnAuction = Boolean(user && auction && user.userId === auction.sellerId);
   const hasBid = bids.some((b) => b.isMine);
+  // Whether this page has shown the auction live. A seller who ends it early (End Now) closes it
+  // before its clock runs out, so the page's next fetch already reads CLOSED rather than a live
+  // auction whose time is up: that is an ending watched here too, not an old auction opened later.
+  // Set during render, React's pattern for remembering something from an earlier render.
+  const [sawLive, setSawLive] = useState(false);
+  if (outcome === 'live' && !sawLive) setSawLive(true);
+  const endedWhileWatched = sawLive && auction?.status === 'CLOSED';
   // A member who bid is taken to their result (win, reserve not met, or lost); everyone else stays
   // here and watches this page turn into the ended view.
-  const goesToResult = expired && viewer === 'member' && hasBid && !isOwnAuction;
+  const goesToResult = (expired || endedWhileWatched) && viewer === 'member' && hasBid && !isOwnAuction;
 
   const wentToResultRef = useRef(false);
   useEffect(() => {

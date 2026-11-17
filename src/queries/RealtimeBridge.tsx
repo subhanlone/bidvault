@@ -48,6 +48,15 @@ export function RealtimeBridge() {
       applyAuctionCancelledToCache(queryClient, payload.auctionId);
     }
 
+    // The seller ended this auction early (End Now). Everyone watching its room, guests included,
+    // still has the old end time cached and a countdown running: refetching the auction gives the
+    // new end time, so the page turns into its ended view (and a bidder's page goes to the result).
+    function onAuctionEnded(payload: { auctionId: string }) {
+      void queryClient.invalidateQueries({ queryKey: keys.auctions.all });
+      void queryClient.invalidateQueries({ queryKey: keys.bids.forAuction(payload.auctionId) });
+      void queryClient.invalidateQueries({ queryKey: keys.notifications });
+    }
+
     // Sent to a seller's own room when someone bids on one of their auctions. It carries only
     // numbers; the notification text, the My Items rows and the bidder names are the
     // server's to word, so this refetches them instead of patching the cache. The bids list needs
@@ -62,11 +71,13 @@ export function RealtimeBridge() {
     socket.on('bid:placed', onBidPlaced);
     socket.on('auction:price', onAuctionPrice);
     socket.on('auction:cancelled', onAuctionCancelled);
+    socket.on('auction:ended', onAuctionEnded);
     socket.on('bid:received', onBidReceived);
     return () => {
       socket.off('bid:placed', onBidPlaced);
       socket.off('auction:price', onAuctionPrice);
       socket.off('auction:cancelled', onAuctionCancelled);
+      socket.off('auction:ended', onAuctionEnded);
       socket.off('bid:received', onBidReceived);
     };
   }, [queryClient]);
