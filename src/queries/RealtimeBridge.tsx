@@ -19,7 +19,7 @@ export function RealtimeBridge() {
 
     function onBidPlaced(payload: {
       auctionId: string;
-      // Masked server-side, like GET /:auctionId/bids: no buyerId, buyerName is a pseudonym. This
+      // The same shape as GET /:auctionId/bids: the bidder's name, no buyerId. This
       // handler cannot know whether the bid was the viewer's own; if it was, usePlaceBid's
       // onSuccess (which does) upgrades the entry, in either arrival order (see applyBidToCache).
       bid: { bidId: string; amount: number; buyerName: string; timestamp: string };
@@ -49,7 +49,7 @@ export function RealtimeBridge() {
     }
 
     // Sent to a seller's own room when someone bids on one of their auctions. It carries only
-    // numbers; the notification text, the My Items rows and the masked bidder names are the
+    // numbers; the notification text, the My Items rows and the bidder names are the
     // server's to word, so this refetches them instead of patching the cache. The bids list needs
     // it too: the seller is not in the auction's own room, so `bid:placed` never reaches an
     // expanded row.

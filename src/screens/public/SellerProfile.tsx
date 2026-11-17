@@ -12,8 +12,8 @@ import type { Auction, SellerReview } from '../../types/api';
 
 /**
  * A seller's public page (guest browsing F3): who they are (name, member since, where they are,
- * their own words), what they sell now, what has ended, and their reviews. Reviewers are masked by
- * the API, and the page never has a phone number or an e-mail address: the API does not send them.
+ * their own words), what they sell now, what has ended, and their reviews with each reviewer's name.
+ * The page never has a phone number or an e-mail address: the API does not send them.
  */
 export default function PublicSellerProfile() {
   const { sellerId } = useParams<{ sellerId: string }>();

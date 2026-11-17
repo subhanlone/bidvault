@@ -17,7 +17,7 @@ export function useSellerProfile(sellerId: string | undefined) {
   });
 }
 
-/** GET /reviews/seller/{sellerId}: reviewers are masked ("Reviewer 1") by the API. */
+/** GET /reviews/seller/{sellerId}: each reviewer by name (no id or contact details). */
 export function useSellerReviews(sellerId: string | undefined, enabled = true) {
   return useQuery<SellerReviews>({
     queryKey: keys.sellers.reviews(sellerId ?? ''),
