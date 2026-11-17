@@ -276,7 +276,9 @@ export default function MemberBidPanel({
               </div>
               <button
                 type="submit"
-                aria-label={`Place bid of PKR ${Number(customBid) > 0 ? Number(customBid).toLocaleString() : minNext.toLocaleString()}`}
+                // Names the amount only when one is typed: with the box empty the button places no
+                // bid (it asks for an amount), so it must not announce one, least of all the minimum.
+                aria-label={customBidIsInteger && customBidNum > 0 ? `Place bid of PKR ${customBidNum.toLocaleString()}` : 'Place custom bid'}
                 className="bg-navy font-bold text-[13px] text-white px-4 rounded-sm hover:bg-navy-mid active:scale-[0.97] transition-colors cursor-pointer h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
               >
                 Bid

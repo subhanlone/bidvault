@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Search, X } from 'lucide-react';
 import { useAuth } from '../../context/auth';
@@ -95,12 +95,8 @@ export default function SellerAuctionMonitor() {
   const live = auction?.status === 'ACTIVE' && !timer.isExpired;
   const topBid = bids[0];
 
-  // A bid arriving over the socket moves the price in the cache, but whether the reserve is met is
-  // the server's to say (the amount is never sent): ask again whenever the highest bid changes.
-  const topBidId = topBid?.bidId;
-  useEffect(() => {
-    if (topBidId) void refetch();
-  }, [topBidId, refetch]);
+  // Whether the reserve is met after a new bid is refreshed for every page by the socket handlers
+  // (refreshReserveIfUnmet in queries/auctions.ts).
   // The server's own rule, restated so the button is only offered when it can work.
   const canEndNow = live && (auction?.bidCount ?? 0) > 0 && auction?.reserveMet !== false && Boolean(topBid);
 

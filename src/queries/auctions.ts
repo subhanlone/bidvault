@@ -179,6 +179,19 @@ export function applyBidToCache(queryClient: QueryClient, auctionId: string, bid
     currentBid: Math.max(a.currentBid, bid.amount),
     bidCount: a.bidCount + 1,
   }));
+  refreshReserveIfUnmet(queryClient, auctionId);
+}
+
+/**
+ * A new bid may have met the reserve, but only the server can say so: the reserve amount is
+ * never sent to the browser. While the cached auction still reads "not met", ask for it again;
+ * once it reads met (or there is no reserve) a price update needs no extra request.
+ */
+function refreshReserveIfUnmet(queryClient: QueryClient, auctionId: string) {
+  const cached = queryClient.getQueryData<Auction>(keys.auctions.detail(auctionId));
+  if (cached?.reserveMet === false) {
+    void queryClient.invalidateQueries({ queryKey: keys.auctions.detail(auctionId), exact: true });
+  }
 }
 
 function isAuction(item: unknown): item is Auction {
@@ -235,6 +248,7 @@ export function applyPriceToCache(
     currentBid: Math.max(a.currentBid, update.currentBid),
     bidCount: Math.max(a.bidCount, update.bidCount),
   }));
+  refreshReserveIfUnmet(queryClient, auctionId);
 }
 
 /**
