@@ -560,7 +560,7 @@ export type RegisterRequest = {
 };
 
 export type Registration = {
-  user: User;
+  message: string;
   verificationCode?: string;
   codeExpiresAt: string;
 };
