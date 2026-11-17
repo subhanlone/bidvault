@@ -143,6 +143,45 @@ test.describe('The seller live monitor', () => {
     await bidderContext.close();
   });
 
+  test('the auction page shows the reserve become met live, without a reload', async ({ page, request }) => {
+    const seller = await newSeller(request);
+    const { auctionId } = await liveAuction(request, seller);
+
+    // A guest is told the price and the count over the socket; whether the reserve is met is
+    // refetched while it still reads "not met".
+    await page.goto(`/auctions/${auctionId}`);
+    await bid(request, auctionId, 10_000);
+    await expect(page.getByText(/^Reserve not met/)).toBeVisible();
+    await bid(request, auctionId, 12_000);
+    await expect(page.getByText('Reserve met — this item will sell')).toBeVisible();
+    await expect(page.getByText(/^Reserve not met/)).toHaveCount(0);
+
+    // Leave no live auction behind: the guest specs count the live ones.
+    const ended = await request.post(`${API}/auctions/${auctionId}/end-now`, {
+      headers: { Authorization: `Bearer ${seller.token}` },
+      data: { expectedBid: 12_000 },
+    });
+    expect(ended.ok(), 'end it').toBeTruthy();
+  });
+
+  test('the custom bid button names the typed amount, and no amount while the box is empty', async ({ page, request }) => {
+    const seller = await newSeller(request);
+    const { auctionId } = await liveAuction(request, seller);
+    await signIn(page, OTHER_SELLER, FIXTURE_PASSWORD);
+    await page.goto(`/auctions/${auctionId}`);
+
+    await expect(page.getByRole('button', { name: 'Place custom bid' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Place bid of PKR 10,000$/ })).toHaveCount(0);
+    await page.getByLabel('Custom amount (PKR)').fill('15500');
+    await expect(page.getByRole('button', { name: 'Place bid of PKR 15,500' })).toBeVisible();
+
+    const cancelled = await request.post(`${API}/auctions/${auctionId}/cancel`, {
+      headers: { Authorization: `Bearer ${seller.token}` },
+      data: { reason: 'Cleaning up after the End Now spec.' },
+    });
+    expect(cancelled.ok(), 'cancel it').toBeTruthy();
+  });
+
   test('another seller cannot open it, and My Items links to it from a live item', async ({ page, request }) => {
     const seller = await newSeller(request);
     const { auctionId, title } = await liveAuction(request, seller);
