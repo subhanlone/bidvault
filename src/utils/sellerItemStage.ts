@@ -102,7 +102,8 @@ export function stageView(item: SellerItem, now: number): StageView {
         { label: 'Removed', variant: 'error' },
         [fact('Submitted', dateMedium(listing.submittedAt)), fact('Start price', pkr(listing.startPrice))]);
     case 'LIVE': {
-      const reserve = listing.reservePrice;
+      // The auction's own reserve: the seller may have lowered it since the listing was approved.
+      const reserve = auction ? auction.reservePrice : listing.reservePrice;
       const badge: StageView['badge'] =
         reserve === undefined
           ? { label: 'No reserve', variant: 'tag' }
@@ -173,10 +174,13 @@ export function stageView(item: SellerItem, now: number): StageView {
     case 'RELISTED':
       return view('Relisted', item.relistedAs ? `Live again as ${item.relistedAs.listingCode}` : 'Live again as a new listing', 'info', 3, null,
         { label: 'Relisted', variant: 'info' }, [fact('Winning bid', pkr(sale?.finalAmount ?? 0)), fact('Payment', 'Not received')]);
-    case 'ENDED_RESERVE_NOT_MET':
+    case 'ENDED_RESERVE_NOT_MET': {
+      // The reserve the auction closed against, which a live edit may have lowered.
+      const reserve = auction ? auction.reservePrice : listing.reservePrice;
       return view('Ended, reserve not met',
-        `Top bid ${pkr(auction?.currentBid ?? 0)}${listing.reservePrice !== undefined ? `, reserve ${pkr(listing.reservePrice)}` : ''}`, 'warn', 2, 2,
+        `Top bid ${pkr(auction?.currentBid ?? 0)}${reserve !== undefined ? `, reserve ${pkr(reserve)}` : ''}`, 'warn', 2, 2,
         { label: 'Not sold', variant: 'warning' }, [fact('Top bid', pkr(auction?.currentBid ?? 0)), fact('Bids', String(bidCount))]);
+    }
     case 'ENDED_NO_BIDS':
       return view('Ended with no bids', auction ? `Ended ${dateMedium(auction.endTime)}` : '', 'warn', 2, 2,
         { label: 'Not sold', variant: 'warning' }, [fact('Start price', pkr(listing.startPrice)), fact('Bids', '0')]);
@@ -243,8 +247,17 @@ export function detailFacts(item: SellerItem): Fact[] {
     fact('Category', item.category),
     fact('Condition', conditionLabel(item.condition)),
     fact('Start price', pkr(listing.startPrice)),
-    fact('Reserve', listing.reservePrice !== undefined ? pkr(listing.reservePrice) : 'None'),
-    fact('Min. increment', pkr(listing.minIncrement)),
+    // Once there is an auction its own values, which the seller may have changed while it ran; the
+    // listing keeps the approved ones (and "List again" still starts from those, in toDraft).
+    ...(auction
+      ? [
+          fact('Reserve', auction.reservePrice !== undefined ? pkr(auction.reservePrice) : 'None'),
+          fact('Min. increment', pkr(auction.minIncrement)),
+        ]
+      : [
+          fact('Reserve', listing.reservePrice !== undefined ? pkr(listing.reservePrice) : 'None'),
+          fact('Min. increment', pkr(listing.minIncrement)),
+        ]),
     fact('Duration', `${listing.durationDays} days`),
   ];
   if (auction) {

@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type BrowserContext, type Page } from '@playwright/test';
 
 /**
  * The seller's live monitor and Conclude Now (End Now until 2026-11-28): the seller watches their auction's bids
@@ -23,10 +23,19 @@ let n = 0;
 
 interface Seller { email: string; token: string }
 
+// One sign-in per account for the whole file. The backend's global limit is 300 requests a minute
+// per IP, and every request here and in the browsers comes from this machine: signing the bidder
+// and the admin in again for every bid and every approval spent that allowance for nothing.
+const tokens = new Map<string, string>();
+
 async function login(request: APIRequestContext, email: string, password: string) {
+  const cached = tokens.get(email);
+  if (cached) return cached;
   const res = await request.post(`${API}/auth/login`, { data: { email, password } });
   expect(res.ok(), `login ${email}`).toBeTruthy();
-  return ((await res.json()) as { data: { accessToken: string } }).data.accessToken;
+  const token = ((await res.json()) as { data: { accessToken: string } }).data.accessToken;
+  tokens.set(email, token);
+  return token;
 }
 
 /** A new account that has just become a seller. */
@@ -81,7 +90,22 @@ async function signIn(page: Page, email: string, password: string) {
   await expect(page).not.toHaveURL(/\/login/);
 }
 
+/**
+ * The auction page asks for the AI price comparison and, while a run is pending, asks again every
+ * four seconds. Locally no worker ever runs it, so every open auction page polls for as long as it
+ * is open: requests that count against the backend's 300-a-minute per-IP limit and pushed the last
+ * test of a full run into 429s. Nothing here is about the AI panel, so the browser is told the
+ * request failed (the panel shows its error state and stops asking).
+ */
+async function withoutAiPolling(context: BrowserContext) {
+  await context.route('**/api/v1/ai/valuations/**', (route) => route.abort());
+}
+
 test.describe('The seller live monitor', () => {
+  test.beforeEach(async ({ context }) => {
+    await withoutAiPolling(context);
+  });
+
   test('offers Conclude Now only once there is a bid and the reserve is met, and shows each bid by name as it arrives', async ({ page, request }) => {
     const seller = await newSeller(request);
     const { auctionId } = await liveAuction(request, seller);
@@ -108,7 +132,7 @@ test.describe('The seller live monitor', () => {
       headers: { Authorization: `Bearer ${seller.token}` },
       data: { expectedBid: 12_000 },
     });
-    expect(ended.ok(), 'end it').toBeTruthy();
+    expect(ended.ok(), `end it (${ended.status()})`).toBeTruthy();
   });
 
   test('Conclude Now sells it to the highest bidder, and the bidder watching the auction is taken to the result', async ({ page, request, browser }) => {
@@ -118,6 +142,7 @@ test.describe('The seller live monitor', () => {
 
     // The bidder has the auction page open with time still on the clock.
     const bidderContext = await browser.newContext();
+    await withoutAiPolling(bidderContext);
     const bidderPage = await bidderContext.newPage();
     await signIn(bidderPage, BIDDER.email, FIXTURE_PASSWORD);
     await bidderPage.goto(`/auctions/${auctionId}`);
@@ -161,7 +186,7 @@ test.describe('The seller live monitor', () => {
       headers: { Authorization: `Bearer ${seller.token}` },
       data: { expectedBid: 12_000 },
     });
-    expect(ended.ok(), 'end it').toBeTruthy();
+    expect(ended.ok(), `end it (${ended.status()})`).toBeTruthy();
   });
 
   test('the custom bid button names the typed amount, and no amount while the box is empty', async ({ page, request }) => {
@@ -179,7 +204,7 @@ test.describe('The seller live monitor', () => {
       headers: { Authorization: `Bearer ${seller.token}` },
       data: { reason: 'Cleaning up after the End Now spec.' },
     });
-    expect(cancelled.ok(), 'cancel it').toBeTruthy();
+    expect(cancelled.ok(), `cancel it (${cancelled.status()})`).toBeTruthy();
   });
 
   test('the custom amount takes digits only, and a bad amount is explained in a popup', async ({ page, request }) => {
@@ -231,7 +256,7 @@ test.describe('The seller live monitor', () => {
       headers: { Authorization: `Bearer ${seller.token}` },
       data: { expectedBid: 12_000 },
     });
-    expect(ended.ok(), 'end it').toBeTruthy();
+    expect(ended.ok(), `end it (${ended.status()})`).toBeTruthy();
   });
 
   test('a bid the server refuses because another landed first is explained in a popup, not a toast', async ({ page, request }) => {
@@ -260,7 +285,94 @@ test.describe('The seller live monitor', () => {
       headers: { Authorization: `Bearer ${seller.token}` },
       data: { expectedBid: 12_000 },
     });
-    expect(ended.ok(), 'end it').toBeTruthy();
+    expect(ended.ok(), `end it (${ended.status()})`).toBeTruthy();
+  });
+
+  test('the seller changes the increment, and a bidder watching sees the new minimum at once', async ({ page, request, browser }) => {
+    const seller = await newSeller(request);
+    const { auctionId } = await liveAuction(request, seller);
+    await bid(request, auctionId, 10_000);
+
+    // A bidder (here the fixture seller account, bidding) has the auction open: 10,000 + 500.
+    const bidderContext = await browser.newContext();
+    await withoutAiPolling(bidderContext);
+    const bidderPage = await bidderContext.newPage();
+    await signIn(bidderPage, OTHER_SELLER, FIXTURE_PASSWORD);
+    await bidderPage.goto(`/auctions/${auctionId}`);
+    await expect(bidderPage.getByText('Min next: PKR 10,500')).toBeVisible();
+
+    await signIn(page, seller.email, PASSWORD);
+    await page.goto(`/seller/auctions/${auctionId}/live`);
+    const rules = page.getByRole('region', { name: 'Bidding rules' });
+    await rules.getByRole('button', { name: 'Change' }).click();
+    await rules.getByLabel('New increment (PKR)').fill('2000');
+    await rules.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Each new bid must now beat the last by PKR 2,000.')).toBeVisible();
+    await expect(rules.getByText('PKR 2,000', { exact: true })).toBeVisible();
+
+    // `auction:updated` refetches the bidder's auction: the minimum, the quick bids and a notice.
+    await expect(bidderPage.getByText('Min next: PKR 12,000')).toBeVisible();
+    await expect(bidderPage.getByRole('button', { name: /PKR 12,000/ }).first()).toBeVisible();
+    await expect(bidderPage.getByText('The seller changed the minimum increment to PKR 2,000.')).toBeVisible();
+    await bidderContext.close();
+
+    await bid(request, auctionId, 12_000);
+    const ended = await request.post(`${API}/auctions/${auctionId}/end-now`, {
+      headers: { Authorization: `Bearer ${seller.token}` },
+      data: { expectedBid: 12_000 },
+    });
+    expect(ended.ok(), `end it (${ended.status()})`).toBeTruthy();
+  });
+
+  test('in the final hour the increment is shown locked', async ({ page, request }) => {
+    const seller = await newSeller(request);
+    const { auctionId } = await liveAuction(request, seller);
+    const res = await request.get(`${API}/auctions/${auctionId}`);
+    const { data } = (await res.json()) as { data: { endTime: string } };
+
+    // The browser's clock 30 minutes before the end: the page counts down from there. (The server
+    // keeps real time; its own lock is covered by the backend's live-auction-edits tests.)
+    await page.clock.install({ time: new Date(new Date(data.endTime).getTime() - 30 * 60 * 1000) });
+    await signIn(page, seller.email, PASSWORD);
+    await page.goto(`/seller/auctions/${auctionId}/live`);
+    const rules = page.getByRole('region', { name: 'Bidding rules' });
+    await expect(rules.getByText('Locked in the final hour')).toBeVisible();
+    await expect(rules.getByRole('button', { name: 'Change' })).toHaveCount(0);
+
+    const cancelled = await request.post(`${API}/auctions/${auctionId}/cancel`, {
+      headers: { Authorization: `Bearer ${seller.token}` },
+      data: { reason: 'Cleaning up after the End Now spec.' },
+    });
+    expect(cancelled.ok(), `cancel it (${cancelled.status()})`).toBeTruthy();
+  });
+
+  test('lowering an unmet reserve to the current bid lets the seller conclude the sale', async ({ page, request }) => {
+    const seller = await newSeller(request);
+    const { auctionId } = await liveAuction(request, seller);
+    await bid(request, auctionId, 10_000);
+
+    await signIn(page, seller.email, PASSWORD);
+    await page.goto(`/seller/auctions/${auctionId}/live`);
+    await expect(page.getByText(/^The reserve price has not been met, so the auction cannot be concluded early yet/)).toBeVisible();
+    const rules = page.getByRole('region', { name: 'Bidding rules' });
+    await expect(rules.getByText('PKR 12,000', { exact: true })).toBeVisible();
+
+    // A reserve can only go down.
+    await rules.getByRole('button', { name: 'Lower' }).click();
+    await rules.getByLabel('New reserve (PKR)').fill('13000');
+    await rules.getByRole('button', { name: 'Lower' }).click();
+    await expect(rules.getByText('Enter less than your current reserve of PKR 12,000.')).toBeVisible();
+
+    await rules.getByRole('button', { name: /Use the current bid/ }).click();
+    await expect(rules.getByLabel('New reserve (PKR)')).toHaveValue('10000');
+    await rules.getByRole('button', { name: 'Lower' }).click();
+    await expect(page.getByText('The reserve is now PKR 10,000. You can conclude the sale.')).toBeVisible();
+    // On the monitor itself (the toast's title says it too).
+    await expect(page.getByRole('main').getByText('Reserve met', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Conclude now and sell' }).click();
+    await page.getByRole('dialog', { name: 'Conclude the auction now?' }).getByRole('button', { name: 'Conclude now and sell' }).click();
+    await expect(page.getByText(/This auction has ended\. Sold to Test Buyer for PKR 10,000/)).toBeVisible();
   });
 
   test('another seller cannot open it, and My Items links to it from a live item', async ({ page, request }) => {
@@ -285,6 +397,6 @@ test.describe('The seller live monitor', () => {
       headers: { Authorization: `Bearer ${seller.token}` },
       data: { reason: 'Cleaning up after the End Now spec.' },
     });
-    expect(cancelled.ok(), 'cancel it').toBeTruthy();
+    expect(cancelled.ok(), `cancel it (${cancelled.status()})`).toBeTruthy();
   });
 });
