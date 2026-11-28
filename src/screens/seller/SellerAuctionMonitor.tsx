@@ -48,10 +48,10 @@ function EndNowDialog({ title, amount, winner, loading, error, onConfirm, onClos
             <X size={16} className="text-muted" aria-hidden="true" />
           </button>
         </div>
-        <h2 id="end-now-title" className="font-extrabold text-[18px] text-navy mb-1">End the auction now?</h2>
+        <h2 id="end-now-title" className="font-extrabold text-[18px] text-navy mb-1">Conclude the auction now?</h2>
         <p className="text-[13px] text-muted mb-4 leading-[20px]">
-          "{title}" ends at once and is sold to the highest bidder, who then has to pay as after any
-          auction. This cannot be undone.
+          "{title}" is concluded at once and sold to the highest bidder, who then has to pay as after
+          any auction. This cannot be undone.
         </p>
         <div className="bg-bg rounded-md p-3 sm:p-4 mb-4 flex flex-col gap-2">
           <div className="flex items-center justify-between">
@@ -64,9 +64,10 @@ function EndNowDialog({ title, amount, winner, loading, error, onConfirm, onClos
           </div>
         </div>
         {error && <p role="alert" className="text-[13px] text-error mb-4">{error}</p>}
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={onClose}>Keep it running</Button>
-          <Button variant="primary" className="flex-1" loading={loading} onClick={onConfirm}>End now and sell</Button>
+        {/* Side by side from sm up; stacked on a phone, the sale on top, so neither label wraps. */}
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
+          <Button variant="outline" className="sm:flex-1 whitespace-nowrap" onClick={onClose}>Keep it running</Button>
+          <Button variant="primary" className="sm:flex-1 whitespace-nowrap" loading={loading} onClick={onConfirm}>Conclude now and sell</Button>
         </div>
       </div>
     </div>
@@ -75,7 +76,8 @@ function EndNowDialog({ title, amount, winner, loading, error, onConfirm, onClos
 
 /**
  * The seller's live view of their own auction: the clock, the price, whether the reserve is met,
- * the bids as they arrive (by name), and End Now, which sells it to the highest bidder at once.
+ * the bids as they arrive (by name), and Conclude Now (the end-now route), which sells it to the
+ * highest bidder at once.
  * Anyone but the auction's seller is shown "not found", the same as an unknown auction.
  */
 export default function SellerAuctionMonitor() {
@@ -112,7 +114,7 @@ export default function SellerAuctionMonitor() {
       {
         onSuccess: () => {
           setConfirming(false);
-          showToast({ type: 'success', title: 'Auction ended', message: `"${auction.title}" has been sold to the highest bidder.` });
+          showToast({ type: 'success', title: 'Auction concluded', message: `"${auction.title}" has been sold to the highest bidder.` });
         },
         onError: (err) => {
           setEndError(err instanceof ApiError ? err.message : 'Could not end the auction. Please try again.');
@@ -189,22 +191,22 @@ export default function SellerAuctionMonitor() {
               </div>
             </div>
 
-            {/* End Now, or why not */}
+            {/* Conclude Now, or why not */}
             {live ? (
               <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">
                 {canEndNow && topBid ? (
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                     <p className="text-[13px] text-muted">
                       Happy with <span className="font-bold text-secondary">{pkr(auction.currentBid)}</span> from{' '}
-                      <span className="font-bold text-secondary">{topBid.buyerName}</span>? End the auction now and sell it.
+                      <span className="font-bold text-secondary">{topBid.buyerName}</span>? Conclude the auction now and sell it.
                     </p>
-                    <Button variant="primary" onClick={openConfirm} className="shrink-0">End now and sell</Button>
+                    <Button variant="primary" onClick={openConfirm} className="shrink-0">Conclude now and sell</Button>
                   </div>
                 ) : (
                   <p className="text-[13px] text-muted">
                     {auction.bidCount === 0
-                      ? 'No bids yet. An auction can be ended early once it has a bid; to stop it now, cancel it from My Items.'
-                      : 'The reserve price has not been met, so the auction cannot be ended early yet.'}
+                      ? 'No bids yet. An auction can be concluded early once it has a bid; to stop it now, cancel it from My Items.'
+                      : 'The reserve price has not been met, so the auction cannot be concluded early yet.'}
                   </p>
                 )}
               </div>

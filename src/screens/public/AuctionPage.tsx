@@ -58,7 +58,7 @@ export default function AuctionPage() {
   const expired = Boolean(auction) && outcome === 'live' && timer.isExpired;
   const isOwnAuction = Boolean(user && auction && user.userId === auction.sellerId);
   const hasBid = bids.some((b) => b.isMine);
-  // Whether this page has shown the auction live. A seller who ends it early (End Now) closes it
+  // Whether this page has shown the auction live. A seller who concludes it early (Conclude Now) closes it
   // before its clock runs out, so the page's next fetch already reads CLOSED rather than a live
   // auction whose time is up: that is an ending watched here too, not an old auction opened later.
   // Set during render, React's pattern for remembering something from an earlier render.

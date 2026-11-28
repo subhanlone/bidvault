@@ -9,8 +9,19 @@ import { useDialog } from '../../hooks/useDialog';
 import { useRegisterLink, useSignInLink } from '../../hooks/useSignInLink';
 import type { TimerState } from '../../hooks/useTimer';
 import { usePlaceBid } from '../../queries/auctions';
+import { ApiError } from '../../services/api';
 import type { Auction, PublicBid, User } from '../../types/api';
 import { conditionLabel, count, pkr } from '../../utils/format';
+
+/** Why a bid was not sent, or was refused by the server; shown in a popup when Bid is pressed. */
+type BidProblem =
+  | { kind: 'empty' }
+  | { kind: 'low'; amount: number }
+  | { kind: 'high'; amount: number }
+  | { kind: 'refused'; message: string };
+
+// The server's ceiling for any stored amount (MAX_STORED_MONEY in the backend's auctions.routes.ts).
+const MAX_STORED_MONEY = 2_000_000_000;
 
 /** The countdown. It pulses in the last minute and flashes when the price moves. */
 export function TimerCard({ timer, currentBid }: { timer: TimerState; currentBid: number }) {
@@ -163,11 +174,29 @@ export default function MemberBidPanel({
 }) {
   const placeBid = usePlaceBid();
   const { showToast } = useToast();
+  // Digits only: the field drops anything else as it is typed or pasted, so a minus sign, a decimal
+  // point or an exponent can never be entered.
   const [customBid, setCustomBid] = useState('');
   const [customBidTouched, setCustomBidTouched] = useState(false);
   const [pendingBidAmount, setPendingBidAmount] = useState<number | null>(null);
+  // Whether the pending bid came from the custom amount (typed, or the minimum the popup offered),
+  // so the field is cleared once that bid is placed and does not go on showing a stale amount.
+  const [pendingFromCustom, setPendingFromCustom] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [problem, setProblem] = useState<BidProblem | null>(null);
+  const customInputRef = useRef<HTMLInputElement>(null);
+  const focusCustomOnClose = useRef(false);
   const confirmDialogRef = useDialog<HTMLDivElement>(pendingBidAmount !== null, () => setPendingBidAmount(null));
+  const problemDialogRef = useDialog<HTMLDivElement>(problem !== null, () => setProblem(null));
+
+  // "Change amount" puts the cursor back in the field. This effect is declared after useDialog's,
+  // so it runs after that hook has restored focus to the Bid button, and wins.
+  useEffect(() => {
+    if (problem === null && focusCustomOnClose.current) {
+      focusCustomOnClose.current = false;
+      customInputRef.current?.focus();
+    }
+  }, [problem]);
 
   const isOwnAuction = user.userId === auction.sellerId;
   // The first bid is allowed at the starting price itself (as eBay does); the price only has to be
@@ -178,19 +207,37 @@ export default function MemberBidPanel({
   const isHighest = myBids.length > 0 && myBids[0].amount === auction.currentBid;
   const isOutbid = myBids.length > 0 && !isHighest;
   const quickAmounts = [minNext, minNext + auction.minIncrement, minNext + auction.minIncrement * 2];
-  const customBidNum = Number(customBid);
-  const customBidIsInteger = customBid.trim() !== '' && Number.isInteger(customBidNum);
-  const showCustomBidError = customBidTouched && customBid.trim() !== '' && (!customBidIsInteger || customBidNum < minNext);
-  const customBidErrorMessage = customBid.trim() !== '' && !customBidIsInteger
-    ? 'Bid amount must be a whole number'
+  // The server's own ceiling, applied under its row lock (auctions.routes.ts), restated so an absurd
+  // amount is explained before it is sent. The server still has the last word.
+  const maxBid = Math.min(MAX_STORED_MONEY, Math.max(minNext, auction.currentBid * 10, auction.startPrice * 100));
+  const customBidNum = customBid === '' ? 0 : Number(customBid);
+  const customBidProblem: BidProblem | null =
+    customBidNum <= 0 ? { kind: 'empty' }
+      : customBidNum < minNext ? { kind: 'low', amount: customBidNum }
+        : customBidNum > maxBid ? { kind: 'high', amount: customBidNum }
+          : null;
+  const showCustomBidError = customBidTouched && customBid !== '' && customBidProblem !== null;
+  const customBidErrorMessage = customBidProblem?.kind === 'high'
+    ? `Maximum bid is PKR ${maxBid.toLocaleString()}`
     : `Minimum bid is PKR ${minNext.toLocaleString()}`;
 
-  const handleBid = (amount: number) => {
+  const handleBid = (amount: number, fromCustom = false) => {
     if (amount < minNext) {
-      showToast({ type: 'error', title: 'Bid Too Low', message: `Minimum bid is PKR ${minNext.toLocaleString()}` });
+      setProblem({ kind: 'low', amount });
       return;
     }
+    setPendingFromCustom(fromCustom);
     setPendingBidAmount(amount);
+  };
+
+  const changeAmount = () => {
+    focusCustomOnClose.current = true;
+    setProblem(null);
+  };
+
+  const bidTheMinimum = () => {
+    setProblem(null);
+    handleBid(minNext, true);
   };
 
   const handleConfirmBid = async () => {
@@ -200,8 +247,19 @@ export default function MemberBidPanel({
       await placeBid.mutateAsync({ auctionId: auction.auctionId, amount: pendingBidAmount });
       showToast({ type: 'success', title: 'Bid Placed!', message: `Your bid of PKR ${pendingBidAmount.toLocaleString()} was placed successfully.` });
       setPendingBidAmount(null);
+      if (pendingFromCustom) {
+        setCustomBid('');
+        setCustomBidTouched(false);
+      }
     } catch (err) {
-      showToast({ type: 'error', title: 'Bid Failed', message: err instanceof Error ? err.message : 'Could not place bid.' });
+      if (err instanceof ApiError && err.status === 422) {
+        // The server refused the bid itself (a higher bid landed first, or bidding closed): say why
+        // in the same popup as the checks above, in the server's own words.
+        setPendingBidAmount(null);
+        setProblem({ kind: 'refused', message: err.message });
+      } else {
+        showToast({ type: 'error', title: 'Bid Failed', message: err instanceof Error ? err.message : 'Could not place bid.' });
+      }
     } finally {
       setIsConfirming(false);
     }
@@ -255,21 +313,30 @@ export default function MemberBidPanel({
             className="flex flex-col gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!customBidIsInteger || customBidNum < minNext) { setCustomBidTouched(true); return; }
-              handleBid(customBidNum);
+              setCustomBidTouched(true);
+              if (customBidProblem) { setProblem(customBidProblem); return; }
+              handleBid(customBidNum, true);
             }}
           >
             <label htmlFor="custom-bid-amount" className="font-bold text-[11px] text-muted uppercase tracking-[0.3px]">Custom amount (PKR)</label>
             <div className="flex gap-2 items-start">
               <div className="flex-1">
                 <Input
+                  ref={customInputRef}
                   id="custom-bid-amount"
-                  type="number"
+                  type="text"
                   inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={10}
                   className="h-[44px]"
                   placeholder={`Min ${minNext.toLocaleString()}`}
                   value={customBid}
-                  onChange={(e) => { setCustomBid(e.target.value); if (!customBidTouched && e.target.value.trim() !== '') setCustomBidTouched(true); }}
+                  onChange={(e) => {
+                    // Keep the digits only, and drop leading zeros so "007" reads as 7.
+                    const digits = e.target.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+                    setCustomBid(digits);
+                    if (!customBidTouched && digits !== '') setCustomBidTouched(true);
+                  }}
                   onBlur={() => setCustomBidTouched(true)}
                   error={showCustomBidError ? customBidErrorMessage : undefined}
                 />
@@ -278,7 +345,7 @@ export default function MemberBidPanel({
                 type="submit"
                 // Names the amount only when one is typed: with the box empty the button places no
                 // bid (it asks for an amount), so it must not announce one, least of all the minimum.
-                aria-label={customBidIsInteger && customBidNum > 0 ? `Place bid of PKR ${customBidNum.toLocaleString()}` : 'Place custom bid'}
+                aria-label={customBidNum > 0 ? `Place bid of PKR ${customBidNum.toLocaleString()}` : 'Place custom bid'}
                 className="bg-navy font-bold text-[13px] text-white px-4 rounded-sm hover:bg-navy-mid active:scale-[0.97] transition-colors cursor-pointer h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
               >
                 Bid
@@ -354,6 +421,97 @@ export default function MemberBidPanel({
                 <Button size="lg" className="flex-1 rounded-sm shadow-primary" loading={isConfirming} onClick={handleConfirmBid}>
                   Confirm Bid <ChevronRight size={15} aria-hidden="true" />
                 </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {problem !== null && (
+        <div className="fixed inset-0 bg-[rgba(11,31,58,0.45)] flex items-center justify-center p-4 z-50">
+          <div
+            ref={problemDialogRef}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="bid-problem-title"
+            aria-describedby="bid-problem-text"
+            tabIndex={-1}
+            className="bg-surface rounded-lg shadow-[0px_20px_60px_rgba(11,31,58,0.2)] w-full max-w-[400px] overflow-hidden focus:outline-none"
+          >
+            <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-0">
+              <div className="bg-primary-surface flex items-center justify-center rounded-full size-[44px]">
+                <AlertTriangle size={20} strokeWidth={2} className="text-primary" aria-hidden="true" />
+              </div>
+              <button
+                onClick={() => setProblem(null)}
+                aria-label="Close"
+                className="bg-bg flex items-center justify-center rounded-full size-[32px] hover:bg-border-light transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+              >
+                <X size={16} className="text-muted" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-4">
+              <h3 id="bid-problem-title" className="font-extrabold text-[18px] text-navy mb-1">
+                {problem.kind === 'empty' ? 'Enter a bid amount'
+                  : problem.kind === 'low' ? 'Bid too low'
+                    : problem.kind === 'high' ? 'Bid too high'
+                      : 'Bid not placed'}
+              </h3>
+              <p id="bid-problem-text" className="text-[13px] text-muted mb-5 leading-[20px]">
+                {problem.kind === 'empty'
+                  ? `Type how much you want to bid. The minimum for this auction is ${pkr(minNext)}.`
+                  : problem.kind === 'low'
+                    ? noBidsYet
+                      ? 'Your amount is below the starting price. The first bid can be the starting price itself.'
+                      : 'Your amount is below the minimum for this auction. A new bid must beat the current bid by at least the minimum increment.'
+                    : problem.kind === 'high'
+                      ? `You entered ${pkr(problem.amount)}, but this auction accepts bids up to ${pkr(maxBid)}. Check the amount for an extra zero.`
+                      : problem.message}
+              </p>
+
+              {problem.kind === 'low' && (
+                <div className="bg-bg rounded-md p-3 sm:p-4 mb-5 flex flex-col gap-[10px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] text-muted">You entered</span>
+                    <span className="font-bold text-[13px] text-error">{pkr(problem.amount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] text-muted">{noBidsYet ? 'Starting price' : 'Current bid'}</span>
+                    <span className="font-bold text-[13px] text-secondary">{pkr(auction.currentBid)}</span>
+                  </div>
+                  {!noBidsYet && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] text-muted">Min increment</span>
+                      <span className="font-bold text-[13px] text-secondary">+ {pkr(auction.minIncrement)}</span>
+                    </div>
+                  )}
+                  <div className="h-px bg-border-medium" />
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[13px] text-navy">Minimum you can bid</span>
+                    <span className="font-extrabold text-[14px] text-navy">{pkr(minNext)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Side by side from sm up; stacked on a phone, the bid on top, so neither label wraps. */}
+              <div className="flex flex-col-reverse sm:flex-row gap-3">
+                {problem.kind === 'refused' ? (
+                  <Button size="lg" className="sm:flex-1 rounded-sm" onClick={() => setProblem(null)}>
+                    OK
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" size="lg" className="sm:flex-1 rounded-sm whitespace-nowrap" onClick={changeAmount}>
+                      {problem.kind === 'empty' ? 'Enter amount' : 'Change amount'}
+                    </Button>
+                    {problem.kind !== 'high' && (
+                      <Button size="lg" className="sm:flex-1 rounded-sm shadow-primary whitespace-nowrap" onClick={bidTheMinimum}>
+                        Bid {pkr(minNext)}
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -48,7 +48,7 @@ export function RealtimeBridge() {
       applyAuctionCancelledToCache(queryClient, payload.auctionId);
     }
 
-    // The seller ended this auction early (End Now). Everyone watching its room, guests included,
+    // The seller concluded this auction early (Conclude Now). Everyone watching its room, guests included,
     // still has the old end time cached and a countdown running: refetching the auction gives the
     // new end time, so the page turns into its ended view (and a bidder's page goes to the result).
     function onAuctionEnded(payload: { auctionId: string }) {
