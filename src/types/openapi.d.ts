@@ -139,6 +139,7 @@ export type Auction = {
   currentBid: number;
   minIncrement: number;
   reserveMet: boolean | null;
+  reservePrice?: number;
   bidCount: number;
   watcherCount: number;
   startTime: string;
@@ -202,6 +203,10 @@ export type CancelAuctionRequest = {
 
 /** Category-specific fields; keys vary by category. */
 export type CategoryAttributes = Record<string, string | number>;
+
+export type ChangeMinIncrementRequest = {
+  minIncrement: number;
+};
 
 export type ChangePasswordRequest = {
   currentPassword: string;
@@ -349,6 +354,10 @@ export type LoginRequest = {
    * false for a session that should end with the browser session instead of lasting 14 days. Default true.
    */
   remember?: boolean;
+};
+
+export type LowerReserveRequest = {
+  reservePrice: number;
 };
 
 export type Message = {
@@ -661,6 +670,8 @@ export type SellerItem = {
     bidCount: number;
     watcherCount: number;
     reserveMet: boolean | null;
+    minIncrement: number;
+    reservePrice?: number;
     startTime: string;
     endTime: string;
   };
@@ -1102,6 +1113,15 @@ export interface PatchEndpoints {
   "/admin/reports/{reportId}": {
     report: ListingReport;
   };
+  "/auctions/{auctionId}/min-increment": {
+    auctionId: string;
+    minIncrement: number;
+  };
+  "/auctions/{auctionId}/reserve": {
+    auctionId: string;
+    reservePrice: number;
+    reserveMet: boolean;
+  };
   "/auth/me/preferences": NotificationPrefs;
   "/listings/{listingId}": Listing;
   "/payments/{transactionId}/ship": {
@@ -1171,6 +1191,8 @@ export interface PutRequests {
 /** The body each documented PATCH expects. */
 export interface PatchRequests {
   "/admin/reports/{reportId}": ResolveReportRequest;
+  "/auctions/{auctionId}/min-increment": ChangeMinIncrementRequest;
+  "/auctions/{auctionId}/reserve": LowerReserveRequest;
   "/auth/me/preferences": NotificationPreferences;
   "/listings/{listingId}": SubmitListingRequest;
   "/reviews/{reviewId}": UpdateReviewRequest;

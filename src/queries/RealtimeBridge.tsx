@@ -57,6 +57,15 @@ export function RealtimeBridge() {
       void queryClient.invalidateQueries({ queryKey: keys.notifications });
     }
 
+    // The seller changed a live auction: its minimum increment, or a lower reserve. Sent to the
+    // auction's room, guests included; it carries the new increment but never the reserve, so the
+    // auction is refetched: the bid panel's minimum and quick bids move, and whether the reserve is
+    // met (and, for the seller, its amount) comes back with it. My Items shows the live values too.
+    function onAuctionUpdated(payload: { auctionId: string; minIncrement?: number }) {
+      void queryClient.invalidateQueries({ queryKey: keys.auctions.detail(payload.auctionId), exact: true });
+      void queryClient.invalidateQueries({ queryKey: keys.sellerItems.all });
+    }
+
     // Sent to a seller's own room when someone bids on one of their auctions. It carries only
     // numbers; the notification text, the My Items rows and the bidder names are the
     // server's to word, so this refetches them instead of patching the cache. The bids list needs
@@ -72,12 +81,14 @@ export function RealtimeBridge() {
     socket.on('auction:price', onAuctionPrice);
     socket.on('auction:cancelled', onAuctionCancelled);
     socket.on('auction:ended', onAuctionEnded);
+    socket.on('auction:updated', onAuctionUpdated);
     socket.on('bid:received', onBidReceived);
     return () => {
       socket.off('bid:placed', onBidPlaced);
       socket.off('auction:price', onAuctionPrice);
       socket.off('auction:cancelled', onAuctionCancelled);
       socket.off('auction:ended', onAuctionEnded);
+      socket.off('auction:updated', onAuctionUpdated);
       socket.off('bid:received', onBidReceived);
     };
   }, [queryClient]);

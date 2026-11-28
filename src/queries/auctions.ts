@@ -278,6 +278,35 @@ export function useEndAuctionNow() {
   });
 }
 
+/**
+ * The seller's live edits (2026-11-28). Each refetches the auction (its increment, whether the reserve
+ * is met, and for the seller the reserve itself) and My Items; the open bid panels are told by the
+ * socket's `auction:updated`.
+ */
+export function useChangeMinIncrement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ auctionId, minIncrement }: { auctionId: string; minIncrement: number }) =>
+      api.patch(`/auctions/${auctionId}/min-increment`, { minIncrement }),
+    onSettled: (_data, _error, { auctionId }) => {
+      void queryClient.invalidateQueries({ queryKey: keys.auctions.detail(auctionId), exact: true });
+      void queryClient.invalidateQueries({ queryKey: keys.sellerItems.all });
+    },
+  });
+}
+
+export function useLowerReserve() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ auctionId, reservePrice }: { auctionId: string; reservePrice: number }) =>
+      api.patch(`/auctions/${auctionId}/reserve`, { reservePrice }),
+    onSettled: (_data, _error, { auctionId }) => {
+      void queryClient.invalidateQueries({ queryKey: keys.auctions.detail(auctionId), exact: true });
+      void queryClient.invalidateQueries({ queryKey: keys.sellerItems.all });
+    },
+  });
+}
+
 export function usePlaceBid() {
   const queryClient = useQueryClient();
 

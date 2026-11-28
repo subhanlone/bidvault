@@ -9,6 +9,7 @@ import { useAuctionRoom } from '../../hooks/useAuctionRoom';
 import { useDialog } from '../../hooks/useDialog';
 import { SellerNavbar, Button, ErrorState } from '../../components/ui';
 import AuctionThumbnail from '../../components/ui/AuctionThumbnail';
+import LiveAuctionEdits from '../../components/seller/LiveAuctionEdits';
 import { ApiError } from '../../services/api';
 import { conditionLabel, count, pkr, timeShort } from '../../utils/format';
 
@@ -76,8 +77,8 @@ function EndNowDialog({ title, amount, winner, loading, error, onConfirm, onClos
 
 /**
  * The seller's live view of their own auction: the clock, the price, whether the reserve is met,
- * the bids as they arrive (by name), and Conclude Now (the end-now route), which sells it to the
- * highest bidder at once.
+ * the bids as they arrive (by name), Conclude Now (the end-now route), which sells it to the
+ * highest bidder at once, and the bidding rules it may change while it runs (LiveAuctionEdits).
  * Anyone but the auction's seller is shown "not found", the same as an unknown auction.
  */
 export default function SellerAuctionMonitor() {
@@ -206,7 +207,7 @@ export default function SellerAuctionMonitor() {
                   <p className="text-[13px] text-muted">
                     {auction.bidCount === 0
                       ? 'No bids yet. An auction can be concluded early once it has a bid; to stop it now, cancel it from My Items.'
-                      : 'The reserve price has not been met, so the auction cannot be concluded early yet.'}
+                      : 'The reserve price has not been met, so the auction cannot be concluded early yet. You can lower the reserve below.'}
                   </p>
                 )}
               </div>
@@ -220,6 +221,9 @@ export default function SellerAuctionMonitor() {
                 </p>
               </div>
             ) : null}
+
+            {/* The increment and the reserve, changeable while it runs */}
+            {live && <LiveAuctionEdits auction={auction} secondsLeft={timer.totalSeconds} />}
 
             {/* Bids as they arrive */}
             <div className="bg-surface border border-border-light rounded-md p-4 sm:p-5">

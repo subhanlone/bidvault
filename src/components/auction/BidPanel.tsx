@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Ban, Check, ChevronRight, Timer, X, Zap } from 'lucide-react';
+import { AlertTriangle, Ban, Check, ChevronRight, Info, Timer, X, Zap } from 'lucide-react';
 import { AuctionThumbnail } from '../ui';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -198,6 +198,17 @@ export default function MemberBidPanel({
     }
   }, [problem]);
 
+  // The seller can change the increment while the auction runs (2026-11-28). When that happens with
+  // this page open, say so, so the moved minimum is not a surprise. State adjusted during render
+  // (React's pattern for reacting to a prop change), keyed by auction so moving to another auction
+  // is never mistaken for a change.
+  const [seenIncrement, setSeenIncrement] = useState({ auctionId: auction.auctionId, value: auction.minIncrement });
+  const [incrementNotice, setIncrementNotice] = useState<number | null>(null);
+  if (seenIncrement.auctionId !== auction.auctionId || seenIncrement.value !== auction.minIncrement) {
+    setSeenIncrement({ auctionId: auction.auctionId, value: auction.minIncrement });
+    setIncrementNotice(seenIncrement.auctionId === auction.auctionId ? auction.minIncrement : null);
+  }
+
   const isOwnAuction = user.userId === auction.sellerId;
   // The first bid is allowed at the starting price itself (as eBay does); the price only has to be
   // cleared by a full increment once a bid exists.
@@ -296,6 +307,14 @@ export default function MemberBidPanel({
           <p className="font-bold text-[13px] text-navy mb-3">
             {isFinalCountdown ? 'Place Final Bid' : 'Quick Bid'}
           </p>
+          <div role="status" aria-live="polite">
+            {incrementNotice !== null && (
+              <p className="bg-info-surface border border-info-border text-info-text rounded-sm px-3 py-2 mb-3 text-[12px] font-semibold flex items-start gap-2">
+                <Info size={14} strokeWidth={2.5} className="shrink-0 mt-px" aria-hidden="true" />
+                <span>The seller changed the minimum increment to {pkr(incrementNotice)}.</span>
+              </p>
+            )}
+          </div>
           <div className="flex flex-col gap-2 mb-4">
             {quickAmounts.map((amt, i) => (
               <button
