@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient, type UseInfiniteQueryResult } from '@tanstack/react-query';
-import { api } from '../services/api';
+import { api, ApiError } from '../services/api';
 import type { Auction, PublicBid, PaginatedAuctions, PaginatedBidsWithAuction } from '../types/api';
 import { keys } from './keys';
 import { useAuth } from '../context/auth';
@@ -297,6 +297,14 @@ export function usePlaceBid() {
         amount: bid.amount,
         timestamp: bid.timestamp,
       });
+    },
+    onError: (err, { auctionId }) => {
+      // A 422 means the auction moved on while this bid was in flight (a higher bid landed first,
+      // or it closed). Refetch it so the panel shows where it stands now, even with the socket down.
+      if (err instanceof ApiError && err.status === 422) {
+        void queryClient.invalidateQueries({ queryKey: keys.auctions.detail(auctionId), exact: true });
+        void queryClient.invalidateQueries({ queryKey: keys.bids.forAuction(auctionId) });
+      }
     },
   });
 }
